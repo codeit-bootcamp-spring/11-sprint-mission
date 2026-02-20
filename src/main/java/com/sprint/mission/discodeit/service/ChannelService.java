@@ -1,0 +1,15 @@
+package com.sprint.mission.discodeit.service;
+
+import com.sprint.mission.discodeit.entity.Channel;
+import com.sprint.mission.discodeit.service.jcf.JCFMessageService;
+
+import java.util.List;
+import java.util.UUID;
+
+public interface ChannelService {
+    void createChannel(Channel channel);
+    Channel findChannel(UUID id);
+    List<Channel> findAllChannel();
+    void updateChannel(Channel oldChannel, Channel newChannel);
+    void deleteChannel(Channel channel);
+}
