@@ -1,7 +1,6 @@
 package com.sprint.mission.discodeit.entity.Domain;
 
 import java.io.Serializable;
-import java.util.UUID;
 
 public class User extends BaseEntity implements Serializable {
     private String userName;
@@ -17,7 +16,7 @@ public class User extends BaseEntity implements Serializable {
     }
 
     public String getUserName() {return userName;}
-    public String getUserEmail() {return userNickname;}
+    public String getUserNickname() {return userNickname;}
     public String getStatus() {return userStatus;}
 
     public void updateUserName(String userName, String userNickname, String userStatus) {

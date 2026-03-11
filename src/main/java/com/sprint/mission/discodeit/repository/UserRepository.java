@@ -16,4 +16,7 @@ public interface UserRepository {
 
     // 삭제
     void delete(UUID id);
+
+    // 복구
+    void restore(UUID id);
 }

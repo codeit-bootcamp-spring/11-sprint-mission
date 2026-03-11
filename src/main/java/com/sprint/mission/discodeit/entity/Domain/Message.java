@@ -5,11 +5,11 @@ import java.util.UUID;
 
 public class Message extends BaseEntity implements Serializable {
     private String messageContent;     // 내용
-    private String messageSender;        // 보낸이
-    private String messageReceiver;     // 받는이
+    private User messageSender;        // 보낸이
+    private User messageReceiver;     // 받는이
     private static final long serialVersionUID = 1L;
 
-    public Message(String messageContent, String messageSender, String messageReceiver) {
+    public Message(String messageContent, User messageSender, User messageReceiver) {
         super();
         this.messageContent = messageContent;
         this.messageSender = messageSender;
@@ -17,8 +17,8 @@ public class Message extends BaseEntity implements Serializable {
     }
 
     public String getContent() {return messageContent;}
-    public String getSender() {return messageSender;}
-    public String getReceiver() {return messageReceiver;}
+    public User getSender() {return messageSender;}
+    public User getReceiver() {return messageReceiver;}
 
     public void updateContent( String messageContent) {
         this.messageContent = messageContent;
