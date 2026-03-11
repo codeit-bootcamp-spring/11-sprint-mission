@@ -4,19 +4,17 @@ import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.ChannelType;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.service.ChannelService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
 public class BasicChannelService implements ChannelService {
 
-    ChannelRepository channelRepo;
-
-    public BasicChannelService(ChannelRepository channelRepo) {
-        this.channelRepo = channelRepo;
-    }
+    private final ChannelRepository channelRepo;
 
     public Channel createChannel(ChannelType channelType, String name, String description) {
         Channel channel = new Channel(channelType, name, description);
