@@ -1,6 +1,7 @@
 package com.sprint.mission.discodeit.entity;
 
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
 import java.io.Serializable;
 import java.time.Instant;
@@ -10,34 +11,25 @@ import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
 @Getter
+@RequiredArgsConstructor
 public class User implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private final UUID id;
     private final UUID currentUserId;
-    private final long createdAt;
-    private long updatedAt;
+    private final UUID profileId;
+    private final Instant createdAt;
+    private Instant updatedAt;
     private String username;
     private String password;
     private String email;
-
-    // 생성자 초기화
-    public User(String username, String email, String password) {
-        this.id = UUID.randomUUID();
-        this.currentUserId = UUID.randomUUID();
-        this.createdAt = System.currentTimeMillis();
-        this.updatedAt = System.currentTimeMillis();
-        this.username = username;
-        this.email = email;
-        this.password = password;
-    }
 
     // 필드를 수정하는 update 함수
     public void update(String name, String email, String password) {
         this.username = name;
         this.email = email;
         this.password = password;
-        this.updatedAt = System.currentTimeMillis();
+        this.updatedAt = Instant.now();
     }
 
 
