@@ -8,6 +8,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
 
@@ -50,17 +51,19 @@ public abstract class CommonFileRepository<T extends Common> {
         }
     }
 
-    public T findById(UUID id) {
+    public Optional<T> findById(UUID id) {
         Path path = filePath(id);
+
         if (!Files.exists(path)) {
-            throw new IllegalArgumentException(type.getSimpleName() + " Not Found");
+            return Optional.empty();
         }
+
         try (
                 FileInputStream fis = new FileInputStream(path.toFile());
                 ObjectInputStream ois = new ObjectInputStream(fis);
         ) {
             Object obj = ois.readObject();
-            return type.cast(obj);
+            return Optional.of(type.cast(obj));
         } catch (IOException | ClassNotFoundException e) {
             throw new RuntimeException("Failed to load: " + path, e);
         }

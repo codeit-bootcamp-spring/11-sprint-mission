@@ -4,6 +4,7 @@ import com.sprint.mission.discodeit.entity.Common;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public class CommonJCFRepository<T extends Common> {
@@ -24,15 +25,10 @@ public class CommonJCFRepository<T extends Common> {
         repo.add(obj);
     }
 
-    public T findById(UUID id) {
-        List<T> list;
-        list = repo.stream()
+    public Optional<T> findById(UUID id) {
+        return repo.stream()
                 .filter(p -> p.getId().equals(id))
-                .toList();
-        if(list.isEmpty()) {
-            throw new IllegalArgumentException(type.getSimpleName() + " Not Found: " + id);
-        }
-        return list.get(0);
+                .findFirst();
     }
 
     public List<T> findAll() {

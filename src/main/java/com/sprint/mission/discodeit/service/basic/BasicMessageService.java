@@ -1,6 +1,7 @@
 package com.sprint.mission.discodeit.service.basic;
 
 import com.sprint.mission.discodeit.entity.Message;
+import com.sprint.mission.discodeit.exception.MessageNotFoundException;
 import com.sprint.mission.discodeit.repository.MessageRepository;
 import com.sprint.mission.discodeit.service.MessageService;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +23,8 @@ public class BasicMessageService implements MessageService {
     }
 
     public Message findById(UUID id) {
-        return messageRepo.findById(id);
+        return messageRepo.findById(id)
+                .orElseThrow(() -> new MessageNotFoundException(id));
     }
 
     public List<Message> findAll() {

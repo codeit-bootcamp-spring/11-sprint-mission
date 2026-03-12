@@ -1,6 +1,7 @@
 package com.sprint.mission.discodeit.service.basic;
 
 import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.exception.UserNotFoundException;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +25,8 @@ public class BasicUserService implements UserService {
 
     @Override
     public User findById(UUID id) {
-        return userRepo.findById(id);
+        return userRepo.findById(id)
+                .orElseThrow(() -> new UserNotFoundException(id));
     }
 
     @Override
