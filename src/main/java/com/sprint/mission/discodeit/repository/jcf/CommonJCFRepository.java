@@ -20,6 +20,12 @@ public class CommonJCFRepository<T extends Common> {
     }
 
     public void save(T obj) {
+        for(int i=0; i<repo.size(); i++) {
+            if(repo.get(i).getId().equals(obj.getId())) {
+                repo.set(i, obj);
+                return;
+            }
+        }
         repo.add(obj);
     }
 
