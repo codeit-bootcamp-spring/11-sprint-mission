@@ -1,5 +1,7 @@
 package com.sprint.mission.discodeit.entity;
 
+import lombok.Getter;
+
 import java.io.Serializable;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -9,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+@Getter
 public class Channel implements Serializable {
     private static final long serialVersionUID = 1L;
 
@@ -38,39 +41,6 @@ public class Channel implements Serializable {
         this.updatedAt = System.currentTimeMillis();
         System.out.println("채널의 정보가 수정되었습니다. 수정시간: " + getUpdatedAt());
     }
-
-    // id 반환
-    public UUID getId() {
-        return id;
-    }
-
-    public ChannelType getType() {
-        return type;
-    }
-
-
-    public UUID getOwnerId() {
-        return ownerId;
-    }
-
-    // 생성시간 반환
-    public String getCreatedAt() {
-        LocalDateTime dateTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(createdAt), ZoneId.systemDefault());
-        String formattedDate = dateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-        return formattedDate;
-    }
-
-    // 업데이트 시간 반환
-    public String getUpdatedAt() {
-        LocalDateTime dateTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(updatedAt), ZoneId.systemDefault());
-        String formattedDate = dateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-        return formattedDate;
-    }
-
-    public String getName() {
-        return name;
-    }
-
 
     @Override
     public String toString() {
