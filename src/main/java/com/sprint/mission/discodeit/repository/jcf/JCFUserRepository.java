@@ -6,44 +6,34 @@ import com.sprint.mission.discodeit.repository.UserRepository;
 import java.util.*;
 
 public class JCFUserRepository implements UserRepository {
-    private List<User> users = new ArrayList<>();
+    private final Map<UUID, User> users = new HashMap<>();
 
     @Override
-    public void save(User user) {
-        users.add(user);
+    public User save(User user) {
+        users.put(user.getId(), user);
+        return user;
     }
 
     @Override
     public Optional<User> findByEmail(String email) {
-        return users.stream()
+        return users.values().stream()
                 .filter(user -> user.getEmail().equals(email))
                 .findFirst();
     }
 
     @Override
     public Optional<User> findById(UUID id) {
-        return users.stream()
-                .filter(user -> user.getId().equals(id))
-                .findFirst();
+        return Optional.ofNullable(users.get(id));
     }
 
     @Override
     public List<User> findAll() {
-        return users;
+        return new ArrayList<>(users.values());
     }
 
     @Override
     public void delete(User user) {
-        users.remove(user);
+        users.remove(user.getId());
     }
 
-    @Override
-    public void update(User user) {
-        for (int i = 0; i < users.size(); i++) {
-            if(users.get(i).getId().equals(user.getId())) {
-                users.set(i, user);
-                return;
-            }
-        }
-    }
 }

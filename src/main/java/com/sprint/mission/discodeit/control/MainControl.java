@@ -1,4 +1,4 @@
-package com.sprint.mission.discodeit.Control;
+package com.sprint.mission.discodeit.control;
 
 import com.sprint.mission.discodeit.menu.MainMenu;
 
@@ -10,7 +10,7 @@ public class MainControl {
         System.out.println("메뉴 번호를 선택하세요. User(1) Channel(2), Message(3), EXIT(4)");
 
         try {
-            int num = input.nextInt();
+            int num = Integer.parseInt(input.nextLine());
             return MainMenu.from(num);
 
         } catch (InputMismatchException e) {

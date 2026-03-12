@@ -10,26 +10,29 @@ import java.util.List;
 import java.util.UUID;
 
 public class Channel implements Serializable {
-    private final UUID id;
     private static final long serialVersionUID = 1L;
+
+    private final UUID id;
     private final long createdAt;
     private long updatedAt;
     private String name;
-    private String channelPassword;
+    private ChannelType type;
+    private String description;
 
     // 생성자 초기화
-    public Channel(String name, String channelPassword) {
+    public Channel(String name, String description, ChannelType type) {
         this.id = UUID.randomUUID();
         this.createdAt = System.currentTimeMillis();
         this.updatedAt = System.currentTimeMillis();
         this.name = name;
-        this.channelPassword = channelPassword;
+        this.type = type;
+        this.description = description;
     }
 
     // 필드를 수정하는 update 함수
     public void update(String name, String password) {
         this.name = name;
-        this.channelPassword = password;
+        this.type = type;
         this.updatedAt = System.currentTimeMillis();
         System.out.println("채널의 정보가 수정되었습니다. 수정시간: " + getUpdatedAt());
     }
@@ -37,6 +40,14 @@ public class Channel implements Serializable {
     // id 반환
     public UUID getId() {
         return id;
+    }
+
+    public ChannelType getType() {
+        return type;
+    }
+
+    public String getDescription() {
+        return description;
     }
 
     // 생성시간 반환
@@ -57,12 +68,9 @@ public class Channel implements Serializable {
         return name;
     }
 
-    public String getChannelPassword() {
-        return channelPassword;
-    }
 
     @Override
     public String toString() {
-        return "채널명 : " + name + ", 생성 시간 : " + getCreatedAt();
+        return "채널명 : " + name + ", 채널 타입 : " + type;
     }
 }

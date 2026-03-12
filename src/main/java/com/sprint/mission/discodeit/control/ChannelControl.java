@@ -1,6 +1,7 @@
-package com.sprint.mission.discodeit.Control;
+package com.sprint.mission.discodeit.control;
 
 import com.sprint.mission.discodeit.entity.Channel;
+import com.sprint.mission.discodeit.entity.ChannelType;
 import com.sprint.mission.discodeit.menu.ChannelMenu;
 import com.sprint.mission.discodeit.service.ChannelService;
 
@@ -17,8 +18,7 @@ public class ChannelControl {
             );
 
             try {
-                int num = input.nextInt();
-                input.nextLine();
+                int num = Integer.parseInt(input.nextLine());
                 ChannelMenu menu = ChannelMenu.from(num);
 
                 switch(menu) {
@@ -27,12 +27,15 @@ public class ChannelControl {
                             System.out.print("등록할 채널명을 입력해주세요 : ");
                             String name = input.nextLine();
                             System.out.println();
-                            System.out.print("채널의 비밀번호를 입력해주세요 : ");
-                            String password = input.nextLine();
+                            System.out.print("채널 설명을 입력해주세요 : ");
+                            String description = input.nextLine();
                             System.out.println();
-                            channelService.createChannel(name, password);
+                            System.out.println("채널 타입을 입력해주세요 (1. PUBLIC, 2. PRIVATE) : ");
+                            int typeNum = Integer.parseInt(input.nextLine());
+                            ChannelType type = (typeNum == 2) ? ChannelType.PRIVATE : ChannelType.PUBLIC;
+                            channelService.createChannel(name, description, type);
                         } catch (IllegalArgumentException e) {
-                            System.out.println("이미 존재하는 패스워드 입니다.");
+                            System.out.println("잘못된 입력입니다.");
                         } catch (RuntimeException e) {
                             System.out.println(e.getMessage());
                         }
@@ -55,8 +58,8 @@ public class ChannelControl {
                                     System.out.println("목록에 없는 번호입니다. 다시 입력해주세요.");
                                     continue;
                                 }
-                                Channel choiceChannel = channels.get(channelChoice - 1);
-                                UUID id = choiceChannel.getId();
+
+                                UUID id = channels.get(channelChoice - 1).getId();
                                 Channel resultChannel = channelService.readChannel(id);
                                 System.out.println("조회 결과 : " + resultChannel);
                                 break;
@@ -101,18 +104,11 @@ public class ChannelControl {
                                     System.out.println("목록에 없는 번호입니다. 다시 입력해주세요.");
                                     continue;
                                 }
-                                Channel choiceChannel = deleteChannelList.get(choice - 1);
-                                UUID id = choiceChannel.getId();
 
-                                System.out.print("패스워드를 입력해주세요 : ");
-                                String password = input.nextLine();
-                                System.out.println();
-
-                                channelService.deleteChannel(id, password);
+                                UUID id = deleteChannelList.get(choice - 1).getId();
+                                channelService.deleteChannel(id);
                                 System.out.println("삭제되었습니다.");
                                 break;
-                            } catch (InputMismatchException e) {
-                                System.out.println("잘못된 패스워드입니다.");
                             } catch (IllegalArgumentException e) {
                                 System.out.println("채널이 존재하지 않습니다.");
                             } catch (RuntimeException e) {
@@ -139,16 +135,14 @@ public class ChannelControl {
                                     continue;
                                 }
 
-                                Channel choiceChannel = updateChannelList.get(updateChoice - 1);
-                                UUID id = choiceChannel.getId();
-
+                                UUID id = updateChannelList.get(updateChoice - 1).getId();
                                 System.out.print("변경 할 채널이름을 입력해주세요 : ");
                                 String updateName = input.nextLine();
                                 System.out.println();
-                                System.out.print("변경 할 패스워드를 입력해주세요 : ");
-                                String updatePassword = input.nextLine();
+                                System.out.print("변경 할 설명을 입력해주세요 : ");
+                                String description = input.nextLine();
                                 System.out.println();
-                                channelService.updateChannel(id, updateName, updatePassword);
+                                channelService.updateChannel(id, updateName, description);
                                 break;
                             } catch (IllegalArgumentException e) {
                                 System.out.println("채널이 존재하지 않습니다.");

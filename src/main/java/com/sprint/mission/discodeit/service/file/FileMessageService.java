@@ -7,6 +7,7 @@ import com.sprint.mission.discodeit.service.MessageService;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 public class FileMessageService implements MessageService {
     private MessageRepository messageRepository;
@@ -16,17 +17,24 @@ public class FileMessageService implements MessageService {
     }
 
     @Override
-    public void createMessage(String message) {
-        Message mes = new Message(message);
+    public Message createMessage(UUID channelId, UUID authorId, String message) {
+        Message mes = new Message(channelId, authorId, message);
         messageRepository.save(mes);
-        System.out.println(message + ", 생성 시간 : " + mes.getCreatedAt());
+        System.out.println("[파일 저장 완료] 작성자 : " + authorId + ", 채널 : " + channelId + ", 일시 : " + mes.getCreatedAt());
+        return mes;
     }
 
     @Override
     public Message readMessage(UUID id) {
-        Message message = messageRepository.findById(id)
+        return messageRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("해당 메세지가 존재하지 않습니다."));
-        return message;
+    }
+
+    @Override
+    public List<Message> readMessagesByChannel(UUID channelId) {
+        return messageRepository.findAll().stream()
+                .filter(m -> m.getChannelId().equals(channelId))
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -36,17 +44,15 @@ public class FileMessageService implements MessageService {
 
     @Override
     public void deleteMessage(UUID id) {
-        Message mes = messageRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("해당 메세지가 존재하지 않습니다."));
-
+        Message mes = readMessage(id);
         messageRepository.delete(mes);
+        System.out.println("파일에서 메시지가 삭제되었습니다.");
     }
 
     @Override
-    public void updateMessage(UUID id, String message) {
-        Message mes = messageRepository.findById(id)
-                        .orElseThrow(() -> new IllegalArgumentException("메세지가 존재하지 않습니다."));
-        mes.update(message);
-        messageRepository.update(mes);
+    public void updateMessage(UUID id, String newMessage) {
+        Message mes = readMessage(id);
+        mes.update(newMessage);
+        messageRepository.save(mes);
     }
 }

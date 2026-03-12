@@ -8,8 +8,9 @@ import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
 public class User implements Serializable {
-    private final UUID id;
     private static final long serialVersionUID = 1L;
+
+    private final UUID id;
     private final long createdAt;
     private long updatedAt;
     private String username;
@@ -32,7 +33,6 @@ public class User implements Serializable {
         this.email = email;
         this.password = password;
         this.updatedAt = System.currentTimeMillis();
-        System.out.println("유저의 정보가 수정되었습니다. 수정시간: " + getUpdatedAt());
     }
 
     // id 반환
@@ -68,6 +68,10 @@ public class User implements Serializable {
 
     @Override
     public String toString() {
-        return "User{ name: " + username + ", userEmail: " + email + " }";
+        return "User{" +
+                "id=" + id +
+                ", username='" + username + '\'' +
+                ", email='" + email + '\'' +
+                '}';
     }
 }

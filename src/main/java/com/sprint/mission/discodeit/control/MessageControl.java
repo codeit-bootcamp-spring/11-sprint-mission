@@ -1,8 +1,10 @@
-package com.sprint.mission.discodeit.Control;
+package com.sprint.mission.discodeit.control;
 
 import com.sprint.mission.discodeit.entity.Message;
+import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.menu.MessageMenu;
 import com.sprint.mission.discodeit.service.MessageService;
+import com.sprint.mission.discodeit.service.UserService;
 
 import java.util.InputMismatchException;
 import java.util.List;
@@ -10,15 +12,14 @@ import java.util.Scanner;
 import java.util.UUID;
 
 public class MessageControl {
-    public static void controlMessageMenu(Scanner input, MessageService messageService) {
+    public static void controlMessageMenu(Scanner input, MessageService messageService, UserService userService, UUID currentChannelId, UUID currentUserId) {
         while(true) {
-            System.out.println(
-                    "== Create(1) == Read(2) == ReadAll(3) == Delete(4) == Update(5) == Back(0)"
-            );
+            System.out.println("\n--- 현재 채널 메시지 관리 ---");
+            System.out.println("1.메시지 전송 | 2.상세 조회 | 3.전체 보기 | 4.삭제 | 5.수정 | 0.뒤로가기");
+            System.out.print("선택: ");
 
             try {
-                int num = input.nextInt();
-                input.nextLine();
+                int num = Integer.parseInt(input.nextLine());
                 MessageMenu menu = MessageMenu.from(num);
 
                 switch(menu) {
@@ -26,7 +27,7 @@ public class MessageControl {
                         try {
                             System.out.print("메세지를 입력해주세요 : ");
                             String createMessage = input.nextLine();
-                            messageService.createMessage(createMessage);
+                            messageService.createMessage(currentChannelId, currentUserId, createMessage);
                         } catch (RuntimeException e) {
                             System.out.println(e.getMessage());
                         }
@@ -34,14 +35,22 @@ public class MessageControl {
                     case READ_MESSAGE:
                         while(true) {
                             try {
-                                List<Message> messageList = messageService.readAllMessage();
+                                List<Message> messageList = messageService.readMessagesByChannel(currentChannelId);
                                 if(messageList.isEmpty()) {
-                                    System.out.println("메세지 목록이 비어있습니다.");
+                                    System.out.println("이 채널에 메시지가 없습니다.");
                                     break;
                                 }
                                 for (int i = 0; i < messageList.size(); i++) {
-                                    Message rm = messageList.get(i);
-                                    System.out.println((i + 1) + ". 메세지 : " + rm.getMessage());
+                                    Message m = messageList.get(i);
+                                    User author = userService.readUser(m.getAuthorId());
+                                    String authorName;
+
+                                    if(author == null) {
+                                        authorName = "탈퇴한 유저(또는 테스트용)";
+                                    } else {
+                                        authorName = author.getUsername();
+                                    }
+                                    System.out.println((i + 1) + ". [" + authorName + "] " + m.getMessage());
                                 }
                                 System.out.print("조회 할 메세지를 선택해주세요 : ");
                                 int readMessageChoice = Integer.parseInt(input.nextLine());
@@ -50,10 +59,15 @@ public class MessageControl {
                                     System.out.println("목록에 없는 번호입니다. 다시 입력해주세요.");
                                     continue;
                                 }
-                                Message choiceMessage = messageList.get(readMessageChoice - 1);
-                                UUID id = choiceMessage.getId();
+
+                                UUID id = messageList.get(readMessageChoice - 1).getId();
                                 Message resultMessage = messageService.readMessage(id);
-                                System.out.println("조회 결과 : " + resultMessage.getMessage() + ", 마지막 업데이트 시간 : " + resultMessage.getUpdatedAt());
+                                User author = userService.readUser(resultMessage.getAuthorId());
+                                System.out.println("\n[메시지 상세 정보]");
+                                System.out.println("작성자 : " + author.getUsername());
+                                System.out.println("내용 : " + resultMessage.getMessage());
+                                System.out.println("생성 시간 : " + resultMessage.getCreatedAt());
+                                System.out.println("수정 시간 : " + resultMessage.getUpdatedAt());
                                 break;
                             } catch (IllegalArgumentException e) {
                                 System.out.println("메세지가 존재하지 않습니다.");
@@ -64,14 +78,22 @@ public class MessageControl {
                         break;
                     case READ_ALL:
                         try {
-                            List<Message> allReadMessageList = messageService.readAllMessage();
+                            List<Message> allReadMessageList = messageService.readMessagesByChannel(currentChannelId);
                             if(allReadMessageList.isEmpty()) {
                                 System.out.println("메세지 목록이 비어있습니다.");
                                 break;
                             }
                             for (int i = 0; i < allReadMessageList.size(); i++) {
-                                Message am = allReadMessageList.get(i);
-                                System.out.println((i + 1) + ". 메세지 : " + am.getMessage());
+                                Message m = allReadMessageList.get(i);
+                                User author = userService.readUser(m.getAuthorId());
+                                String authorName;
+
+                                if(author == null) {
+                                    authorName = "탈퇴한 유저(또는 테스트용)";
+                                } else {
+                                    authorName = author.getUsername();
+                                }
+                                System.out.println((i + 1) + ". [" + authorName + "] " + m.getMessage());
                             }
                         } catch (RuntimeException e) {
                             System.out.println(e.getMessage());
@@ -80,24 +102,31 @@ public class MessageControl {
                     case DELETE:
                         while(true) {
                             try {
-                                List<Message> delMessageList = messageService.readAllMessage();
+                                List<Message> delMessageList = messageService.readMessagesByChannel(currentChannelId);
                                 if(delMessageList.isEmpty()) {
-                                    System.out.println("메세지 목록이 비어있습니다.");
+                                    System.out.println("삭제할 메세지가 없습니다.");
                                     break;
                                 }
                                 for (int i = 0; i < delMessageList.size(); i++) {
-                                    Message rm = delMessageList.get(i);
-                                    System.out.println((i + 1) + ". 메세지 : " + rm.getMessage());
+                                    Message m = delMessageList.get(i);
+                                    User author = userService.readUser(m.getAuthorId());
+                                    String authorName;
+
+                                    if(author == null) {
+                                        authorName = "탈퇴한 유저(또는 테스트용)";
+                                    } else {
+                                        authorName = author.getUsername();
+                                    }
+                                    System.out.println((i + 1) + ". [" + authorName + "] " + m.getMessage());
                                 }
-                                System.out.println("삭제 할 메세지를 선택해주세요.");
+                                System.out.print("삭제 할 메세지를 선택 : ");
                                 int choice = Integer.parseInt(input.nextLine());
                                 if(choice < 1 || choice > delMessageList.size()) {
                                     System.out.println("목록에 없는 번호입니다. 다시 입력해주세요.");
                                     continue;
                                 }
-                                Message delMessage = delMessageList.get(choice - 1);
-                                UUID delId = delMessage.getId();
 
+                                UUID delId = delMessageList.get(choice - 1).getId();
                                 messageService.deleteMessage(delId);
                                 System.out.println("삭제되었습니다.");
                                 break;
@@ -111,14 +140,22 @@ public class MessageControl {
                     case UPDATE:
                         while(true) {
                             try {
-                                List<Message> updateMessageList = messageService.readAllMessage();
+                                List<Message> updateMessageList = messageService.readMessagesByChannel(currentChannelId);
                                 if(updateMessageList.isEmpty()) {
                                     System.out.println("메세지 목록이 비어있습니다.");
                                     break;
                                 }
                                 for (int i = 0; i < updateMessageList.size(); i++) {
-                                    Message um = updateMessageList.get(i);
-                                    System.out.println((i + 1) + ". 메세지 : " + um.getMessage());
+                                    Message m = updateMessageList.get(i);
+                                    User author = userService.readUser(m.getAuthorId());
+                                    String authorName;
+
+                                    if(author == null) {
+                                        authorName = "탈퇴한 유저(또는 테스트용)";
+                                    } else {
+                                        authorName = author.getUsername();
+                                    }
+                                    System.out.println((i + 1) + ". [" + authorName + "] " + m.getMessage());
                                 }
                                 System.out.print("변경 할 메세지를 선택해주세요 : ");
                                 int updateChoice = Integer.parseInt(input.nextLine());
@@ -126,18 +163,19 @@ public class MessageControl {
                                     System.out.println("목록에 없는 번호입니다. 다시 입력해주세요.");
                                     continue;
                                 }
-                                Message updateMessage = updateMessageList.get(updateChoice - 1);
-                                UUID updateId = updateMessage.getId();
 
+                                UUID updateId = updateMessageList.get(updateChoice - 1).getId();
                                 System.out.print("변경 할 메세지를 입력해주세요 : ");
                                 String newMessage = input.nextLine();
 
                                 messageService.updateMessage(updateId, newMessage);
+                                System.out.println("수정 완료!");
                                 break;
                             } catch (IllegalArgumentException e) {
                                 System.out.println("업데이트 할 메세지가 존재하지 않습니다.");
                             } catch (RuntimeException e) {
                                 System.out.println(e.getMessage());
+                                break;
                             }
                         }
                         break;

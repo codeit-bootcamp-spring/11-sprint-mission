@@ -9,73 +9,62 @@ import java.util.*;
 public class FileUserRepository implements UserRepository {
     private final String USER_FILE = "users.ser";
 
+    private Map<UUID, User> userMap;
 
-    private List<User> loadUsers() {
+    public FileUserRepository() {
+        this.userMap = loadUsers();
+    }
+
+    private Map<UUID, User> loadUsers() {
         File file = new File(USER_FILE);
 
         if(!file.exists()) {
-            return new ArrayList<>();
+            return new HashMap<>();
         }
         try(ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))) {
-            return (List<User>) ois.readObject();
+            return (Map<UUID, User>) ois.readObject();
         } catch (IOException | ClassNotFoundException e) {
             throw new RuntimeException("유저 로드실패", e);
         }
     }
 
-    private void saveUsers(List<User> users) {
-        File file = new File(USER_FILE);
-
-        try(ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(file))) {
-            oos.writeObject(users);
+    private void saveUsers() {
+        try(ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(USER_FILE))) {
+            oos.writeObject(userMap);
         } catch (IOException e) {
             throw new RuntimeException("유저 저장실패", e);
         }
     }
 
     @Override
-    public void save(User user) {
-        List<User> users = loadUsers();
-        users.add(user);
-        saveUsers(users);
+    public User save(User user) {
+        userMap.put(user.getId() , user);
+        saveUsers();
+        return user;
     }
 
     @Override
     public Optional<User> findByEmail(String email) {
-        return loadUsers().stream()
+        return userMap.values().stream()
                 .filter(user -> user.getEmail().equals(email))
                 .findFirst();
     }
 
     @Override
     public Optional<User> findById(UUID id) {
-        return loadUsers().stream()
-                .filter(user -> user.getId().equals(id))
-                .findFirst();
+        return Optional.ofNullable(userMap.get(id));
     }
 
     @Override
     public List<User> findAll() {
-        return loadUsers();
+        return new ArrayList<>(userMap.values());
     }
 
     @Override
     public void delete(User user) {
-        List<User> users = loadUsers();
-        users.removeIf(u -> u.getId().equals(user.getId()));
-        saveUsers(users);
-    }
-
-    public void update(User user) {
-        List<User> users = loadUsers();
-
-        for (int i = 0; i < users.size(); i++) {
-            if(users.get(i).getId().equals(user.getId())) {
-                users.set(i, user);
-                break;
-            }
+        if(userMap.remove(user.getId()) != null) {
+            saveUsers();
         }
-
-        saveUsers(users);
     }
+
 }

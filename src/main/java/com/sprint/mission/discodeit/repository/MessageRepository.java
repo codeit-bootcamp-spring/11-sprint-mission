@@ -7,5 +7,5 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface MessageRepository extends CrudRepository<Message, UUID> {
-
+    void delete(Message message);
 }

@@ -7,5 +7,5 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface ChannelRepository extends CrudRepository<Channel, UUID> {
-    Optional<Channel> findByPassword(String password);
+    void delete(UUID id);
 }

@@ -1,6 +1,7 @@
 package com.sprint.mission.discodeit.service.basic;
 
 import com.sprint.mission.discodeit.entity.Channel;
+import com.sprint.mission.discodeit.entity.ChannelType;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.service.ChannelService;
 
@@ -16,13 +17,11 @@ public class BasicChannelService implements ChannelService {
     }
 
     @Override
-    public void createChannel(String name, String password) {
-        if(channelRepository.findByPassword(password).isPresent()) {
-            throw new IllegalArgumentException("이미 존재하는 패스워드입니다.");
-        }
-        Channel channel = new Channel(name, password);
-        channelRepository.save(channel);
-        System.out.println(channel.getName() + " 채널이 생성되었습니다. 채널 생성시간 : " + channel.getCreatedAt());
+    public Channel createChannel(String name, String description, ChannelType type) {
+        Channel channel = new Channel(name, description, type);
+        Channel savedChannel = channelRepository.save(channel);
+        System.out.println(savedChannel.getName() + " 채널이 생성되었습니다.");
+        return channel;
     }
 
     @Override
@@ -37,26 +36,20 @@ public class BasicChannelService implements ChannelService {
     }
 
     @Override
-    public void deleteChannel(UUID id, String password) {
-        Channel channel = channelRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("채널이 존재하지 않습니다."));
-        if(!channel.getChannelPassword().equals(password)) {
-            throw new InputMismatchException("패스워드가 일치하지 않습니다.");
+    public void deleteChannel(UUID id) {
+        if(!channelRepository.findById(id).isPresent()) {
+            throw new IllegalArgumentException("삭제할 채널이 존재하지 않습니다.");
         }
 
-        channelRepository.delete(channel);
+        channelRepository.delete(id);
     }
 
     @Override
-    public void updateChannel(UUID id, String name, String password) {
+    public void updateChannel(UUID id, String name, String description) {
         Channel channel = channelRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("채널이 존재하지 않습니다."));
-        if(channel.getName().equals(name) && channel.getChannelPassword().equals(password)) {
-            System.out.println("변경사항이 없습니다.");
-            return;
-        }
 
-        channel.update(name, password);
-        channelRepository.update(channel);
+        channel.update(name, description);
+        channelRepository.save(channel);
     }
 }
