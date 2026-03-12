@@ -5,6 +5,6 @@ import com.sprint.mission.discodeit.repository.UserRepository;
 
 public class JCFUserRepository extends CommonJCFRepository<User> implements UserRepository {
     public JCFUserRepository() {
-        super(User.class);
+        super();
     }
 }

@@ -5,6 +5,6 @@ import com.sprint.mission.discodeit.repository.ChannelRepository;
 
 public class JCFChannelRepository extends CommonJCFRepository<Channel> implements ChannelRepository {
     public JCFChannelRepository() {
-        super(Channel.class);
+        super();
     }
 }

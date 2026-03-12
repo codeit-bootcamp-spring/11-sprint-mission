@@ -10,10 +10,8 @@ import java.util.UUID;
 public class CommonJCFRepository<T extends Common> {
 
     private List<T> repo;
-    private Class<T> type;
 
-    public CommonJCFRepository(Class<T> type) {
-        this.type = type;
+    public CommonJCFRepository() {
         init();
     }
 

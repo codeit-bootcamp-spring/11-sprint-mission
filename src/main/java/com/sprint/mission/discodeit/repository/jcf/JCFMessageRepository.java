@@ -5,6 +5,6 @@ import com.sprint.mission.discodeit.repository.MessageRepository;
 
 public class JCFMessageRepository extends CommonJCFRepository<Message> implements MessageRepository {
     public JCFMessageRepository() {
-        super(Message.class);
+        super();
     }
 }
