@@ -11,7 +11,7 @@ import java.util.Scanner;
 import java.util.UUID;
 
 public class ChannelControl {
-    public static void controlChannelMenu(Scanner input, ChannelService channelService) {
+    public static void controlChannelMenu(Scanner input, ChannelService channelService, UUID currentUserId) {
         while(true) {
             System.out.println(
                     "== Create(1) == Read(2) == ReadAll(3) == Delete(4) == Update(5) == Back(0)"
@@ -33,7 +33,7 @@ public class ChannelControl {
                             System.out.println("채널 타입을 입력해주세요 (1. PUBLIC, 2. PRIVATE) : ");
                             int typeNum = Integer.parseInt(input.nextLine());
                             ChannelType type = (typeNum == 2) ? ChannelType.PRIVATE : ChannelType.PUBLIC;
-                            channelService.createChannel(name, description, type);
+                            channelService.createChannel(name, description, type, currentUserId);
                         } catch (IllegalArgumentException e) {
                             System.out.println("잘못된 입력입니다.");
                         } catch (RuntimeException e) {

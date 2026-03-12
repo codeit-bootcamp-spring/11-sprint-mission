@@ -17,8 +17,8 @@ public class BasicChannelService implements ChannelService {
     }
 
     @Override
-    public Channel createChannel(String name, String description, ChannelType type) {
-        Channel channel = new Channel(name, description, type);
+    public Channel createChannel(String name, String description, ChannelType type, UUID ownerId) {
+        Channel channel = new Channel(name, description, type, ownerId);
         Channel savedChannel = channelRepository.save(channel);
         System.out.println(savedChannel.getName() + " 채널이 생성되었습니다.");
         return channel;

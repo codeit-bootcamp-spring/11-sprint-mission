@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.UUID;
 
 public interface ChannelService {
-    Channel createChannel(String name, String description, ChannelType type);
+    Channel createChannel(String name, String description, ChannelType type, UUID ownerId);
     Channel readChannel(UUID id);
     List<Channel> allReadChannel();
     void deleteChannel(UUID id);

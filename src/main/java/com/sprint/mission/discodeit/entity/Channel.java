@@ -13,6 +13,7 @@ public class Channel implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private final UUID id;
+    private final UUID ownerId;
     private final long createdAt;
     private long updatedAt;
     private String name;
@@ -20,8 +21,9 @@ public class Channel implements Serializable {
     private String description;
 
     // 생성자 초기화
-    public Channel(String name, String description, ChannelType type) {
+    public Channel(String name, String description, ChannelType type, UUID ownerId) {
         this.id = UUID.randomUUID();
+        this.ownerId = ownerId;
         this.createdAt = System.currentTimeMillis();
         this.updatedAt = System.currentTimeMillis();
         this.name = name;
@@ -30,9 +32,9 @@ public class Channel implements Serializable {
     }
 
     // 필드를 수정하는 update 함수
-    public void update(String name, String password) {
+    public void update(String name, String description) {
         this.name = name;
-        this.type = type;
+        this.description = description;
         this.updatedAt = System.currentTimeMillis();
         System.out.println("채널의 정보가 수정되었습니다. 수정시간: " + getUpdatedAt());
     }
@@ -46,8 +48,9 @@ public class Channel implements Serializable {
         return type;
     }
 
-    public String getDescription() {
-        return description;
+
+    public UUID getOwnerId() {
+        return ownerId;
     }
 
     // 생성시간 반환

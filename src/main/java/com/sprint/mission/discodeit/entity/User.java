@@ -11,6 +11,7 @@ public class User implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private final UUID id;
+    private final UUID currentUserId;
     private final long createdAt;
     private long updatedAt;
     private String username;
@@ -20,6 +21,7 @@ public class User implements Serializable {
     // 생성자 초기화
     public User(String username, String email, String password) {
         this.id = UUID.randomUUID();
+        this.currentUserId = UUID.randomUUID();
         this.createdAt = System.currentTimeMillis();
         this.updatedAt = System.currentTimeMillis();
         this.username = username;
@@ -38,6 +40,10 @@ public class User implements Serializable {
     // id 반환
     public UUID getId() {
         return id;
+    }
+
+    public UUID getCurrentUserId() {
+        return currentUserId;
     }
 
     // 생성시간 반환

@@ -1,8 +1,11 @@
 package com.sprint.mission.discodeit.control;
 
+import com.sprint.mission.discodeit.entity.Channel;
+import com.sprint.mission.discodeit.entity.ChannelType;
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.menu.MessageMenu;
+import com.sprint.mission.discodeit.service.ChannelService;
 import com.sprint.mission.discodeit.service.MessageService;
 import com.sprint.mission.discodeit.service.UserService;
 
@@ -12,9 +15,14 @@ import java.util.Scanner;
 import java.util.UUID;
 
 public class MessageControl {
-    public static void controlMessageMenu(Scanner input, MessageService messageService, UserService userService, UUID currentChannelId, UUID currentUserId) {
+    public static void controlMessageMenu(Scanner input, MessageService messageService, UserService userService, ChannelService channelService, UUID currentUserId) {
+
+        UUID currentChannelId = selectChannel(input, channelService, currentUserId);
+        if(currentChannelId == null) return;
+
         while(true) {
-            System.out.println("\n--- 현재 채널 메시지 관리 ---");
+            String channelName = channelService.readChannel(currentChannelId).getName();
+            System.out.println("\n---  [" + channelName + " 채널] 메시지 관리 ---");
             System.out.println("1.메시지 전송 | 2.상세 조회 | 3.전체 보기 | 4.삭제 | 5.수정 | 0.뒤로가기");
             System.out.print("선택: ");
 
@@ -186,6 +194,41 @@ public class MessageControl {
             } catch (InputMismatchException e) {
                 System.out.println("입력이 잘못되었습니다. 다시 입력하세요.");
                 input.nextLine();
+            }
+        }
+    }
+    private static UUID selectChannel(Scanner input, ChannelService channelService, UUID currentUserId) {
+        while(true) {
+            List<Channel> channels = channelService.allReadChannel();
+            if(channels.isEmpty()) {
+                System.out.println("생성된 채널이 없습니다.");
+                return null;
+            }
+            System.out.println("\n--- 접속 가능한 채널 목록 ---");
+            for (int i = 0; i < channels.size(); i++) {
+                Channel c = channels.get(i);
+
+                System.out.println((i + 1) + ". [" + c.getType() + "] " + c.getName());
+            }
+            System.out.println("0. 돌아가기");
+            System.out.print("입장할 채널 번호 선택 : ");
+
+            try {
+                int choice = Integer.parseInt(input.nextLine());
+                if(choice == 0) return null;
+                if(choice < 1 || choice > channels.size()) {
+                    System.out.println("번호를 잘못 입력하셨습니다.");
+                    continue;
+                }
+                Channel selected = channels.get(choice - 1);
+
+                if(selected.getType() == ChannelType.PRIVATE && !selected.getOwnerId().equals(currentUserId)) {
+                    System.out.println("접근 권한이 없습니다.");
+                    continue;
+                }
+                return selected.getId();
+            } catch (NumberFormatException e) {
+                System.out.println("숫자만 입력 가능합니다.");
             }
         }
     }

@@ -4,6 +4,7 @@ import com.sprint.mission.discodeit.control.ChannelControl;
 import com.sprint.mission.discodeit.control.MainControl;
 import com.sprint.mission.discodeit.control.MessageControl;
 import com.sprint.mission.discodeit.control.UserControl;
+import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.menu.MainMenu;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
@@ -18,6 +19,7 @@ import com.sprint.mission.discodeit.service.basic.BasicChannelService;
 import com.sprint.mission.discodeit.service.basic.BasicMessageService;
 import com.sprint.mission.discodeit.service.basic.BasicUserService;
 
+import java.util.List;
 import java.util.Scanner;
 import java.util.UUID;
 
@@ -34,7 +36,6 @@ public class JavaApplication {
         Scanner input = new Scanner(System.in);
 
         UUID currentUserId = null;
-        UUID currentchannelId = null;
 
         while(true) {
             try {
@@ -42,20 +43,21 @@ public class JavaApplication {
 
                 switch (mainMenu) {
                     case USER:
-                        UserControl.controlUserMenu(input, userService);
-                        if (!userService.allReadUser().isEmpty()) {
-                            currentUserId = userService.allReadUser().get(0).getId();
+                        UUID id = UserControl.controlUserMenu(input, userService);
+
+                        if (id != null) {
+                            currentUserId = id;
+
+                            User nowUser = userService.readUser(currentUserId);
+                            System.out.println("로그인 유저 : " + nowUser.getUsername());
                         }
                         break;
                     case CHANNEL:
-                        ChannelControl.controlChannelMenu(input, channelService);
-                        if (!channelService.allReadChannel().isEmpty()) {
-                            currentchannelId = channelService.allReadChannel().get(0).getId();
-                        }
+                        ChannelControl.controlChannelMenu(input, channelService, currentUserId);
                         break;
                     case MESSAGE:
-                        if (currentUserId == null || currentchannelId == null) {
-                            System.out.println("메시지 기능을 사용하려면  먼저 유저 생성 및 채널 선택이 필요합니다.");
+                        if (currentUserId == null) {
+                            System.out.println("메시지 기능을 사용하려면  먼저 유저 생성이 필요합니다.");
                             continue;
                         }
 
@@ -63,7 +65,7 @@ public class JavaApplication {
                                 input,
                                 messageService,
                                 userService,
-                                currentchannelId,
+                                channelService,
                                 currentUserId
                         );
                         break;
