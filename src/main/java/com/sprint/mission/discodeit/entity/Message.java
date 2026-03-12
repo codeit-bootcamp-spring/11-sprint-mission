@@ -6,7 +6,6 @@ import lombok.Setter;
 import java.util.UUID;
 
 @Getter
-@Setter
 public class Message extends Common{
     private String contents;
     private UUID userId;
@@ -16,6 +15,18 @@ public class Message extends Common{
         super();
         this.contents = contents;
         this.userId = userId;
+        this.channelId = channelId;
+    }
+
+    public void setContents(String contents) {
+        this.contents = contents;
+    }
+
+    public void setUserId(UUID userId) {
+        this.userId = userId;
+    }
+
+    public void setChannelId(UUID channelId) {
         this.channelId = channelId;
     }
 

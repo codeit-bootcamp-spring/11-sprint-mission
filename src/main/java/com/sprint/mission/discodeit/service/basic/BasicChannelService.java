@@ -38,6 +38,7 @@ public class BasicChannelService implements ChannelService {
         oldChannel.setChannelType(newChannel.getChannelType());
         oldChannel.setName(newChannel.getName());
         oldChannel.setDescription(newChannel.getDescription());
+        oldChannel.setAttachmentIds(newChannel.getAttachmentIds());
         oldChannel.update();
 
         channelRepo.save(oldChannel);

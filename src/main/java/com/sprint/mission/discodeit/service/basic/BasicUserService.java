@@ -41,6 +41,7 @@ public class BasicUserService implements UserService {
         oldUser.setName(newUser.getName());
         oldUser.setEmail(newUser.getEmail());
         oldUser.setPassword(newUser.getPassword());
+        oldUser.setProfileId(newUser.getProfileId());
         oldUser.update();
 
         userRepo.save(oldUser);
