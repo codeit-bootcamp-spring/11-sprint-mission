@@ -28,7 +28,7 @@ public class JCFChannelRepository implements ChannelRepository {
     public Channel load(UUID id) {
         List<Channel> list;
         list = channels.stream()
-                .filter(p -> p.getId() == id)
+                .filter(p -> p.getId().equals(id))
                 .toList();
         if(list.isEmpty()) {
             throw new IllegalArgumentException("Channel Not Found: " + id);

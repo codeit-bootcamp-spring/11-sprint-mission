@@ -28,7 +28,7 @@ public class JCFMessageRepository implements MessageRepository {
     public Message load(UUID id) {
         List<Message> list;
         list = messages.stream()
-                .filter(p -> p.getId() == id)
+                .filter(p -> p.getId().equals(id))
                 .toList();
         if(list.isEmpty()) {
             throw new IllegalArgumentException("Message Not Found: " + id);

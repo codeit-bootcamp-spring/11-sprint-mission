@@ -28,7 +28,7 @@ public class JCFUserRepository implements UserRepository {
     public User load(UUID id) {
         List<User> list;
         list = users.stream()
-                .filter(p -> p.getId() == id)
+                .filter(p -> p.getId().equals(id))
                 .toList();
         if(list.isEmpty()) {
             throw new IllegalArgumentException("User Not Found: " + id);
