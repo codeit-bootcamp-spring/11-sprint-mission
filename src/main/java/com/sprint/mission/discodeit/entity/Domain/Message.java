@@ -1,8 +1,11 @@
 package com.sprint.mission.discodeit.entity.Domain;
 
+import lombok.Getter;
+
 import java.io.Serializable;
 import java.util.UUID;
 
+@Getter
 public class Message extends BaseEntity implements Serializable {
     private String messageContent;     // 내용
     private User messageSender;        // 보낸이
@@ -15,10 +18,6 @@ public class Message extends BaseEntity implements Serializable {
         this.messageSender = messageSender;
         this.messageReceiver = messageReceiver;
     }
-
-    public String getContent() {return messageContent;}
-    public User getSender() {return messageSender;}
-    public User getReceiver() {return messageReceiver;}
 
     public void updateContent( String messageContent) {
         this.messageContent = messageContent;

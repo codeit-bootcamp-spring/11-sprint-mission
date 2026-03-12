@@ -1,7 +1,10 @@
 package com.sprint.mission.discodeit.entity.Domain;
 
+import lombok.Getter;
+
 import java.io.Serializable;
 
+@Getter
 public class Channel extends BaseEntity implements Serializable {
     private String channelName;     // 채널이름(채널명)
     private String channelDescription;      // 채널주소
@@ -12,8 +15,6 @@ public class Channel extends BaseEntity implements Serializable {
         this.channelName = channelName;
         this.channelDescription = channelDescription;
     }
-    public String getChannelName() {return channelName;}    // 채널이름 리턴하기
-    public String getChannelDescription() {return channelDescription;}      // 채널 주소 리턴
 
     public void updateChannel(String channelName, String channelDescription) {
         this.channelName = channelName;     // 채널 업데이트하는 설정

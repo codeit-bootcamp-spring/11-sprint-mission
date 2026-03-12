@@ -1,7 +1,10 @@
 package com.sprint.mission.discodeit.entity.Domain;
 
+import lombok.Getter;
+
 import java.util.UUID;
 
+@Getter
 public class BaseEntity {
     protected UUID id;      // 유효아이디
     protected Long createdAt;   // 만든시간
@@ -12,14 +15,6 @@ public class BaseEntity {
         this.createdAt = System.currentTimeMillis();    // 각각 만들어진 시간
         this.updatedAt = this.createdAt;
     }
-
-    public UUID getId() {
-        return id;
-    }       // 유효아이디 불러오기
-    public Long getCreatedAt() {
-        return createdAt;
-    }       // 만든시간
-    public Long getUpdatedAt() {return updatedAt;}      // 업데이트된 시간
 
     protected void updateTimestamp() {
         this.updatedAt = System.currentTimeMillis();

@@ -303,7 +303,7 @@ public class JavaApplication {
 
         System.out.println("\n[Message ID]");
         messageService.readAll().forEach(m ->
-                System.out.println("id=" + m.getId() + " | sender=" + m.getSender() + " | receiver=" + m.getReceiver())
+                System.out.println("id=" + m.getId() + " | sender=" + m.getMessageSender().getUserName() + " | receiver=" + m.getMessageReceiver().getUserName())
         );
         System.out.println("====================================\n");
     }
@@ -327,7 +327,7 @@ public class JavaApplication {
     public static void printMessage(MessageService messageService) {
         System.out.println("==== [현재 저장된 Message ID 목록] ====");
         messageService.readAll().forEach(m ->
-                System.out.println("id=" + m.getId() + " | sender=" + m.getSender() + " | receiver=" + m.getReceiver())
+                System.out.println("id=" + m.getId() + " | sender=" + m.getMessageSender().getUserName() + " | receiver=" + m.getMessageReceiver().getUserName() + " | content=" + m.getMessageContent())
         );
         System.out.println("====================================\n");
     }
