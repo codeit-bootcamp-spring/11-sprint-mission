@@ -33,7 +33,7 @@ public class DiscodeitApplication {
     }
 
     static User setupUser(UserService userService) {
-        User user = new User("woody", "woody@codeit.com", "ONLINE");
+        User user = new User("woody", "woody@codeit.com");
         userService.create(user);
         return user;
     }

@@ -44,7 +44,7 @@ public class BasicUserService implements UserService {
     }
 
     @Override
-    public void update(UUID id, String userName, String userNickname, String userStatus) {
+    public void update(UUID id, String userName, String userNickname) {
         User user = userRepository.read(id);
         if (user == null) {
             throw new IllegalArgumentException("존재하지 않는 유저입니다.");
@@ -61,7 +61,7 @@ public class BasicUserService implements UserService {
         if (isDuplicate) {
             throw new IllegalArgumentException("이미 존재하는 유저입니다.");
         }
-        user.updateUserName(userName, userNickname, userStatus);
+        user.updateUserName(userName, userNickname);
         userRepository.create(user);
     }
 

@@ -15,7 +15,7 @@ public interface UserService {
     List<User> readAll();
 
     // 수정
-    void update(UUID id, String userName, String userNickname, String userStatus);
+    void update(UUID id, String userName, String userNickname);
 
     // 삭제
     void delete(UUID id);

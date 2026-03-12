@@ -94,9 +94,7 @@ public class JavaApplication {
                     String name = br.readLine();
                     System.out.print("닉네임: ");
                     String nickname = br.readLine();
-                    System.out.print("상태(ONLINE/OFFLINE 등): ");
-                    String status = br.readLine();
-                    UUID id = userService.create(new User(name, nickname, status));
+                    UUID id = userService.create(new User(name, nickname));
                     System.out.println("생성 완료. ID = " + id);
 
                 } else if (input.equals("2")) {
@@ -116,9 +114,7 @@ public class JavaApplication {
                     String name = br.readLine();
                     System.out.print("새 닉네임: ");
                     String nickname = br.readLine();
-                    System.out.print("새 상태: ");
-                    String status = br.readLine();
-                    userService.update(id, name, nickname, status);
+                    userService.update(id, name, nickname);
                     System.out.println("수정 완료.");
                     System.out.println("수정 결과: " + userService.read(id));
 
