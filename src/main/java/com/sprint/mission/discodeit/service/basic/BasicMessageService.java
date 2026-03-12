@@ -31,11 +31,14 @@ public class BasicMessageService implements MessageService {
         return messageRepo.findAll();
     }
 
-    public void update(Message oldMessage, Message newMessage) {
+    public void update(UUID id, Message newMessage) {
+        Message oldMessage = findById(id);
+
         oldMessage.setContents(newMessage.getContents());
         oldMessage.setUserId(newMessage.getUserId());
         oldMessage.setChannelId(newMessage.getChannelId());
         oldMessage.update();
+
         messageRepo.save(oldMessage);
     }
 

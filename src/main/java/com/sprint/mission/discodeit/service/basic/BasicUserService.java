@@ -35,11 +35,14 @@ public class BasicUserService implements UserService {
     }
 
     @Override
-    public void update(User oldUser, User newUser) {
+    public void update(UUID id, User newUser) {
+        User oldUser = findById(id);
+
         oldUser.setName(newUser.getName());
         oldUser.setEmail(newUser.getEmail());
         oldUser.setPassword(newUser.getPassword());
         oldUser.update();
+
         userRepo.save(oldUser);
     }
 

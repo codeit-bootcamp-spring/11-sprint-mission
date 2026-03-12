@@ -1,6 +1,7 @@
 package com.sprint.mission.discodeit.service.jcf;
 
 import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.exception.UserNotFoundException;
 import com.sprint.mission.discodeit.service.UserService;
 
 import java.util.ArrayList;
@@ -26,7 +27,7 @@ public class JCFUserService implements UserService {
         for(User user: userList) {
             if(user.getId().equals(id)) return user;
         }
-        throw new IllegalArgumentException("User Not Found");
+        throw new UserNotFoundException(id);
     }
 
     @Override
@@ -35,8 +36,9 @@ public class JCFUserService implements UserService {
     }
 
     @Override
-    public void update(User oldUser, User newUser) {
+    public void update(UUID id, User newUser) {
         // UUID를 유지하기 위해 remove -> add 하지 않음
+        User oldUser = findById(id);
         oldUser.setName(newUser.getName());
         oldUser.setPassword(newUser.getPassword());
         oldUser.setEmail(newUser.getEmail());

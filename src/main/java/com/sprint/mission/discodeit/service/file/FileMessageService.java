@@ -1,6 +1,7 @@
 package com.sprint.mission.discodeit.service.file;
 
 import com.sprint.mission.discodeit.entity.Message;
+import com.sprint.mission.discodeit.exception.MessageNotFoundException;
 import com.sprint.mission.discodeit.service.MessageService;
 
 import java.nio.file.Files;
@@ -24,7 +25,7 @@ public class FileMessageService extends FileUtil implements MessageService {
     public Message findById(UUID id) {
         Path path = filePath(id);
         if(!Files.exists(path)) {
-            throw new IllegalArgumentException("Message Not Found");
+            throw new MessageNotFoundException(id);
         }
         return load(path, Message.class);
     }
@@ -35,12 +36,15 @@ public class FileMessageService extends FileUtil implements MessageService {
     }
 
     @Override
-    public void update(Message oldMessage, Message newMessage) {
+    public void update(UUID id, Message newMessage) {
         // UUID를 유지하기 위해 remove -> add 하지 않음
+        Message oldMessage = findById(id);
+
         oldMessage.setContents(newMessage.getContents());
         oldMessage.setUserId(newMessage.getUserId());
         oldMessage.setChannelId(newMessage.getChannelId());
         oldMessage.update();
+
         save(filePath(oldMessage.getId()), oldMessage);
     }
 

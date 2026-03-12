@@ -3,6 +3,7 @@ package com.sprint.mission.discodeit.service.jcf;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.exception.MessageNotFoundException;
 import com.sprint.mission.discodeit.service.MessageService;
 
 import java.util.ArrayList;
@@ -28,7 +29,7 @@ public class JCFMessageService implements MessageService {
         for(Message message: messageList) {
             if(message.getId().equals(id)) return message;
         }
-        throw new IllegalArgumentException("Message Not Found");
+        throw new MessageNotFoundException(id);
     }
 
     @Override
@@ -37,8 +38,9 @@ public class JCFMessageService implements MessageService {
     }
 
     @Override
-    public void update(Message oldMessage, Message newMessage) {
+    public void update(UUID id, Message newMessage) {
         // UUID를 유지하기 위해 remove -> add 하지 않음
+        Message oldMessage = findById(id);
         oldMessage.setContents(newMessage.getContents());
         oldMessage.setUserId(newMessage.getUserId());
         oldMessage.setChannelId(newMessage.getChannelId());

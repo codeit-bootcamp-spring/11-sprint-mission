@@ -2,6 +2,7 @@ package com.sprint.mission.discodeit.service.jcf;
 
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.ChannelType;
+import com.sprint.mission.discodeit.exception.ChannelNotFoundException;
 import com.sprint.mission.discodeit.service.ChannelService;
 
 import java.util.ArrayList;
@@ -27,7 +28,7 @@ public class JCFChannelService implements ChannelService {
         for(Channel channel: channelList) {
             if(channel.getId().equals(id)) return channel;
         }
-        throw new IllegalArgumentException("Channel Not Found");
+        throw new ChannelNotFoundException(id);
     }
 
     @Override
@@ -36,8 +37,9 @@ public class JCFChannelService implements ChannelService {
     }
 
     @Override
-    public void update(Channel oldChannel, Channel newChannel) {
+    public void update(UUID id, Channel newChannel) {
         // UUID를 유지하기 위해 remove -> add 하지 않음
+        Channel oldChannel = findById(id);
         oldChannel.setChannelType(newChannel.getChannelType());
         oldChannel.setName(newChannel.getName());
         oldChannel.setDescription(newChannel.getDescription());

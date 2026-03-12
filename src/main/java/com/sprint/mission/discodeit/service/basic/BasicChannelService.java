@@ -32,11 +32,14 @@ public class BasicChannelService implements ChannelService {
         return channelRepo.findAll();
     }
 
-    public void update(Channel oldChannel, Channel newChannel) {
+    public void update(UUID id, Channel newChannel) {
+        Channel oldChannel = findById(id);
+
         oldChannel.setChannelType(newChannel.getChannelType());
         oldChannel.setName(newChannel.getName());
         oldChannel.setDescription(newChannel.getDescription());
         oldChannel.update();
+
         channelRepo.save(oldChannel);
     }
 

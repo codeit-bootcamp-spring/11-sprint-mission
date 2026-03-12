@@ -1,6 +1,7 @@
 package com.sprint.mission.discodeit.service.file;
 
 import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.exception.UserNotFoundException;
 import com.sprint.mission.discodeit.service.UserService;
 
 import java.nio.file.Files;
@@ -24,7 +25,7 @@ public class FileUserService extends FileUtil implements UserService {
     public User findById(UUID id) {
         Path path = filePath(id);
         if(!Files.exists(path)) {
-            throw new IllegalArgumentException("User Not Found");
+            throw new UserNotFoundException(id);
         }
         return load(path, User.class);
     }
@@ -35,12 +36,15 @@ public class FileUserService extends FileUtil implements UserService {
     }
 
     @Override
-    public void update(User oldUser, User newUser) {
+    public void update(UUID id, User newUser) {
         // UUID를 유지하기 위해 remove -> add 하지 않음
+        User oldUser = findById(id);
+
         oldUser.setName(newUser.getName());
         oldUser.setPassword(newUser.getPassword());
         oldUser.setEmail(newUser.getEmail());
         oldUser.update();
+
         save(filePath(oldUser.getId()), oldUser);
     }
 

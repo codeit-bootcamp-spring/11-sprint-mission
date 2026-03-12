@@ -10,6 +10,6 @@ public interface UserService {
     User create(String name, String email, String password);
     User findById(UUID id);
     List<User> findAll();
-    void update(User oldUser, User newUser);
+    void update(UUID id, User newUser);
     void delete(User user);
 }

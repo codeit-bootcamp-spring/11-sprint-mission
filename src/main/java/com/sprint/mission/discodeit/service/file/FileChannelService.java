@@ -2,6 +2,7 @@ package com.sprint.mission.discodeit.service.file;
 
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.ChannelType;
+import com.sprint.mission.discodeit.exception.ChannelNotFoundException;
 import com.sprint.mission.discodeit.service.ChannelService;
 
 import java.io.*;
@@ -27,7 +28,7 @@ public class FileChannelService extends FileUtil implements ChannelService {
     public Channel findById(UUID id) {
         Path path = filePath(id);
         if(!Files.exists(path)) {
-            throw new IllegalArgumentException("Channel Not Found");
+            throw new ChannelNotFoundException(id);
         }
         return load(path, Channel.class);
     }
@@ -38,12 +39,15 @@ public class FileChannelService extends FileUtil implements ChannelService {
     }
 
     @Override
-    public void update(Channel oldChannel, Channel newChannel) {
+    public void update(UUID id, Channel newChannel) {
         // UUID를 유지하기 위해 remove -> add 하지 않음
+        Channel oldChannel = findById(id);
+
         oldChannel.setChannelType(newChannel.getChannelType());
         oldChannel.setName(newChannel.getName());
         oldChannel.setDescription(newChannel.getDescription());
         oldChannel.update();
+
         save(filePath(oldChannel.getId()), oldChannel);
     }
 
