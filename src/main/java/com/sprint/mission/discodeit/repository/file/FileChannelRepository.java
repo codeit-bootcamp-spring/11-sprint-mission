@@ -2,10 +2,13 @@ package com.sprint.mission.discodeit.repository.file;
 
 import com.sprint.mission.discodeit.entity.Domain.Channel;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Repository;
 
 import java.io.*;
 import java.util.*;
 
+@Repository
 public class FileChannelRepository implements ChannelRepository {
     private Map<UUID, Channel> data ;   // 실제 데이터 삭제되는 곳
     private Map<UUID, Channel> data_at; // 데이터 삭제시에 바로 전 데이터모습을 복사?
@@ -35,6 +38,7 @@ public class FileChannelRepository implements ChannelRepository {
             e.printStackTrace();
         }
     }
+
     public FileChannelRepository() {
         this.data = new HashMap<>();
         loadFromFile();

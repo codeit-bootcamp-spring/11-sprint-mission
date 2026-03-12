@@ -2,10 +2,12 @@ package com.sprint.mission.discodeit.repository.file;
 
 import com.sprint.mission.discodeit.entity.Domain.User;
 import com.sprint.mission.discodeit.repository.UserRepository;
+import org.springframework.stereotype.Repository;
 
 import java.io.*;
 import java.util.*;
 
+@Repository
 public class FileUserRepository implements UserRepository {
     private Map<UUID, User> data;   // 원래는 private final map으로 저장 > 어차피 바뀌니까 final빼기
     private Map<UUID, User> data_at;
