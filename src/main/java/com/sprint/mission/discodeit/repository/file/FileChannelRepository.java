@@ -2,15 +2,18 @@ package com.sprint.mission.discodeit.repository.file;
 
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Repository;
 
 import java.io.*;
 import java.util.*;
 
+@Repository
 public class FileChannelRepository implements ChannelRepository {
     private final Map<UUID, Channel> data;
     private final String filePath;
 
-    public FileChannelRepository(String filePath) {
+    public FileChannelRepository(@Value("${discodeit.repository.file-directory:.discodeit}/channel.ser")String filePath) {
         this.filePath = filePath;
         this.data = loadFromFile();
     }
@@ -52,6 +55,9 @@ public class FileChannelRepository implements ChannelRepository {
     }
 
     private void saveToFile() {
+        File file = new File(filePath);
+        file.getParentFile().mkdirs();
+
         try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(filePath))) {
             oos.writeObject(data);
         } catch (IOException e) {

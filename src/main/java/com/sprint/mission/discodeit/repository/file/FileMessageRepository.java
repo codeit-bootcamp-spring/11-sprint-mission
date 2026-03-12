@@ -2,15 +2,18 @@ package com.sprint.mission.discodeit.repository.file;
 
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.repository.MessageRepository;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Repository;
 
 import java.io.*;
 import java.util.*;
 
+@Repository
 public class FileMessageRepository implements MessageRepository {
     private final Map<UUID, Message> data;
     private final String filePath;
 
-    public FileMessageRepository(String filePath) {
+    public FileMessageRepository(@Value("${discodeit.repository.file-directory:.discodeit}/message.ser")String filePath) {
         this.filePath = filePath;
         this.data = loadFromFile();
     }
@@ -52,6 +55,9 @@ public class FileMessageRepository implements MessageRepository {
     }
 
     private void saveToFile() {
+        File file = new File(filePath);
+        file.getParentFile().mkdirs();
+
         try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(filePath))) {
             oos.writeObject(data);
         } catch (IOException e) {

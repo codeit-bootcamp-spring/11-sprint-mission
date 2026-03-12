@@ -2,15 +2,18 @@ package com.sprint.mission.discodeit.repository.file;
 
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Repository;
 
 import java.io.*;
 import java.util.*;
 
+@Repository
 public class FileUserRepository implements UserRepository {
     private final Map<UUID, User> data;
     private final String filePath;
 
-    public FileUserRepository(String filePath) {
+    public FileUserRepository(@Value("${discodeit.repository.file-directory:.discodeit}/user.ser")String filePath) {
         this.filePath = filePath;
         this.data = loadFromFile();
     }
@@ -52,6 +55,9 @@ public class FileUserRepository implements UserRepository {
     }
 
     private void saveToFile() {
+        File file = new File(filePath);
+        file.getParentFile().mkdirs();
+
         try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(filePath))) {
             oos.writeObject(data);
         } catch (IOException e) {

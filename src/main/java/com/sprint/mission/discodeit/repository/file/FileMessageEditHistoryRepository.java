@@ -2,15 +2,18 @@ package com.sprint.mission.discodeit.repository.file;
 
 import com.sprint.mission.discodeit.entity.MessageEditHistory;
 import com.sprint.mission.discodeit.repository.MessageEditHistoryRepository;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Repository;
 
 import java.io.*;
 import java.util.*;
 
+@Repository
 public class FileMessageEditHistoryRepository implements MessageEditHistoryRepository {
     private final Map<UUID, MessageEditHistory> data;
     private final String filePath;
 
-    public FileMessageEditHistoryRepository(String filePath) {
+    public FileMessageEditHistoryRepository(@Value("${discodeit.repository.file-directory:.discodeit}/messageEditHistory.ser")String filePath) {
         this.filePath = filePath;
         this.data = loadFromFile();
     }
@@ -52,6 +55,9 @@ public class FileMessageEditHistoryRepository implements MessageEditHistoryRepos
     }
 
     private void saveToFile() {
+        File file = new File(filePath);
+        file.getParentFile().mkdirs();
+
         try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(filePath))) {
             oos.writeObject(data);
         } catch (IOException e) {

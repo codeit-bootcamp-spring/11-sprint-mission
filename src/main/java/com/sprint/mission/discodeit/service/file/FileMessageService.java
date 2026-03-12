@@ -5,10 +5,12 @@ import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.entity.MessageEditHistory;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.service.MessageService;
+import org.springframework.stereotype.Service;
 
 import java.io.*;
 import java.util.*;
 import java.util.stream.Collectors;
+
 
 public class FileMessageService implements MessageService {
     private final Map<UUID, Message> data;
