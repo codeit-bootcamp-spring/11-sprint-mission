@@ -1,8 +1,12 @@
 package com.sprint.mission.discodeit.entity;
 
+import lombok.Getter;
+
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
+@Getter
 public class Message extends BaseEntity {
     private static final long serialVersionUID = 1L;
     private User sender;
@@ -32,40 +36,16 @@ public class Message extends BaseEntity {
         this.isDeleted = false;
     }
 
-    public User getSender() {
-        return sender;
-    }
-
-    public User getReceiver() {
-        return receiver;
-    }
-
-    public String getContent() {
-        return content;
-    }
-
     public void setContent(String newContent) {
         MessageEditHistory history = new MessageEditHistory(this.content);
         this.editHistories.add(history);
         this.content = newContent;
-        setUpdatedAt(System.currentTimeMillis());
-    }
-
-    public Channel getChannel() {
-        return channel;
-    }
-
-    public List<MessageEditHistory> getEditHistories() {
-        return editHistories;
-    }
-
-    public boolean isDeleted() {
-        return isDeleted;
+        setUpdatedAt(Instant.now());
     }
 
     public void delete() {
         this.isDeleted = true;
-        setUpdatedAt(System.currentTimeMillis());
+        setUpdatedAt(Instant.now());
     }
 
     public boolean isDM() {

@@ -1,21 +1,19 @@
 package com.sprint.mission.discodeit.entity;
 
+import lombok.Getter;
+
+import java.time.Instant;
+
+@Getter
 public class MessageEditHistory extends BaseEntity {
     private static final long serialVersionUID = 1L;
     private String previousContent;
-    private long editedAt;
+    private Instant editedAt;
 
     public MessageEditHistory(String previousContent) {
         super();
         this.previousContent = previousContent;
-        this.editedAt = System.currentTimeMillis();
+        this.editedAt = Instant.now();
     }
 
-    public String getPreviousContent() {
-        return previousContent;
-    }
-
-    public long getEditedAt() {
-        return editedAt;
-    }
 }

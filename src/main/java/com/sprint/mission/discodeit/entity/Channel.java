@@ -1,8 +1,12 @@
 package com.sprint.mission.discodeit.entity;
 
+import lombok.Getter;
+
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
+@Getter
 public class Channel extends BaseEntity {
     private static final long serialVersionUID = 1L;
     private String name;
@@ -19,34 +23,6 @@ public class Channel extends BaseEntity {
         this.participants = new ArrayList<>();
         this.messages = new ArrayList<>();
         this.participants.add(owner);
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public int getCapacity() {
-        return capacity;
-    }
-
-    public void setCapacity(int capacity) {
-        this.capacity = capacity;
-    }
-
-    public User getOwner() {
-        return owner;
-    }
-
-    public List<User> getParticipants() {
-        return participants;
-    }
-
-    public List<Message> getMessages() {
-        return messages;
     }
 
     public boolean addParticipant(User user) {
@@ -71,6 +47,6 @@ public class Channel extends BaseEntity {
     public void update(String name, int capacity) {
         this.name = name;
         this.capacity = capacity;
-        setUpdatedAt(System.currentTimeMillis());
+        setUpdatedAt(Instant.now());
     }
 }
