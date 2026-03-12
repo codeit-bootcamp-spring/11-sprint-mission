@@ -51,7 +51,7 @@ public class FileMessageRepository implements MessageRepository {
     }
 
     @Override
-    public Message load(UUID id) {
+    public Message findById(UUID id) {
         Path path = filePath(id);
         if (!Files.exists(path)) {
             throw new IllegalArgumentException("Message Not Found");
@@ -67,7 +67,7 @@ public class FileMessageRepository implements MessageRepository {
     }
 
     @Override
-    public List<Message> loadAll() {
+    public List<Message> findAll() {
         if(Files.exists(directory)) {
             try (
                     Stream<Path> paths = Files.list(directory);

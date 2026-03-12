@@ -16,14 +16,14 @@ public class JCFChannelService implements ChannelService {
     }
 
     @Override
-    public Channel createChannel(ChannelType channelType, String name, String description) {
+    public Channel create(ChannelType channelType, String name, String description) {
         Channel channel = new Channel(channelType, name, description);
         channelList.add(channel);
         return channel;
     }
 
     @Override
-    public Channel findChannel(UUID id) {
+    public Channel findById(UUID id) {
         for(Channel channel: channelList) {
             if(channel.getId().equals(id)) return channel;
         }
@@ -31,12 +31,12 @@ public class JCFChannelService implements ChannelService {
     }
 
     @Override
-    public List<Channel> findAllChannel() {
+    public List<Channel> findAll() {
         return channelList;
     }
 
     @Override
-    public void updateChannel(Channel oldChannel, Channel newChannel) {
+    public void update(Channel oldChannel, Channel newChannel) {
         // UUID를 유지하기 위해 remove -> add 하지 않음
         oldChannel.setChannelType(newChannel.getChannelType());
         oldChannel.setName(newChannel.getName());
@@ -45,7 +45,7 @@ public class JCFChannelService implements ChannelService {
     }
 
     @Override
-    public void deleteChannel(Channel channel) {
+    public void delete(Channel channel) {
         channelList.remove(channel);
     }
 }

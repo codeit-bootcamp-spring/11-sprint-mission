@@ -25,7 +25,7 @@ public class JCFChannelRepository implements ChannelRepository {
     }
 
     @Override
-    public Channel load(UUID id) {
+    public Channel findById(UUID id) {
         List<Channel> list;
         list = channels.stream()
                 .filter(p -> p.getId().equals(id))
@@ -37,7 +37,7 @@ public class JCFChannelRepository implements ChannelRepository {
     }
 
     @Override
-    public List<Channel> loadAll() {
+    public List<Channel> findAll() {
         return channels;
     }
 

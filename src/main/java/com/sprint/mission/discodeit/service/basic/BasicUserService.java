@@ -16,24 +16,24 @@ public class BasicUserService implements UserService {
     private final UserRepository userRepo;
 
     @Override
-    public User createUser(String name, String email, String password) {
+    public User create(String name, String email, String password) {
         User user = new User(name, email, password);
         userRepo.save(user);
         return user;
     }
 
     @Override
-    public User findUser(UUID id) {
-        return userRepo.load(id);
+    public User findById(UUID id) {
+        return userRepo.findById(id);
     }
 
     @Override
-    public List<User> findAllUser() {
-        return userRepo.loadAll();
+    public List<User> findAll() {
+        return userRepo.findAll();
     }
 
     @Override
-    public void updateUser(User oldUser, User newUser) {
+    public void update(User oldUser, User newUser) {
         oldUser.setName(newUser.getName());
         oldUser.setEmail(newUser.getEmail());
         oldUser.setPassword(newUser.getPassword());
@@ -42,7 +42,7 @@ public class BasicUserService implements UserService {
     }
 
     @Override
-    public void deleteUser(User user) {
+    public void delete(User user) {
         userRepo.delete(user);
     }
 }

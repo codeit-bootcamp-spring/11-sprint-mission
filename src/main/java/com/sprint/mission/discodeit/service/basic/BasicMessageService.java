@@ -15,21 +15,21 @@ public class BasicMessageService implements MessageService {
 
     private final MessageRepository messageRepo;
 
-    public Message createMessage(String contents, UUID userId, UUID channelId) {
+    public Message create(String contents, UUID userId, UUID channelId) {
         Message message = new Message(contents, userId, channelId);
         messageRepo.save(message);
         return message;
     }
 
-    public Message findMessage(UUID id) {
-        return messageRepo.load(id);
+    public Message findById(UUID id) {
+        return messageRepo.findById(id);
     }
 
-    public List<Message> findAllMessage() {
-        return messageRepo.loadAll();
+    public List<Message> findAll() {
+        return messageRepo.findAll();
     }
 
-    public void updateMessage(Message oldMessage, Message newMessage) {
+    public void update(Message oldMessage, Message newMessage) {
         oldMessage.setContents(newMessage.getContents());
         oldMessage.setUserId(newMessage.getUserId());
         oldMessage.setChannelId(newMessage.getChannelId());
@@ -37,7 +37,7 @@ public class BasicMessageService implements MessageService {
         messageRepo.save(oldMessage);
     }
 
-    public void deleteMessage(Message message) {
+    public void delete(Message message) {
         messageRepo.delete(message);
     }
 }

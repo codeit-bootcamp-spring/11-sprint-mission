@@ -15,14 +15,14 @@ public class JCFUserService implements UserService {
     }
 
     @Override
-    public User createUser(String name, String email, String password) {
+    public User create(String name, String email, String password) {
         User user = new User(name, email, password);
         userList.add(user);
         return user;
     }
 
     @Override
-    public User findUser(UUID id) {
+    public User findById(UUID id) {
         for(User user: userList) {
             if(user.getId().equals(id)) return user;
         }
@@ -30,12 +30,12 @@ public class JCFUserService implements UserService {
     }
 
     @Override
-    public List<User> findAllUser() {
+    public List<User> findAll() {
         return userList;
     }
 
     @Override
-    public void updateUser(User oldUser, User newUser) {
+    public void update(User oldUser, User newUser) {
         // UUID를 유지하기 위해 remove -> add 하지 않음
         oldUser.setName(newUser.getName());
         oldUser.setPassword(newUser.getPassword());
@@ -44,7 +44,7 @@ public class JCFUserService implements UserService {
     }
 
     @Override
-    public void deleteUser(User user) {
+    public void delete(User user) {
         userList.remove(user);
     }
 }

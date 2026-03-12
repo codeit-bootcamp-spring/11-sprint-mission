@@ -51,7 +51,7 @@ public class FileUserRepository implements UserRepository {
     }
 
     @Override
-    public User load(UUID id) {
+    public User findById(UUID id) {
         Path path = filePath(id);
         if (!Files.exists(path)) {
             throw new IllegalArgumentException("User Not Found");
@@ -67,7 +67,7 @@ public class FileUserRepository implements UserRepository {
     }
 
     @Override
-    public List<User> loadAll() {
+    public List<User> findAll() {
         if(Files.exists(directory)) {
             try (
                     Stream<Path> paths = Files.list(directory);

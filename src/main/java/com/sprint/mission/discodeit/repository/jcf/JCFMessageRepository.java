@@ -25,7 +25,7 @@ public class JCFMessageRepository implements MessageRepository {
     }
 
     @Override
-    public Message load(UUID id) {
+    public Message findById(UUID id) {
         List<Message> list;
         list = messages.stream()
                 .filter(p -> p.getId().equals(id))
@@ -37,7 +37,7 @@ public class JCFMessageRepository implements MessageRepository {
     }
 
     @Override
-    public List<Message> loadAll() {
+    public List<Message> findAll() {
         return messages;
     }
 

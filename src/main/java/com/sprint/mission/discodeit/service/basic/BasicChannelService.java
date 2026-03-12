@@ -16,21 +16,21 @@ public class BasicChannelService implements ChannelService {
 
     private final ChannelRepository channelRepo;
 
-    public Channel createChannel(ChannelType channelType, String name, String description) {
+    public Channel create(ChannelType channelType, String name, String description) {
         Channel channel = new Channel(channelType, name, description);
         channelRepo.save(channel);
         return channel;
     }
 
-    public Channel findChannel(UUID id) {
-        return channelRepo.load(id);
+    public Channel findById(UUID id) {
+        return channelRepo.findById(id);
     }
 
-    public List<Channel> findAllChannel() {
-        return channelRepo.loadAll();
+    public List<Channel> findAll() {
+        return channelRepo.findAll();
     }
 
-    public void updateChannel(Channel oldChannel, Channel newChannel) {
+    public void update(Channel oldChannel, Channel newChannel) {
         oldChannel.setChannelType(newChannel.getChannelType());
         oldChannel.setName(newChannel.getName());
         oldChannel.setDescription(newChannel.getDescription());
@@ -38,7 +38,7 @@ public class BasicChannelService implements ChannelService {
         channelRepo.save(oldChannel);
     }
 
-    public void deleteChannel(Channel channel) {
+    public void delete(Channel channel) {
         channelRepo.delete(channel);
     }
 }

@@ -15,17 +15,17 @@ import org.springframework.context.ApplicationContext;
 public class DiscodeitApplication {
 
 	static User setupUser(UserService userService) {
-		User user = userService.createUser("woody", "woody@codeit.com", "woody1234");
+		User user = userService.create("woody", "woody@codeit.com", "woody1234");
 		return user;
 	}
 
 	static Channel setupChannel(ChannelService channelService) {
-		Channel channel = channelService.createChannel(ChannelType.PUBLIC, "공지", "공지 채널입니다.");
+		Channel channel = channelService.create(ChannelType.PUBLIC, "공지", "공지 채널입니다.");
 		return channel;
 	}
 
 	static void messageCreateTest(MessageService messageService, Channel channel, User author) {
-		Message message = messageService.createMessage("안녕하세요.", channel.getId(), author.getId());
+		Message message = messageService.create("안녕하세요.", channel.getId(), author.getId());
 		System.out.println("메시지 생성: " + message.getId());
 	}
 
