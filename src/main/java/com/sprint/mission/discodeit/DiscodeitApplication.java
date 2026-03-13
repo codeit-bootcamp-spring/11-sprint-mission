@@ -5,7 +5,6 @@ import com.sprint.mission.discodeit.dto.LoginResponseDto;
 import com.sprint.mission.discodeit.dto.PublicChannelCreateRequestDto;
 import com.sprint.mission.discodeit.dto.UserCreateRequestDto;
 import com.sprint.mission.discodeit.entity.Channel;
-import com.sprint.mission.discodeit.entity.ChannelType;
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.service.AuthService;
