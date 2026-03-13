@@ -25,6 +25,16 @@ public class Channel implements Serializable {
     private ChannelType type;
     private String description;
 
+    public Channel(String name, String description, ChannelType type, UUID ownerId) {
+        this.id = UUID.randomUUID();
+        this.ownerId = ownerId;
+        this.createdAt = Instant.now();
+        this.updatedAt = Instant.now();
+        this.name = name;
+        this.type = type;
+        this.description = description;
+    }
+
     // 필드를 수정하는 update 함수
     public void update(String name, String description) {
         this.name = name;

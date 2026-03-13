@@ -53,6 +53,13 @@ public class FileUserRepository implements UserRepository {
     }
 
     @Override
+    public Optional<User> findByName(String userName) {
+        return userMap.values().stream()
+                .filter(user -> user.getUsername().equals(userName))
+                .findFirst();
+    }
+
+    @Override
     public Optional<User> findById(UUID id) {
         return Optional.ofNullable(userMap.get(id));
     }
@@ -63,9 +70,11 @@ public class FileUserRepository implements UserRepository {
     }
 
     @Override
-    public void delete(User user) {
-        if(userMap.remove(user.getId()) != null) {
+    public void delete(UUID id) {
+        if(userMap.remove(id) != null) {
             saveUsers();
+        } else {
+            throw new IllegalArgumentException("존재하지 않는 콘텐츠입니다.");
         }
     }
 

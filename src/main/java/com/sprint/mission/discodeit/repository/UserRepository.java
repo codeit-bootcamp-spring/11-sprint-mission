@@ -9,5 +9,6 @@ import java.util.UUID;
 
 public interface UserRepository extends CrudRepository<User, UUID> {
     Optional<User> findByEmail(String email);
-    void delete(User user);
+    Optional<User> findByName(String userName);
+    void delete(UUID id);
 }
