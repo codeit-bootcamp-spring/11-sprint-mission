@@ -2,7 +2,9 @@ package com.sprint.mission.discodeit.service.basic;
 
 import com.sprint.mission.discodeit.dto.MessageCreateRequestDto;
 import com.sprint.mission.discodeit.dto.MessageUpdateRequestDto;
+import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.Message;
+import com.sprint.mission.discodeit.exception.BinaryContentNotFoundException;
 import com.sprint.mission.discodeit.exception.ChannelNotFoundException;
 import com.sprint.mission.discodeit.exception.MessageNotFoundException;
 import com.sprint.mission.discodeit.exception.UserNotFoundException;
@@ -66,6 +68,12 @@ public class BasicMessageService implements MessageService {
     public void delete(UUID id) {
         Message message = messageRepo.findById(id)
                 .orElseThrow(() -> new MessageNotFoundException(id));
+
+        for(UUID binaryContentId : message.getAttachmentIds()) {
+            BinaryContent binaryContent = binaryContentRepo.findById(binaryContentId)
+                    .orElseThrow(() -> new BinaryContentNotFoundException(binaryContentId));
+            binaryContentRepo.delete(binaryContent);
+        }
 
         messageRepo.delete(message);
     }
