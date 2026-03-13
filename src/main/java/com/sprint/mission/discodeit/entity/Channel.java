@@ -21,10 +21,6 @@ public class Channel extends Common{
         this.description = description;
     }
 
-    public void setChannelType(ChannelType channelType) {
-        this.channelType = channelType;
-    }
-
     public void setName(String name) {
         this.name = name;
     }

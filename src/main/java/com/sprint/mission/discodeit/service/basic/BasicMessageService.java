@@ -1,6 +1,7 @@
 package com.sprint.mission.discodeit.service.basic;
 
 import com.sprint.mission.discodeit.dto.MessageCreateRequestDto;
+import com.sprint.mission.discodeit.dto.MessageUpdateRequestDto;
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.exception.ChannelNotFoundException;
 import com.sprint.mission.discodeit.exception.MessageNotFoundException;
@@ -46,19 +47,21 @@ public class BasicMessageService implements MessageService {
         return messageRepo.findAll();
     }
 
-    public void update(UUID id, Message newMessage) {
-        Message oldMessage = findById(id);
+    public void update(MessageUpdateRequestDto dto) {
+        Message message = messageRepo.findById(dto.messageId())
+                .orElseThrow(() -> new MessageNotFoundException(dto.messageId()));
 
-        oldMessage.setContents(newMessage.getContents());
-        oldMessage.setUserId(newMessage.getUserId());
-        oldMessage.setChannelId(newMessage.getChannelId());
-        oldMessage.setAttachmentIds(newMessage.getAttachmentIds());
-        oldMessage.update();
+        message.setContents(dto.contents());
+        message.setAttachmentIds(dto.attachmentIds());
+        message.update();
 
-        messageRepo.save(oldMessage);
+        messageRepo.save(message);
     }
 
-    public void delete(Message message) {
+    public void delete(UUID id) {
+        Message message = messageRepo.findById(id)
+                .orElseThrow(() -> new MessageNotFoundException(id));
+
         messageRepo.delete(message);
     }
 }

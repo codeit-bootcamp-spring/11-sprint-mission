@@ -34,14 +34,6 @@ public class Message extends Common{
         this.contents = contents;
     }
 
-    public void setUserId(UUID userId) {
-        this.userId = userId;
-    }
-
-    public void setChannelId(UUID channelId) {
-        this.channelId = channelId;
-    }
-
     public void setAttachmentIds(List<UUID> attachmentIds) {
         this.attachmentIds = new ArrayList<>(attachmentIds);
     }
