@@ -43,8 +43,13 @@ public class BasicMessageService implements MessageService {
                 .orElseThrow(() -> new MessageNotFoundException(id));
     }
 
-    public List<Message> findAll() {
-        return messageRepo.findAll();
+    public List<Message> findAllByChannelId(UUID id) {
+        channelRepo.findById(id)
+                .orElseThrow(() -> new ChannelNotFoundException(id));
+
+        return messageRepo.findAll().stream()
+                .filter(p -> p.getChannelId().equals(id))
+                .toList();
     }
 
     public void update(MessageUpdateRequestDto dto) {
