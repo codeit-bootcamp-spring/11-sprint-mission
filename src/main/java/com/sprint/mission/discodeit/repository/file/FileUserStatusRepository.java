@@ -4,9 +4,24 @@ import com.sprint.mission.discodeit.entity.UserStatus;
 import com.sprint.mission.discodeit.repository.UserStatusRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
 @Repository
 public class FileUserStatusRepository extends CommonFileRepository<UserStatus> implements UserStatusRepository {
     public FileUserStatusRepository() {
         super("userstatuses", UserStatus.class);
+    }
+
+    @Override
+    public Optional<UserStatus> findByUserId(UUID id) {
+        List<UserStatus> userStatusList = findAll();
+        for(UserStatus userStatus : userStatusList) {
+            if(userStatus.getUserId().equals(id)) {
+                return Optional.of(userStatus);
+            }
+        }
+        return Optional.empty();
     }
 }

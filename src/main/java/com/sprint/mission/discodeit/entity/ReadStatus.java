@@ -6,7 +6,6 @@ import lombok.Setter;
 import java.util.UUID;
 
 @Getter
-@Setter
 public class ReadStatus extends Common{
     private UUID userId;
     private UUID channelId;
