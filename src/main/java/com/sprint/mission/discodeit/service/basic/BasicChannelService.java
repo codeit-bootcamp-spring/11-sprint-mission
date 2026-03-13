@@ -113,7 +113,23 @@ public class BasicChannelService implements ChannelService {
         channelRepo.save(channel);
     }
 
-    public void delete(Channel channel) {
+    public void delete(UUID id) {
+        Channel channel = channelRepo.findById(id)
+                .orElseThrow(() -> new ChannelNotFoundException(id));
+
+        List<Message> messageList = messageRepo.findAll().stream()
+                .filter(p -> (p.getChannelId().equals(id)))
+                .toList();
+        for(Message message : messageList) {
+            messageRepo.delete(message);
+        }
+
+        List<ReadStatus> readStatusList = readStatusRepo.findAll().stream()
+                .filter(p -> (p.getChannelId().equals(id)))
+                .toList();
+        for(ReadStatus readStatus : readStatusList) {
+            readStatusRepo.delete(readStatus);
+        }
         channelRepo.delete(channel);
     }
 }
