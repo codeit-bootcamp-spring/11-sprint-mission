@@ -20,7 +20,7 @@ import java.util.UUID;
 public class BasicUserService implements UserService {
 
     private final UserRepository userRepo;
-//    private final UserStatusRepository userStatusRepo;
+    private final UserStatusRepository userStatusRepo;
 
     @Override
     public User create(UserCreateRequestDto dto) {
@@ -30,8 +30,8 @@ public class BasicUserService implements UserService {
         User user = new User(dto.name(), dto.email(), dto.password(), dto.profileId());
         userRepo.save(user);
 
-//        UserStatus userStatus = new UserStatus(user.getId());
-//        userStatusRepo.save(userStatus);
+        UserStatus userStatus = new UserStatus(user.getId());
+        userStatusRepo.save(userStatus);
 
         return user;
     }
