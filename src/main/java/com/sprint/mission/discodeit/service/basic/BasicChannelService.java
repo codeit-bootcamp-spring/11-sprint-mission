@@ -57,7 +57,7 @@ public class BasicChannelService implements ChannelService {
 
         if(channel.getChannelType()==ChannelType.PUBLIC) {
             return new ChannelResponseDto(id, ChannelType.PUBLIC, channel.getName(), channel.getDescription(),
-                    latestMessageCreatedAt, null);
+                    latestMessageCreatedAt, new ArrayList<>());
         } else { // PRIVATE
             List<UUID> userIds = readStatusRepo.findAll().stream()
                     .filter(p -> (p.getChannelId().equals(id)))
@@ -84,7 +84,7 @@ public class BasicChannelService implements ChannelService {
 
             if(channel.getChannelType() == ChannelType.PUBLIC) {
                 response.add(new ChannelResponseDto(channel.getId(), ChannelType.PUBLIC, channel.getName(),
-                        channel.getDescription(), latestMessageCreatedAt, null));
+                        channel.getDescription(), latestMessageCreatedAt, new ArrayList<>()));
             } else { // PRIVATE
                 List<UUID> userIds = readStatusList.stream()
                         .filter(p -> (p.getChannelId().equals(channel.getId())))
