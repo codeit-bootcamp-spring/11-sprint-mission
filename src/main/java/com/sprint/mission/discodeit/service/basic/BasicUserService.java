@@ -2,6 +2,7 @@ package com.sprint.mission.discodeit.service.basic;
 
 import com.sprint.mission.discodeit.dto.UserCreateRequestDto;
 import com.sprint.mission.discodeit.dto.UserResponseDto;
+import com.sprint.mission.discodeit.dto.UserUpdateRequestDto;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.entity.UserStatus;
 import com.sprint.mission.discodeit.exception.DuplicateEmailException;
@@ -63,17 +64,20 @@ public class BasicUserService implements UserService {
     }
 
     @Override
-    public void update(UUID id, User newUser) {
-        User oldUser = userRepo.findById(id)
-                .orElseThrow(() -> new UserNotFoundException(id));
+    public void update(UserUpdateRequestDto dto) {
+        User user = userRepo.findById(dto.userId())
+                .orElseThrow(() -> new UserNotFoundException(dto.userId()));
 
-        oldUser.setName(newUser.getName());
-        oldUser.setEmail(newUser.getEmail());
-        oldUser.setPassword(newUser.getPassword());
-        oldUser.setProfileId(newUser.getProfileId());
-        oldUser.update();
+        if(!user.getName().equals(dto.name()) && userRepo.existsByName(dto.name())) throw new DuplicateNameException(dto.name());
+        if(!user.getEmail().equals(dto.email()) && userRepo.existsByEmail(dto.email())) throw new DuplicateEmailException(dto.email());
 
-        userRepo.save(oldUser);
+        user.setName(dto.name());
+        user.setEmail(dto.email());
+        user.setPassword(dto.password());
+        if(dto.profileId() != null) user.setProfileId(dto.profileId());
+        user.update();
+
+        userRepo.save(user);
     }
 
     @Override
