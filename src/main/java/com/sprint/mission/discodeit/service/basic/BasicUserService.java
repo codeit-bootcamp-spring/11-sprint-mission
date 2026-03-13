@@ -3,12 +3,11 @@ package com.sprint.mission.discodeit.service.basic;
 import com.sprint.mission.discodeit.dto.UserCreateRequestDto;
 import com.sprint.mission.discodeit.dto.UserResponseDto;
 import com.sprint.mission.discodeit.dto.UserUpdateRequestDto;
+import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.entity.UserStatus;
-import com.sprint.mission.discodeit.exception.DuplicateEmailException;
-import com.sprint.mission.discodeit.exception.DuplicateNameException;
-import com.sprint.mission.discodeit.exception.UserNotFoundException;
-import com.sprint.mission.discodeit.exception.UserStatusNotFoundException;
+import com.sprint.mission.discodeit.exception.*;
+import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.repository.UserStatusRepository;
 import com.sprint.mission.discodeit.service.UserService;
@@ -26,6 +25,7 @@ public class BasicUserService implements UserService {
 
     private final UserRepository userRepo;
     private final UserStatusRepository userStatusRepo;
+    private final BinaryContentRepository binaryContentRepo;
 
     @Override
     public User create(UserCreateRequestDto dto) {
@@ -86,7 +86,11 @@ public class BasicUserService implements UserService {
                 .orElseThrow(() -> new UserNotFoundException(id));
 
         userStatusRepo.deleteByUserId(id);
-        //binaryContentRepo.deleteByUserId(id);
+        if(user.getProfileId() != null) {
+            BinaryContent binaryContent = binaryContentRepo.findById(user.getProfileId())
+                    .orElseThrow(() -> new BinaryContentNotFoundException(user.getProfileId()));
+            binaryContentRepo.delete(binaryContent);
+        }
         userRepo.delete(user);
     }
 }

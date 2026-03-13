@@ -10,8 +10,9 @@ public interface UserStatusRepository {
     public void init();
     public void save(UserStatus userStatus);
     public Optional<UserStatus> findById(UUID id);
-    public Optional<UserStatus> findByUserId(UUID id);
     public List<UserStatus> findAll();
     public void delete(UserStatus userStatus);
+
+    public Optional<UserStatus> findByUserId(UUID id);
     public void deleteByUserId(UUID id);
 }
