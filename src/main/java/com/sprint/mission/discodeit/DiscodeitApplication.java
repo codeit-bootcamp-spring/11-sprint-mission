@@ -1,10 +1,13 @@
 package com.sprint.mission.discodeit;
 
+import com.sprint.mission.discodeit.dto.LoginRequestDto;
+import com.sprint.mission.discodeit.dto.LoginResponseDto;
 import com.sprint.mission.discodeit.dto.UserCreateRequestDto;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.ChannelType;
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.service.AuthService;
 import com.sprint.mission.discodeit.service.ChannelService;
 import com.sprint.mission.discodeit.service.MessageService;
 import com.sprint.mission.discodeit.service.UserService;
@@ -30,6 +33,16 @@ public class DiscodeitApplication {
 		System.out.println("메시지 생성: " + message.getId());
 	}
 
+	static void authLoginTest(AuthService authService) {
+		LoginResponseDto response = authService.login(
+				new LoginRequestDto("woody", "woody1234")
+		);
+
+		System.out.println("로그인 성공: " + response.id());
+		System.out.println("이름: " + response.name());
+		System.out.println("이메일: " + response.email());
+	}
+
 	public static void main(String[] args) {
 		ApplicationContext context = SpringApplication.run(DiscodeitApplication.class, args);
 
@@ -37,12 +50,14 @@ public class DiscodeitApplication {
 		UserService userService = context.getBean(UserService.class);
 		ChannelService channelService = context.getBean(ChannelService.class);
 		MessageService messageService = context.getBean(MessageService.class);
+		AuthService authService = context.getBean(AuthService.class);
 
 		// 셋업
 		User user = setupUser(userService);
 		Channel channel = setupChannel(channelService);
 
 		// 테스트
+		authLoginTest(authService);
 		messageCreateTest(messageService, channel, user);
 	}
 
