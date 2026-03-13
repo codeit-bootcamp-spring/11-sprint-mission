@@ -1,13 +1,18 @@
 package com.sprint.mission.discodeit.service.basic;
 
+import com.sprint.mission.discodeit.dto.PrivateChannelCreateRequestDto;
+import com.sprint.mission.discodeit.dto.PublicChannelCreateRequestDto;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.ChannelType;
+import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.exception.ChannelNotFoundException;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
+import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.service.ChannelService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -16,10 +21,22 @@ import java.util.UUID;
 public class BasicChannelService implements ChannelService {
 
     private final ChannelRepository channelRepo;
+    private final ReadStatusRepository readStatusRepo;
 
-    public Channel create(ChannelType channelType, String name, String description) {
-        Channel channel = new Channel(channelType, name, description);
+    public Channel createPublicChannel(PublicChannelCreateRequestDto dto) {
+        Channel channel = new Channel(ChannelType.PUBLIC, dto.name(), dto.description());
         channelRepo.save(channel);
+        return channel;
+    }
+
+    public Channel createPrivateChannel(PrivateChannelCreateRequestDto dto) {
+        Channel channel = new Channel(ChannelType.PRIVATE, null, null);
+        channelRepo.save(channel);
+
+        for(UUID userId : dto.userIdList()) {
+            readStatusRepo.save(new ReadStatus(userId, channel.getId()));
+        }
+
         return channel;
     }
 
