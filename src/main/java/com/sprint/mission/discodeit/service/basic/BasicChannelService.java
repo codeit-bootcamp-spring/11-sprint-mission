@@ -7,6 +7,7 @@ import com.sprint.mission.discodeit.entity.ChannelType;
 import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.exception.ChannelNotFoundException;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
+import com.sprint.mission.discodeit.repository.MessageRepository;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.service.ChannelService;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,7 @@ import java.util.UUID;
 public class BasicChannelService implements ChannelService {
 
     private final ChannelRepository channelRepo;
+    private final MessageRepository messageRepo;
     private final ReadStatusRepository readStatusRepo;
 
     public Channel createPublicChannel(PublicChannelCreateRequestDto dto) {
@@ -55,7 +57,6 @@ public class BasicChannelService implements ChannelService {
         oldChannel.setChannelType(newChannel.getChannelType());
         oldChannel.setName(newChannel.getName());
         oldChannel.setDescription(newChannel.getDescription());
-        oldChannel.setAttachmentIds(newChannel.getAttachmentIds());
         oldChannel.update();
 
         channelRepo.save(oldChannel);

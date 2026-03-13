@@ -37,6 +37,7 @@ public class BasicMessageService implements MessageService {
         oldMessage.setContents(newMessage.getContents());
         oldMessage.setUserId(newMessage.getUserId());
         oldMessage.setChannelId(newMessage.getChannelId());
+        oldMessage.setAttachmentIds(newMessage.getAttachmentIds());
         oldMessage.update();
 
         messageRepo.save(oldMessage);

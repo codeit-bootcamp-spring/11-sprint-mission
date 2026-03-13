@@ -13,22 +13,12 @@ public class Channel extends Common{
     private ChannelType channelType;
     private String name;
     private String description;
-    private List<UUID> attachmentIds;
 
     public Channel(ChannelType channelType, String name, String description) {
         super();
         this.channelType = channelType;
         this.name = name;
         this.description = description;
-        this.attachmentIds = new ArrayList<>();
-    }
-
-    public Channel(ChannelType channelType, String name, String description, List<UUID> attachmentIds) {
-        super();
-        this.channelType = channelType;
-        this.name = name;
-        this.description = description;
-        this.attachmentIds = new ArrayList<>(attachmentIds);
     }
 
     public void setChannelType(ChannelType channelType) {
@@ -41,10 +31,6 @@ public class Channel extends Common{
 
     public void setDescription(String description) {
         this.description = description;
-    }
-
-    public void setAttachmentIds(List<UUID> attachmentIds) {
-        this.attachmentIds = new ArrayList<>(attachmentIds);
     }
 
     @Override
