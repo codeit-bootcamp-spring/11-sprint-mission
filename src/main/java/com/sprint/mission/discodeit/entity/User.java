@@ -13,14 +13,6 @@ public class User extends Common{
     private String password;
     private UUID profileId;
 
-    public User(String name, String email, String password) {
-        super();
-        this.name = name;
-        this.email = email;
-        this.password = password;
-        this.profileId = null;
-    }
-
     public User(String name, String email, String password, UUID profileId) {
         super();
         this.name = name;

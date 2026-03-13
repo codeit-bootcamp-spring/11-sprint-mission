@@ -1,8 +1,13 @@
 package com.sprint.mission.discodeit.service.basic;
 
+import com.sprint.mission.discodeit.dto.UserCreateRequestDto;
 import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.entity.UserStatus;
+import com.sprint.mission.discodeit.exception.DuplicateEmailException;
+import com.sprint.mission.discodeit.exception.DuplicateNameException;
 import com.sprint.mission.discodeit.exception.UserNotFoundException;
 import com.sprint.mission.discodeit.repository.UserRepository;
+import com.sprint.mission.discodeit.repository.UserStatusRepository;
 import com.sprint.mission.discodeit.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -15,11 +20,19 @@ import java.util.UUID;
 public class BasicUserService implements UserService {
 
     private final UserRepository userRepo;
+//    private final UserStatusRepository userStatusRepo;
 
     @Override
-    public User create(String name, String email, String password) {
-        User user = new User(name, email, password);
+    public User create(UserCreateRequestDto dto) {
+        if(userRepo.existsByName(dto.name())) throw new DuplicateNameException(dto.name());
+        if(userRepo.existsByEmail(dto.email())) throw new DuplicateEmailException(dto.email());
+
+        User user = new User(dto.name(), dto.email(), dto.password(), dto.profileId());
         userRepo.save(user);
+
+//        UserStatus userStatus = new UserStatus(user.getId());
+//        userStatusRepo.save(userStatus);
+
         return user;
     }
 

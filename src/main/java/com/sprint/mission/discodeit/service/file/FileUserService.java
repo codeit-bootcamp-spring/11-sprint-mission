@@ -1,6 +1,9 @@
 package com.sprint.mission.discodeit.service.file;
 
+import com.sprint.mission.discodeit.dto.UserCreateRequestDto;
 import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.exception.DuplicateEmailException;
+import com.sprint.mission.discodeit.exception.DuplicateNameException;
 import com.sprint.mission.discodeit.exception.UserNotFoundException;
 import com.sprint.mission.discodeit.service.UserService;
 
@@ -15,8 +18,11 @@ public class FileUserService extends FileUtil implements UserService {
     }
 
     @Override
-    public User create(String name, String email, String password) {
-        User user = new User(name, email, password);
+    public User create(UserCreateRequestDto dto) {
+        if(existsByName(dto.name())) throw new DuplicateNameException(dto.name());
+        if(existsByEmail(dto.email())) throw new DuplicateEmailException(dto.email());
+
+        User user = new User(dto.name(), dto.email(), dto.password(), dto.profileId());
         save(filePath(user.getId()), user);
         return user;
     }
@@ -51,5 +57,25 @@ public class FileUserService extends FileUtil implements UserService {
     @Override
     public void delete(User user) {
         delete(filePath(user.getId()));
+    }
+
+    public boolean existsByName(String name) {
+        List<User> userList = findAll();
+        for(User user : userList) {
+            if(user.getName().equals(name)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean existsByEmail(String email) {
+        List<User> userList = findAll();
+        for(User user : userList) {
+            if(user.getEmail().equals(email)) {
+                return true;
+            }
+        }
+        return false;
     }
 }
