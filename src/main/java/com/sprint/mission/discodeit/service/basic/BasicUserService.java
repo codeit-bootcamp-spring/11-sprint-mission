@@ -81,7 +81,12 @@ public class BasicUserService implements UserService {
     }
 
     @Override
-    public void delete(User user) {
+    public void delete(UUID id) {
+        User user = userRepo.findById(id)
+                .orElseThrow(() -> new UserNotFoundException(id));
+
+        userStatusRepo.deleteByUserId(id);
+        //binaryContentRepo.deleteByUserId(id);
         userRepo.delete(user);
     }
 }

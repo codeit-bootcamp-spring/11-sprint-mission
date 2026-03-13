@@ -13,5 +13,5 @@ public interface UserService {
     UserResponseDto findById(UUID id);
     List<UserResponseDto> findAll();
     void update(UserUpdateRequestDto dto);
-    void delete(User user);
+    void delete(UUID id);
 }

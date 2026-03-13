@@ -2,6 +2,7 @@ package com.sprint.mission.discodeit.repository.jcf;
 
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.entity.UserStatus;
+import com.sprint.mission.discodeit.exception.UserStatusNotFoundException;
 import com.sprint.mission.discodeit.repository.UserStatusRepository;
 
 import java.util.List;
@@ -22,5 +23,12 @@ public class JCFUserStatusRepository extends CommonJCFRepository<UserStatus> imp
             }
         }
         return Optional.empty();
+    }
+
+    @Override
+    public void deleteByUserId(UUID id) {
+        UserStatus userStatus = findByUserId(id)
+                .orElseThrow(() -> new UserStatusNotFoundException(id));
+        delete(userStatus);
     }
 }
