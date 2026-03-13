@@ -1,6 +1,7 @@
 package com.sprint.mission.discodeit.service.basic;
 
 import com.sprint.mission.discodeit.dto.ChannelResponseDto;
+import com.sprint.mission.discodeit.dto.ChannelUpdateRequestDto;
 import com.sprint.mission.discodeit.dto.PrivateChannelCreateRequestDto;
 import com.sprint.mission.discodeit.dto.PublicChannelCreateRequestDto;
 import com.sprint.mission.discodeit.entity.Channel;
@@ -8,6 +9,7 @@ import com.sprint.mission.discodeit.entity.ChannelType;
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.exception.ChannelNotFoundException;
+import com.sprint.mission.discodeit.exception.PrivateChannelUpdateNotAllowedException;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
@@ -98,16 +100,17 @@ public class BasicChannelService implements ChannelService {
         return response;
     }
 
-    public void update(UUID id, Channel newChannel) {
-        Channel oldChannel = channelRepo.findById(id)
-                .orElseThrow(() -> new ChannelNotFoundException(id));
+    public void update(ChannelUpdateRequestDto dto) {
+        Channel channel = channelRepo.findById(dto.channelId())
+                .orElseThrow(() -> new ChannelNotFoundException(dto.channelId()));
 
-        oldChannel.setChannelType(newChannel.getChannelType());
-        oldChannel.setName(newChannel.getName());
-        oldChannel.setDescription(newChannel.getDescription());
-        oldChannel.update();
+        if(channel.getChannelType() == ChannelType.PRIVATE) throw new PrivateChannelUpdateNotAllowedException();
 
-        channelRepo.save(oldChannel);
+        channel.setName(dto.name());
+        channel.setDescription(dto.description());
+        channel.update();
+
+        channelRepo.save(channel);
     }
 
     public void delete(Channel channel) {
