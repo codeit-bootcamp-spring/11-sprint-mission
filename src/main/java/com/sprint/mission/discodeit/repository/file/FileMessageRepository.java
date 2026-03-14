@@ -2,6 +2,7 @@ package com.sprint.mission.discodeit.repository.file;
 
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.repository.MessageRepository;
+import jakarta.websocket.OnClose;
 import org.springframework.stereotype.Repository;
 
 import java.io.*;
@@ -10,6 +11,7 @@ import java.util.*;
 @Repository
 public class FileMessageRepository implements MessageRepository {
     private final String MESSAGE_FILE = "messages.ser";
+    private final List<Message> messages = new ArrayList<>();
 
     private Map<UUID, Message> loadMessages() {
         File file = new File(MESSAGE_FILE);
@@ -61,6 +63,17 @@ public class FileMessageRepository implements MessageRepository {
         if(messages.remove(message.getId()) != null) {
             saveMessage(messages);
         }
+    }
+
+    @Override
+    public Optional<Message> findLatestMessage(UUID channelId) {
+        return messages.stream()
+                .filter(message -> message.getChannelId().equals(channelId))
+                .max(Comparator.comparing(Message::getCreatedAt));
+    }
+
+    public void deleteAllByChannelId(UUID channelId) {
+        messages.removeIf(message -> message.getChannelId().equals(channelId));
     }
 
 }

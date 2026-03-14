@@ -2,6 +2,7 @@ package com.sprint.mission.discodeit.repository.interaction;
 
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.UserStatus;
+import com.sprint.mission.discodeit.repository.UserStatusRepository;
 import org.springframework.stereotype.Repository;
 
 import java.io.*;
@@ -11,7 +12,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Repository
-public class BasicUserStatusRepository implements com.sprint.mission.discodeit.repository.UserStatusRepository {
+public class BasicUserStatusRepository implements UserStatusRepository {
     private final String STATUS_FILE = "userStatus.ser";
     private final Map<UUID, UserStatus> userStatusMap;
 
@@ -42,6 +43,7 @@ public class BasicUserStatusRepository implements com.sprint.mission.discodeit.r
 
     public void save(UserStatus status) {
         userStatusMap.put(status.getUserId(), status);
+        saveContents();
     }
 
     public Optional<UserStatus> findById(UUID id) {
@@ -53,6 +55,7 @@ public class BasicUserStatusRepository implements com.sprint.mission.discodeit.r
     public void deleteByUserId(UUID userId) {
         userStatusMap.entrySet()
                 .removeIf(entry -> entry.getValue().getUserId().equals(userId));
+        saveContents();
     }
 
 }

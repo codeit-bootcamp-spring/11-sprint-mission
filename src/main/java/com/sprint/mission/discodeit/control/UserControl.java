@@ -1,15 +1,18 @@
 //package com.sprint.mission.discodeit.control;
 //
+//
 //import com.sprint.mission.discodeit.entity.User;
-//import com.sprint.mission.discodeit.menu.UserMenu;
 //import com.sprint.mission.discodeit.service.UserService;
+//import org.springframework.web.bind.annotation.*;
 //
 //import java.util.InputMismatchException;
 //import java.util.List;
 //import java.util.Scanner;
 //import java.util.UUID;
 //
+//
 //public class UserControl {
+//
 //    public static UUID controlUserMenu(Scanner input, UserService userService) {
 //        while(true) {
 //            System.out.println("\n== 유저 관리 시스템 ==");

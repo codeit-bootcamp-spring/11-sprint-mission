@@ -35,6 +35,8 @@ public class DiscodeitApplication {
 
 	public static void main(String[] args) {
 		SpringApplication.run(DiscodeitApplication.class, args);
+
+		System.out.println("\uD83D\uDE80 디스코드잇 서버가 가동되었습니다!");
 	}
 
 	@Bean
