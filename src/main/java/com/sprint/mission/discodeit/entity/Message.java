@@ -1,5 +1,6 @@
 package com.sprint.mission.discodeit.entity;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -14,7 +15,8 @@ import java.util.List;
 import java.util.UUID;
 
 @Getter
-@RequiredArgsConstructor
+@Builder
+@AllArgsConstructor
 public class Message implements Serializable {
     private final UUID id;
     private final UUID channelId;

@@ -64,4 +64,14 @@ public class BasicBinaryContentRepository implements BinaryContentRepository {
             throw new IllegalArgumentException("존재하지 않는 콘텐츠입니다.");
         }
     }
+
+    @Override
+    public void deleteAllByMessageId(UUID id) {
+        boolean removed = binaryContentMap.values()
+                .removeIf(content -> content.getMessageId().equals(id));
+
+        if(removed) {
+            saveContents();
+        }
+    }
 }

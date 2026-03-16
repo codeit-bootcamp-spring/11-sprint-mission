@@ -10,4 +10,5 @@ public interface MessageRepository extends CrudRepository<Message, UUID> {
     void delete(Message message);
     Optional<Message> findLatestMessage(UUID channelId);
     void deleteAllByChannelId(UUID channelId);
+    List<Message> findByChannelId(UUID channelId);
 }

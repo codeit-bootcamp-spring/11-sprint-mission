@@ -39,6 +39,7 @@ public class BasicChannelService implements ChannelService {
         return savedChannel;
     }
 
+    @Override
     public Channel createPrivateChannel(PrivateChannelRequest request) {
         Channel channel = Channel.builder()
                 .type(ChannelType.PRIVATE)
