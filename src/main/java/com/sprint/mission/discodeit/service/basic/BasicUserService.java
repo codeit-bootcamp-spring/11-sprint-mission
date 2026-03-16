@@ -86,11 +86,13 @@ public class BasicUserService implements UserService {
                 .orElseThrow(() -> new UserNotFoundException(id));
 
         userStatusRepo.deleteByUserId(id);
+
         if(user.getProfileId() != null) {
             BinaryContent binaryContent = binaryContentRepo.findById(user.getProfileId())
                     .orElseThrow(() -> new BinaryContentNotFoundException(user.getProfileId()));
             binaryContentRepo.delete(binaryContent);
         }
+
         userRepo.delete(user);
     }
 }

@@ -4,12 +4,11 @@ import com.sprint.mission.discodeit.dto.ChannelResponseDto;
 import com.sprint.mission.discodeit.dto.ChannelUpdateRequestDto;
 import com.sprint.mission.discodeit.dto.PrivateChannelCreateRequestDto;
 import com.sprint.mission.discodeit.dto.PublicChannelCreateRequestDto;
-import com.sprint.mission.discodeit.entity.Channel;
-import com.sprint.mission.discodeit.entity.ChannelType;
-import com.sprint.mission.discodeit.entity.Message;
-import com.sprint.mission.discodeit.entity.ReadStatus;
+import com.sprint.mission.discodeit.entity.*;
+import com.sprint.mission.discodeit.exception.BinaryContentNotFoundException;
 import com.sprint.mission.discodeit.exception.ChannelNotFoundException;
 import com.sprint.mission.discodeit.exception.PrivateChannelUpdateNotAllowedException;
+import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
@@ -27,6 +26,7 @@ public class BasicChannelService implements ChannelService {
     private final ChannelRepository channelRepo;
     private final MessageRepository messageRepo;
     private final ReadStatusRepository readStatusRepo;
+    private final BinaryContentRepository binaryContentRepo;
 
     public ChannelResponseDto createPublicChannel(PublicChannelCreateRequestDto dto) {
         Channel channel = new Channel(ChannelType.PUBLIC, dto.name(), dto.description());
@@ -123,6 +123,11 @@ public class BasicChannelService implements ChannelService {
                 .filter(p -> (p.getChannelId().equals(id)))
                 .toList();
         for(Message message : messageList) {
+            for(UUID binaryContentId : message.getAttachmentIds()) {
+                BinaryContent binaryContent = binaryContentRepo.findById(binaryContentId)
+                        .orElseThrow(() -> new BinaryContentNotFoundException(binaryContentId));
+                binaryContentRepo.delete(binaryContent);
+            }
             messageRepo.delete(message);
         }
 
