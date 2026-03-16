@@ -28,13 +28,14 @@ public class BasicChannelService implements ChannelService {
     private final MessageRepository messageRepo;
     private final ReadStatusRepository readStatusRepo;
 
-    public Channel createPublicChannel(PublicChannelCreateRequestDto dto) {
+    public ChannelResponseDto createPublicChannel(PublicChannelCreateRequestDto dto) {
         Channel channel = new Channel(ChannelType.PUBLIC, dto.name(), dto.description());
         channelRepo.save(channel);
-        return channel;
+        return new ChannelResponseDto(channel.getId(), ChannelType.PUBLIC, channel.getName(), channel.getDescription(),
+                null, new ArrayList<>());
     }
 
-    public Channel createPrivateChannel(PrivateChannelCreateRequestDto dto) {
+    public ChannelResponseDto createPrivateChannel(PrivateChannelCreateRequestDto dto) {
         Channel channel = new Channel(ChannelType.PRIVATE, null, null);
         channelRepo.save(channel);
 
@@ -42,7 +43,8 @@ public class BasicChannelService implements ChannelService {
             readStatusRepo.save(new ReadStatus(userId, channel.getId()));
         }
 
-        return channel;
+        return new ChannelResponseDto(channel.getId(), ChannelType.PRIVATE, null, null,
+                null, dto.userIdList());
     }
 
     public ChannelResponseDto findById(UUID id) {

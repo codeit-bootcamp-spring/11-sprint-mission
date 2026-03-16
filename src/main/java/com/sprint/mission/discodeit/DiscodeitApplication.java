@@ -1,9 +1,7 @@
 package com.sprint.mission.discodeit;
 
 import com.sprint.mission.discodeit.dto.*;
-import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.Message;
-import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.service.AuthService;
 import com.sprint.mission.discodeit.service.ChannelService;
 import com.sprint.mission.discodeit.service.MessageService;
@@ -13,22 +11,26 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ApplicationContext;
 
 import java.util.ArrayList;
+import java.util.UUID;
 
 @SpringBootApplication
 public class DiscodeitApplication {
 
-	static User setupUser(UserService userService) {
-		User user = userService.create(new UserCreateRequestDto("woody", "woody@codeit.com", "woody1234", null));
-		return user;
+	static UserResponseDto setupUser(UserService userService) {
+		UserResponseDto userResponseDto = userService.create(
+				new UserCreateRequestDto("woody", "woody@codeit.com", "woody1234", null));
+		return userResponseDto;
 	}
 
-	static Channel setupChannel(ChannelService channelService) {
-		Channel channel = channelService.createPublicChannel(new PublicChannelCreateRequestDto("공지", "공지 채널입니다."));
-		return channel;
+	static ChannelResponseDto setupChannel(ChannelService channelService) {
+		ChannelResponseDto channelResponseDto = channelService.createPublicChannel(
+				new PublicChannelCreateRequestDto("공지", "공지 채널입니다."));
+		return channelResponseDto;
 	}
 
-	static void messageCreateTest(MessageService messageService, Channel channel, User author) {
-		Message message = messageService.create(new MessageCreateRequestDto("안녕하세요.", channel.getId(), author.getId(), new ArrayList<>()) );
+	static void messageCreateTest(MessageService messageService, UUID channelId, UUID authorId) {
+		Message message = messageService.create(
+				new MessageCreateRequestDto("안녕하세요.", channelId, authorId, new ArrayList<>()) );
 		System.out.println("메시지 생성: " + message.getId());
 	}
 
@@ -52,12 +54,12 @@ public class DiscodeitApplication {
 		AuthService authService = context.getBean(AuthService.class);
 
 		// 셋업
-		User user = setupUser(userService);
-		Channel channel = setupChannel(channelService);
+		UserResponseDto userResponseDto = setupUser(userService);
+		ChannelResponseDto channelResponseDto = setupChannel(channelService);
 
 		// 테스트
 		authLoginTest(authService);
-		messageCreateTest(messageService, channel, user);
+		messageCreateTest(messageService, channelResponseDto.id(), userResponseDto.id());
 	}
 
 }

@@ -28,7 +28,7 @@ public class BasicUserService implements UserService {
     private final BinaryContentRepository binaryContentRepo;
 
     @Override
-    public User create(UserCreateRequestDto dto) {
+    public UserResponseDto create(UserCreateRequestDto dto) {
         if(userRepo.existsByName(dto.name())) throw new DuplicateNameException(dto.name());
         if(userRepo.existsByEmail(dto.email())) throw new DuplicateEmailException(dto.email());
 
@@ -38,7 +38,7 @@ public class BasicUserService implements UserService {
         UserStatus userStatus = new UserStatus(user.getId());
         userStatusRepo.save(userStatus);
 
-        return user;
+        return new UserResponseDto(user.getId(), user.getName(), user.getEmail(), userStatus.passed());
     }
 
     @Override
