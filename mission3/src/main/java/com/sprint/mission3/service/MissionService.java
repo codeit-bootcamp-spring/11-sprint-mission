@@ -1,16 +1,15 @@
 package com.sprint.mission3.service;
 
 import com.sprint.mission3.repository.RepositoryInterface;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 @Service
+@RequiredArgsConstructor
+
 public class MissionService {
 
     private final RepositoryInterface repository;
-
-    public MissionService(RepositoryInterface repository) {
-        this.repository = repository;
-    }
 
     public void run() {
         System.out.println("서비스가 실행됩니다!");
