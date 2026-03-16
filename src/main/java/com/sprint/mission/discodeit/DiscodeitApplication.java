@@ -7,6 +7,7 @@ package com.sprint.mission.discodeit;
 import com.sprint.mission.discodeit.dto.*;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.ChannelType;
+import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.entity.User;
 //import com.sprint.mission.discodeit.menu.MainMenu;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
@@ -17,6 +18,7 @@ import com.sprint.mission.discodeit.repository.file.FileMessageRepository;
 import com.sprint.mission.discodeit.repository.file.FileUserRepository;
 import com.sprint.mission.discodeit.service.ChannelService;
 import com.sprint.mission.discodeit.service.MessageService;
+import com.sprint.mission.discodeit.service.ReadStatusService;
 import com.sprint.mission.discodeit.service.UserService;
 import com.sprint.mission.discodeit.service.basic.BasicChannelService;
 import com.sprint.mission.discodeit.service.basic.BasicMessageService;
@@ -27,6 +29,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Scanner;
 import java.util.UUID;
@@ -42,7 +45,7 @@ public class DiscodeitApplication {
 	public CommandLineRunner test(
 			UserService userService,
 			ChannelService channelService,
-			MessageService messageService) {
+			MessageService messageService, ReadStatusService readStatusService) {
 		return args -> {
 			System.out.println("=== 고도화 서비스 테스트 시작 ===");
 
@@ -86,6 +89,22 @@ public class DiscodeitApplication {
 				MessageResponseDto sendMessage = messageService.createMessage(messageRequest);
 				System.out.println("✅ 메시지 전송 완료 : " + sendMessage.message());
 
+				// ReadStatus 생성
+				System.out.println("\n--- ReadStatus 생성 테스트 ---");
+				ReadStatusCreateDto createDto = new ReadStatusCreateDto(newUser.id(), channel.getId());
+				readStatusService.createReadStatus(createDto);
+
+				// ReadStatus 조회 및 업데이트
+				System.out.println("\n--- ReadStatus 조회 및 업데이트 ---");
+				List<ReadStatus> statusList = readStatusService.findAllByUserId(newUser.id());
+				ReadStatus myStatus = statusList.get(0);
+				System.out.println("✅ 기존 ReadStatus : " + myStatus.getLastReadAt());
+
+				Instant now = Instant.now();
+				ReadStatusUpdateDto updateDto = new ReadStatusUpdateDto(myStatus.getId(), now);
+				ReadStatus updatedStatus = readStatusService.updateStatus(updateDto);
+				System.out.println("✅ 업데이트 된 ReadStatus : " + updatedStatus.getLastReadAt() + " 유저 : " + updatedStatus.getUserId());
+
 				// 채널 상세 조회
 				System.out.println("\n--- 채널 상세 조회 테스트 ---");
 				ChannelResponse channelDetail = channelService.readChannel(channel.getId());
@@ -106,12 +125,17 @@ public class DiscodeitApplication {
 				System.out.println("✅ 채널 업데이트 완료");
 				channelService.readChannel(channel.getId());
 
+				// ReadStatus 삭제
+				System.out.println("\n--- ReadStatus 삭제 테스트 ---");
+				readStatusService.deleteReadStatus(myStatus.getId());
+				System.out.println("✅ 읽음 상태 데이터 삭제");
+
 				// 메시지 삭제 및 채널 삭제
-				System.out.println("\n--- 메시지 및 채널 삭제 테스트");
+				System.out.println("\n--- 메시지 및 채널 삭제 테스트 ---");
 				channelService.deleteChannel(channel.getId());
 				System.out.println("❌ 채널 삭제 완료");
 			} catch (Exception e) {
-				System.out.println("테스트 중 오류 발생 : " + e.getMessage());
+				System.out.println("❌ 테스트 중 오류 발생 : " + e.getMessage());
 				e.printStackTrace();
 			}
 		};
