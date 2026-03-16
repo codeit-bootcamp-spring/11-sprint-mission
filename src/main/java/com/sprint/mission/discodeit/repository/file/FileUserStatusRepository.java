@@ -3,6 +3,7 @@ package com.sprint.mission.discodeit.repository.file;
 import com.sprint.mission.discodeit.entity.UserStatus;
 import com.sprint.mission.discodeit.exception.userstatus.UserStatusOfUserNotFoundException;
 import com.sprint.mission.discodeit.repository.UserStatusRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Repository;
 
@@ -16,8 +17,10 @@ import java.util.UUID;
         havingValue = "file"
 )
 public class FileUserStatusRepository extends CommonFileRepository<UserStatus> implements UserStatusRepository {
-    public FileUserStatusRepository() {
-        super("userstatuses", UserStatus.class);
+    public FileUserStatusRepository(
+            @Value("${discodeit.repository.file.base-dir}") String basedir
+    ) {
+        super("userstatuses", UserStatus.class, basedir);
     }
 
     @Override

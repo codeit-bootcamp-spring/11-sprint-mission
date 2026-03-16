@@ -4,3 +4,6 @@ spring:
 
 discodeit:
   repository:
+    type: file
+    file:
+      base-dir: data

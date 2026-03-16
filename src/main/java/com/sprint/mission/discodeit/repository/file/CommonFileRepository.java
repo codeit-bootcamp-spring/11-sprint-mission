@@ -15,17 +15,15 @@ import java.util.stream.Stream;
 public abstract class CommonFileRepository<T extends Common> {
 
     private Path directory;
-    private String dirName;
     private Class<T> type;
 
-    public CommonFileRepository(String dirName, Class<T> type) {
-        this.dirName = dirName;
+    public CommonFileRepository(String dirName, Class<T> type, String basedir) {
+        this.directory = Paths.get(System.getProperty("user.dir"), basedir, dirName);
         this.type = type;
         init();
     }
 
     public void init() {
-        directory = Paths.get(System.getProperty("user.dir"), "data", dirName);
         if(!Files.exists(directory)) {
             try {
                 Files.createDirectories(directory);
