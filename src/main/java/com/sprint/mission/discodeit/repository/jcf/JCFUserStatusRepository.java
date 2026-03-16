@@ -1,7 +1,7 @@
 package com.sprint.mission.discodeit.repository.jcf;
 
 import com.sprint.mission.discodeit.entity.UserStatus;
-import com.sprint.mission.discodeit.exception.userstatus.UserStatusNotFoundException;
+import com.sprint.mission.discodeit.exception.userstatus.UserStatusOfUserNotFoundException;
 import com.sprint.mission.discodeit.repository.UserStatusRepository;
 
 import java.util.List;
@@ -27,7 +27,7 @@ public class JCFUserStatusRepository extends CommonJCFRepository<UserStatus> imp
     @Override
     public void deleteByUserId(UUID id) {
         UserStatus userStatus = findByUserId(id)
-                .orElseThrow(() -> new UserStatusNotFoundException(id));
+                .orElseThrow(() -> new UserStatusOfUserNotFoundException(id));
         delete(userStatus);
     }
 }

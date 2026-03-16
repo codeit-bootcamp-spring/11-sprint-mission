@@ -1,7 +1,7 @@
 package com.sprint.mission.discodeit.repository.file;
 
 import com.sprint.mission.discodeit.entity.UserStatus;
-import com.sprint.mission.discodeit.exception.userstatus.UserStatusNotFoundException;
+import com.sprint.mission.discodeit.exception.userstatus.UserStatusOfUserNotFoundException;
 import com.sprint.mission.discodeit.repository.UserStatusRepository;
 import org.springframework.stereotype.Repository;
 
@@ -29,7 +29,7 @@ public class FileUserStatusRepository extends CommonFileRepository<UserStatus> i
     @Override
     public void deleteByUserId(UUID id) {
         UserStatus userStatus = findByUserId(id)
-                .orElseThrow(() -> new UserStatusNotFoundException(id));
+                .orElseThrow(() -> new UserStatusOfUserNotFoundException(id));
         delete(userStatus);
     }
 }

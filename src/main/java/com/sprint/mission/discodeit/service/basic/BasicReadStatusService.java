@@ -42,6 +42,10 @@ public class BasicReadStatusService implements ReadStatusService {
 
         ReadStatus readStatus = new ReadStatus(dto.userId(), dto.channelId());
         readStatusRepo.save(readStatus);
+        return toDto(readStatus);
+    }
+
+    private ReadStatusResponseDto toDto(ReadStatus readStatus) {
         return new ReadStatusResponseDto(
                 readStatus.getId(), readStatus.getUserId(), readStatus.getChannelId(), readStatus.getUpdatedAt());
     }
@@ -51,8 +55,7 @@ public class BasicReadStatusService implements ReadStatusService {
         ReadStatus readStatus = readStatusRepo.findById(id)
                 .orElseThrow(() -> new ReadStatusNotFoundException(id));
 
-        return new ReadStatusResponseDto(
-                readStatus.getId(), readStatus.getUserId(), readStatus.getChannelId(), readStatus.getUpdatedAt());
+        return toDto(readStatus);
     }
 
     @Override
@@ -60,16 +63,10 @@ public class BasicReadStatusService implements ReadStatusService {
         userRepo.findById(id)
                 .orElseThrow(() -> new UserNotFoundException(id));
 
-        List<ReadStatus> readStatusList = readStatusRepo.findAll().stream()
+        return readStatusRepo.findAll().stream()
                 .filter(p -> p.getUserId().equals(id))
+                .map(this::toDto)
                 .toList();
-
-        List<ReadStatusResponseDto> response = new ArrayList<>();
-        for(ReadStatus readStatus : readStatusList) {
-            response.add(new ReadStatusResponseDto(
-                    readStatus.getId(), readStatus.getUserId(), readStatus.getChannelId(), readStatus.getUpdatedAt()));
-        }
-        return response;
     }
 
     @Override

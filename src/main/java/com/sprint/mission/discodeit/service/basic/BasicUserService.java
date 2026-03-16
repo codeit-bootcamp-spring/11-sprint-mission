@@ -10,7 +10,7 @@ import com.sprint.mission.discodeit.exception.binarycontent.BinaryContentNotFoun
 import com.sprint.mission.discodeit.exception.user.DuplicateEmailException;
 import com.sprint.mission.discodeit.exception.user.DuplicateNameException;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
-import com.sprint.mission.discodeit.exception.userstatus.UserStatusNotFoundException;
+import com.sprint.mission.discodeit.exception.userstatus.UserStatusOfUserNotFoundException;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.repository.UserStatusRepository;
@@ -49,7 +49,7 @@ public class BasicUserService implements UserService {
         User user = userRepo.findById(id)
                 .orElseThrow(() -> new UserNotFoundException(id));
         UserStatus userStatus = userStatusRepo.findByUserId(id)
-                .orElseThrow(() -> new UserStatusNotFoundException(id));
+                .orElseThrow(() -> new UserStatusOfUserNotFoundException(id));
 
         return new UserResponseDto(user.getId(), user.getName(), user.getEmail(), userStatus.passed());
     }
@@ -61,7 +61,7 @@ public class BasicUserService implements UserService {
 
         for(User user : userList) {
             UserStatus userStatus = userStatusRepo.findByUserId(user.getId())
-                    .orElseThrow(() -> new UserStatusNotFoundException(user.getId()));
+                    .orElseThrow(() -> new UserStatusOfUserNotFoundException(user.getId()));
             userStatusList.add(new UserResponseDto(user.getId(), user.getName(), user.getEmail(), userStatus.passed()));
         }
         return userStatusList;
