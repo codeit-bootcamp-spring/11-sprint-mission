@@ -1,6 +1,10 @@
 package com.sprint.mission.discodeit.repository.file;
 
 import com.sprint.mission.discodeit.entity.Common;
+import com.sprint.mission.discodeit.exception.repository.DirectoryCreationException;
+import com.sprint.mission.discodeit.exception.repository.FileDeleteException;
+import com.sprint.mission.discodeit.exception.repository.FileLoadException;
+import com.sprint.mission.discodeit.exception.repository.FileSaveException;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -14,8 +18,8 @@ import java.util.stream.Stream;
 
 public abstract class CommonFileRepository<T extends Common> {
 
-    private Path directory;
-    private Class<T> type;
+    private final Path directory;
+    private final Class<T> type;
 
     public CommonFileRepository(String dirName, Class<T> type, String basedir) {
         this.directory = Paths.get(System.getProperty("user.dir"), basedir, dirName);
@@ -28,7 +32,7 @@ public abstract class CommonFileRepository<T extends Common> {
             try {
                 Files.createDirectories(directory);
             } catch (IOException e) {
-                throw new RuntimeException("Failed to create directory: " + directory, e);
+                throw new DirectoryCreationException(directory, e);
             }
         }
     }
@@ -45,7 +49,7 @@ public abstract class CommonFileRepository<T extends Common> {
         ) {
             oos.writeObject(obj);
         } catch (IOException e) {
-            throw new RuntimeException("Failed to save: " + path, e);
+            throw new FileSaveException(path, e);
         }
     }
 
@@ -63,7 +67,7 @@ public abstract class CommonFileRepository<T extends Common> {
             Object obj = ois.readObject();
             return Optional.of(type.cast(obj));
         } catch (IOException | ClassNotFoundException e) {
-            throw new RuntimeException("Failed to load: " + path, e);
+            throw new FileLoadException(path, e);
         }
     }
 
@@ -80,12 +84,12 @@ public abstract class CommonFileRepository<T extends Common> {
                             ) {
                                 return type.cast(ois.readObject());
                             } catch (IOException | ClassNotFoundException e) {
-                                throw new RuntimeException("Failed to load: " + path, e);
+                                throw new FileLoadException(path, e);
                             }
                         })
                         .toList();
             } catch (IOException e) {
-                throw new RuntimeException("Failed to load every " + type.getSimpleName(), e);
+                throw new FileLoadException(directory, e);
             }
         } else {
             return new ArrayList<>();
@@ -97,7 +101,7 @@ public abstract class CommonFileRepository<T extends Common> {
         try {
             Files.deleteIfExists(path);
         } catch (IOException e) {
-            throw new RuntimeException("Failed to delete: " + path, e);
+            throw new FileDeleteException(path, e);
         }
     }
 
