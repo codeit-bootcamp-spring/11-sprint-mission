@@ -23,15 +23,13 @@ import java.util.UUID;
 public class DiscodeitApplication {
 
 	static UserResponseDto setupUser(UserService userService) {
-		UserResponseDto userResponseDto = userService.create(
+		return userService.create(
 				new UserCreateRequestDto("woody", "woody@codeit.com", "woody1234", null));
-		return userResponseDto;
 	}
 
 	static ChannelResponseDto setupChannel(ChannelService channelService) {
-		ChannelResponseDto channelResponseDto = channelService.createPublicChannel(
+		return channelService.createPublicChannel(
 				new PublicChannelCreateRequestDto("공지", "공지 채널입니다."));
-		return channelResponseDto;
 	}
 
 	static void messageCreateTest(MessageService messageService, UUID channelId, UUID authorId) {
