@@ -47,6 +47,7 @@ public class BasicUserService implements UserService {
                 .orElseThrow(() -> new UserNotFoundException(id));
         UserStatus userStatus = userStatusRepo.findByUserId(id)
                 .orElseThrow(() -> new UserStatusNotFoundException(id));
+
         return new UserResponseDto(user.getId(), user.getName(), user.getEmail(), userStatus.passed());
     }
 
