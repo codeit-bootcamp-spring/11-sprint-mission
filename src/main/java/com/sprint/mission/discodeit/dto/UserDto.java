@@ -22,7 +22,7 @@ public record UserDto(
                 user.getUsername(),
                 user.getEmail(),
                 user.getPassword(),
-                status.isOnline(),
+                (status != null) && status.isOnline(),
                 status.getUpdatedAt()
         );
     }

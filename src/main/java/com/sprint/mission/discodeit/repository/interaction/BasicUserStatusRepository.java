@@ -6,10 +6,7 @@ import com.sprint.mission.discodeit.repository.UserStatusRepository;
 import org.springframework.stereotype.Repository;
 
 import java.io.*;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @Repository
 public class BasicUserStatusRepository implements UserStatusRepository {
@@ -41,17 +38,30 @@ public class BasicUserStatusRepository implements UserStatusRepository {
         }
     }
 
+    @Override
     public void save(UserStatus status) {
-        userStatusMap.put(status.getUserId(), status);
+        userStatusMap.put(status.getId(), status);
         saveContents();
     }
 
+    @Override
     public Optional<UserStatus> findById(UUID id) {
+        return Optional.ofNullable(userStatusMap.get(id));
+    }
+
+    @Override
+    public Optional<UserStatus> findByUserId(UUID userId) {
         return userStatusMap.values().stream()
-                .filter(userStatus -> userStatus.getUserId().equals(id))
+                .filter(status -> status.getUserId().equals(userId))
                 .findFirst();
     }
 
+    @Override
+    public List<UserStatus> findAll() {
+        return new ArrayList<>(userStatusMap.values());
+    }
+
+    @Override
     public void deleteByUserId(UUID userId) {
         userStatusMap.entrySet()
                 .removeIf(entry -> entry.getValue().getUserId().equals(userId));

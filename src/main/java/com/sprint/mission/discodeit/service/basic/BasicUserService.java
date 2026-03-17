@@ -53,7 +53,7 @@ public class BasicUserService implements UserService {
     public UserDto readUser(UUID id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("읽어 오려는 유저가 존재하지 않습니다."));
-        UserStatus status = userStatusRepository.findById(id)
+        UserStatus status = userStatusRepository.findByUserId(user.getId())
                 .orElseThrow(() -> new IllegalArgumentException("유저 상태 정보가 없습니다."));
 
         return UserDto.from(user, status);
@@ -63,7 +63,7 @@ public class BasicUserService implements UserService {
     public List<UserDto> allReadUser() {
         List<User> users = userRepository.findAll();
         return users.stream()
-                .map(user -> {UserStatus status = userStatusRepository.findById(user.getId())
+                .map(user -> {UserStatus status = userStatusRepository.findByUserId(user.getId())
                         .orElseThrow(() -> new IllegalArgumentException("유저가 존재하지 않습니다."));
                 return UserDto.from(user, status);
                 })
@@ -78,7 +78,7 @@ public class BasicUserService implements UserService {
             throw new InputMismatchException("패스워드가 일치하지 않습니다.");
         }
 
-        UserStatus status = userStatusRepository.findById(id).orElse(null);
+        UserStatus status = userStatusRepository.findByUserId(id).orElse(null);
         UserDto response = UserDto.from(user, status);
 
         if(user.getProfileId() != null) {

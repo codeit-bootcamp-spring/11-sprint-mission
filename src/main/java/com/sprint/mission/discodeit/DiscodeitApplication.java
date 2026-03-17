@@ -5,10 +5,7 @@ package com.sprint.mission.discodeit;
 //import com.sprint.mission.discodeit.control.MessageControl;
 //import com.sprint.mission.discodeit.control.UserControl;
 import com.sprint.mission.discodeit.dto.*;
-import com.sprint.mission.discodeit.entity.Channel;
-import com.sprint.mission.discodeit.entity.ChannelType;
-import com.sprint.mission.discodeit.entity.ReadStatus;
-import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.entity.*;
 //import com.sprint.mission.discodeit.menu.MainMenu;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
@@ -16,10 +13,7 @@ import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.repository.file.FileChannelRepository;
 import com.sprint.mission.discodeit.repository.file.FileMessageRepository;
 import com.sprint.mission.discodeit.repository.file.FileUserRepository;
-import com.sprint.mission.discodeit.service.ChannelService;
-import com.sprint.mission.discodeit.service.MessageService;
-import com.sprint.mission.discodeit.service.ReadStatusService;
-import com.sprint.mission.discodeit.service.UserService;
+import com.sprint.mission.discodeit.service.*;
 import com.sprint.mission.discodeit.service.basic.BasicChannelService;
 import com.sprint.mission.discodeit.service.basic.BasicMessageService;
 import com.sprint.mission.discodeit.service.basic.BasicUserService;
@@ -45,7 +39,7 @@ public class DiscodeitApplication {
 	public CommandLineRunner test(
 			UserService userService,
 			ChannelService channelService,
-			MessageService messageService, ReadStatusService readStatusService) {
+			MessageService messageService, ReadStatusService readStatusService, UserStatusService userStatusService) {
 		return args -> {
 			System.out.println("=== 고도화 서비스 테스트 시작 ===");
 
@@ -62,8 +56,23 @@ public class DiscodeitApplication {
 				// 유저 전체 조회
 				System.out.println("현재 등록된 유저 수 : " + userService.allReadUser());
 
-				// 유저 삭제
-				userService.deleteUser(targetId, "password12");
+				// UserStatus 생성 및 조회 테스트
+				System.out.println("\n--- UserStatus 생성 및 조회 테스트 ---");
+				UserStatus createdStatus = userStatusService.createUserStatus(new UserStatusCreateDto(newUser.id()));
+
+				UserStatus status = userStatusService.findUserStatus(newUser.id());
+				System.out.println("✅ 초기 활동 시각 : " + status.getUpdatedAt());
+
+				Thread.sleep(10);
+				userStatusService.updateUserStatus(new UserStatusUpdateDto(createdStatus.getId(), null, Instant.now()));
+				userStatusService.updateUserIdStatus(new UserStatusUpdateDto(null, newUser.id(), Instant.now()));
+
+				UserStatus updatedUserStatus = userStatusService.findUserStatus(newUser.id());
+				System.out.println("✅ 최종 갱신 시각 : " + updatedUserStatus.getUpdatedAt());
+
+				// UserStatus 전제 조회
+				System.out.println("\n--- UserStatus 전체 조회 테스트 ---");
+				userStatusService.findAllUserStatus().forEach(s -> System.out.println("유저 ID : " + s.getUserId() + ", 온라인 : " + s.isOnline()));
 
 				// 유저 전체 조회
 				System.out.println("현재 등록된 유저 수 : " + userService.allReadUser());
@@ -126,12 +135,19 @@ public class DiscodeitApplication {
 				channelService.readChannel(channel.getId());
 
 				// ReadStatus 삭제
-				System.out.println("\n--- ReadStatus 삭제 테스트 ---");
+				System.out.println("\n--- 삭제 테스트 ---");
 				readStatusService.deleteReadStatus(myStatus.getId());
 				System.out.println("✅ 읽음 상태 데이터 삭제");
 
-				// 메시지 삭제 및 채널 삭제
-				System.out.println("\n--- 메시지 및 채널 삭제 테스트 ---");
+				// UserStatus 삭제
+				userStatusService.deleteUserStatus(newUser.id());
+				System.out.println("✅ UserStatus 삭제 완료");
+
+				// User 삭제
+				userService.deleteUser(targetId, "password12");
+				System.out.println("✅ User 삭제 완료");
+
+				// 채널 삭제
 				channelService.deleteChannel(channel.getId());
 				System.out.println("❌ 채널 삭제 완료");
 			} catch (Exception e) {
