@@ -1,5 +1,6 @@
 package com.sprint.mission.discodeit.service.basic;
 
+import com.sprint.mission.discodeit.dto.request.binaryContent.CreateBinaryContentRequest;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.service.BinaryContentService;
@@ -12,11 +13,17 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class BasicBinaryContentService implements BinaryContentService {
+
     private final BinaryContentRepository binaryContentRepository;
 
     @Override
-    public BinaryContent createBinaryContent(String filename, Long size, String contentType, byte[] bytes) {
-        BinaryContent binaryContent = new BinaryContent(filename, size, contentType, bytes);
+    public BinaryContent createBinaryContent(CreateBinaryContentRequest request) {
+        BinaryContent binaryContent = new BinaryContent(
+                request.getFileName(),
+                request.getSize(),
+                request.getContentType(),
+                request.getBytes()
+        );
         binaryContentRepository.save(binaryContent);
         return binaryContent;
     }
@@ -27,8 +34,11 @@ public class BasicBinaryContentService implements BinaryContentService {
     }
 
     @Override
-    public List<BinaryContent> getAllBinaryContents() {
-        return binaryContentRepository.findAll();
+    public List<BinaryContent> findAllByIdIn(List<UUID> ids) {
+        return ids.stream()
+                .map(binaryContentRepository::findById)
+                .filter(bc -> bc != null)
+                .toList();
     }
 
     @Override

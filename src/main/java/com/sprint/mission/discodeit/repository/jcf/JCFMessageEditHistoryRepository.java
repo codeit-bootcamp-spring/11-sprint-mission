@@ -2,9 +2,17 @@ package com.sprint.mission.discodeit.repository.jcf;
 
 import com.sprint.mission.discodeit.entity.MessageEditHistory;
 import com.sprint.mission.discodeit.repository.MessageEditHistoryRepository;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.stereotype.Repository;
 
 import java.util.*;
 
+@Repository
+@ConditionalOnProperty(
+        name = "discodeit.repository.type",
+        havingValue = "jcf",
+        matchIfMissing = true  // 값이 없으면 기본으로 JCF 사용
+)
 public class JCFMessageEditHistoryRepository implements MessageEditHistoryRepository {
     private final Map<UUID, MessageEditHistory> data;
 

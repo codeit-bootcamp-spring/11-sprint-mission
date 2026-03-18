@@ -5,48 +5,53 @@ import lombok.Getter;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Getter
 public class Channel extends BaseEntity {
     private static final long serialVersionUID = 1L;
+    private ChannelType type;
     private String name;
-    private int capacity;
-    private User owner;
-    private List<User> participants;
-    private List<Message> messages;
+    private String description;
+    private UUID ownerId;
+    private List<UUID> participantIds;
 
-    public Channel(String name, int capacity, User owner) {
+
+    public Channel(String name, String description, UUID ownerId) {
         super();
+        this.type = ChannelType.PUBLIC;
         this.name = name;
-        this.capacity = capacity;
-        this.owner = owner;
-        this.participants = new ArrayList<>();
-        this.messages = new ArrayList<>();
-        this.participants.add(owner);
+        this.description = description;
+        this.ownerId = ownerId;
+        this.participantIds = new ArrayList<>();
+        this.participantIds.add(ownerId);
     }
 
-    public boolean addParticipant(User user) {
-        if (participants.size() >= capacity) {
-            return false;
-        }
-        if (!participants.contains(user)) {
-            participants.add(user);
+
+    public Channel(List<UUID> participantIds) {
+        super();
+        this.type = ChannelType.PRIVATE;
+        this.name = null;
+        this.description = null;
+        this.ownerId = null;
+        this.participantIds = new ArrayList<>(participantIds);
+    }
+
+    public boolean addParticipant(UUID userId) {
+        if (!participantIds.contains(userId)) {
+            participantIds.add(userId);
             return true;
         }
         return false;
     }
 
-    public boolean removeParticipant(User user) {
-        return participants.remove(user);
+    public boolean removeParticipant(UUID userId) {
+        return participantIds.remove(userId);
     }
 
-    public void addMessage(Message message) {
-        messages.add(message);
-    }
-
-    public void update(String name, int capacity) {
+    public void update(String name, String description) {
         this.name = name;
-        this.capacity = capacity;
+        this.description = description;
         setUpdatedAt(Instant.now());
     }
 }

@@ -1,9 +1,11 @@
 package com.sprint.mission.discodeit.service.basic;
 
-import com.sprint.mission.discodeit.entity.Channel;
+import com.sprint.mission.discodeit.dto.request.message.CreateMessageRequest;
+import com.sprint.mission.discodeit.dto.request.message.UpdateMessageRequest;
+import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.entity.MessageEditHistory;
-import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
 import com.sprint.mission.discodeit.service.MessageService;
 import lombok.RequiredArgsConstructor;
@@ -16,24 +18,60 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class BasicMessageService implements MessageService {
+
     private final MessageRepository messageRepository;
+    private final BinaryContentRepository binaryContentRepository;
 
     @Override
-    public Message sendDirectMessage(User sender, User receiver, String content) {
-        Message message = new Message(sender, receiver, content);
+    public Message createMessage(CreateMessageRequest request) {
+        // 첨부파일 저장 (선택적)
+        List<UUID> attachmentIds = new ArrayList<>();
+        if (request.getAttachments() != null && !request.getAttachments().isEmpty()) {
+            request.getAttachments().forEach(attachment -> {
+                BinaryContent binaryContent = new BinaryContent(
+                        attachment.getFileName(),
+                        attachment.getSize(),
+                        attachment.getContentType(),
+                        attachment.getBytes()
+                );
+                binaryContentRepository.save(binaryContent);
+                attachmentIds.add(binaryContent.getId());
+            });
+        }
+
+        Message message = new Message(
+                request.getContent(),
+                request.getChannelId(),
+                request.getUserId(),
+                attachmentIds
+        );
         messageRepository.save(message);
-        sender.getSentMessages().add(message);
-        receiver.getReceivedMessages().add(message);
         return message;
     }
 
     @Override
-    public Message sendChannelMessage(User sender, Channel channel, String content) {
-        Message message = new Message(sender, channel, content);
-        messageRepository.save(message);
-        sender.getSentMessages().add(message);
-        channel.addMessage(message);
-        return message;
+    public List<Message> findAllByChannelId(UUID channelId) {
+        return messageRepository.findByChannelId(channelId);
+    }
+
+    @Override
+    public void updateMessage(UUID id, UpdateMessageRequest request) {
+        Message message = messageRepository.findById(id);
+        if (message != null && !message.isDeleted()) {
+            message.update(request.getContent());
+            messageRepository.save(message);
+        }
+    }
+
+    @Override
+    public void deleteMessage(UUID id) {
+        Message message = messageRepository.findById(id);
+        if (message != null) {
+            // 첨부파일 삭제
+            message.getAttachmentIds().forEach(binaryContentRepository::deleteById);
+            message.delete();
+            messageRepository.save(message);
+        }
     }
 
     @Override
@@ -47,39 +85,9 @@ public class BasicMessageService implements MessageService {
     }
 
     @Override
-    public List<Message> getMessagesBySender(User sender) {
-        return new ArrayList<>(sender.getSentMessages());
-    }
-
-    @Override
-    public List<Message> getMessagesInChannel(Channel channel) {
-        return new ArrayList<>(channel.getMessages());
-    }
-
-    @Override
-    public void updateMessage(UUID messageId, String newContent) {
-        Message message = messageRepository.findById(messageId);
-        if (message != null && !message.isDeleted()) {
-            message.update(newContent);
-            messageRepository.save(message);
-        }
-    }
-
-    @Override
-    public void deleteMessage(UUID messageId) {
-        Message message = messageRepository.findById(messageId);
-        if (message != null) {
-            message.delete();
-            messageRepository.save(message);
-        }
-    }
-
-    @Override
     public List<MessageEditHistory> getMessageEditHistory(UUID messageId) {
         Message message = messageRepository.findById(messageId);
-        if (message == null) {
-            return new ArrayList<>();
-        }
+        if (message == null) return new ArrayList<>();
         return new ArrayList<>(message.getEditHistories());
     }
 

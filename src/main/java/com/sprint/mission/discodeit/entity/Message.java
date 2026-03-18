@@ -5,33 +5,34 @@ import lombok.Getter;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Getter
 public class Message extends BaseEntity {
     private static final long serialVersionUID = 1L;
-    private User sender;
-    private User receiver;
     private String content;
-    private Channel channel;
+    private UUID channelId;
+    private UUID authorId;
+    private List<UUID> attachmentIds;
     private List<MessageEditHistory> editHistories;
     private boolean isDeleted;
 
-    public Message(User sender, User receiver, String content) {
+    public Message(String content, UUID channelId, UUID authorId) {
         super();
-        this.sender = sender;
-        this.receiver = receiver;
         this.content = content;
-        this.channel = null;
+        this.channelId = channelId;
+        this.authorId = authorId;
+        this.attachmentIds = new ArrayList<>();
         this.editHistories = new ArrayList<>();
         this.isDeleted = false;
     }
 
-    public Message(User sender, Channel channel, String content) {
+    public Message(String content, UUID channelId, UUID authorId, List<UUID> attachmentIds) {
         super();
-        this.sender = sender;
-        this.receiver = null;
         this.content = content;
-        this.channel = channel;
+        this.channelId = channelId;
+        this.authorId = authorId;
+        this.attachmentIds = new ArrayList<>(attachmentIds);
         this.editHistories = new ArrayList<>();
         this.isDeleted = false;
     }
@@ -46,10 +47,6 @@ public class Message extends BaseEntity {
     public void delete() {
         this.isDeleted = true;
         setUpdatedAt(Instant.now());
-    }
-
-    public boolean isDM() {
-        return channel == null;
     }
 
     public void update(String content) {

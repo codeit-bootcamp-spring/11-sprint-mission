@@ -3,32 +3,33 @@ package com.sprint.mission.discodeit.entity;
 import lombok.Getter;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.UUID;
 
 @Getter
 public class User extends BaseEntity {
     private static final long serialVersionUID = 1L;
-    private String name;
+    private String username;
     private String email;
-    private List<Message> sentMessages;
-    private List<Message> receivedMessages;
-    private List<Channel> joinedChannels;
-    private List<Channel> ownedChannels;
+    private String password;
+    private UUID profileId;
 
-    public User(String name, String email) {
+    public User(String username, String email, String password, UUID profileId) {
         super();
-        this.name = name;
+        this.username = username;
         this.email = email;
-        this.sentMessages = new ArrayList<>();
-        this.receivedMessages = new ArrayList<>();
-        this.joinedChannels = new ArrayList<>();
-        this.ownedChannels = new ArrayList<>();
+        this.password = password;
+        this.profileId = profileId;
     }
 
-    public void update(String name, String email) {
-        this.name = name;
+    public void update(String username, String email, String password) {
+        this.username = username;
         this.email = email;
+        this.password = password;
+        setUpdatedAt(Instant.now());
+    }
+
+    public void updateProfile(UUID profileId) {
+        this.profileId = profileId;
         setUpdatedAt(Instant.now());
     }
 }
