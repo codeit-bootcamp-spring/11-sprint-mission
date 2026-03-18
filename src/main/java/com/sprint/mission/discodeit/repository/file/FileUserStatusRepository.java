@@ -1,6 +1,5 @@
-package com.sprint.mission.discodeit.repository.interaction;
+package com.sprint.mission.discodeit.repository.file;
 
-import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.UserStatus;
 import com.sprint.mission.discodeit.repository.UserStatusRepository;
 import org.springframework.stereotype.Repository;
@@ -9,11 +8,11 @@ import java.io.*;
 import java.util.*;
 
 @Repository
-public class BasicUserStatusRepository implements UserStatusRepository {
+public class FileUserStatusRepository implements UserStatusRepository {
     private final String STATUS_FILE = "userStatus.ser";
     private final Map<UUID, UserStatus> userStatusMap;
 
-    public BasicUserStatusRepository() {
+    public FileUserStatusRepository() {
         this.userStatusMap = loadStatus();
     }
 

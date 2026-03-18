@@ -2,5 +2,7 @@ spring:
   application:
     name: discodeit
 
-server:
-  port: 8080
+discodeit:
+  repository:
+    type: file
+    file-directory: .discodeit

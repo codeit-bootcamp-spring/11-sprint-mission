@@ -1,8 +1,6 @@
-package com.sprint.mission.discodeit.repository.interaction;
+package com.sprint.mission.discodeit.repository.file;
 
 import com.sprint.mission.discodeit.entity.BinaryContent;
-import com.sprint.mission.discodeit.entity.User;
-import com.sprint.mission.discodeit.entity.UserStatus;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import org.springframework.stereotype.Repository;
 
@@ -11,11 +9,11 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Repository
-public class BasicBinaryContentRepository implements BinaryContentRepository {
+public class FileBinaryContentRepository implements BinaryContentRepository {
     private final String CONTENT_FILE = "binaryContents.ser";
     private final Map<UUID, BinaryContent> binaryContentMap;
 
-    public BasicBinaryContentRepository() {
+    public FileBinaryContentRepository() {
         this.binaryContentMap = loadContents();
     }
 

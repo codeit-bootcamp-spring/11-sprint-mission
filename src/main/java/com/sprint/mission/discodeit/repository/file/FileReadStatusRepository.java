@@ -1,22 +1,18 @@
-package com.sprint.mission.discodeit.repository.interaction;
+package com.sprint.mission.discodeit.repository.file;
 
-import com.sprint.mission.discodeit.entity.BinaryContent;
-import com.sprint.mission.discodeit.entity.Channel;
-import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import org.springframework.stereotype.Repository;
 
 import java.io.*;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Repository
-public class BasicReadStatusRepository implements ReadStatusRepository {
+public class FileReadStatusRepository implements ReadStatusRepository {
     private final String READSTATUS_FILE = "readStatus.ser";
     private final Map<UUID, ReadStatus> readStatusMap;
 
-    public BasicReadStatusRepository() {
+    public FileReadStatusRepository() {
         this.readStatusMap = loadStatus();
     }
 

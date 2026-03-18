@@ -8,14 +8,13 @@ import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.entity.UserStatus;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
-import com.sprint.mission.discodeit.repository.interaction.BasicUserStatusRepository;
+import com.sprint.mission.discodeit.repository.file.FileUserStatusRepository;
 import com.sprint.mission.discodeit.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.InputMismatchException;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -23,7 +22,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class BasicUserService implements UserService {
     private final UserRepository userRepository;
-    private final BasicUserStatusRepository userStatusRepository;
+    private final FileUserStatusRepository userStatusRepository;
     private final BinaryContentRepository binaryContentRepository;
 
     @Override
