@@ -39,7 +39,10 @@ public class DiscodeitApplication {
 	public CommandLineRunner test(
 			UserService userService,
 			ChannelService channelService,
-			MessageService messageService, ReadStatusService readStatusService, UserStatusService userStatusService) {
+			MessageService messageService,
+			ReadStatusService readStatusService,
+			UserStatusService userStatusService,
+			BinaryContentService binaryContentService) {
 		return args -> {
 			System.out.println("=== 고도화 서비스 테스트 시작 ===");
 
@@ -56,10 +59,18 @@ public class DiscodeitApplication {
 				// 유저 전체 조회
 				System.out.println("현재 등록된 유저 수 : " + userService.allReadUser());
 
+				// BinaryContent 테스트
+				System.out.println("\n--- BinaryContent 테스트 ---");
+				byte[] profileImageData = "imageData".getBytes();
+				BinaryContent profileImage = binaryContentService.createBinaryContent(new BinaryContentCreateDto(profileImageData));
+				System.out.println("✅ 프로필 이미지 바이너리 생성완료 (ID : " + profileImage.getId() + ")");
+
+				BinaryContent findContent = binaryContentService.find(profileImage.getId());
+				System.out.println("✅ 바이너리 컨텐츠 단건조회 성공 : " + findContent.getId());
+
 				// UserStatus 생성 및 조회 테스트
 				System.out.println("\n--- UserStatus 생성 및 조회 테스트 ---");
 				UserStatus createdStatus = userStatusService.createUserStatus(new UserStatusCreateDto(newUser.id()));
-
 				UserStatus status = userStatusService.findUserStatus(newUser.id());
 				System.out.println("✅ 초기 활동 시각 : " + status.getUpdatedAt());
 
@@ -78,11 +89,11 @@ public class DiscodeitApplication {
 				System.out.println("현재 등록된 유저 수 : " + userService.allReadUser());
 
 				// 업데이트
+				System.out.println("\n--- 유저 정보 업데이트 테스트 ---");
 				byte[] image = "image-content".getBytes();
 				UserUpdateRequest updateRequest = new UserUpdateRequest("테스트_수정", "spring@spring.com", "password12", image);
 				userService.updateUser(newUser.id(), updateRequest);
 
-				// 유저 조회
 				UserDto updateUser = userService.readUser(newUser.id());
 				System.out.println("수정된 이름 : " + updateUser.name() + ", 수정된 이메일 : " + updateUser.email());
 
@@ -92,11 +103,20 @@ public class DiscodeitApplication {
 				Channel channel = channelService.createPublicChannel(publicChannelRequest);
 				System.out.println("✅ 공개 채널 생성 완료 : " + channel.getName());
 
+				// 메시지에 첨부할 바이너리 생성
+				byte[] attachmentData = "attachmentContent".getBytes();
+				BinaryContent attachment = binaryContentService.createBinaryContent(new BinaryContentCreateDto(attachmentData));
+
 				// 메시지 전송
 				System.out.println("\n--- 메시지 생성 테스트 ---");
-				CreateMessageRequest messageRequest = new CreateMessageRequest(channel.getId(), newUser.id(), "안녕하세요!", List.of());
+				CreateMessageRequest messageRequest = new CreateMessageRequest(channel.getId(), newUser.id(), "안녕하세요!", List.of(attachment.getId()));
 				MessageResponseDto sendMessage = messageService.createMessage(messageRequest);
 				System.out.println("✅ 메시지 전송 완료 : " + sendMessage.message());
+
+				// MessageId 연동 결과 확인
+				BinaryContent linkedContent = binaryContentService.find(attachment.getId());
+				System.out.println("✅ 바이너리 MessageId 연동 : " + (linkedContent.getMessageId() != null));
+				System.out.println("✅ 연결된 MessageId : " + linkedContent.getMessageId());
 
 				// ReadStatus 생성
 				System.out.println("\n--- ReadStatus 생성 테스트 ---");
@@ -134,6 +154,11 @@ public class DiscodeitApplication {
 				System.out.println("✅ 채널 업데이트 완료");
 				channelService.readChannel(channel.getId());
 
+				System.out.println("\n--- 전체 데이터 삭제 테스트");
+
+				binaryContentService.deleteBinaryContent(attachment.getId());
+				System.out.println("✅ 첨부파일 바이너리 삭제 완료");
+
 				// ReadStatus 삭제
 				System.out.println("\n--- 삭제 테스트 ---");
 				readStatusService.deleteReadStatus(myStatus.getId());
@@ -150,6 +175,8 @@ public class DiscodeitApplication {
 				// 채널 삭제
 				channelService.deleteChannel(channel.getId());
 				System.out.println("❌ 채널 삭제 완료");
+
+				System.out.println("\n=== 모든 테스트 정상 종료 ===");
 			} catch (Exception e) {
 				System.out.println("❌ 테스트 중 오류 발생 : " + e.getMessage());
 				e.printStackTrace();

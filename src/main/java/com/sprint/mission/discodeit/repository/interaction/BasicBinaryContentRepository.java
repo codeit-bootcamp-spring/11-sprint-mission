@@ -7,10 +7,8 @@ import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import org.springframework.stereotype.Repository;
 
 import java.io.*;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Repository
 public class BasicBinaryContentRepository implements BinaryContentRepository {
@@ -54,6 +52,13 @@ public class BasicBinaryContentRepository implements BinaryContentRepository {
         return binaryContentMap.values().stream()
                 .filter(content -> content.getId().equals(id))
                 .findFirst();
+    }
+
+    @Override
+    public List<BinaryContent> findAllById(Collection<UUID> ids) {
+        return binaryContentMap.values().stream()
+                .filter(content -> ids.contains(content.getId()))
+                .collect(Collectors.toList());
     }
 
     @Override
