@@ -4,3 +4,8 @@ spring:
 
 server:
   port: 8081
+
+discodeit:
+  repository:
+    type: file   # jcf | file
+    file-directory: .discodeit

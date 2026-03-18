@@ -1,10 +1,14 @@
 package com.sprint.mission.discodeit.service.basic;
 
-import com.sprint.mission.discodeit.entity.Domain.Message;
+import com.sprint.mission.discodeit.entity.BinaryContent;
+import com.sprint.mission.discodeit.entity.Message;
+import com.sprint.mission.discodeit.dto.message.MessageCreateRequest;
+import com.sprint.mission.discodeit.dto.message.MessageUpdateRequest;
+import com.sprint.mission.discodeit.repository.BinaryContentRepository;
+import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
-import com.sprint.mission.discodeit.service.ChannelService;
+import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.MessageService;
-import com.sprint.mission.discodeit.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -15,54 +19,68 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class BasicMessageService implements MessageService {
     private final MessageRepository messageRepository;
-    private final UserService userService;
+    private final ChannelRepository channelRepository;
+    private final UserRepository userRepository;
+    private final BinaryContentRepository binaryContentRepository;
 
     @Override
-    public UUID create(Message message) {
-        if (message == null) {
+    public Message create(MessageCreateRequest request) {
+        if (request == null) {
             throw new IllegalArgumentException("메세지가 null입니다.");
         }
-        if (message.getMessageContent() == null || message.getMessageContent().isBlank()) {
+        if (request.getContent() == null || request.getContent().isBlank()) {
             throw new IllegalArgumentException("메세지 내용이 null이거나 blank입니다.");
         }
-        if (message.getMessageSender() == null) {
-            throw new IllegalArgumentException("sender가 null입니다.");
-        }
-        if (message.getMessageReceiver() == null) {
-            throw new IllegalArgumentException("receiver가 null입니다.");
-        }
-        if(userService.read(message.getMessageSender().getId()) == null){
+
+        if (userRepository.read(request.getAuthorId()) == null) {
             throw new IllegalArgumentException("존재하지 않는 유저입니다.");
         }
-        if (userService.read(message.getMessageReceiver().getId()) == null) {
-            throw new IllegalArgumentException("존재하지 않는 유저입니다.");
+
+        if (request.getReceiverId() != null && userRepository.read(request.getReceiverId()) == null) {
+            throw new IllegalArgumentException("존재하지 않는 수신자입니다.");
         }
-        return messageRepository.create(message);
+
+        if (request.getChannelId() != null && channelRepository.read(request.getChannelId()) == null) {
+            throw new IllegalArgumentException("존재하지 않는 채널입니다.");
+        }
+
+        Message message = new Message(request.getContent(), request.getChannelId(), request.getAuthorId(), request.getReceiverId());
+        messageRepository.create(message);
+
+        if (request.getFileName() != null) {
+            BinaryContent binaryContent = BinaryContent.forMessage(message.getId(), request.getFileName(), request.getFileContent(), request.getContentType());
+            binaryContentRepository.create(binaryContent);
+        }
+        return message;
     }
 
     @Override
     public Message read(UUID id) {
-        return messageRepository.read(id);
-    }
-
-    @Override
-    public List<Message> readAll() {
-        return messageRepository.readAll();
-    }
-
-    @Override
-    public void update(UUID id, String messageContent) {
         Message message = messageRepository.read(id);
         if (message == null) {
             throw new IllegalArgumentException("존재하지 않는 메세지입니다.");
         }
-        if (messageContent == null) {
+        return message;
+    }
+
+    @Override
+    public List<Message> readAllByChannelId(UUID channelId) {
+        return messageRepository.readAllByChannelId(channelId);
+    }
+
+    @Override
+    public void update(MessageUpdateRequest request) {
+        Message message = messageRepository.read(request.getMessageId());
+        if (message == null) {
+            throw new IllegalArgumentException("존재하지 않는 메세지입니다.");
+        }
+        if (request.getMessageContent() == null) {
             throw new IllegalArgumentException("메세지 내용이 null입니다.");
         }
-        if (messageContent.isBlank()) {
+        if (request.getMessageContent().isBlank()) {
             throw new IllegalArgumentException("메세지 내용이 blank입니다.");
         }
-        message.updateContent(messageContent);
+        message.updateContent(request.getMessageContent());
         messageRepository.create(message);
     }
 
@@ -72,6 +90,7 @@ public class BasicMessageService implements MessageService {
         if (message == null) {
             throw new IllegalArgumentException("존재하지 않는 메세지입니다.");
         }
+        binaryContentRepository.deleteByMessageId(id);
         messageRepository.delete(id);
     }
 }

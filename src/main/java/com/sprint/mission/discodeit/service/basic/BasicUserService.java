@@ -1,11 +1,19 @@
 package com.sprint.mission.discodeit.service.basic;
 
-import com.sprint.mission.discodeit.entity.Domain.User;
+import com.sprint.mission.discodeit.entity.BinaryContent;
+import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.entity.UserStatus;
+import com.sprint.mission.discodeit.dto.user.UserCreateRequest;
+import com.sprint.mission.discodeit.dto.user.UserResponse;
+import com.sprint.mission.discodeit.dto.user.UserUpdateRequest;
+import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
+import com.sprint.mission.discodeit.repository.UserStatusRepository;
 import com.sprint.mission.discodeit.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -13,55 +21,91 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class BasicUserService implements UserService {
     private final UserRepository userRepository;
+    private final UserStatusRepository userStatusRepository;
+    private final BinaryContentRepository binaryContentRepository;
 
     @Override
-    public UUID create(User user) {
-        if (user == null) {
-            throw new IllegalArgumentException("유저가 null입니다.");
+    public UserResponse create(UserCreateRequest request) {
+        if (request.getUserName() == null || request.getUserName().isBlank()) {
+            throw new IllegalArgumentException("유저명이 null이거나 blank입니다.");
         }
-        if (user.getUserName() == null) {
-            throw new IllegalArgumentException("유저명이 null입니다.");
+        if (request.getUserEmail() == null || request.getUserEmail().isBlank()) {
+            throw new IllegalArgumentException("email이 null이거나 blank입니다.");
         }
-        if (user.getUserName().isBlank()) {
-            throw new IllegalArgumentException("유저명이 blank입니다.");
-        }
-        boolean isDuplicate = userRepository.readAll().stream()
-                .anyMatch(u -> u.getUserName().equals(user.getUserName()));
-        if (isDuplicate) {
+
+        boolean isDuplicateName = userRepository.readAll().stream()
+                .anyMatch(u -> u.getUserName().equals(request.getUserName()));
+        boolean isDuplicateEmail = userRepository.readAll().stream()
+                .anyMatch(u -> u.getUserEmail().equals(request.getUserEmail()));
+        if (isDuplicateName) {
             throw new IllegalArgumentException("이미 존재하는 유저입니다.");
         }
-        return userRepository.create(user);
+        if (isDuplicateEmail) {
+            throw new IllegalArgumentException("이미 존재하는 email입니다.");
+        }
+
+        User user = new User(request.getUserName(), request.getUserEmail(), request.getUserPassword());
+        userRepository.create(user);
+
+        if (request.getFileName() != null) {
+            BinaryContent binaryContent = BinaryContent.forProfile(user.getId(), request.getFileName(), request.getFileContent(),request.getContentType());
+            binaryContentRepository.create(binaryContent);
+        }
+
+        UserStatus userStatus = new UserStatus(user.getId(), Instant.now());
+        userStatusRepository.create(userStatus);
+
+        return new UserResponse(user.getId(), user.getUserName(), user.getUserEmail(), userStatus.isOnline());
     }
 
     @Override
-    public User read(UUID id) {
-        return userRepository.read(id);
-    }
-
-    @Override
-    public List<User> readAll() {
-        return userRepository.readAll();
-    }
-
-    @Override
-    public void update(UUID id, String userName, String userNickname) {
+    public UserResponse read(UUID id) {
         User user = userRepository.read(id);
-        if (user == null) {
-            throw new IllegalArgumentException("존재하지 않는 유저입니다.");
+        if(user == null) throw new IllegalArgumentException("존재하지 않는 유저입니다.");
+        UserStatus userStatus = userStatusRepository.readByUserId(id);
+        return new UserResponse(user.getId(), user.getUserName(), user.getUserEmail(), userStatus.isOnline());
+    }
+
+    @Override
+    public List<UserResponse> readAll() {
+        return userRepository.readAll().stream()
+                .map(user -> {
+                    UserStatus userStatus = userStatusRepository.readByUserId(user.getId());
+                    return new UserResponse(user.getId(), user.getUserName(), user.getUserEmail(), userStatus.isOnline());
+                })
+                .toList();
+
+    }
+
+    @Override
+    public void update(UserUpdateRequest request) {
+        User user = userRepository.read(request.getId());
+        if (user == null) throw new IllegalArgumentException("존재하지 않는 유저입니다.");
+
+        if (request.getUserName() == null || request.getUserName().isBlank()) {
+            throw new IllegalArgumentException("유저명이 null이거나 blank입니다.");
         }
-        if (userName == null) {
-            throw new IllegalArgumentException("유저명이 null입니다.");
+        if (request.getUserEmail() == null || request.getUserEmail().isBlank()) {
+            throw new IllegalArgumentException("email이 null이거나 blank입니다.");
         }
-        if (userName.isBlank()) {
-            throw new IllegalArgumentException("유저명이 blank입니다.");
+
+        boolean isDuplicateName = userRepository.readAll().stream()
+                .filter(u -> !u.getId().equals(request.getId()))
+                .anyMatch(u -> u.getUserName().equals(request.getUserName()));
+        if (isDuplicateName) throw new IllegalArgumentException("이미 존재하는 유저입니다.");
+
+        boolean isDuplicateEmail = userRepository.readAll().stream()
+                .filter(u -> !u.getId().equals(request.getId()))
+                .anyMatch(u -> u.getUserEmail().equals(request.getUserEmail()));
+        if (isDuplicateEmail) throw new IllegalArgumentException("이미 존재하는 email입니다.");
+
+        if(request.getFileName() != null){
+            binaryContentRepository.deleteByUserId(user.getId());
+            BinaryContent binaryContent = BinaryContent.forProfile(user.getId(), request.getFileName(), request.getFileContent(),request.getContentType());
+            binaryContentRepository.create(binaryContent);
         }
-        boolean isDuplicate = userRepository.readAll().stream()
-                .filter(u -> !u.getId().equals(id))
-                .anyMatch(u -> u.getUserName().equals(userName));
-        if (isDuplicate) {
-            throw new IllegalArgumentException("이미 존재하는 유저입니다.");
-        }
-        user.updateUserName(userName, userNickname);
+
+        user.updateUser(request.getUserName(), request.getUserEmail(), request.getUserPassword());
         userRepository.create(user);
     }
 
@@ -71,6 +115,8 @@ public class BasicUserService implements UserService {
         if (user == null) {
             throw new IllegalArgumentException("존재하지 않는 유저입니다.");
         }
+        binaryContentRepository.deleteByUserId(id);
+        userStatusRepository.delete(id);
         userRepository.delete(id);
     }
 }
