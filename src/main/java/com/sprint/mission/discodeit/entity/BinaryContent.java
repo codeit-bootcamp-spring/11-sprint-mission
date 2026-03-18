@@ -25,6 +25,15 @@ public class BinaryContent implements Serializable {
         this.contentType = contentType;
     }
 
+    public void validateService() {
+        if (this.fileName == null || this.fileName.isBlank()) {
+            throw new IllegalArgumentException("파일명이 null이거나 blank입니다.");
+        }
+        if (this.content == null) {
+            throw new IllegalArgumentException("파일 데이터가 null입니다.");
+        }
+    }
+
     // 프로필 이미지
     public static BinaryContent forProfile(UUID userId, String fileName, byte[] content, String contentType){
         BinaryContent binaryContent = new BinaryContent(fileName, content, contentType);

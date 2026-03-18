@@ -15,6 +15,7 @@ import java.util.UUID;
 @ConditionalOnProperty(name = "discodeit.repository.type", havingValue = "file")
 public class FileUserStatusRepository implements UserStatusRepository {
     private Map<UUID, UserStatus> data = new HashMap<>();
+    private Map<UUID, UserStatus> data_at = new HashMap<>();
 
     private void saveToFile() {
         File change = new File("UserStatus.ser");
@@ -75,7 +76,19 @@ public class FileUserStatusRepository implements UserStatusRepository {
 
     @Override
     public void delete(UUID userId){
+        data_at.put(userId, data.get(userId));
         data.remove(userId);
+        saveToFile();
+    }
+
+    @Override
+    public void restore(UUID userId) {
+        // data_at에서 복구
+        if (data_at == null || data_at.get(userId) == null) {
+            throw new IllegalArgumentException("복구할 UserStatus가 없습니다.");
+        }
+        data.put(userId, data_at.get(userId));
+        data_at.remove(userId);
         saveToFile();
     }
 }

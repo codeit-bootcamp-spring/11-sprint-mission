@@ -3,6 +3,7 @@ package com.sprint.mission.discodeit.service.basic;
 import com.sprint.mission.discodeit.entity.UserStatus;
 import com.sprint.mission.discodeit.dto.userStatus.UserStatusCreateRequest;
 import com.sprint.mission.discodeit.dto.userStatus.UserStatusUpdateRequest;
+import com.sprint.mission.discodeit.exception.UserStatusNotFoundException;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.repository.UserStatusRepository;
 import com.sprint.mission.discodeit.service.UserStatusService;
@@ -35,7 +36,7 @@ public class BasicUserStatusService implements UserStatusService {
     public UserStatus read(UUID id){
         UserStatus userStatus = userStatusRepository.readByUserId(id);
         if(userStatus ==null){
-            throw new IllegalArgumentException("존재하지 않는 UserStatus입니다.");
+            throw new UserStatusNotFoundException(id);
         }
         return userStatus;
     }
@@ -49,7 +50,7 @@ public class BasicUserStatusService implements UserStatusService {
     public void update(UserStatusUpdateRequest request){
         UserStatus userStatus = userStatusRepository.readByUserId(request.getUserId());
         if(userStatus ==null){
-            throw new IllegalArgumentException("존재하지 않는 UserStatus입니다.");
+            throw new UserStatusNotFoundException(request.getUserId());
         }
         userStatus.updateLastOnlineAt(request.getLastOnlineAt());
         userStatusRepository.update(request.getUserId(), request.getLastOnlineAt());

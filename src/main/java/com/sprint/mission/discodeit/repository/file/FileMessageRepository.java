@@ -60,10 +60,18 @@ public class FileMessageRepository implements MessageRepository {
         return new ArrayList<>(data.values());
     }
 
+    @Override
     public List<Message> readAllByChannelId(UUID channelId){
         return data.values().stream()
                 .filter(message -> message.getChannelId().equals(channelId))
                 .toList();
+    }
+
+    @Override
+    public Message update(Message message) {
+        data.put(message.getId(), message);
+        saveToFile();
+        return message;
     }
 
 
@@ -83,4 +91,5 @@ public class FileMessageRepository implements MessageRepository {
     public String toString() {
         return data.toString();
     }
+
 }

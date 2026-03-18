@@ -12,6 +12,8 @@ public interface ChannelRepository {
 
     List<Channel> readAll();
 
+    Channel update(Channel channel);
+
     void delete(UUID id);
 
     void restore(UUID id);

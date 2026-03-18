@@ -13,6 +13,8 @@ public interface MessageRepository {
     List<Message> readAll();
     List<Message> readAllByChannelId(UUID channelId);
 
+    Message update(Message message);
+
     void delete(UUID id);
     void deleteAllByChannelId(UUID channelId);  // 추가
 }

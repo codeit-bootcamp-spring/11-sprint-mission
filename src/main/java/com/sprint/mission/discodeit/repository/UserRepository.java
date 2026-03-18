@@ -14,5 +14,7 @@ public interface UserRepository {
 
     void delete(UUID id);
 
+    User update(User user);
+
     void restore(UUID id);
 }

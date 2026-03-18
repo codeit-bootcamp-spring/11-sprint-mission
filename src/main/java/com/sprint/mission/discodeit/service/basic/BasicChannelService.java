@@ -7,6 +7,7 @@ import com.sprint.mission.discodeit.dto.channel.ChannelResponse;
 import com.sprint.mission.discodeit.dto.channel.ChannelUpdateRequest;
 import com.sprint.mission.discodeit.dto.channel.PrivateChannelCreateRequest;
 import com.sprint.mission.discodeit.dto.channel.PublicChannelCreateRequest;
+import com.sprint.mission.discodeit.exception.ChannelNotFoundException;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
@@ -30,13 +31,6 @@ public class BasicChannelService implements ChannelService {
 
     @Override
     public ChannelResponse createPublicChannel(PublicChannelCreateRequest request) {
-        if (request == null) {
-            throw new IllegalArgumentException("채널이 null입니다.");
-        }
-        if (request.getChannelName() == null || request.getChannelName().isBlank()) {
-            throw new IllegalArgumentException("채널 명이 null이거나 blank입니다.");
-        }
-
         boolean isDuplicate = channelRepository.readAll().stream()
                 .anyMatch(c -> c.getChannelName().equals(request.getChannelName()));
         if (isDuplicate) {
@@ -44,7 +38,7 @@ public class BasicChannelService implements ChannelService {
         }
 
         Channel channel = new Channel(request.getChannelName(), request.getChannelDescription(), PUBLIC);
-
+        channel.validateService();
         channelRepository.create(channel);
         return new ChannelResponse(channel.getId(), channel.getChannelName(), channel.getChannelDescription(), null, null);
 
@@ -68,7 +62,7 @@ public class BasicChannelService implements ChannelService {
     public ChannelResponse read(UUID id) {
         Channel channel = channelRepository.read(id);
         if (channel == null) {
-            throw new IllegalArgumentException("존재하지 않는 채널입니다.");
+            throw new ChannelNotFoundException(id);
         }
 
         Instant lastMessageAt = messageRepository.readAllByChannelId(id).stream()
@@ -111,13 +105,10 @@ public class BasicChannelService implements ChannelService {
     public void update(ChannelUpdateRequest request) {
         Channel channel = channelRepository.read(request.getChannelId());
         if (channel == null) {
-            throw new IllegalArgumentException("존재하지 않는 채널입니다.");
+            throw new ChannelNotFoundException(request.getChannelId());
         }
         if (channel.getChannelType() == ChannelType.PRIVATE) {
             throw new IllegalArgumentException("PRIVATE 채널은 수정이 불가합니다.");
-        }
-        if (request.getChannelName() == null || request.getChannelName().isBlank()) {
-            throw new IllegalArgumentException("채널명이 null이거나 blank입니다.");
         }
         boolean isDuplicate = channelRepository.readAll().stream()
                 .filter(c -> !c.getId().equals(request.getChannelId()))
@@ -127,6 +118,7 @@ public class BasicChannelService implements ChannelService {
             throw new IllegalArgumentException("이미 존재하는 채널명입니다.");
         }
         channel.updateChannel(request.getChannelName(), request.getChannelDescription());
+        channel.validateService();
         channelRepository.create(channel);
     }
 
@@ -134,10 +126,15 @@ public class BasicChannelService implements ChannelService {
     public void delete(UUID id) {
         Channel channel = channelRepository.read(id);
         if (channel == null) {
-            throw new IllegalArgumentException("존재하지 않는 채널입니다.");
+            throw new ChannelNotFoundException(id);
         }
         messageRepository.deleteAllByChannelId(id);
         readStatusRepository.deleteByChannelId(id);
         channelRepository.delete(id);
+    }
+
+    @Override
+    public void restore(UUID id) {
+        channelRepository.restore(id);
     }
 }

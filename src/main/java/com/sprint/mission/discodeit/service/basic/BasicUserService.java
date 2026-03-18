@@ -6,6 +6,7 @@ import com.sprint.mission.discodeit.entity.UserStatus;
 import com.sprint.mission.discodeit.dto.user.UserCreateRequest;
 import com.sprint.mission.discodeit.dto.user.UserResponse;
 import com.sprint.mission.discodeit.dto.user.UserUpdateRequest;
+import com.sprint.mission.discodeit.exception.UserNotFoundException;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.repository.UserStatusRepository;
@@ -26,13 +27,6 @@ public class BasicUserService implements UserService {
 
     @Override
     public UserResponse create(UserCreateRequest request) {
-        if (request.getUserName() == null || request.getUserName().isBlank()) {
-            throw new IllegalArgumentException("유저명이 null이거나 blank입니다.");
-        }
-        if (request.getUserEmail() == null || request.getUserEmail().isBlank()) {
-            throw new IllegalArgumentException("email이 null이거나 blank입니다.");
-        }
-
         boolean isDuplicateName = userRepository.readAll().stream()
                 .anyMatch(u -> u.getUserName().equals(request.getUserName()));
         boolean isDuplicateEmail = userRepository.readAll().stream()
@@ -45,6 +39,7 @@ public class BasicUserService implements UserService {
         }
 
         User user = new User(request.getUserName(), request.getUserEmail(), request.getUserPassword());
+        user.validateService();
         userRepository.create(user);
 
         if (request.getFileName() != null) {
@@ -61,7 +56,7 @@ public class BasicUserService implements UserService {
     @Override
     public UserResponse read(UUID id) {
         User user = userRepository.read(id);
-        if(user == null) throw new IllegalArgumentException("존재하지 않는 유저입니다.");
+        if(user == null) throw new UserNotFoundException(id);
         UserStatus userStatus = userStatusRepository.readByUserId(id);
         return new UserResponse(user.getId(), user.getUserName(), user.getUserEmail(), userStatus.isOnline());
     }
@@ -80,14 +75,7 @@ public class BasicUserService implements UserService {
     @Override
     public void update(UserUpdateRequest request) {
         User user = userRepository.read(request.getId());
-        if (user == null) throw new IllegalArgumentException("존재하지 않는 유저입니다.");
-
-        if (request.getUserName() == null || request.getUserName().isBlank()) {
-            throw new IllegalArgumentException("유저명이 null이거나 blank입니다.");
-        }
-        if (request.getUserEmail() == null || request.getUserEmail().isBlank()) {
-            throw new IllegalArgumentException("email이 null이거나 blank입니다.");
-        }
+        if (user == null) throw new UserNotFoundException(request.getId());
 
         boolean isDuplicateName = userRepository.readAll().stream()
                 .filter(u -> !u.getId().equals(request.getId()))
@@ -106,17 +94,24 @@ public class BasicUserService implements UserService {
         }
 
         user.updateUser(request.getUserName(), request.getUserEmail(), request.getUserPassword());
-        userRepository.create(user);
+        user.validateService();
+        userRepository.update(user);
     }
 
     @Override
     public void delete(UUID id) {
         User user = userRepository.read(id);
         if (user == null) {
-            throw new IllegalArgumentException("존재하지 않는 유저입니다.");
+            throw new UserNotFoundException(id);
         }
         binaryContentRepository.deleteByUserId(id);
         userStatusRepository.delete(id);
         userRepository.delete(id);
+    }
+
+    @Override
+    public void restore(UUID id) {
+        userRepository.restore(id);
+        userStatusRepository.restore(id);
     }
 }

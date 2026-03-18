@@ -16,4 +16,6 @@ public interface UserStatusRepository {
     UserStatus update(UUID userId, Instant lastOnlineAt);
 
     void delete(UUID userId);
+
+    void restore(UUID id);
 }

@@ -17,6 +17,9 @@ import com.sprint.mission.discodeit.dto.user.UserCreateRequest;
 import com.sprint.mission.discodeit.dto.user.UserResponse;
 import com.sprint.mission.discodeit.dto.user.UserUpdateRequest;
 import com.sprint.mission.discodeit.dto.userStatus.UserStatusUpdateRequest;
+import com.sprint.mission.discodeit.exception.ChannelNotFoundException;
+import com.sprint.mission.discodeit.exception.MessageNotFoundException;
+import com.sprint.mission.discodeit.exception.UserNotFoundException;
 import com.sprint.mission.discodeit.service.*;
 import org.springframework.context.ApplicationContext;
 import org.springframework.boot.SpringApplication;
@@ -54,7 +57,6 @@ public class DiscodeitApplication {
         System.out.println("\n===== Auth 테스트 =====");
         try {
             authService.login(new LoginRequest("정수용수정", "틀린비밀번호"));
-            System.out.println("로그인 성공 (이건 나오면 안됨)");
         } catch (IllegalArgumentException e) {
             System.out.println("로그인 실패: " + e.getMessage());
         }
@@ -78,6 +80,11 @@ public class DiscodeitApplication {
 
         channelService.update(new ChannelUpdateRequest(publicChannel.getChannelId(), "수정된PUBLIC채널", "수정된PUBLIC채널"));
         System.out.println("채널 수정: " + channelService.read(publicChannel.getChannelId()).getChannelName());
+
+        // ===== readAllByUserId 테스트 =====
+        System.out.println("\n===== readAllByUserId 테스트 =====");
+        channelService.readAllByUserId(user1.getId()).forEach(c ->
+                System.out.println("채널: " + (c.getChannelName() != null ? c.getChannelName() : "PRIVATE 채널")));
 
         // ===== ReadStatus 테스트 =====
         System.out.println("\n===== ReadStatus 테스트 =====");
@@ -114,8 +121,8 @@ public class DiscodeitApplication {
         messageService.delete(message.getId());
         System.out.println("메시지 삭제 완료");
         try {
-            messageService.read(message.getId());
-        } catch (IllegalArgumentException e) {
+                messageService.read(message.getId());
+        } catch (MessageNotFoundException e) {
             System.out.println("메시지 삭제 확인: " + e.getMessage());
         }
 
@@ -123,7 +130,7 @@ public class DiscodeitApplication {
         System.out.println("채널 삭제 완료");
         try {
             channelService.read(publicChannel.getChannelId());
-        } catch (IllegalArgumentException e) {
+        } catch (ChannelNotFoundException e) {
             System.out.println("채널 삭제 확인: " + e.getMessage());
         }
 
@@ -131,8 +138,17 @@ public class DiscodeitApplication {
         System.out.println("유저 삭제 완료");
         try {
             userService.read(user1.getId());
-        } catch (IllegalArgumentException e) {
+        } catch (UserNotFoundException e) {
             System.out.println("유저 삭제 확인: " + e.getMessage());
         }
+
+        // ===== Restore 테스트 =====
+        System.out.println("\n===== Restore 테스트 =====");
+        userService.restore(user1.getId());
+        System.out.println("유저 복구 완료: " + userService.read(user1.getId()).getUserName());
+
+        channelService.restore(publicChannel.getChannelId());
+        System.out.println("채널 복구 완료: " + channelService.read(publicChannel.getChannelId()).getChannelName());
+
     }
 }

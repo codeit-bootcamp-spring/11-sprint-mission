@@ -24,6 +24,12 @@ public class Channel extends BaseEntity implements Serializable {
         updateTimestamp();
     }
 
+    public void validateService() {
+        if (this.channelName == null || this.channelName.isBlank()) {
+            throw new IllegalArgumentException("채널명이 null이거나 blank입니다.");
+        }
+    }
+
     @Override
     public String toString() {
         return

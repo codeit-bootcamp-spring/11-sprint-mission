@@ -20,4 +20,6 @@ public interface ChannelService {
     void update(ChannelUpdateRequest request);
 
     void delete(UUID id);
+
+    void restore(UUID id);
 }

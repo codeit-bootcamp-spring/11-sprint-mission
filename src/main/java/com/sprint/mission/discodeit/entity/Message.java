@@ -26,6 +26,12 @@ public class Message extends BaseEntity implements Serializable {
         updateTimestamp();
     }
 
+    public void validateService(){
+        if (this.messageContent == null || this.messageContent.isBlank()) {
+            throw new IllegalArgumentException("메세지 내용이 null이거나 blank입니다.");
+        }
+    }
+
     @Override
     public String toString() {
         return "Message ---- [" +

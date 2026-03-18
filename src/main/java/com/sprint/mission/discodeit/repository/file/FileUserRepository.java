@@ -70,6 +70,12 @@ public class FileUserRepository implements UserRepository {
     }
 
     @Override
+    public User update(User user) {
+        saveToFile();  // create랑 동일한 로직
+        return user;
+    }
+
+    @Override
     public void restore(UUID id) {
         if(data_at == null || data_at.get(id) == null){
             throw new IllegalArgumentException("복구할 데이터가 없습니다.");

@@ -3,6 +3,7 @@ package com.sprint.mission.discodeit.service.basic;
 import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.dto.readStatus.ReadStatusCreateRequest;
 import com.sprint.mission.discodeit.dto.readStatus.ReadStatusUpdateRequest;
+import com.sprint.mission.discodeit.exception.ReadStatusNotFoundException;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
@@ -53,7 +54,7 @@ public class BasicReadStatusService implements ReadStatusService {
     public void update(ReadStatusUpdateRequest request) {
         ReadStatus readStatus = readStatusRepository.readByUserIdAndChannelId(request.getUserId(), request.getChannelId());
         if (readStatus == null) {
-            throw new IllegalArgumentException("존재하지 않는 ReadStatus입니다.");
+            throw new ReadStatusNotFoundException(request.getUserId(), request.getChannelId());
         }
         readStatus.updateLastMessageReadAt(request.getLastMessageReadAt());
         readStatusRepository.update(request.getUserId(), request.getChannelId(), request.getLastMessageReadAt());

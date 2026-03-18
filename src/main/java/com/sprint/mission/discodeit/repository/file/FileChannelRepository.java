@@ -58,6 +58,13 @@ public class FileChannelRepository implements ChannelRepository {
     }
 
     @Override
+    public Channel update(Channel channel) {
+        data.put(channel.getId(), channel);
+        saveToFile();
+        return channel;
+    }
+
+    @Override
     public void delete(UUID id) {
         data_at =new HashMap<>();
         data_at.put(id, data.get(id));

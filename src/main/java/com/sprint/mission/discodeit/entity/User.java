@@ -23,6 +23,18 @@ public class User extends BaseEntity implements Serializable {
         updateTimestamp();
     }
 
+    public void validateService(){
+        if (this.userName == null || this.userName.isBlank()) {
+            throw new IllegalArgumentException("유저명이 null이거나 blank입니다.");
+        }
+        if (this.userEmail == null || this.userEmail.isBlank()) {
+            throw new IllegalArgumentException("email이 null이거나 blank입니다.");
+        }
+        if (this.userPassword == null || this.userPassword.isBlank()) {
+            throw new IllegalArgumentException("비밀번호가 null이거나 blank입니다.");
+        }
+    }
+
     @Override
     public String toString() {return "User ---- " +
             "[id=" + id +
