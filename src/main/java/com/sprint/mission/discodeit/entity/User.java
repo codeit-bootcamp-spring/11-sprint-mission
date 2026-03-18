@@ -50,7 +50,10 @@ public class User extends BaseEntity {
     }
 
     public void updateUserInfo(String username, String email, String password, UUID profileId) {
-
+        this.username = username;
+        this.email = email;
+        this.password = password;
+        this.profileId = profileId;
         touch();
     }
 

@@ -44,6 +44,7 @@ public class BasicUserStatusService implements UserStatusService {
                 .orElseThrow(() -> new RuntimeException("해당 UserStatus는 없습니다."));
     }
 
+    @Override
     public List<UserStatus> findAll() {
         return userStatusRepository.findAll();
     }

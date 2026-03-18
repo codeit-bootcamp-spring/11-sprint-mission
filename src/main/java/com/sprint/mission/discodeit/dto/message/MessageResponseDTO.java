@@ -6,13 +6,15 @@ import java.util.List;
 import java.util.UUID;
 
 public record MessageResponseDTO(
-    String content,
-    UUID channelId,
-    UUID userId,
-    List<UUID> attachmentIds
+        UUID messageId,
+        String content,
+        UUID channelId,
+        UUID userId,
+        List<UUID> attachmentIds
 ) {
     public static MessageResponseDTO from(Message message) {
         return new MessageResponseDTO(
+                message.getId(),
                 message.getContent(),
                 message.getChannelId(),
                 message.getUserId(),
