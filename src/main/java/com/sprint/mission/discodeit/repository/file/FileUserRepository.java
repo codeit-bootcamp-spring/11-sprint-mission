@@ -2,23 +2,31 @@ package com.sprint.mission.discodeit.repository.file;
 
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Repository;
 
 import java.io.*;
 import java.util.*;
 
 @Repository
+@ConditionalOnProperty(name = "discodeit.repository.type", havingValue = "file")
 public class FileUserRepository implements UserRepository {
     private final String USER_FILE = "users.ser";
-
+    private final File file;
     private Map<UUID, User> userMap;
 
-    public FileUserRepository() {
+    public FileUserRepository(@Value("${discodeit.repository.file-directory}") String fileDirectory) {
+        File dir = new File(fileDirectory);
+
+        if(!dir.exists()) {
+            dir.mkdirs();
+        }
+        this.file = new File(dir, USER_FILE);
         this.userMap = loadUsers();
     }
 
     private Map<UUID, User> loadUsers() {
-        File file = new File(USER_FILE);
 
         if(!file.exists()) {
             return new HashMap<>();
@@ -31,7 +39,7 @@ public class FileUserRepository implements UserRepository {
     }
 
     private void saveUsers() {
-        try(ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(USER_FILE))) {
+        try(ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(file))) {
             oos.writeObject(userMap);
         } catch (IOException e) {
             throw new RuntimeException("유저 저장실패", e);

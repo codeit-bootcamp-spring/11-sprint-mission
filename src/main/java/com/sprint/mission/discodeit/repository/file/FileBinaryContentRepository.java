@@ -2,6 +2,8 @@ package com.sprint.mission.discodeit.repository.file;
 
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Repository;
 
 import java.io.*;
@@ -9,16 +11,25 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Repository
+@ConditionalOnProperty(name = "discodeit.repository.type", havingValue = "file")
 public class FileBinaryContentRepository implements BinaryContentRepository {
     private final String CONTENT_FILE = "binaryContents.ser";
+    private final File file;
     private final Map<UUID, BinaryContent> binaryContentMap;
 
-    public FileBinaryContentRepository() {
+    public FileBinaryContentRepository(@Value("${discodeit.repository.file-directory}") String fileDirectory) {
+        File dir = new File(fileDirectory);
+
+        if(!dir.exists()) {
+            dir.mkdirs();
+        }
+
+        this.file = new File(dir, CONTENT_FILE);
+
         this.binaryContentMap = loadContents();
     }
 
     private Map<UUID, BinaryContent> loadContents() {
-        File file = new File(CONTENT_FILE);
 
         if(!file.exists()) {
             return new HashMap<>();
@@ -31,10 +42,10 @@ public class FileBinaryContentRepository implements BinaryContentRepository {
     }
 
     private void saveContents() {
-        try(ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(CONTENT_FILE))) {
+        try(ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(file))) {
             oos.writeObject(binaryContentMap);
         } catch (IOException e) {
-            throw new RuntimeException("유저 저장실패", e);
+            throw new RuntimeException("콘텐츠 저장 실패", e);
         }
     }
 

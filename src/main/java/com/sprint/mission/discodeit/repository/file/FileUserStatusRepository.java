@@ -2,22 +2,31 @@ package com.sprint.mission.discodeit.repository.file;
 
 import com.sprint.mission.discodeit.entity.UserStatus;
 import com.sprint.mission.discodeit.repository.UserStatusRepository;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Repository;
 
 import java.io.*;
 import java.util.*;
 
 @Repository
+@ConditionalOnProperty(name = "discodeit.repository.type", havingValue = "file")
 public class FileUserStatusRepository implements UserStatusRepository {
     private final String STATUS_FILE = "userStatus.ser";
+    private final File file;
     private final Map<UUID, UserStatus> userStatusMap;
 
-    public FileUserStatusRepository() {
+    public FileUserStatusRepository(@Value("${discodeit.repository.file-directory}") String fileDirectory) {
+        File dir = new File(fileDirectory);
+
+        if(!dir.exists()) {
+            dir.mkdirs();
+        }
+        this.file = new File(dir, STATUS_FILE);
         this.userStatusMap = loadStatus();
     }
 
     private Map<UUID, UserStatus> loadStatus() {
-        File file = new File(STATUS_FILE);
 
         if(!file.exists()) {
             return new HashMap<>();
@@ -30,7 +39,7 @@ public class FileUserStatusRepository implements UserStatusRepository {
     }
 
     private void saveContents() {
-        try(ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(STATUS_FILE))) {
+        try(ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(file))) {
             oos.writeObject(userStatusMap);
         } catch (IOException e) {
             throw new RuntimeException("유저 저장실패", e);

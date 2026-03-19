@@ -2,17 +2,33 @@ package com.sprint.mission.discodeit.repository.file;
 
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Repository;
 
 import java.io.*;
 import java.util.*;
 
 @Repository
+@ConditionalOnProperty(name = "discodeit.repository.type", havingValue = "file")
 public class FileChannelRepository implements ChannelRepository {
     private final String CHANNEL_FILE = "channels.ser";
+    private final File file;
+    private final Map<UUID, Channel> channelMap;
+
+    public FileChannelRepository(@Value("${discodeit.repository.file-directory}") String fileDirectory) {
+        File dir = new File(fileDirectory);
+
+        if(!dir.exists()) {
+            dir.mkdirs();
+        }
+
+        this.file = new File(dir, CHANNEL_FILE);
+
+        this.channelMap = loadChannels();
+    }
 
     private Map<UUID, Channel> loadChannels() {
-        File file = new File(CHANNEL_FILE);
 
         if(!file.exists()) {
             return new HashMap<>();
@@ -24,11 +40,11 @@ public class FileChannelRepository implements ChannelRepository {
         }
     }
 
-    private void saveChannel(Map<UUID, Channel> channels) {
+    private void saveChannel() {
         File file = new File(CHANNEL_FILE);
 
         try(ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(file))) {
-            oos.writeObject(channels);
+            oos.writeObject(channelMap);
         } catch (IOException e) {
             throw new RuntimeException("채널 저장실패", e);
         }
@@ -36,28 +52,26 @@ public class FileChannelRepository implements ChannelRepository {
 
     @Override
     public Channel save(Channel channel) {
-        Map<UUID, Channel> channels = loadChannels();
-        channels.put(channel.getId(),channel);
-        saveChannel(channels);
+        channelMap.put(channel.getId(),channel);
+        saveChannel();
         return channel;
     }
 
     @Override
     public Optional<Channel> findById(UUID id) {
-        return Optional.ofNullable(loadChannels().get(id));
+        return Optional.ofNullable(channelMap.get(id));
     }
 
     @Override
     public List<Channel> findAll() {
-        return new ArrayList<>(loadChannels().values());
+        return new ArrayList<>(channelMap.values());
     }
 
     @Override
     public void delete(UUID id) {
-        Map<UUID, Channel> channels = loadChannels();
-        if(channels.containsKey(id)) {
-            channels.remove(id);
-            saveChannel(channels);
+        if(channelMap.containsKey(id)) {
+            channelMap.remove(id);
+            saveChannel();
         }
     }
 
