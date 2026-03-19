@@ -3,7 +3,7 @@ package com.sprint.mission.discodeit.service.basic;
 import com.sprint.mission.discodeit.entity.UserStatus;
 import com.sprint.mission.discodeit.dto.userStatus.UserStatusCreateRequest;
 import com.sprint.mission.discodeit.dto.userStatus.UserStatusUpdateRequest;
-import com.sprint.mission.discodeit.exception.UserStatusNotFoundException;
+import com.sprint.mission.discodeit.exception.DiscodeitException;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.repository.UserStatusRepository;
 import com.sprint.mission.discodeit.service.UserStatusService;
@@ -23,10 +23,11 @@ public class BasicUserStatusService implements UserStatusService {
     @Override
     public UserStatus create(UserStatusCreateRequest request){
         if(userRepository.read(request.getUserId()) == null){
-            throw new IllegalArgumentException("존재하지 않는 유저입니다.");
+            throw DiscodeitException.userNotFound(request.getUserId());
         }
+        // 유저는 하나의 상태만 가질 수 있음.
         if(userStatusRepository.readByUserId(request.getUserId()) != null){
-            throw new IllegalArgumentException("이미 존재하는 UserStatus입니다.");
+            throw DiscodeitException.duplicateUserStatus(request.getUserId());
         }
         UserStatus userStatus = new UserStatus(request.getUserId(), Instant.now());
         return userStatusRepository.create(userStatus);
@@ -36,7 +37,7 @@ public class BasicUserStatusService implements UserStatusService {
     public UserStatus read(UUID id){
         UserStatus userStatus = userStatusRepository.readByUserId(id);
         if(userStatus ==null){
-            throw new UserStatusNotFoundException(id);
+            throw DiscodeitException.userStatusNotFound(id);
         }
         return userStatus;
     }
@@ -50,7 +51,7 @@ public class BasicUserStatusService implements UserStatusService {
     public void update(UserStatusUpdateRequest request){
         UserStatus userStatus = userStatusRepository.readByUserId(request.getUserId());
         if(userStatus ==null){
-            throw new UserStatusNotFoundException(request.getUserId());
+            throw DiscodeitException.userStatusNotFound(request.getUserId());
         }
         userStatus.updateLastOnlineAt(request.getLastOnlineAt());
         userStatusRepository.update(request.getUserId(), request.getLastOnlineAt());

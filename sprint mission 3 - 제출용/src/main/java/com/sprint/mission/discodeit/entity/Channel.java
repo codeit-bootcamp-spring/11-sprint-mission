@@ -1,5 +1,6 @@
 package com.sprint.mission.discodeit.entity;
 
+import com.sprint.mission.discodeit.exception.DiscodeitException;
 import lombok.Getter;
 
 import java.io.Serializable;
@@ -26,7 +27,7 @@ public class Channel extends BaseEntity implements Serializable {
 
     public void validateService() {
         if (this.channelName == null || this.channelName.isBlank()) {
-            throw new IllegalArgumentException("채널명이 null이거나 blank입니다.");
+            throw DiscodeitException.blankField("channelname");
         }
     }
 

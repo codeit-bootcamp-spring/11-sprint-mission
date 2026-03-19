@@ -6,7 +6,7 @@ import com.sprint.mission.discodeit.entity.UserStatus;
 import com.sprint.mission.discodeit.dto.user.UserCreateRequest;
 import com.sprint.mission.discodeit.dto.user.UserResponse;
 import com.sprint.mission.discodeit.dto.user.UserUpdateRequest;
-import com.sprint.mission.discodeit.exception.UserNotFoundException;
+import com.sprint.mission.discodeit.exception.DiscodeitException;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.repository.UserStatusRepository;
@@ -32,10 +32,10 @@ public class BasicUserService implements UserService {
         boolean isDuplicateEmail = userRepository.readAll().stream()
                 .anyMatch(u -> u.getUserEmail().equals(request.getUserEmail()));
         if (isDuplicateName) {
-            throw new IllegalArgumentException("이미 존재하는 유저입니다.");
+            throw DiscodeitException.duplicateUser(request.getUserName());
         }
         if (isDuplicateEmail) {
-            throw new IllegalArgumentException("이미 존재하는 email입니다.");
+            throw DiscodeitException.duplicateUser(request.getUserEmail());
         }
 
         User user = new User(request.getUserName(), request.getUserEmail(), request.getUserPassword());
@@ -56,7 +56,7 @@ public class BasicUserService implements UserService {
     @Override
     public UserResponse read(UUID id) {
         User user = userRepository.read(id);
-        if(user == null) throw new UserNotFoundException(id);
+        if(user == null) throw DiscodeitException.userNotFound(id);
         UserStatus userStatus = userStatusRepository.readByUserId(id);
         return new UserResponse(user.getId(), user.getUserName(), user.getUserEmail(), userStatus.isOnline());
     }
@@ -75,17 +75,17 @@ public class BasicUserService implements UserService {
     @Override
     public void update(UserUpdateRequest request) {
         User user = userRepository.read(request.getId());
-        if (user == null) throw new UserNotFoundException(request.getId());
+        if (user == null) DiscodeitException.userNotFound(request.getId());
 
         boolean isDuplicateName = userRepository.readAll().stream()
                 .filter(u -> !u.getId().equals(request.getId()))
                 .anyMatch(u -> u.getUserName().equals(request.getUserName()));
-        if (isDuplicateName) throw new IllegalArgumentException("이미 존재하는 유저입니다.");
+        if (isDuplicateName) throw DiscodeitException.duplicateUser(request.getUserName());
 
         boolean isDuplicateEmail = userRepository.readAll().stream()
                 .filter(u -> !u.getId().equals(request.getId()))
                 .anyMatch(u -> u.getUserEmail().equals(request.getUserEmail()));
-        if (isDuplicateEmail) throw new IllegalArgumentException("이미 존재하는 email입니다.");
+        if (isDuplicateEmail) throw DiscodeitException.duplicateUser(request.getUserEmail());
 
         if(request.getFileName() != null){
             binaryContentRepository.deleteByUserId(user.getId());
@@ -102,7 +102,7 @@ public class BasicUserService implements UserService {
     public void delete(UUID id) {
         User user = userRepository.read(id);
         if (user == null) {
-            throw new UserNotFoundException(id);
+            throw DiscodeitException.userNotFound(id);
         }
         binaryContentRepository.deleteByUserId(id);
         userStatusRepository.delete(id);

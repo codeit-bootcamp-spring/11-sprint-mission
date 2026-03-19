@@ -262,7 +262,8 @@
     `# application.yaml discodeit:     repository:          type: jcf   # jcf | file         file-directory: .discodeit`
     
 ## 실행 결과 스크린샷
-![[Pasted image 20260318172845.png]]
+<img width="653" height="1114" alt="스크린샷 2026-03-18 172835" src="https://github.com/user-attachments/assets/5752fbe6-7c79-4e8d-aeb3-1dd4cc5aef37" />
+
 
 ## 멘토에게
 

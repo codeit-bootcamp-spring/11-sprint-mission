@@ -1,4 +1,5 @@
 package com.sprint.mission.discodeit.entity;
+import com.sprint.mission.discodeit.exception.DiscodeitException;
 import lombok.Getter;
 import java.io.Serializable;
 
@@ -25,13 +26,13 @@ public class User extends BaseEntity implements Serializable {
 
     public void validateService(){
         if (this.userName == null || this.userName.isBlank()) {
-            throw new IllegalArgumentException("유저명이 null이거나 blank입니다.");
+            throw DiscodeitException.blankField("username");
         }
         if (this.userEmail == null || this.userEmail.isBlank()) {
-            throw new IllegalArgumentException("email이 null이거나 blank입니다.");
+            throw DiscodeitException.blankField("useremail");
         }
         if (this.userPassword == null || this.userPassword.isBlank()) {
-            throw new IllegalArgumentException("비밀번호가 null이거나 blank입니다.");
+            throw DiscodeitException.blankField("userpassword");
         }
     }
 

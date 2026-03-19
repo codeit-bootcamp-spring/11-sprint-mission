@@ -1,5 +1,6 @@
 package com.sprint.mission.discodeit.entity;
 
+import com.sprint.mission.discodeit.exception.DiscodeitException;
 import lombok.Getter;
 
 import java.io.Serializable;
@@ -28,7 +29,7 @@ public class Message extends BaseEntity implements Serializable {
 
     public void validateService(){
         if (this.messageContent == null || this.messageContent.isBlank()) {
-            throw new IllegalArgumentException("메세지 내용이 null이거나 blank입니다.");
+            throw DiscodeitException.blankField("messagecontent");
         }
     }
 

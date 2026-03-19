@@ -1,5 +1,6 @@
 package com.sprint.mission.discodeit.entity;
 
+import com.sprint.mission.discodeit.exception.DiscodeitException;
 import lombok.Getter;
 
 import java.io.Serializable;
@@ -27,10 +28,16 @@ public class BinaryContent implements Serializable {
 
     public void validateService() {
         if (this.fileName == null || this.fileName.isBlank()) {
-            throw new IllegalArgumentException("파일명이 null이거나 blank입니다.");
+            throw DiscodeitException.blankField("filename");
         }
-        if (this.content == null) {
-            throw new IllegalArgumentException("파일 데이터가 null입니다.");
+        if (this.content == null || this.content.length == 0) {
+            throw DiscodeitException.blankField("content");
+        }
+        if(this.contentType == null || this.contentType.isBlank()){
+            throw DiscodeitException.blankField("contentType");
+        }
+        if(this.userId == null && this.messageId == null){
+            throw DiscodeitException.blankField("userId or messageId");
         }
     }
 

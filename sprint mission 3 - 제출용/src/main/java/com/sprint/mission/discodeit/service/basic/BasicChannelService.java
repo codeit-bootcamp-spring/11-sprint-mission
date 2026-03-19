@@ -7,7 +7,7 @@ import com.sprint.mission.discodeit.dto.channel.ChannelResponse;
 import com.sprint.mission.discodeit.dto.channel.ChannelUpdateRequest;
 import com.sprint.mission.discodeit.dto.channel.PrivateChannelCreateRequest;
 import com.sprint.mission.discodeit.dto.channel.PublicChannelCreateRequest;
-import com.sprint.mission.discodeit.exception.ChannelNotFoundException;
+import com.sprint.mission.discodeit.exception.DiscodeitException;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
@@ -34,7 +34,7 @@ public class BasicChannelService implements ChannelService {
         boolean isDuplicate = channelRepository.readAll().stream()
                 .anyMatch(c -> c.getChannelName().equals(request.getChannelName()));
         if (isDuplicate) {
-            throw new IllegalArgumentException("채널명은 중복 될 수 없습니다.");
+            throw DiscodeitException.duplicateChannel(request.getChannelName());
         }
 
         Channel channel = new Channel(request.getChannelName(), request.getChannelDescription(), PUBLIC);
@@ -62,7 +62,7 @@ public class BasicChannelService implements ChannelService {
     public ChannelResponse read(UUID id) {
         Channel channel = channelRepository.read(id);
         if (channel == null) {
-            throw new ChannelNotFoundException(id);
+            throw DiscodeitException.channelNotFound(id);
         }
 
         Instant lastMessageAt = messageRepository.readAllByChannelId(id).stream()
@@ -105,7 +105,7 @@ public class BasicChannelService implements ChannelService {
     public void update(ChannelUpdateRequest request) {
         Channel channel = channelRepository.read(request.getChannelId());
         if (channel == null) {
-            throw new ChannelNotFoundException(request.getChannelId());
+            throw DiscodeitException.channelNotFound(request.getChannelId());
         }
         if (channel.getChannelType() == ChannelType.PRIVATE) {
             throw new IllegalArgumentException("PRIVATE 채널은 수정이 불가합니다.");
@@ -115,7 +115,7 @@ public class BasicChannelService implements ChannelService {
                 .filter(c -> c.getChannelName() != null)
                 .anyMatch(c -> c.getChannelName().equals(request.getChannelName()));
         if (isDuplicate) {
-            throw new IllegalArgumentException("이미 존재하는 채널명입니다.");
+            throw DiscodeitException.duplicateChannel(request.getChannelName());
         }
         channel.updateChannel(request.getChannelName(), request.getChannelDescription());
         channel.validateService();
@@ -126,7 +126,7 @@ public class BasicChannelService implements ChannelService {
     public void delete(UUID id) {
         Channel channel = channelRepository.read(id);
         if (channel == null) {
-            throw new ChannelNotFoundException(id);
+            throw DiscodeitException.channelNotFound(id);
         }
         messageRepository.deleteAllByChannelId(id);
         readStatusRepository.deleteByChannelId(id);

@@ -2,7 +2,7 @@ package com.sprint.mission.discodeit.service.basic;
 
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.dto.binaryContent.BinaryContentCreateRequest;
-import com.sprint.mission.discodeit.exception.BinaryContentNotFoundException;
+import com.sprint.mission.discodeit.exception.DiscodeitException;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.service.BinaryContentService;
 import lombok.RequiredArgsConstructor;
@@ -31,8 +31,8 @@ public class BasicBinaryContentService implements BinaryContentService {
     @Override
     public BinaryContent read(UUID id){
         BinaryContent binaryContent = binaryContentRepository.readById(id);
-        if(binaryContent ==null){
-            throw new BinaryContentNotFoundException(id);
+        if(binaryContent ==null) {
+            throw DiscodeitException.binaryContentNotFound(id);
         }
         return binaryContent;
     }

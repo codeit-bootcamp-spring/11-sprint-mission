@@ -17,9 +17,7 @@ import com.sprint.mission.discodeit.dto.user.UserCreateRequest;
 import com.sprint.mission.discodeit.dto.user.UserResponse;
 import com.sprint.mission.discodeit.dto.user.UserUpdateRequest;
 import com.sprint.mission.discodeit.dto.userStatus.UserStatusUpdateRequest;
-import com.sprint.mission.discodeit.exception.ChannelNotFoundException;
-import com.sprint.mission.discodeit.exception.MessageNotFoundException;
-import com.sprint.mission.discodeit.exception.UserNotFoundException;
+import com.sprint.mission.discodeit.exception.DiscodeitException;
 import com.sprint.mission.discodeit.service.*;
 import org.springframework.context.ApplicationContext;
 import org.springframework.boot.SpringApplication;
@@ -122,7 +120,7 @@ public class DiscodeitApplication {
         System.out.println("메시지 삭제 완료");
         try {
                 messageService.read(message.getId());
-        } catch (MessageNotFoundException e) {
+        } catch (DiscodeitException e) {
             System.out.println("메시지 삭제 확인: " + e.getMessage());
         }
 
@@ -130,7 +128,7 @@ public class DiscodeitApplication {
         System.out.println("채널 삭제 완료");
         try {
             channelService.read(publicChannel.getChannelId());
-        } catch (ChannelNotFoundException e) {
+        } catch (DiscodeitException  e) {
             System.out.println("채널 삭제 확인: " + e.getMessage());
         }
 
@@ -138,7 +136,7 @@ public class DiscodeitApplication {
         System.out.println("유저 삭제 완료");
         try {
             userService.read(user1.getId());
-        } catch (UserNotFoundException e) {
+        } catch (DiscodeitException  e) {
             System.out.println("유저 삭제 확인: " + e.getMessage());
         }
 

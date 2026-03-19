@@ -3,7 +3,7 @@ package com.sprint.mission.discodeit.service.basic;
 import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.dto.readStatus.ReadStatusCreateRequest;
 import com.sprint.mission.discodeit.dto.readStatus.ReadStatusUpdateRequest;
-import com.sprint.mission.discodeit.exception.ReadStatusNotFoundException;
+import com.sprint.mission.discodeit.exception.DiscodeitException;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
@@ -25,15 +25,15 @@ public class BasicReadStatusService implements ReadStatusService {
     @Override
     public ReadStatus create(ReadStatusCreateRequest request) {
         if (userRepository.read(request.getUserId()) == null) {
-            throw new IllegalArgumentException("존재하지 않는 유저입니다.");
+            throw DiscodeitException.userNotFound(request.getUserId());
         }
 
         if (channelRepository.read(request.getChannelId()) == null) {
-            throw new IllegalArgumentException("존재하지 않는 채널입니다.");
+            throw DiscodeitException.channelNotFound(request.getChannelId());
         }
 
         if (readStatusRepository.readByUserIdAndChannelId(request.getUserId(), request.getChannelId()) != null) {
-            throw new IllegalArgumentException("이미 존재하는 ReadStatus입니다.");
+            throw DiscodeitException.duplicateReadStatus(request.getUserId(), request.getChannelId());
         }
 
         ReadStatus readStatus = new ReadStatus(request.getUserId(), request.getChannelId(), Instant.now());
@@ -41,7 +41,7 @@ public class BasicReadStatusService implements ReadStatusService {
     }
 
     @Override
-    public ReadStatus read(UUID id) {
+    public ReadStatus read(UUID id) {   // ReadStatus는 자체 UUID 없음.
         throw new UnsupportedOperationException("ReadStatus는 id로 조회할 수 없습니다.");
     }
 
@@ -54,7 +54,7 @@ public class BasicReadStatusService implements ReadStatusService {
     public void update(ReadStatusUpdateRequest request) {
         ReadStatus readStatus = readStatusRepository.readByUserIdAndChannelId(request.getUserId(), request.getChannelId());
         if (readStatus == null) {
-            throw new ReadStatusNotFoundException(request.getUserId(), request.getChannelId());
+            throw DiscodeitException.readStatusNotFound(request.getUserId(), request.getChannelId());
         }
         readStatus.updateLastMessageReadAt(request.getLastMessageReadAt());
         readStatusRepository.update(request.getUserId(), request.getChannelId(), request.getLastMessageReadAt());
