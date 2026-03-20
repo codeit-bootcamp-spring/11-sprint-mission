@@ -34,7 +34,7 @@ public class BasicUserService implements UserService {
             throw new IllegalArgumentException("이미 사용 중인 username 또는 email입니다.");
         }
 
-        // 프로필 이미지 저장 (선택적)
+
         UUID profileId = null;
         if (request.getProfile() != null) {
             BinaryContent profile = new BinaryContent(
@@ -60,8 +60,9 @@ public class BasicUserService implements UserService {
 
     @Override
     public UserResponse getUserById(UUID id) {
-        User user = userRepository.findById(id);
-        UserStatus userStatus = userStatusRepository.findByUserId(id);
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 User입니다."));
+        UserStatus userStatus = userStatusRepository.findByUserId(id).orElse(null);
         return toResponse(user, userStatus);
     }
 
@@ -69,7 +70,7 @@ public class BasicUserService implements UserService {
     public List<UserResponse> getAllUsers() {
         return userRepository.findAll().stream()
                 .map(user -> {
-                    UserStatus userStatus = userStatusRepository.findByUserId(user.getId());
+                    UserStatus userStatus = userStatusRepository.findByUserId(user.getId()).orElse(null);
                     return toResponse(user, userStatus);
                 })
                 .toList();
@@ -77,7 +78,8 @@ public class BasicUserService implements UserService {
 
     @Override
     public UserResponse updateUser(UUID id, UpdateUserRequest request) {
-        User user = userRepository.findById(id);
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 User입니다."));
 
         // 기존 프로필 삭제 후 새 프로필 저장 (선택적)
         if (request.getProfile() != null) {
@@ -99,20 +101,19 @@ public class BasicUserService implements UserService {
         user.update(request.getUsername(), request.getEmail(), request.getPassword());
         userRepository.save(user);
 
-        UserStatus userStatus = userStatusRepository.findByUserId(id);
+        UserStatus userStatus = userStatusRepository.findByUserId(id).orElse(null);
         return toResponse(user, userStatus);
     }
 
     @Override
     public void deleteUser(UUID id) {
-        User user = userRepository.findById(id);
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 User입니다."));
 
-        // 프로필 이미지 삭제
         if (user.getProfileId() != null) {
             binaryContentRepository.deleteById(user.getProfileId());
         }
-        // UserStatus 삭제
-        UserStatus userStatus = userStatusRepository.findByUserId(id);
+        UserStatus userStatus = userStatusRepository.findByUserId(id).orElse(null);
         if (userStatus != null) {
             userStatusRepository.deleteById(userStatus.getId());
         }
@@ -120,7 +121,6 @@ public class BasicUserService implements UserService {
         userRepository.deleteById(id);
     }
 
-    // Entity → Response DTO 변환 메서드
     private UserResponse toResponse(User user, UserStatus userStatus) {
         boolean isOnline = userStatus != null && userStatus.isOnline();
         return new UserResponse(user.getId(), user.getUsername(), user.getEmail(), isOnline, user.getProfileId());

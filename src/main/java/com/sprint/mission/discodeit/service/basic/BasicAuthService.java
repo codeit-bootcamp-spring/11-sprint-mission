@@ -26,8 +26,8 @@ public class BasicAuthService implements AuthService {
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("username 또는 password가 올바르지 않습니다."));
 
-        UserStatus userStatus = userStatusRepository.findByUserId(user.getId());
-        // 로그인 시 lastActiveAt 갱신
+        UserStatus userStatus = userStatusRepository.findByUserId(user.getId())
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 UserStatus입니다."));
         userStatus.update(Instant.now());
         userStatusRepository.save(userStatus);
 

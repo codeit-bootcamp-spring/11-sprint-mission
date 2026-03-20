@@ -11,7 +11,7 @@ import java.util.*;
 @ConditionalOnProperty(
         name = "discodeit.repository.type",
         havingValue = "jcf",
-        matchIfMissing = true  // 값이 없으면 기본으로 JCF 사용
+        matchIfMissing = true
 )
 public class JCFMessageRepository implements MessageRepository {
     private final Map<UUID, Message> data;
@@ -26,8 +26,8 @@ public class JCFMessageRepository implements MessageRepository {
     }
 
     @Override
-    public Message findById(UUID id) {
-        return data.get(id);
+    public Optional<Message> findById(UUID id) {
+        return Optional.ofNullable(data.get(id));
     }
 
     @Override

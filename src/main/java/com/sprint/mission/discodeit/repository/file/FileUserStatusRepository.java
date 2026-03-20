@@ -31,16 +31,15 @@ public class FileUserStatusRepository implements UserStatusRepository {
     }
 
     @Override
-    public UserStatus findById(UUID id) {
-        return data.get(id);
+    public Optional<UserStatus> findById(UUID id) {
+        return Optional.ofNullable(loadFromFile().get(id));
     }
 
     @Override
-    public UserStatus findByUserId(UUID userId) {
+    public Optional<UserStatus> findByUserId(UUID userId) {
         return data.values().stream()
                 .filter(us -> us.getUserId().equals(userId))
-                .findFirst()
-                .orElse(null);
+                .findFirst();
     }
 
     @Override

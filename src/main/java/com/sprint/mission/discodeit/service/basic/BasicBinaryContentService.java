@@ -30,14 +30,16 @@ public class BasicBinaryContentService implements BinaryContentService {
 
     @Override
     public BinaryContent getBinaryContentById(UUID id) {
-        return binaryContentRepository.findById(id);
+        return binaryContentRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 BinaryContent입니다."));
     }
 
     @Override
     public List<BinaryContent> findAllByIdIn(List<UUID> ids) {
         return ids.stream()
                 .map(binaryContentRepository::findById)
-                .filter(bc -> bc != null)
+                .filter(opt -> opt.isPresent())
+                .map(opt -> opt.get())
                 .toList();
     }
 

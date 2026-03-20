@@ -11,7 +11,7 @@ import java.util.*;
 @ConditionalOnProperty(
         name = "discodeit.repository.type",
         havingValue = "jcf",
-        matchIfMissing = true  // 값이 없으면 기본으로 JCF 사용
+        matchIfMissing = true
 )
 public class JCFUserRepository implements UserRepository {
     private final Map<UUID, User> data;
@@ -26,8 +26,8 @@ public class JCFUserRepository implements UserRepository {
     }
 
     @Override
-    public User findById(UUID id) {
-        return data.get(id);
+    public Optional<User> findById(UUID id) {
+        return Optional.ofNullable(data.get(id));
     }
 
     @Override

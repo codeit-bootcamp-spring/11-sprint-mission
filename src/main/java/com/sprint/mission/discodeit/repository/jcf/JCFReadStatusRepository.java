@@ -11,7 +11,7 @@ import java.util.*;
 @ConditionalOnProperty(
         name = "discodeit.repository.type",
         havingValue = "jcf",
-        matchIfMissing = true  // 값이 없으면 기본으로 JCF 사용
+        matchIfMissing = true
 )
 public class JCFReadStatusRepository implements ReadStatusRepository {
     private final Map<UUID, ReadStatus> data = new HashMap<>();
@@ -22,16 +22,15 @@ public class JCFReadStatusRepository implements ReadStatusRepository {
     }
 
     @Override
-    public ReadStatus findById(UUID id) {
-        return data.get(id);
+    public Optional<ReadStatus> findById(UUID id) {
+        return Optional.ofNullable(data.get(id));
     }
 
     @Override
-    public ReadStatus findByUserIdAndChannelId(UUID userId, UUID channelId) {
+    public Optional<ReadStatus> findByUserIdAndChannelId(UUID userId, UUID channelId) {
         return data.values().stream()
                 .filter(rs -> rs.getUserId().equals(userId) && rs.getChannelId().equals(channelId))
-                .findFirst()
-                .orElse(null);
+                .findFirst();
     }
 
     @Override

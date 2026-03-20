@@ -13,7 +13,7 @@ import java.util.*;
 @ConditionalOnProperty(
         name = "discodeit.repository.type",
         havingValue = "file",
-        matchIfMissing = true  // 값이 없으면 기본으로 JCF 사용
+        matchIfMissing = true
 )
 public class FileMessageEditHistoryRepository implements MessageEditHistoryRepository {
     private final Map<UUID, MessageEditHistory> data;
@@ -31,8 +31,8 @@ public class FileMessageEditHistoryRepository implements MessageEditHistoryRepos
     }
 
     @Override
-    public MessageEditHistory findById(UUID id) {
-        return data.get(id);
+    public Optional<MessageEditHistory> findById(UUID id) {
+        return Optional.ofNullable(loadFromFile().get(id));
     }
 
     @Override

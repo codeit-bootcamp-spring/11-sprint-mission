@@ -49,7 +49,8 @@ public class BasicChannelService implements ChannelService {
 
     @Override
     public ChannelResponse getChannelById(UUID id) {
-        Channel channel = channelRepository.findById(id);
+        Channel channel = channelRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 Channel입니다."));
         return toResponse(channel);
     }
 
@@ -68,7 +69,8 @@ public class BasicChannelService implements ChannelService {
 
     @Override
     public ChannelResponse updateChannel(UUID id, UpdateChannelRequest request) {
-        Channel channel = channelRepository.findById(id);
+        Channel channel = channelRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 Channel입니다."));
         if (channel.getType() == ChannelType.PRIVATE) {
             throw new IllegalArgumentException("PRIVATE 채널은 수정할 수 없습니다.");
         }
@@ -89,7 +91,7 @@ public class BasicChannelService implements ChannelService {
 
     @Override
     public boolean joinChannel(UUID channelId, UUID userId) {
-        Channel channel = channelRepository.findById(channelId);
+        Channel channel = channelRepository.findById(channelId).orElse(null);
         if (channel == null) return false;
         boolean success = channel.addParticipant(userId);
         if (success) channelRepository.save(channel);
@@ -98,7 +100,7 @@ public class BasicChannelService implements ChannelService {
 
     @Override
     public boolean leaveChannel(UUID channelId, UUID userId) {
-        Channel channel = channelRepository.findById(channelId);
+        Channel channel = channelRepository.findById(channelId).orElse(null);
         if (channel == null) return false;
         boolean success = channel.removeParticipant(userId);
         if (success) channelRepository.save(channel);
@@ -107,7 +109,7 @@ public class BasicChannelService implements ChannelService {
 
     @Override
     public boolean kickUser(UUID channelId, UUID ownerId, UUID targetUserId) {
-        Channel channel = channelRepository.findById(channelId);
+        Channel channel = channelRepository.findById(channelId).orElse(null);
         if (channel == null || !channel.getOwnerId().equals(ownerId)) return false;
         boolean success = channel.removeParticipant(targetUserId);
         if (success) channelRepository.save(channel);
@@ -116,7 +118,7 @@ public class BasicChannelService implements ChannelService {
 
     @Override
     public List<UUID> getChannelParticipants(UUID channelId) {
-        Channel channel = channelRepository.findById(channelId);
+        Channel channel = channelRepository.findById(channelId).orElse(null);
         if (channel == null) return null;
         return channel.getParticipantIds();
     }

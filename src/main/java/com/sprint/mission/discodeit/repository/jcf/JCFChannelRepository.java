@@ -11,7 +11,7 @@ import java.util.*;
 @ConditionalOnProperty(
         name = "discodeit.repository.type",
         havingValue = "jcf",
-        matchIfMissing = true  // 값이 없으면 기본으로 JCF 사용
+        matchIfMissing = true
 )
 public class JCFChannelRepository implements ChannelRepository {
     private final Map<UUID, Channel> data;
@@ -26,8 +26,8 @@ public class JCFChannelRepository implements ChannelRepository {
     }
 
     @Override
-    public Channel findById(UUID id) {
-        return data.get(id);
+    public Optional<Channel> findById(UUID id) {
+        return Optional.ofNullable(data.get(id));
     }
 
     @Override

@@ -56,27 +56,28 @@ public class BasicMessageService implements MessageService {
 
     @Override
     public void updateMessage(UUID id, UpdateMessageRequest request) {
-        Message message = messageRepository.findById(id);
-        if (message != null && !message.isDeleted()) {
-            message.update(request.getContent());
-            messageRepository.save(message);
+        Message message = messageRepository.findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 Message입니다."));
+        if (message.isDeleted()) {
+            throw new IllegalArgumentException("삭제된 Message는 수정할 수 없습니다.");
         }
+        message.update(request.getContent());
+        messageRepository.save(message);
     }
 
     @Override
     public void deleteMessage(UUID id) {
-        Message message = messageRepository.findById(id);
-        if (message != null) {
-            // 첨부파일 삭제
+        Message message = messageRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 Message입니다."));
             message.getAttachmentIds().forEach(binaryContentRepository::deleteById);
             message.delete();
             messageRepository.save(message);
         }
-    }
 
     @Override
     public Message getMessageById(UUID id) {
-        return messageRepository.findById(id);
+        return messageRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 Message입니다."));
     }
 
     @Override
@@ -86,14 +87,14 @@ public class BasicMessageService implements MessageService {
 
     @Override
     public List<MessageEditHistory> getMessageEditHistory(UUID messageId) {
-        Message message = messageRepository.findById(messageId);
+        Message message = messageRepository.findById(messageId).orElse(null);
         if (message == null) return new ArrayList<>();
         return new ArrayList<>(message.getEditHistories());
     }
 
     @Override
     public boolean isMessageDeleted(UUID messageId) {
-        Message message = messageRepository.findById(messageId);
+        Message message = messageRepository.findById(messageId).orElse(null);
         return message != null && message.isDeleted();
     }
 }

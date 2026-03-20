@@ -22,10 +22,10 @@ public class BasicUserStatusService implements UserStatusService {
 
     @Override
     public UserStatus createUserStatus(CreateUserStatusRequest request) {
-        if (userRepository.findById(request.getUserId()) == null) {
+        if (!userRepository.findById(request.getUserId()).isPresent()) {
             throw new IllegalArgumentException("존재하지 않는 User입니다.");
         }
-        if (userStatusRepository.findByUserId(request.getUserId()) != null) {
+        if (userStatusRepository.findByUserId(request.getUserId()).isPresent()) {
             throw new IllegalArgumentException("이미 존재하는 UserStatus입니다.");
         }
         UserStatus userStatus = new UserStatus(request.getUserId());
@@ -35,7 +35,8 @@ public class BasicUserStatusService implements UserStatusService {
 
     @Override
     public UserStatus getUserStatusById(UUID id) {
-        return userStatusRepository.findById(id);
+        return userStatusRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 UserStatus입니다."));
     }
 
     @Override
@@ -45,20 +46,16 @@ public class BasicUserStatusService implements UserStatusService {
 
     @Override
     public void updateUserStatus(UUID id, UpdateUserStatusRequest request) {
-        UserStatus userStatus = userStatusRepository.findById(id);
-        if (userStatus == null) {
-            throw new IllegalArgumentException("존재하지 않는 UserStatus입니다.");
-        }
+        UserStatus userStatus = userStatusRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 UserStatus입니다."));
         userStatus.update(request.getLastActiveAt());
         userStatusRepository.save(userStatus);
     }
 
     @Override
     public void updateUserStatusByUserId(UUID userId) {
-        UserStatus userStatus = userStatusRepository.findByUserId(userId);
-        if (userStatus == null) {
-            throw new IllegalArgumentException("존재하지 않는 UserStatus입니다.");
-        }
+        UserStatus userStatus = userStatusRepository.findByUserId(userId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 UserStatus입니다."));
         userStatus.update(Instant.now());
         userStatusRepository.save(userStatus);
     }

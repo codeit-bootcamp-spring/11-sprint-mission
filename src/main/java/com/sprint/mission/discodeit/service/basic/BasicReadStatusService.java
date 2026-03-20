@@ -23,13 +23,13 @@ public class BasicReadStatusService implements ReadStatusService {
 
     @Override
     public ReadStatus createReadStatus(CreateReadStatusRequest request) {
-        if (userRepository.findById(request.getUserId()) == null) {
+        if (!userRepository.findById(request.getUserId()).isPresent()) {
             throw new IllegalArgumentException("존재하지 않는 User입니다.");
         }
-        if (channelRepository.findById(request.getChannelId()) == null) {
+        if (!channelRepository.findById(request.getChannelId()).isPresent()) {
             throw new IllegalArgumentException("존재하지 않는 Channel입니다.");
         }
-        if (readStatusRepository.findByUserIdAndChannelId(request.getUserId(), request.getChannelId()) != null) {
+        if (readStatusRepository.findByUserIdAndChannelId(request.getUserId(), request.getChannelId()).isPresent()) {
             throw new IllegalArgumentException("이미 존재하는 ReadStatus입니다.");
         }
         ReadStatus readStatus = new ReadStatus(request.getUserId(), request.getChannelId());
@@ -39,7 +39,8 @@ public class BasicReadStatusService implements ReadStatusService {
 
     @Override
     public ReadStatus getReadStatusById(UUID id) {
-        return readStatusRepository.findById(id);
+        return readStatusRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 ReadStatus입니다."));
     }
 
     @Override
@@ -49,10 +50,8 @@ public class BasicReadStatusService implements ReadStatusService {
 
     @Override
     public void updateReadStatus(UUID id, UpdateReadStatusRequest request) {
-        ReadStatus readStatus = readStatusRepository.findById(id);
-        if (readStatus == null) {
-            throw new IllegalArgumentException("존재하지 않는 ReadStatus입니다.");
-        }
+        ReadStatus readStatus = readStatusRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 ReadStatus입니다."));
         readStatus.update(request.getLastReadAt());
         readStatusRepository.save(readStatus);
     }
