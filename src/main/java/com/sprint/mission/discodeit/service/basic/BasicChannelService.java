@@ -95,8 +95,9 @@ public class BasicChannelService implements ChannelService {
 
     @Override
     public boolean joinChannel(UUID channelId, UUID userId) {
-        Channel channel = channelRepository.findById(channelId).orElse(null);
-        if (channel == null) return false;
+        if (!channelRepository.findById(channelId).isPresent()) {
+            throw new IllegalArgumentException("존재하지 않는 Channel입니다.");
+        }
 
         // 이미 참여 중인지 확인
         boolean alreadyJoined = readStatusRepository.findByUserId(userId).stream()
@@ -111,8 +112,9 @@ public class BasicChannelService implements ChannelService {
 
     @Override
     public boolean leaveChannel(UUID channelId, UUID userId) {
-        Channel channel = channelRepository.findById(channelId).orElse(null);
-        if (channel == null) return false;
+        if (!channelRepository.findById(channelId).isPresent()) {
+            throw new IllegalArgumentException("존재하지 않는 Channel입니다.");
+        }
 
         ReadStatus readStatus = readStatusRepository.findByUserIdAndChannelId(userId,channelId)
                 .orElse(null);
@@ -125,8 +127,10 @@ public class BasicChannelService implements ChannelService {
 
     @Override
     public boolean kickUser(UUID channelId, UUID ownerId, UUID targetUserId) {
-        Channel channel = channelRepository.findById(channelId).orElse(null);
-        if (channel == null || !channel.getOwnerId().equals(ownerId)) return false;
+        Channel channel = channelRepository.findById(channelId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 Channel입니다."));
+
+        if (!channel.getOwnerId().equals(ownerId)) return false;
 
         ReadStatus readStatus = readStatusRepository.findByUserIdAndChannelId(targetUserId, channelId)
                 .orElse(null);
@@ -139,8 +143,9 @@ public class BasicChannelService implements ChannelService {
 
     @Override
     public List<UUID> getChannelParticipants(UUID channelId) {
-        Channel channel = channelRepository.findById(channelId).orElse(null);
-        if (channel == null) return null;
+        if (!channelRepository.findById(channelId).isPresent()) {
+            throw new IllegalArgumentException("존재하지 않는 Channel입니다.");
+        }
 
         return readStatusRepository.findByChannelId(channelId).stream()
                 .map(ReadStatus::getUserId)

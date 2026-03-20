@@ -1,5 +1,6 @@
 package com.sprint.mission.discodeit.service.basic;
 
+import com.sprint.mission.discodeit.dto.request.binaryContent.CreateBinaryContentRequest;
 import com.sprint.mission.discodeit.dto.request.message.CreateMessageRequest;
 import com.sprint.mission.discodeit.dto.request.message.UpdateMessageRequest;
 import com.sprint.mission.discodeit.entity.BinaryContent;
@@ -23,11 +24,11 @@ public class BasicMessageService implements MessageService {
     private final BinaryContentRepository binaryContentRepository;
 
     @Override
-    public Message createMessage(CreateMessageRequest request) {
+    public Message createMessage(CreateMessageRequest request, List<CreateBinaryContentRequest> attachments) {
         // 첨부파일 저장 (선택적)
         List<UUID> attachmentIds = new ArrayList<>();
-        if (request.getAttachments() != null && !request.getAttachments().isEmpty()) {
-            request.getAttachments().forEach(attachment -> {
+        if (attachments != null && !attachments.isEmpty()) {
+            attachments.forEach(attachment -> {
                 BinaryContent binaryContent = new BinaryContent(
                         attachment.getFileName(),
                         attachment.getSize(),
@@ -87,14 +88,15 @@ public class BasicMessageService implements MessageService {
 
     @Override
     public List<MessageEditHistory> getMessageEditHistory(UUID messageId) {
-        Message message = messageRepository.findById(messageId).orElse(null);
-        if (message == null) return new ArrayList<>();
+        Message message = messageRepository.findById(messageId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 Message입니다."));
         return new ArrayList<>(message.getEditHistories());
     }
 
     @Override
     public boolean isMessageDeleted(UUID messageId) {
-        Message message = messageRepository.findById(messageId).orElse(null);
-        return message != null && message.isDeleted();
+        Message message = messageRepository.findById(messageId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 Message입니다."));
+        return message.isDeleted();
     }
 }

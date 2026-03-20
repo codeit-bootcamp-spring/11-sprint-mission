@@ -31,6 +31,14 @@ public class BasicAuthService implements AuthService {
         userStatus.update(Instant.now());
         userStatusRepository.save(userStatus);
 
-        return new UserResponse(user.getId(), user.getUsername(), user.getEmail(), true, user.getProfileId());
+        return new UserResponse(
+                user.getId(),
+                user.getUsername(),
+                user.getEmail(),
+                userStatus.isOnline(),
+                user.getProfileId(),
+                user.getCreatedAt(),
+                user.getUpdatedAt()
+                );
     }
 }

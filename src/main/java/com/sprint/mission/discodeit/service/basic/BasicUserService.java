@@ -1,5 +1,6 @@
 package com.sprint.mission.discodeit.service.basic;
 
+import com.sprint.mission.discodeit.dto.request.binaryContent.CreateBinaryContentRequest;
 import com.sprint.mission.discodeit.dto.request.user.CreateUserRequest;
 import com.sprint.mission.discodeit.dto.request.user.UpdateUserRequest;
 import com.sprint.mission.discodeit.dto.response.UserResponse;
@@ -25,7 +26,7 @@ public class BasicUserService implements UserService {
     private final BinaryContentRepository binaryContentRepository;
 
     @Override
-    public UserResponse createUser(CreateUserRequest request) {
+    public UserResponse createUser(CreateUserRequest request, CreateBinaryContentRequest profile) {
         // username, email 중복 체크
         boolean duplicated = userRepository.findAll().stream()
                 .anyMatch(u -> u.getUsername().equals(request.getUsername())
@@ -36,15 +37,15 @@ public class BasicUserService implements UserService {
 
 
         UUID profileId = null;
-        if (request.getProfile() != null) {
-            BinaryContent profile = new BinaryContent(
-                    request.getProfile().getFileName(),
-                    request.getProfile().getSize(),
-                    request.getProfile().getContentType(),
-                    request.getProfile().getBytes()
+        if (profile != null) {
+            BinaryContent profileContent = new BinaryContent(
+                    profile.getFileName(),
+                    profile.getSize(),
+                    profile.getContentType(),
+                    profile.getBytes()
             );
-            binaryContentRepository.save(profile);
-            profileId = profile.getId();
+            binaryContentRepository.save(profileContent);
+            profileId = profileContent.getId();
         }
 
         // 유저 생성
@@ -77,25 +78,25 @@ public class BasicUserService implements UserService {
     }
 
     @Override
-    public UserResponse updateUser(UUID id, UpdateUserRequest request) {
+    public UserResponse updateUser(UUID id, UpdateUserRequest request, CreateBinaryContentRequest profile) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 User입니다."));
 
         // 기존 프로필 삭제 후 새 프로필 저장 (선택적)
-        if (request.getProfile() != null) {
-            // 기존 프로필 삭제
+        if (profile != null) {
+
             if (user.getProfileId() != null) {
                 binaryContentRepository.deleteById(user.getProfileId());
             }
-            // 새 프로필 저장
-            BinaryContent profile = new BinaryContent(
-                    request.getProfile().getFileName(),
-                    request.getProfile().getSize(),
-                    request.getProfile().getContentType(),
-                    request.getProfile().getBytes()
+
+            BinaryContent profileContent = new BinaryContent(
+                    profile.getFileName(),
+                    profile.getSize(),
+                    profile.getContentType(),
+                    profile.getBytes()
             );
-            binaryContentRepository.save(profile);
-            user.updateProfile(profile.getId());
+            binaryContentRepository.save(profileContent);
+            user.updateProfile(profileContent.getId());
         }
 
         user.update(request.getUsername(), request.getEmail(), request.getPassword());
@@ -113,10 +114,9 @@ public class BasicUserService implements UserService {
         if (user.getProfileId() != null) {
             binaryContentRepository.deleteById(user.getProfileId());
         }
-        UserStatus userStatus = userStatusRepository.findByUserId(id).orElse(null);
-        if (userStatus != null) {
-            userStatusRepository.deleteById(userStatus.getId());
-        }
+
+        userStatusRepository.findByUserId(id)
+                .ifPresent(userStatus -> userStatusRepository.deleteById(userStatus.getId()));
 
         userRepository.deleteById(id);
     }
