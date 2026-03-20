@@ -123,6 +123,13 @@ public class BasicUserService implements UserService {
 
     private UserResponse toResponse(User user, UserStatus userStatus) {
         boolean isOnline = userStatus != null && userStatus.isOnline();
-        return new UserResponse(user.getId(), user.getUsername(), user.getEmail(), isOnline, user.getProfileId());
+        return new UserResponse(
+                user.getId(),
+                user.getUsername(),
+                user.getEmail(),
+                isOnline,
+                user.getProfileId(),
+                user.getCreatedAt(),
+                user.getUpdatedAt());
     }
 }
