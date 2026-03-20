@@ -43,11 +43,6 @@ public class BasicReadStatusService implements ReadStatusService {
         return toDto(readStatus);
     }
 
-    private ReadStatusResponseDto toDto(ReadStatus readStatus) {
-        return new ReadStatusResponseDto(
-                readStatus.getId(), readStatus.getUserId(), readStatus.getChannelId(), readStatus.getUpdatedAt());
-    }
-
     @Override
     public ReadStatusResponseDto find(UUID id) {
         ReadStatus readStatus = readStatusRepo.findById(id)
@@ -82,5 +77,10 @@ public class BasicReadStatusService implements ReadStatusService {
                 .orElseThrow(() -> new ReadStatusNotFoundException(id));
 
         readStatusRepo.delete(readStatus);
+    }
+
+    private ReadStatusResponseDto toDto(ReadStatus readStatus) {
+        return new ReadStatusResponseDto(
+                readStatus.getId(), readStatus.getUserId(), readStatus.getChannelId(), readStatus.getUpdatedAt());
     }
 }

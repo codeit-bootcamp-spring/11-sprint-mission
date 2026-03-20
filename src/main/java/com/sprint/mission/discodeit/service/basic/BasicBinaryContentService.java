@@ -25,11 +25,6 @@ public class BasicBinaryContentService implements BinaryContentService {
         return toDto(binaryContent);
     }
 
-    private BinaryContentResponseDto toDto(BinaryContent binaryContent) {
-        return new BinaryContentResponseDto(
-                binaryContent.getId(), binaryContent.getFileName(), binaryContent.getData());
-    }
-
     @Override
     public BinaryContentResponseDto find(UUID id) {
         BinaryContent binaryContent = binaryContentRepo.findById(id)
@@ -52,5 +47,10 @@ public class BasicBinaryContentService implements BinaryContentService {
         BinaryContent binaryContent = binaryContentRepo.findById(id)
                 .orElseThrow(() -> new BinaryContentNotFoundException(id));
         binaryContentRepo.delete(binaryContent);
+    }
+
+    private BinaryContentResponseDto toDto(BinaryContent binaryContent) {
+        return new BinaryContentResponseDto(
+                binaryContent.getId(), binaryContent.getFileName(), binaryContent.getData());
     }
 }

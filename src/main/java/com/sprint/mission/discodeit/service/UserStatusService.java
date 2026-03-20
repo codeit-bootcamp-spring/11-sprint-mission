@@ -9,6 +9,7 @@ import java.util.UUID;
 public interface UserStatusService {
     UserStatusResponseDto create(UserStatusCreateRequestDto dto);
     UserStatusResponseDto find(UUID id);
+    UserStatusResponseDto findByUserId(UUID id);
     List<UserStatusResponseDto> findAll();
     void update(UUID id);
     void delete(UUID id);

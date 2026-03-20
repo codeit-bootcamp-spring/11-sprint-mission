@@ -89,11 +89,11 @@ public class DiscodeitApplication {
 	}
 
 	static UserStatusResponseDto userStatusTest(
-			UserStatusService userStatusService, UUID userId, UUID userStatusId) {
+			UserStatusService userStatusService, UUID userId) {
 
 		System.out.println("\n=== UserStatus 테스트 ===");
 
-		UserStatusResponseDto found = userStatusService.find(userStatusId);
+		UserStatusResponseDto found = userStatusService.findByUserId(userId);
 		System.out.println("UserStatus 조회 성공: " + found.id());
 
 		userStatusService.update(found.id());
@@ -157,7 +157,7 @@ public class DiscodeitApplication {
 
 		authLoginTest(authService);
 
-		UserStatusResponseDto userStatusResponseDto = userStatusTest(userStatusService, userResponseDto.id(), userResponseDto.statusId());
+		UserStatusResponseDto userStatusResponseDto = userStatusTest(userStatusService, userResponseDto.id());
 
 		ReadStatusResponseDto readStatusResponseDto = readStatusTest(readStatusService, userResponseDto.id(), channelResponseDto.id());
 
