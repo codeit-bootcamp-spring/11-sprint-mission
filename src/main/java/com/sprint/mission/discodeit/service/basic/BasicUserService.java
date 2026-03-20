@@ -56,15 +56,21 @@ public class BasicUserService implements UserService {
 
     @Override
     public List<UserResponseDto> findAll() {
-        List<User> userList = new ArrayList<>(userRepo.findAll());
-        List<UserResponseDto> userStatusList = new ArrayList<>();
+        return userRepo.findAll().stream()
+                .map(user -> {
+                            UserStatus userStatus = userStatusRepo.findByUserId(user.getId())
+                                    .orElseThrow(() -> new UserStatusOfUserNotFoundException(user.getId()));
 
-        for(User user : userList) {
-            UserStatus userStatus = userStatusRepo.findByUserId(user.getId())
-                    .orElseThrow(() -> new UserStatusOfUserNotFoundException(user.getId()));
-            userStatusList.add(new UserResponseDto(user.getId(), user.getName(), user.getEmail(), userStatus.passed(), userStatus.getId()));
-        }
-        return userStatusList;
+                            return new UserResponseDto(
+                                    user.getId(),
+                                    user.getName(),
+                                    user.getEmail(),
+                                    userStatus.passed(),
+                                    userStatus.getId()
+                            );
+                        }
+                )
+                .toList();
     }
 
     @Override
