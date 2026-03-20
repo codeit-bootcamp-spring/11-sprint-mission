@@ -13,7 +13,7 @@ public class CommonJCFRepository<T extends Common> {
         init();
     }
 
-    public void init() {
+    private void init() {
         repo = new ConcurrentHashMap<>();
     }
 

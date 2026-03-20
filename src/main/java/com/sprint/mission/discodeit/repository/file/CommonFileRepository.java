@@ -27,7 +27,7 @@ public abstract class CommonFileRepository<T extends Common> {
         init();
     }
 
-    public void init() {
+    private void init() {
         if(!Files.exists(directory)) {
             try {
                 Files.createDirectories(directory);
