@@ -1,11 +1,12 @@
 package com.sprint.mission.discodeit.entity;
 
+import com.sprint.mission.discodeit.entity.baseentity.Common;
 import lombok.Getter;
 
 import java.util.Arrays;
 
 @Getter
-public class BinaryContent extends Common{
+public class BinaryContent extends Common {
 
     private String fileName;
     private byte[] data;

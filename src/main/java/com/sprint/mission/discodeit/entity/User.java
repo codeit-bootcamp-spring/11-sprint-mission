@@ -1,12 +1,13 @@
 package com.sprint.mission.discodeit.entity;
 
+import com.sprint.mission.discodeit.entity.baseentity.Common;
+import com.sprint.mission.discodeit.entity.baseentity.UpdatableEntity;
 import lombok.Getter;
-import lombok.Setter;
 
 import java.util.UUID;
 
 @Getter
-public class User extends Common{
+public class User extends UpdatableEntity {
 
     private String name;
     private String email;

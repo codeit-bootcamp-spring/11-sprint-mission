@@ -1,6 +1,6 @@
 package com.sprint.mission.discodeit.repository.file;
 
-import com.sprint.mission.discodeit.entity.Common;
+import com.sprint.mission.discodeit.entity.baseentity.Common;
 import com.sprint.mission.discodeit.exception.repository.DirectoryCreationException;
 import com.sprint.mission.discodeit.exception.repository.FileDeleteException;
 import com.sprint.mission.discodeit.exception.repository.FileLoadException;

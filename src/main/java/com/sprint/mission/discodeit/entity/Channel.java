@@ -1,14 +1,10 @@
 package com.sprint.mission.discodeit.entity;
 
+import com.sprint.mission.discodeit.entity.baseentity.UpdatableEntity;
 import lombok.Getter;
-import lombok.Setter;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
 
 @Getter
-public class Channel extends Common{
+public class Channel extends UpdatableEntity {
 
     private ChannelType channelType;
     private String name;

@@ -1,6 +1,6 @@
 package com.sprint.mission.discodeit.repository.jcf;
 
-import com.sprint.mission.discodeit.entity.Common;
+import com.sprint.mission.discodeit.entity.baseentity.Common;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
