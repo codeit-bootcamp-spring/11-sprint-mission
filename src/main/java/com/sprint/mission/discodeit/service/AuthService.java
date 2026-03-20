@@ -24,7 +24,7 @@ public class AuthService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("로그인 할 유저가 존재하지 않습니다."));
         if(user.getUsername().equals(name) && user.getPassword().equals(password)) {
-            UserStatus status = userStatusRepository.findById(user.getId())
+            UserStatus status = userStatusRepository.findByUserId(user.getId())
                     .orElseThrow(() -> new RuntimeException("상태 정보를 찾을 수 없습니다."));
             return UserDto.from(user, status);
         } else {

@@ -42,7 +42,8 @@ public class DiscodeitApplication {
 			MessageService messageService,
 			ReadStatusService readStatusService,
 			UserStatusService userStatusService,
-			BinaryContentService binaryContentService) {
+			BinaryContentService binaryContentService,
+			AuthService authService) {
 		return args -> {
 			System.out.println("=== 고도화 서비스 테스트 시작 ===");
 
@@ -84,6 +85,16 @@ public class DiscodeitApplication {
 				// UserStatus 전제 조회
 				System.out.println("\n--- UserStatus 전체 조회 테스트 ---");
 				userStatusService.findAllUserStatus().forEach(s -> System.out.println("유저 ID : " + s.getUserId() + ", 온라인 : " + s.isOnline()));
+
+				// AuthService 테스트
+				System.out.println("\n--- AuthService 테스트 ---");
+				LoginRequest loginRequest = new LoginRequest("테스터", "password123");
+				UserDto loginUser = authService.login(newUser.id(), loginRequest);
+				System.out.println("✅ 로그인 성공 : " + loginUser.name() + "님 환영합니다.");
+
+				LoginRequest loginRequest1 = new LoginRequest("코드잇", "password12");
+				UserDto loginUser1 = authService.login(newUser1.id(), loginRequest1);
+				System.out.println("✅ 로그인 성공 : " + loginUser1.name() + "님 환영합니다.");
 
 				// 유저 전체 조회
 				System.out.println("현재 등록된 유저 수 : " + userService.allReadUser());
