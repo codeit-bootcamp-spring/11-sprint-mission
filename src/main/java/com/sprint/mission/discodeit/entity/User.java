@@ -1,6 +1,5 @@
 package com.sprint.mission.discodeit.entity;
 
-import com.sprint.mission.discodeit.entity.baseentity.Common;
 import com.sprint.mission.discodeit.entity.baseentity.UpdatableEntity;
 import lombok.Getter;
 
