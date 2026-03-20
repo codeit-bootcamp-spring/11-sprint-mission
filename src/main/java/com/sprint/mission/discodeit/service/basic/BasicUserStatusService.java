@@ -2,7 +2,6 @@ package com.sprint.mission.discodeit.service.basic;
 
 import com.sprint.mission.discodeit.dto.userstatus.UserStatusCreateRequestDto;
 import com.sprint.mission.discodeit.dto.userstatus.UserStatusResponseDto;
-import com.sprint.mission.discodeit.dto.userstatus.UserStatusUpdateRequestDto;
 import com.sprint.mission.discodeit.entity.UserStatus;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.exception.userstatus.UserStatusAlreadyExistsException;
@@ -58,9 +57,9 @@ public class BasicUserStatusService implements UserStatusService {
     }
 
     @Override
-    public void update(UserStatusUpdateRequestDto dto) {
-        UserStatus userStatus = userStatusRepo.findById(dto.id())
-                .orElseThrow(() -> new UserStatusNotFoundException(dto.id()));
+    public void update(UUID id) {
+        UserStatus userStatus = userStatusRepo.findById(id)
+                .orElseThrow(() -> new UserStatusNotFoundException(id));
 
         userStatus.update();
         userStatusRepo.save(userStatus);

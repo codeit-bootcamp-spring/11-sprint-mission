@@ -41,7 +41,7 @@ public class BasicUserService implements UserService {
         UserStatus userStatus = new UserStatus(user.getId());
         userStatusRepo.save(userStatus);
 
-        return new UserResponseDto(user.getId(), user.getName(), user.getEmail(), userStatus.passed(), userStatus.getId());
+        return new UserResponseDto(user.getId(), user.getName(), user.getEmail(), user.getProfileId(), userStatus.passed(), userStatus.getId());
     }
 
     @Override
@@ -51,7 +51,7 @@ public class BasicUserService implements UserService {
         UserStatus userStatus = userStatusRepo.findByUserId(id)
                 .orElseThrow(() -> new UserStatusOfUserNotFoundException(id));
 
-        return new UserResponseDto(user.getId(), user.getName(), user.getEmail(), userStatus.passed(), userStatus.getId());
+        return new UserResponseDto(user.getId(), user.getName(), user.getEmail(), user.getProfileId(), userStatus.passed(), userStatus.getId());
     }
 
     @Override
@@ -65,6 +65,7 @@ public class BasicUserService implements UserService {
                                     user.getId(),
                                     user.getName(),
                                     user.getEmail(),
+                                    user.getProfileId(),
                                     userStatus.passed(),
                                     userStatus.getId()
                             );
@@ -74,9 +75,9 @@ public class BasicUserService implements UserService {
     }
 
     @Override
-    public void update(UserUpdateRequestDto dto) {
-        User user = userRepo.findById(dto.userId())
-                .orElseThrow(() -> new UserNotFoundException(dto.userId()));
+    public void update(UUID id, UserUpdateRequestDto dto) {
+        User user = userRepo.findById(id)
+                .orElseThrow(() -> new UserNotFoundException(id));
 
         if(!user.getName().equals(dto.name()) && userRepo.existsByName(dto.name())) throw new DuplicateNameException(dto.name());
         if(!user.getEmail().equals(dto.email()) && userRepo.existsByEmail(dto.email())) throw new DuplicateEmailException(dto.email());

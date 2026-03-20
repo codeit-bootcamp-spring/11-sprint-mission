@@ -54,9 +54,9 @@ public class BasicMessageService implements MessageService {
                 .toList();
     }
 
-    public void update(MessageUpdateRequestDto dto) {
-        Message message = messageRepo.findById(dto.messageId())
-                .orElseThrow(() -> new MessageNotFoundException(dto.messageId()));
+    public void update(UUID id, MessageUpdateRequestDto dto) {
+        Message message = messageRepo.findById(id)
+                .orElseThrow(() -> new MessageNotFoundException(id));
 
         message.setContents(dto.contents());
         message.setAttachmentIds(dto.attachmentIds());

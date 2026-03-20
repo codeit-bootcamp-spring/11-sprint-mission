@@ -3,7 +3,6 @@ package com.sprint.mission.discodeit.service.basic;
 import com.sprint.mission.discodeit.dto.readstatus.ReadStatusCreateRequestDto;
 import com.sprint.mission.discodeit.exception.readstatus.ReadStatusNotFoundException;
 import com.sprint.mission.discodeit.dto.readstatus.ReadStatusResponseDto;
-import com.sprint.mission.discodeit.dto.readstatus.ReadStatusUpdateRequestDto;
 import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.exception.channel.ChannelNotFoundException;
 import com.sprint.mission.discodeit.exception.readstatus.ReadStatusAlreadyExistsException;
@@ -15,7 +14,6 @@ import com.sprint.mission.discodeit.service.ReadStatusService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -70,9 +68,9 @@ public class BasicReadStatusService implements ReadStatusService {
     }
 
     @Override
-    public void update(ReadStatusUpdateRequestDto dto) {
-        ReadStatus readStatus = readStatusRepo.findById(dto.id())
-                .orElseThrow(() -> new ReadStatusNotFoundException(dto.id()));
+    public void update(UUID id) {
+        ReadStatus readStatus = readStatusRepo.findById(id)
+                .orElseThrow(() -> new ReadStatusNotFoundException(id));
 
         readStatus.update();
         readStatusRepo.save(readStatus);

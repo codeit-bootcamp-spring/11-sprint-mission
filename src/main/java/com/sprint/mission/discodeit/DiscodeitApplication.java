@@ -9,11 +9,9 @@ import com.sprint.mission.discodeit.dto.login.LoginResponseDto;
 import com.sprint.mission.discodeit.dto.message.MessageCreateRequestDto;
 import com.sprint.mission.discodeit.dto.readstatus.ReadStatusCreateRequestDto;
 import com.sprint.mission.discodeit.dto.readstatus.ReadStatusResponseDto;
-import com.sprint.mission.discodeit.dto.readstatus.ReadStatusUpdateRequestDto;
 import com.sprint.mission.discodeit.dto.user.UserCreateRequestDto;
 import com.sprint.mission.discodeit.dto.user.UserResponseDto;
 import com.sprint.mission.discodeit.dto.userstatus.UserStatusResponseDto;
-import com.sprint.mission.discodeit.dto.userstatus.UserStatusUpdateRequestDto;
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.service.*;
 import org.springframework.boot.SpringApplication;
@@ -98,7 +96,7 @@ public class DiscodeitApplication {
 		UserStatusResponseDto found = userStatusService.find(userStatusId);
 		System.out.println("UserStatus 조회 성공: " + found.id());
 
-		userStatusService.update(new UserStatusUpdateRequestDto(found.id()));
+		userStatusService.update(found.id());
 		UserStatusResponseDto updated = userStatusService.find(found.id());
 		System.out.println("UserStatus update 후 updatedAt: " + updated.updatedAt());
 
@@ -121,7 +119,7 @@ public class DiscodeitApplication {
 		List<ReadStatusResponseDto> userReadStatuses = readStatusService.findAllByUserId(userId);
 		System.out.println("해당 유저의 ReadStatus 개수: " + userReadStatuses.size());
 
-		readStatusService.update(new ReadStatusUpdateRequestDto(created.id()));
+		readStatusService.update(created.id());
 		ReadStatusResponseDto updated = readStatusService.find(created.id());
 		System.out.println("ReadStatus update 후 updatedAt: " + updated.updatedAt());
 

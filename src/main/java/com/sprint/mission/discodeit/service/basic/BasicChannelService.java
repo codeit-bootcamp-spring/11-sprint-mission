@@ -102,9 +102,9 @@ public class BasicChannelService implements ChannelService {
         return response;
     }
 
-    public void update(ChannelUpdateRequestDto dto) {
-        Channel channel = channelRepo.findById(dto.channelId())
-                .orElseThrow(() -> new ChannelNotFoundException(dto.channelId()));
+    public void update(UUID id, ChannelUpdateRequestDto dto) {
+        Channel channel = channelRepo.findById(id)
+                .orElseThrow(() -> new ChannelNotFoundException(id));
 
         if(channel.getChannelType() == ChannelType.PRIVATE) throw new PrivateChannelUpdateNotAllowedException();
 
