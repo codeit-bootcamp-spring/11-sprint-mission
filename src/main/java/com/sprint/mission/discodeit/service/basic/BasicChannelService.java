@@ -36,7 +36,7 @@ public class BasicChannelService implements ChannelService {
 
     @Override
     public ChannelResponse createPrivateChannel(CreatePrivateChannelRequest request) {
-        Channel channel = new Channel(request.getUserIds());
+        Channel channel = new Channel();
         channelRepository.save(channel);
 
         for (UUID userId : request.getUserIds()) {
@@ -56,12 +56,16 @@ public class BasicChannelService implements ChannelService {
 
     @Override
     public List<ChannelResponse> findAllByUserId(UUID userId) {
+        List<UUID> joinedChannelIds = readStatusRepository.findByUserId(userId).stream()
+                .map(ReadStatus::getChannelId)
+                .toList();
+
         return channelRepository.findAll().stream()
                 .filter(channel ->
                         // PUBLIC 채널은 전체 조회
                         channel.getType() == ChannelType.PUBLIC ||
                                 // PRIVATE 채널은 참여한 채널만
-                                channel.getParticipantIds().contains(userId)
+                                joinedChannelIds.contains(channel.getId())
                 )
                 .map(this::toResponse)
                 .toList();
@@ -93,34 +97,54 @@ public class BasicChannelService implements ChannelService {
     public boolean joinChannel(UUID channelId, UUID userId) {
         Channel channel = channelRepository.findById(channelId).orElse(null);
         if (channel == null) return false;
-        boolean success = channel.addParticipant(userId);
-        if (success) channelRepository.save(channel);
-        return success;
+
+        // 이미 참여 중인지 확인
+        boolean alreadyJoined = readStatusRepository.findByUserId(userId).stream()
+                .anyMatch(rs -> rs.getChannelId().equals(channelId));
+
+        if (alreadyJoined) return false;
+
+        ReadStatus readStatus = new ReadStatus(userId, channelId);
+        readStatusRepository.save(readStatus);
+        return true;
     }
 
     @Override
     public boolean leaveChannel(UUID channelId, UUID userId) {
         Channel channel = channelRepository.findById(channelId).orElse(null);
         if (channel == null) return false;
-        boolean success = channel.removeParticipant(userId);
-        if (success) channelRepository.save(channel);
-        return success;
+
+        ReadStatus readStatus = readStatusRepository.findByUserIdAndChannelId(userId,channelId)
+                .orElse(null);
+
+        if (readStatus == null) return false;
+
+        readStatusRepository.deleteById(readStatus.getId());
+        return true;
     }
 
     @Override
     public boolean kickUser(UUID channelId, UUID ownerId, UUID targetUserId) {
         Channel channel = channelRepository.findById(channelId).orElse(null);
         if (channel == null || !channel.getOwnerId().equals(ownerId)) return false;
-        boolean success = channel.removeParticipant(targetUserId);
-        if (success) channelRepository.save(channel);
-        return success;
+
+        ReadStatus readStatus = readStatusRepository.findByUserIdAndChannelId(targetUserId, channelId)
+                .orElse(null);
+
+        if (readStatus == null) return false;
+
+        readStatusRepository.deleteById(readStatus.getId());
+        return true;
     }
 
     @Override
     public List<UUID> getChannelParticipants(UUID channelId) {
         Channel channel = channelRepository.findById(channelId).orElse(null);
         if (channel == null) return null;
-        return channel.getParticipantIds();
+
+        return readStatusRepository.findByChannelId(channelId).stream()
+                .map(ReadStatus::getUserId)
+                .toList();
     }
 
     // Channel → ChannelResponse 변환
@@ -131,7 +155,9 @@ public class BasicChannelService implements ChannelService {
                 .orElse(null);
 
         List<UUID> participantIds = channel.getType() == ChannelType.PRIVATE
-                ? channel.getParticipantIds()
+                ? readStatusRepository.findByChannelId(channel.getId()).stream()
+                        .map(ReadStatus::getUserId)
+                        .toList()
                 : null;
 
         return new ChannelResponse(
