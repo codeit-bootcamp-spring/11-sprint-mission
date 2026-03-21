@@ -67,11 +67,11 @@ public class BasicUserService implements UserService {
         User user = new User(userCreateRequest, profile);
         this.userRepository.save(user);
 
-        UserStatus userStatus = new UserStatus(user.getId());
-        this.userStatusRepository.save(userStatus);
+        UserStatus status = new UserStatus(user.getId());
+        this.userStatusRepository.save(status);
 
         log.info("{} has been created successfully. ✅ [ID: {}]", user.getNickname(), user.getId());
-        return user.toResponse(profile, userStatus);
+        return user.toResponse(profile, status);
     }
 
     @Override
@@ -147,12 +147,12 @@ public class BasicUserService implements UserService {
 
         this.userRepository.save(user);
 
-        UserStatus userStatus = this.userStatusRepository.findByUserId(user.getId());
-        userStatus.setUpdatedAt();
-        this.userStatusRepository.save(userStatus);
+        UserStatus status = this.userStatusRepository.findByUserId(user.getId());
+        status.setUpdatedAt();
+        this.userStatusRepository.save(status);
 
         log.info("{} has been updated successfully. ✅ [ID: {}]", user.getNickname(), id);
-        return user.toResponse(profile, userStatus);
+        return user.toResponse(profile, status);
     }
 
     @Override
@@ -170,8 +170,8 @@ public class BasicUserService implements UserService {
             this.binaryContentRepository.delete(profile);
         }
 
-        UserStatus userStatus = this.userStatusRepository.findByUserId(user.getId());
-        this.userStatusRepository.delete(userStatus);
+        UserStatus status = this.userStatusRepository.findByUserId(user.getId());
+        this.userStatusRepository.delete(status);
 
         this.userRepository.delete(user);
 

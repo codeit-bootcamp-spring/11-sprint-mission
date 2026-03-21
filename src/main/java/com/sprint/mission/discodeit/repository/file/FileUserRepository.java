@@ -27,6 +27,13 @@ public class FileUserRepository extends FileRepository<User> implements UserRepo
     }
 
     @Override
+    public User findByUsername(String username) {
+        return super.findAll().stream()
+                .filter(user -> user.getUsername().equals(username))
+                .findFirst().orElse(null);
+    }
+
+    @Override
     public boolean existByUsername(String username) {
         return super.findAll().stream()
                 .anyMatch(user -> user.getUsername().equals(username));
