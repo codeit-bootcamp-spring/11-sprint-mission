@@ -1,9 +1,15 @@
 package com.sprint.mission.discodeit.service.basic;
 
+import com.sprint.mission.discodeit.dto.ChannelResponse;
+import com.sprint.mission.discodeit.dto.ChannelUpdateRequest;
+import com.sprint.mission.discodeit.dto.PrivateChannelCreateRequest;
+import com.sprint.mission.discodeit.dto.PublicChannelCreateRequest;
 import com.sprint.mission.discodeit.entity.Channel;
+import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
+import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.ChannelService;
 import lombok.RequiredArgsConstructor;
@@ -19,23 +25,50 @@ import java.util.UUID;
 public class BasicChannelService implements ChannelService {
     private final ChannelRepository channelRepository;
     private final UserRepository userRepository;
+    private final ReadStatusRepository readStatusRepository;
     private final MessageRepository messageRepository;
 
     @Override
-    public Channel createChannel(String name) {
-        if (name == null || name.isBlank()) throw new IllegalArgumentException("name is required. ❌");
-        if (existChannelByName(name)) throw new IllegalArgumentException("name cannot be duplicated. ❌");
+    public ChannelResponse createPublicChannel(PublicChannelCreateRequest publicChannelCreateRequest) {
+        if (publicChannelCreateRequest.name() == null || publicChannelCreateRequest.name().isBlank())
+            throw new IllegalArgumentException("name is required. ❌");
+        if (this.existChannelByName(publicChannelCreateRequest.name()))
+            throw new IllegalArgumentException("name cannot be duplicated. ❌");
 
-        Channel channel = new Channel(name);
+        Channel channel = new Channel(publicChannelCreateRequest);
         this.channelRepository.save(channel);
 
-        log.info("{} channel has been created successfully. ✅ [ID: {}]", name, channel.getId());
-        return channel;
+        log.info("{} channel has been created successfully. ✅ [ID: {}]", channel.getName(), channel.getId());
+        return channel.toResponse();
     }
 
     @Override
-    public Channel getChannelById(UUID id) {
-        return this.channelRepository.findById(id);
+    public ChannelResponse createPrivateChannel(PrivateChannelCreateRequest privateChannelCreateRequest) {
+        if (privateChannelCreateRequest.participants() == null || privateChannelCreateRequest.participants().isEmpty())
+            throw new IllegalArgumentException("participants is required. ❌");
+
+        List<User> participants = privateChannelCreateRequest.participants().stream()
+                .distinct()
+                .map(this.userRepository::findById)
+                .toList();
+
+        Channel channel = new Channel(participants);
+        this.channelRepository.save(channel);
+
+        channel.getParticipants().forEach(user -> {
+            user.getChannels().add(channel);
+            this.userRepository.save(user);
+            ReadStatus status = new ReadStatus(user.getId(), channel.getId());
+            this.readStatusRepository.save(status);
+        });
+
+        log.info("private channel has been created successfully. ✅ [ID: {}]", channel.getId());
+        return channel.toResponse();
+    }
+
+    @Override
+    public ChannelResponse findById(UUID id) {
+        return this.channelRepository.findById(id).toResponse();
     }
 
     @Override
@@ -44,28 +77,37 @@ public class BasicChannelService implements ChannelService {
     }
 
     @Override
-    public List<Channel> getAllChannels() {
-        return this.channelRepository.findAll();
+    public List<ChannelResponse> findAllByUserId(UUID userId) {
+        return this.channelRepository.findAll().stream()
+                .filter(channel -> !channel.isPrivate()
+                        || channel.getParticipants().stream().anyMatch(p -> p.getId().equals(userId)))
+                .map(Channel::toResponse)
+                .toList();
     }
 
     @Override
-    public Channel updateChannel(UUID id, String name) {
-        Channel channel = this.getChannelById(id);
+    public ChannelResponse updateChannel(UUID id, ChannelUpdateRequest channelUpdateRequest) {
+        Channel channel = this.channelRepository.findById(id);
 
-        if (name != null && !name.isBlank()) {
-            if (existChannelByName(name)) throw new IllegalArgumentException("name cannot be duplicated. ❌");
-            channel.updateName(name);
+        if (channel.isPrivate()) throw new IllegalArgumentException("private channel cannot be updated. ❌");
+
+        if (channelUpdateRequest.name() != null && !channelUpdateRequest.name().isBlank()) {
+            if (!channel.getName().equals(channelUpdateRequest.name()) && this.existChannelByName(channelUpdateRequest.name()))
+                throw new IllegalArgumentException("name cannot be duplicated. ❌");
+            channel.updateName(channelUpdateRequest.name());
         }
+
+        if (channelUpdateRequest.description() != null) channel.updateDescription(channelUpdateRequest.description());
 
         this.channelRepository.save(channel);
 
-        log.info("{} channel has been updated successfully. ✅ [ID: {}]", name, id);
-        return channel;
+        log.info("{} channel has been updated successfully. ✅ [ID: {}]", channel.getName(), id);
+        return channel.toResponse();
     }
 
     @Override
     public void deleteChannel(UUID id) {
-        Channel channel = this.getChannelById(id);
+        Channel channel = this.channelRepository.findById(id);
 
         channel.getParticipants()
                 .forEach(user -> {
@@ -81,6 +123,9 @@ public class BasicChannelService implements ChannelService {
                     this.messageRepository.delete(message);
                 });
 
+        this.readStatusRepository.findAllByChannelId(channel.getId())
+                .forEach(this.readStatusRepository::delete);
+
         this.channelRepository.delete(channel);
 
         log.info("{} channel has been deleted successfully. ✅ [ID: {}]", channel.getName(), id);
@@ -88,10 +133,11 @@ public class BasicChannelService implements ChannelService {
 
     @Override
     public void joinChannel(UUID id, UUID participantId) {
-        Channel channel = this.getChannelById(id);
+        Channel channel = this.channelRepository.findById(id);
         User participant = this.userRepository.findById(participantId);
 
-        if (channel.getParticipants().stream().anyMatch(p -> p.getId().equals(participant.getId()))) throw new IllegalArgumentException("duplicated participation is not allowed. ❌");
+        if (channel.getParticipants().stream().anyMatch(p -> p.getId().equals(participant.getId())))
+            throw new IllegalArgumentException("duplicated participation is not allowed. ❌");
 
         channel.getParticipants().add(participant);
         this.channelRepository.save(channel);
@@ -104,7 +150,7 @@ public class BasicChannelService implements ChannelService {
 
     @Override
     public void leaveChannel(UUID id, UUID participantId) {
-        Channel channel = this.getChannelById(id);
+        Channel channel = this.channelRepository.findById(id);
         User participant = this.userRepository.findById(participantId);
 
         channel.getParticipants().removeIf(p -> p.getId().equals(participant.getId()));
