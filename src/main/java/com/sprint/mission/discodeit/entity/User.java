@@ -1,5 +1,7 @@
 package com.sprint.mission.discodeit.entity;
 
+import com.sprint.mission.discodeit.dto.UserCreateRequest;
+import com.sprint.mission.discodeit.dto.UserResponse;
 import lombok.Getter;
 
 import java.util.ArrayList;
@@ -17,15 +19,15 @@ public class User extends BaseEntity {
     private List<Message> messages;
     private UUID profileId;
 
-    public User(String nickname, String username, String email, String password, String phoneNumber, UUID profileId) {
-        this.nickname = nickname;
-        this.username = username;
-        this.email = email;
-        this.password = password;
-        this.phoneNumber = phoneNumber;
+    public User(UserCreateRequest userCreateRequest, BinaryContent profile) {
+        this.nickname = userCreateRequest.nickname();
+        this.username = userCreateRequest.username();
+        this.email = userCreateRequest.email();
+        this.password = userCreateRequest.password();
+        this.phoneNumber = userCreateRequest.phoneNumber();
         this.channels = new ArrayList<>();
         this.messages = new ArrayList<>();
-        this.profileId = profileId;
+        this.profileId = profile != null ? profile.getId() : null;
     }
 
     public void updateNickname(String nickname) {
@@ -57,13 +59,19 @@ public class User extends BaseEntity {
         this.messages.add(message);
     }
 
-    @Override
-    public String toString() {
-        return "User{" +
-                "nickname='" + this.nickname + '\'' +
-                ", username='" + this.username + '\'' +
-                ", email='" + this.email + '\'' +
-                ", phoneNumber='" + this.phoneNumber + '\'' +
-                '}';
+    public void updateProfile(BinaryContent profile) {
+        this.profileId = profile.getId();
+        this.setUpdatedAt();
+    }
+
+    public UserResponse toResponse(BinaryContent profile, UserStatus status) {
+        return new UserResponse(
+                this.nickname,
+                this.username,
+                this.email,
+                this.phoneNumber,
+                profile != null ? profile.toResponse() : null,
+                status.toResponse()
+        );
     }
 }
