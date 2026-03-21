@@ -4,6 +4,7 @@ import lombok.Getter;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Getter
 public class User extends BaseEntity {
@@ -14,8 +15,9 @@ public class User extends BaseEntity {
     private String phoneNumber;
     private List<Channel> channels;
     private List<Message> messages;
+    private UUID profileId;
 
-    public User(String nickname, String username, String email, String password, String phoneNumber) {
+    public User(String nickname, String username, String email, String password, String phoneNumber, UUID profileId) {
         this.nickname = nickname;
         this.username = username;
         this.email = email;
@@ -23,6 +25,7 @@ public class User extends BaseEntity {
         this.phoneNumber = phoneNumber;
         this.channels = new ArrayList<>();
         this.messages = new ArrayList<>();
+        this.profileId = profileId;
     }
 
     public void updateNickname(String nickname) {
