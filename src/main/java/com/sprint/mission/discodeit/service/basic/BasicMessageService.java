@@ -1,43 +1,80 @@
 package com.sprint.mission.discodeit.service.basic;
 
+import com.sprint.mission.discodeit.dto.message.MessageCreateRequestDto;
+import com.sprint.mission.discodeit.dto.message.MessageUpdateRequestDto;
+import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.Message;
+import com.sprint.mission.discodeit.exception.binarycontent.BinaryContentNotFoundException;
+import com.sprint.mission.discodeit.exception.channel.ChannelNotFoundException;
+import com.sprint.mission.discodeit.exception.message.MessageNotFoundException;
+import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
+import com.sprint.mission.discodeit.repository.BinaryContentRepository;
+import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
+import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.MessageService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.UUID;
 
+@Service
+@RequiredArgsConstructor
 public class BasicMessageService implements MessageService {
 
-    MessageRepository messageRepo;
+    private final MessageRepository messageRepo;
+    private final ChannelRepository channelRepo;
+    private final UserRepository userRepo;
+    private final BinaryContentRepository binaryContentRepo;
 
-    public BasicMessageService(MessageRepository messageRepo) {
-        this.messageRepo = messageRepo;
-    }
+    public Message create(MessageCreateRequestDto dto) {
+        channelRepo.findById(dto.channelId())
+                .orElseThrow(() -> new ChannelNotFoundException(dto.channelId()));
 
-    public Message createMessage(String contents, UUID userId, UUID channelId) {
-        Message message = new Message(contents, userId, channelId);
+        userRepo.findById(dto.userId())
+                .orElseThrow(() -> new UserNotFoundException(dto.userId()));
+
+        Message message = new Message(dto.contents(), dto.userId(), dto.channelId(), dto.attachmentIds());
         messageRepo.save(message);
         return message;
     }
 
-    public Message findMessage(UUID id) {
-        return messageRepo.load(id);
+    public Message findById(UUID id) {
+        return messageRepo.findById(id)
+                .orElseThrow(() -> new MessageNotFoundException(id));
     }
 
-    public List<Message> findAllMessage() {
-        return messageRepo.loadAll();
+    public List<Message> findAllByChannelId(UUID id) {
+        channelRepo.findById(id)
+                .orElseThrow(() -> new ChannelNotFoundException(id));
+
+        return messageRepo.findAll().stream()
+                .filter(p -> p.getChannelId().equals(id))
+                .toList();
     }
 
-    public void updateMessage(Message oldMessage, Message newMessage) {
-        oldMessage.setContents(newMessage.getContents());
-        oldMessage.setUserId(newMessage.getUserId());
-        oldMessage.setChannelId(newMessage.getChannelId());
-        oldMessage.update();
-        messageRepo.save(oldMessage);
+    public void update(MessageUpdateRequestDto dto) {
+        Message message = messageRepo.findById(dto.messageId())
+                .orElseThrow(() -> new MessageNotFoundException(dto.messageId()));
+
+        message.setContents(dto.contents());
+        message.setAttachmentIds(dto.attachmentIds());
+        message.update();
+
+        messageRepo.save(message);
     }
 
-    public void deleteMessage(Message message) {
+    public void delete(UUID id) {
+        Message message = messageRepo.findById(id)
+                .orElseThrow(() -> new MessageNotFoundException(id));
+
+        for(UUID binaryContentId : message.getAttachmentIds()) {
+            BinaryContent binaryContent = binaryContentRepo.findById(binaryContentId)
+                    .orElseThrow(() -> new BinaryContentNotFoundException(binaryContentId));
+            binaryContentRepo.delete(binaryContent);
+        }
+
         messageRepo.delete(message);
     }
 }

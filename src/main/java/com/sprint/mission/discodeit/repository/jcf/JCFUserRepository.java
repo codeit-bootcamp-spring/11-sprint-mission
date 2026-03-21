@@ -2,47 +2,42 @@ package com.sprint.mission.discodeit.repository.jcf;
 
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.repository.UserRepository;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.stereotype.Repository;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
-public class JCFUserRepository implements UserRepository {
-    List<User> users;
-
+@Repository
+@ConditionalOnProperty(
+        name = "discodeit.repository.type",
+        havingValue = "jcf",
+        matchIfMissing = true
+)
+public class JCFUserRepository extends CommonJCFRepository<User> implements UserRepository {
     public JCFUserRepository() {
-        init();
+        super();
     }
 
     @Override
-    public void init() {
-        users = new ArrayList<>();
-    }
-
-    @Override
-    public void save(User user) {
-        users.add(user);
-    }
-
-    @Override
-    public User load(UUID id) {
-        List<User> list;
-        list = users.stream()
-                .filter(p -> p.getId() == id)
-                .toList();
-        if(list.isEmpty()) {
-            throw new IllegalArgumentException("User Not Found: " + id);
+    public boolean existsByName(String name) {
+        List<User> userList = findAll();
+        for(User user : userList) {
+            if(user.getName().equals(name)) {
+                return true;
+            }
         }
-        return list.get(0);
+        return false;
     }
 
     @Override
-    public List<User> loadAll() {
-        return users;
+    public boolean existsByEmail(String email) {
+        List<User> userList = findAll();
+        for(User user : userList) {
+            if(user.getEmail().equals(email)) {
+                return true;
+            }
+        }
+        return false;
     }
 
-    @Override
-    public void delete(User user) {
-        users.remove(user);
-    }
 }
