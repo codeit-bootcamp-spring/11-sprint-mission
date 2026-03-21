@@ -4,6 +4,7 @@ import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.UserService;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -11,6 +12,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Slf4j
+@RequiredArgsConstructor
 @Service
 public class BasicUserService implements UserService {
     private final UserRepository userRepository;
@@ -18,10 +20,6 @@ public class BasicUserService implements UserService {
     private static final String EMAIL_REGEX = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$";
     private static final String PHONE_REGEX = "^\\d{3}-\\d{3}-\\d{4}$";
 
-    public BasicUserService(UserRepository userRepository, ChannelRepository channelRepository) {
-        this.userRepository = userRepository;
-        this.channelRepository = channelRepository;
-    }
     @Override
     public User createUser(String nickname, String username, String email, String password, String phoneNumber) {
         if (nickname == null || nickname.isBlank()) throw new IllegalArgumentException("nickname is required. ❌");

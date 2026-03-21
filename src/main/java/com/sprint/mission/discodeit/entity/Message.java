@@ -1,5 +1,8 @@
 package com.sprint.mission.discodeit.entity;
 
+import lombok.Getter;
+
+@Getter
 public class Message extends BaseEntity {
     private String content;
     private User sender;
@@ -11,21 +14,9 @@ public class Message extends BaseEntity {
         this.channel = channel;
     }
 
-    public String getContent() {
-        return this.content;
-    }
-
     public void updateContent(String content) {
         this.content = content;
         this.setUpdatedAt();
-    }
-
-    public User getSender() {
-        return this.sender;
-    }
-
-    public Channel getChannel() {
-        return this.channel;
     }
 
     @Override

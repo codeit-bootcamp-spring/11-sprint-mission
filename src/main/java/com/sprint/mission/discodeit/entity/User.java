@@ -1,8 +1,11 @@
 package com.sprint.mission.discodeit.entity;
 
+import lombok.Getter;
+
 import java.util.ArrayList;
 import java.util.List;
 
+@Getter
 public class User extends BaseEntity {
     private String nickname;
     private String username;
@@ -22,17 +25,9 @@ public class User extends BaseEntity {
         this.messages = new ArrayList<>();
     }
 
-    public String getNickname() {
-        return this.nickname;
-    }
-
     public void updateNickname(String nickname) {
         this.nickname = nickname;
         this.setUpdatedAt();
-    }
-
-    public String getUsername() {
-        return this.username;
     }
 
     public void updateUsername(String username) {
@@ -40,17 +35,9 @@ public class User extends BaseEntity {
         this.setUpdatedAt();
     }
 
-    public String getEmail() {
-        return this.email;
-    }
-
     public void updateEmail(String email) {
         this.email = email;
         this.setUpdatedAt();
-    }
-
-    public String getPassword() {
-        return this.password;
     }
 
     public void updatePassword(String password) {
@@ -58,21 +45,9 @@ public class User extends BaseEntity {
         this.setUpdatedAt();
     }
 
-    public String getPhoneNumber() {
-        return this.phoneNumber;
-    }
-
     public void updatePhoneNumber(String phoneNumber) {
         this.phoneNumber = phoneNumber;
         this.setUpdatedAt();
-    }
-
-    public List<Channel> getChannels() {
-        return this.channels;
-    }
-
-    public List<Message> getMessages() {
-        return this.messages;
     }
 
     public void addMessage(Message message) {
