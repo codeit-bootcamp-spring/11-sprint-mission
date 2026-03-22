@@ -134,6 +134,7 @@ public class BasicUserService implements UserService {
                 .orElseThrow(() -> new IllegalArgumentException("requested binary content not found. ❌"))
                 : null;
         if (binaryContentCreateRequest.isPresent()) {
+            if (profile != null) this.binaryContentRepository.delete(profile);
             profile = new BinaryContent(binaryContentCreateRequest.get());
             this.binaryContentRepository.save(profile);
             user.updateProfile(profile);
@@ -169,6 +170,6 @@ public class BasicUserService implements UserService {
 
         this.userRepository.delete(user);
 
-        log.info("{} has been deleted successfully and left from all channels. ✅ [ID: {}]", user.getNickname(), id);
+        log.info("{} has been deleted successfully. ✅ [ID: {}]", user.getNickname(), id);
     }
 }
