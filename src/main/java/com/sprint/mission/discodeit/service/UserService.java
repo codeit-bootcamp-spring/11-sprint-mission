@@ -12,8 +12,6 @@ import java.util.UUID;
 public interface UserService {
     UserResponse createUser(UserCreateRequest userCreateRequest, Optional<BinaryContentCreateRequest> binaryContentCreateRequest);
     UserResponse findById(UUID id);
-    boolean existUserByUsername(String username);
-    boolean existUserByEmail(String email);
     List<UserResponse> findAll();
     UserResponse updateUser(UUID id, UserUpdateRequest userUpdateRequest, Optional<BinaryContentCreateRequest> binaryContentCreateRequest);
     void deleteUser(UUID id);

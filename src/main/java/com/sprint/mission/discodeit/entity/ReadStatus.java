@@ -10,9 +10,9 @@ public class ReadStatus extends BaseEntity {
     private UUID userId;
     private UUID channelId;
 
-    public ReadStatus(User user, Channel channel) {
-        this.userId = user.getId();
-        this.channelId = channel.getId();
+    public ReadStatus(UUID userId, UUID channelId) {
+        this.userId = userId;
+        this.channelId = channelId;
     }
 
     public ReadStatusResponse toResponse() {

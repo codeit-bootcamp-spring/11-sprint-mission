@@ -12,10 +12,7 @@ public interface ChannelService {
     ChannelResponse createPublicChannel(PublicChannelCreateRequest publicChannelCreateRequest);
     ChannelResponse createPrivateChannel(PrivateChannelCreateRequest privateChannelCreateRequest);
     ChannelResponse findById(UUID id);
-    boolean existChannelByName(String name);
     List<ChannelResponse> findAllByUserId(UUID userId);
-    ChannelResponse updateChannel(UUID id, ChannelUpdateRequest channelUpdateRequest);
+    ChannelResponse updateChannel(ChannelUpdateRequest channelUpdateRequest);
     void deleteChannel(UUID id);
-    void joinChannel(UUID id, UUID participantId);
-    void leaveChannel(UUID id, UUID participantId);
 }

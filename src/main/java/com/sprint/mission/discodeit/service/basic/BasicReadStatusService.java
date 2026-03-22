@@ -36,7 +36,7 @@ public class BasicReadStatusService implements ReadStatusService {
             throw new IllegalArgumentException("read status has same channel id and user id already exist. ❌");
         }
 
-        ReadStatus readStatus = new ReadStatus(user, channel);
+        ReadStatus readStatus = new ReadStatus(user.getId(), channel.getId());
         this.readStatusRepository.save(readStatus);
 
         log.info("read status has been created successfully. ✅ [ID: {}]", readStatus.getId());

@@ -4,8 +4,6 @@ import com.sprint.mission.discodeit.dto.user.UserCreateRequest;
 import com.sprint.mission.discodeit.dto.user.UserResponse;
 import lombok.Getter;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 
 @Getter
@@ -15,8 +13,6 @@ public class User extends BaseEntity {
     private String email;
     private String password;
     private String phoneNumber;
-    private List<Channel> channels;
-    private List<Message> messages;
     private UUID profileId;
 
     public User(UserCreateRequest userCreateRequest, BinaryContent profile) {
@@ -25,8 +21,6 @@ public class User extends BaseEntity {
         this.email = userCreateRequest.email();
         this.password = userCreateRequest.password();
         this.phoneNumber = userCreateRequest.phoneNumber();
-        this.channels = new ArrayList<>();
-        this.messages = new ArrayList<>();
         this.profileId = profile != null ? profile.getId() : null;
     }
 
@@ -53,10 +47,6 @@ public class User extends BaseEntity {
     public void updatePhoneNumber(String phoneNumber) {
         this.phoneNumber = phoneNumber;
         this.setUpdatedAt();
-    }
-
-    public void addMessage(Message message) {
-        this.messages.add(message);
     }
 
     public void updateProfile(BinaryContent profile) {

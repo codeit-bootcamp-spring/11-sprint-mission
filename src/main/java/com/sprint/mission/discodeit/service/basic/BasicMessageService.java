@@ -8,10 +8,7 @@ import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.entity.User;
-import com.sprint.mission.discodeit.repository.BinaryContentRepository;
-import com.sprint.mission.discodeit.repository.ChannelRepository;
-import com.sprint.mission.discodeit.repository.MessageRepository;
-import com.sprint.mission.discodeit.repository.UserRepository;
+import com.sprint.mission.discodeit.repository.*;
 import com.sprint.mission.discodeit.service.MessageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +25,7 @@ public class BasicMessageService implements MessageService {
     private final MessageRepository messageRepository;
     private final UserRepository userRepository;
     private final ChannelRepository channelRepository;
+    private final ReadStatusRepository readStatusRepository;
     private final BinaryContentRepository binaryContentRepository;
 
     @Override
@@ -40,7 +38,7 @@ public class BasicMessageService implements MessageService {
         Channel channel = this.channelRepository.findById(messageCreateRequest.channelId())
                 .orElseThrow(() -> new IllegalArgumentException("requested channel not found. ❌"));
 
-        if (!sender.getChannels().stream().anyMatch(ch -> ch.getId().equals(channel.getId()))) {
+        if (channel.isPrivate() && this.readStatusRepository.existByUserIdAndChannelId(sender.getId(), channel.getId())) {
             throw new IllegalArgumentException("sender cannot send message without channel participation. ❌");
         }
 
@@ -58,12 +56,6 @@ public class BasicMessageService implements MessageService {
         Message message = new Message(messageCreateRequest, sender, channel, attachments);
         this.messageRepository.save(message);
 
-        sender.addMessage(message);
-        this.userRepository.save(sender);
-
-        channel.addMessage(message);
-        this.channelRepository.save(channel);
-
         log.info("Message has been created successfully. ✅ [ID: {}]", message.getId());
         log.info("-> {channel: {}, sender: {}, content: {}}", channel.isPrivate() ? '-' : channel.getName(), sender.getNickname(), message.getContent());
         return message.toResponse(attachments);
@@ -71,11 +63,7 @@ public class BasicMessageService implements MessageService {
 
     @Override
     public List<MessageResponse> findAllByChannelId(UUID channelId) {
-        Channel channel = this.channelRepository.findById(channelId)
-                .orElseThrow(() -> new IllegalArgumentException("requested channel not found. ❌"));
-
-        return this.messageRepository.findAll().stream()
-                .filter(message -> message.getChannel().getId().equals(channel.getId()))
+        return this.messageRepository.findAllByChannelId(channelId).stream()
                 .map(message -> message.toResponse(this.binaryContentRepository.findAllByIdIn(message.getAttachments())))
                 .toList();
     }
@@ -112,16 +100,7 @@ public class BasicMessageService implements MessageService {
         Message message = this.messageRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("requested message not found. ❌"));
 
-        User sender = message.getSender();
-        sender.getMessages().removeIf(m -> m.getId().equals(message.getId()));
-        this.userRepository.save(sender);
-
-        Channel channel = message.getChannel();
-        channel.getMessages().removeIf(m -> m.getId().equals(message.getId()));
-        this.channelRepository.save(channel);
-
         this.binaryContentRepository.deleteAllByIdIn(message.getAttachments());
-
         this.messageRepository.delete(message);
 
         log.info("Message has been deleted successfully. ✅ [ID: {}]", id);
