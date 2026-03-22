@@ -58,7 +58,7 @@ public class BasicChannelService implements ChannelService {
         channel.getParticipants().forEach(user -> {
             user.getChannels().add(channel);
             this.userRepository.save(user);
-            ReadStatus status = new ReadStatus(user.getId(), channel.getId());
+            ReadStatus status = new ReadStatus(user, channel);
             this.readStatusRepository.save(status);
         });
 
