@@ -24,7 +24,8 @@ public class BasicUserStatusService implements UserStatusService {
 
     @Override
     public UserStatusResponse createUserStatus(UserStatusCreateRequest userStatusCreateRequest) {
-        User user = this.userRepository.findById(userStatusCreateRequest.userId());
+        User user = this.userRepository.findById(userStatusCreateRequest.userId())
+                .orElseThrow(() -> new IllegalArgumentException("requested user not found. ❌"));
 
         if (this.userStatusRepository.existByUserId(user.getId())) throw new IllegalArgumentException("user status has same user id already exists. ❌");
 
@@ -38,8 +39,9 @@ public class BasicUserStatusService implements UserStatusService {
 
     @Override
     public UserStatusResponse findById(UUID id) {
-        UserStatus userStatus = this.userStatusRepository.findById(id);
-        return userStatus.toResponse();
+        return this.userStatusRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("requested user status not found. ❌"))
+                .toResponse();
     }
 
     @Override
@@ -51,7 +53,8 @@ public class BasicUserStatusService implements UserStatusService {
 
     @Override
     public UserStatusResponse updateUserStatus(UserStatusUpdateRequest userStatusUpdateRequest) {
-        UserStatus userStatus = this.userStatusRepository.findById(userStatusUpdateRequest.id());
+        UserStatus userStatus = this.userStatusRepository.findById(userStatusUpdateRequest.id())
+                .orElseThrow(() -> new IllegalArgumentException("requested user status not found. ❌"));
 
         userStatus.setUpdatedAt();
         this.userStatusRepository.save(userStatus);
@@ -62,7 +65,8 @@ public class BasicUserStatusService implements UserStatusService {
 
     @Override
     public UserStatusResponse updateUserStatusByUserId(UUID userId) {
-        UserStatus userStatus = this.userStatusRepository.findByUserId(userId);
+        UserStatus userStatus = this.userStatusRepository.findByUserId(userId)
+                .orElseThrow(() -> new IllegalArgumentException("requested user status not found. ❌"));
 
         userStatus.setUpdatedAt();
         this.userStatusRepository.save(userStatus);
@@ -74,7 +78,8 @@ public class BasicUserStatusService implements UserStatusService {
 
     @Override
     public void deleteUserStatus(UUID id) {
-        UserStatus userStatus = this.userStatusRepository.findById(id);
+        UserStatus userStatus = this.userStatusRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("requested user status not found. ❌"));
 
         this.userStatusRepository.delete(userStatus);
 

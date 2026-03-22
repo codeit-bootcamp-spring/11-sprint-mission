@@ -76,11 +76,14 @@ public class BasicUserService implements UserService {
 
     @Override
     public UserResponse findById(UUID id) {
-        User user = this.userRepository.findById(id);
+        User user = this.userRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("requested user not found. ❌"));
         BinaryContent profile = user.getProfileId() != null
                 ? this.binaryContentRepository.findById(user.getProfileId())
+                .orElseThrow(() -> new IllegalArgumentException("requested binary content not found. ❌"))
                 : null;
-        UserStatus status = this.userStatusRepository.findByUserId(user.getId());
+        UserStatus status = this.userStatusRepository.findByUserId(user.getId())
+                .orElseThrow(() -> new IllegalArgumentException("requested user status not found. ❌"));
         return user.toResponse(profile, status);
     }
 
@@ -97,19 +100,22 @@ public class BasicUserService implements UserService {
     @Override
     public List<UserResponse> findAll() {
         return this.userRepository.findAll().stream()
-                .map(u -> {
-                    BinaryContent profile = u.getProfileId() != null
-                            ? this.binaryContentRepository.findById(u.getProfileId())
+                .map(user -> {
+                    BinaryContent profile = user.getProfileId() != null
+                            ? this.binaryContentRepository.findById(user.getProfileId())
+                            .orElseThrow(() -> new IllegalArgumentException("requested binary content not found. ❌"))
                             : null;
-                    UserStatus userStatus = this.userStatusRepository.findByUserId(u.getId());
-                    return u.toResponse(profile, userStatus);
+                    UserStatus status = this.userStatusRepository.findByUserId(user.getId())
+                            .orElseThrow(() -> new IllegalArgumentException("requested user status not found. ❌"));
+                    return user.toResponse(profile, status);
                 })
                 .toList();
     }
 
     @Override
     public UserResponse updateUser(UUID id, UserUpdateRequest userUpdateRequest, Optional<BinaryContentCreateRequest> binaryContentCreateRequest) {
-        User user = this.userRepository.findById(id);
+        User user = this.userRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("requested user not found. ❌"));
 
         if (userUpdateRequest.nickname() != null && !userUpdateRequest.nickname().isBlank())
             user.updateNickname(userUpdateRequest.nickname());
@@ -138,6 +144,7 @@ public class BasicUserService implements UserService {
 
         BinaryContent profile = user.getProfileId() != null
                 ? this.binaryContentRepository.findById(user.getProfileId())
+                .orElseThrow(() -> new IllegalArgumentException("requested binary content not found. ❌"))
                 : null;
         if (binaryContentCreateRequest.isPresent()) {
             profile = new BinaryContent(binaryContentCreateRequest.get());
@@ -147,7 +154,8 @@ public class BasicUserService implements UserService {
 
         this.userRepository.save(user);
 
-        UserStatus status = this.userStatusRepository.findByUserId(user.getId());
+        UserStatus status = this.userStatusRepository.findByUserId(user.getId())
+                .orElseThrow(() -> new IllegalArgumentException("requested user status not found. ❌"));
         status.setUpdatedAt();
         this.userStatusRepository.save(status);
 
@@ -157,7 +165,8 @@ public class BasicUserService implements UserService {
 
     @Override
     public void deleteUser(UUID id) {
-        User user = this.userRepository.findById(id);
+        User user = this.userRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("requested user not found. ❌"));
 
         user.getChannels().
                 forEach(channel -> {
@@ -166,11 +175,13 @@ public class BasicUserService implements UserService {
                 });
 
         if (user.getProfileId() != null) {
-            BinaryContent profile = this.binaryContentRepository.findById(user.getProfileId());
+            BinaryContent profile = this.binaryContentRepository.findById(user.getProfileId())
+                    .orElseThrow(() -> new IllegalArgumentException("requested binary content not found. ❌"));
             this.binaryContentRepository.delete(profile);
         }
 
-        UserStatus status = this.userStatusRepository.findByUserId(user.getId());
+        UserStatus status = this.userStatusRepository.findByUserId(user.getId())
+                .orElseThrow(() -> new IllegalArgumentException("requested user status not found. ❌"));
         this.userStatusRepository.delete(status);
 
         this.userRepository.delete(user);

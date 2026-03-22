@@ -26,7 +26,8 @@ public class BasicAuthService implements AuthService {
         if (authLoginRequest.username() == null || authLoginRequest.username().isBlank())
             throw new IllegalArgumentException("username is required. ❌");
 
-        User user = this.userRepository.findByUsername(authLoginRequest.username());
+        User user = this.userRepository.findByUsername(authLoginRequest.username())
+                .orElseThrow(() -> new IllegalArgumentException("requested user not found. ❌"));
 
         if (authLoginRequest.password() == null || authLoginRequest.password().isBlank())
             throw new IllegalArgumentException("password is required. ❌");
@@ -35,9 +36,11 @@ public class BasicAuthService implements AuthService {
 
         BinaryContent profile = user.getProfileId() != null
                 ? this.binaryContentRepository.findById(user.getProfileId())
+                .orElseThrow(() -> new IllegalArgumentException("requested binary content not found. ❌"))
                 : null;
 
-        UserStatus status  = this.userStatusRepository.findByUserId(user.getId());
+        UserStatus status = this.userStatusRepository.findByUserId(user.getId())
+                .orElseThrow(() -> new IllegalArgumentException("requested user status not found. ❌"));
         status.setUpdatedAt();
         this.userStatusRepository.save(status);
 

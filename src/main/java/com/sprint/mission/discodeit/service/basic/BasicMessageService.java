@@ -35,8 +35,10 @@ public class BasicMessageService implements MessageService {
         if (messageCreateRequest.content() == null || messageCreateRequest.content().isBlank())
             throw new IllegalArgumentException("content is required. ❌");
 
-        User sender = this.userRepository.findById(messageCreateRequest.senderId());
-        Channel channel = this.channelRepository.findById(messageCreateRequest.channelId());
+        User sender = this.userRepository.findById(messageCreateRequest.senderId())
+                .orElseThrow(() -> new IllegalArgumentException("requested sender not found. ❌"));
+        Channel channel = this.channelRepository.findById(messageCreateRequest.channelId())
+                .orElseThrow(() -> new IllegalArgumentException("requested channel not found. ❌"));
 
         if (!sender.getChannels().stream().anyMatch(ch -> ch.getId().equals(channel.getId()))) {
             throw new IllegalArgumentException("sender cannot send message without channel participation. ❌");
@@ -69,38 +71,46 @@ public class BasicMessageService implements MessageService {
 
     @Override
     public List<MessageResponse> findAllByChannelId(UUID channelId) {
-        Channel channel = this.channelRepository.findById(channelId);
+        Channel channel = this.channelRepository.findById(channelId)
+                .orElseThrow(() -> new IllegalArgumentException("requested channel not found. ❌"));
 
         return this.messageRepository.findAll().stream()
                 .filter(message -> message.getChannel().getId().equals(channel.getId()))
-                .map(message -> {
-                    List<BinaryContent> attachments = message.getAttachments().stream()
-                            .map(this.binaryContentRepository::findById)
-                            .toList();
-                    return message.toResponse(attachments);
-                })
+                .map(message -> message.toResponse(this.binaryContentRepository.findAllByIdIn(message.getAttachments())))
                 .toList();
     }
 
     @Override
-    public MessageResponse updateMessage(UUID id, MessageUpdateRequest messageUpdateRequest) {
-        Message message = this.messageRepository.findById(id);
+    public MessageResponse updateMessage(UUID id, MessageUpdateRequest messageUpdateRequest, List<BinaryContentCreateRequest> binaryContentCreateRequests) {
+        Message message = this.messageRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("requested message not found. ❌"));
 
         if (messageUpdateRequest.content() != null && !messageUpdateRequest.content().isBlank())
             message.updateContent(messageUpdateRequest.content());
+
+        List<BinaryContent> newAttachments = new ArrayList<>();
+        if (binaryContentCreateRequests != null && !binaryContentCreateRequests.isEmpty()) {
+            this.binaryContentRepository.deleteAllByIdIn(message.getAttachments());
+            newAttachments = binaryContentCreateRequests.stream()
+                    .map(binaryContentCreateRequest -> {
+                        BinaryContent attachment = new BinaryContent(binaryContentCreateRequest);
+                        this.binaryContentRepository.save(attachment);
+                        return attachment;
+                    })
+                    .toList();
+        }
+        if (!newAttachments.isEmpty()) message.replaceAttachments(newAttachments);
+
         this.messageRepository.save(message);
 
-        List<BinaryContent> attachments = message.getAttachments().stream()
-                .map(this.binaryContentRepository::findById)
-                .toList();
-
         log.info("Message has been updated successfully. ✅ [ID: {}]", id);
-        return message.toResponse(attachments);
+        return message.toResponse(this.binaryContentRepository.findAllByIdIn(message.getAttachments()));
     }
 
     @Override
     public void deleteMessage(UUID id) {
-        Message message = this.messageRepository.findById(id);
+        Message message = this.messageRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("requested message not found. ❌"));
 
         User sender = message.getSender();
         sender.getMessages().removeIf(m -> m.getId().equals(message.getId()));
@@ -110,11 +120,7 @@ public class BasicMessageService implements MessageService {
         channel.getMessages().removeIf(m -> m.getId().equals(message.getId()));
         this.channelRepository.save(channel);
 
-        message.getAttachments().forEach(uuid -> {
-                    BinaryContent content = this.binaryContentRepository.findById(uuid);
-                    this.binaryContentRepository.delete(content);
-                }
-        );
+        this.binaryContentRepository.deleteAllByIdIn(message.getAttachments());
 
         this.messageRepository.delete(message);
 

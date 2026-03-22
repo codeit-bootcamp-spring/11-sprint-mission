@@ -49,7 +49,8 @@ public class BasicChannelService implements ChannelService {
 
         List<User> participants = privateChannelCreateRequest.participants().stream()
                 .distinct()
-                .map(this.userRepository::findById)
+                .map(userId -> this.userRepository.findById(userId)
+                        .orElseThrow(() -> new IllegalArgumentException("requested user not found. ❌")))
                 .toList();
 
         Channel channel = new Channel(participants);
@@ -68,7 +69,9 @@ public class BasicChannelService implements ChannelService {
 
     @Override
     public ChannelResponse findById(UUID id) {
-        return this.channelRepository.findById(id).toResponse();
+        return this.channelRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("requested channel not found. ❌"))
+                .toResponse();
     }
 
     @Override
@@ -87,7 +90,8 @@ public class BasicChannelService implements ChannelService {
 
     @Override
     public ChannelResponse updateChannel(UUID id, ChannelUpdateRequest channelUpdateRequest) {
-        Channel channel = this.channelRepository.findById(id);
+        Channel channel = this.channelRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("requested channel not found. ❌"));
 
         if (channel.isPrivate()) throw new IllegalArgumentException("private channel cannot be updated. ❌");
 
@@ -107,7 +111,8 @@ public class BasicChannelService implements ChannelService {
 
     @Override
     public void deleteChannel(UUID id) {
-        Channel channel = this.channelRepository.findById(id);
+        Channel channel = this.channelRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("requested channel not found. ❌"));
 
         channel.getParticipants()
                 .forEach(user -> {
@@ -123,8 +128,7 @@ public class BasicChannelService implements ChannelService {
                     this.messageRepository.delete(message);
                 });
 
-        this.readStatusRepository.findAllByChannelId(channel.getId())
-                .forEach(this.readStatusRepository::delete);
+        this.readStatusRepository.deleteByChannelId(channel.getId());
 
         this.channelRepository.delete(channel);
 
@@ -133,8 +137,10 @@ public class BasicChannelService implements ChannelService {
 
     @Override
     public void joinChannel(UUID id, UUID participantId) {
-        Channel channel = this.channelRepository.findById(id);
-        User participant = this.userRepository.findById(participantId);
+        Channel channel = this.channelRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("requested channel not found. ❌"));
+        User participant = this.userRepository.findById(participantId)
+                .orElseThrow(() -> new IllegalArgumentException("requested user not found. ❌"));
 
         if (channel.getParticipants().stream().anyMatch(p -> p.getId().equals(participant.getId())))
             throw new IllegalArgumentException("duplicated participation is not allowed. ❌");
@@ -150,8 +156,10 @@ public class BasicChannelService implements ChannelService {
 
     @Override
     public void leaveChannel(UUID id, UUID participantId) {
-        Channel channel = this.channelRepository.findById(id);
-        User participant = this.userRepository.findById(participantId);
+        Channel channel = this.channelRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("requested channel not found. ❌"));
+        User participant = this.userRepository.findById(participantId)
+                .orElseThrow(() -> new IllegalArgumentException("requested user not found. ❌"));
 
         channel.getParticipants().removeIf(p -> p.getId().equals(participant.getId()));
         this.channelRepository.save(channel);

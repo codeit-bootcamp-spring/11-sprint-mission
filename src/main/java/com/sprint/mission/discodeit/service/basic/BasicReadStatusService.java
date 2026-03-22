@@ -27,8 +27,10 @@ public class BasicReadStatusService implements ReadStatusService {
 
     @Override
     public ReadStatusResponse createReadStatus(ReadStatusCreateRequest readStatusCreateRequest) {
-        User user = this.userRepository.findById(readStatusCreateRequest.userId());
-        Channel channel = this.channelRepository.findById(readStatusCreateRequest.channelId());
+        User user = this.userRepository.findById(readStatusCreateRequest.userId())
+                .orElseThrow(() -> new IllegalArgumentException("requested user not found. ❌"));
+        Channel channel = this.channelRepository.findById(readStatusCreateRequest.channelId())
+                .orElseThrow(() -> new IllegalArgumentException("requested channel not found. ❌"));
 
         if (this.readStatusRepository.existByUserIdAndChannelId(user.getId(), channel.getId())) {
             throw new IllegalArgumentException("read status has same channel id and user id already exist. ❌");
@@ -37,15 +39,16 @@ public class BasicReadStatusService implements ReadStatusService {
         ReadStatus readStatus = new ReadStatus(user, channel);
         this.readStatusRepository.save(readStatus);
 
-        log.info("ReadStatus has been created successfully. ✅ [ID: {}]", readStatus.getId());
+        log.info("read status has been created successfully. ✅ [ID: {}]", readStatus.getId());
         log.info("-> {user: {}, channel: {}}", user.getId(), channel.getId());
         return readStatus.toResponse();
     }
 
     @Override
     public ReadStatusResponse findById(UUID id) {
-        ReadStatus readStatus = this.readStatusRepository.findById(id);
-        return readStatus.toResponse();
+        return this.readStatusRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("requested read status not found. ❌"))
+                .toResponse();
     }
 
     @Override
@@ -57,20 +60,22 @@ public class BasicReadStatusService implements ReadStatusService {
 
     @Override
     public ReadStatusResponse updateReadStatus(ReadStatusUpdateRequest readStatusUpdateRequest) {
-        ReadStatus readStatus = this.readStatusRepository.findById(readStatusUpdateRequest.id());
+        ReadStatus readStatus = this.readStatusRepository.findById(readStatusUpdateRequest.id())
+                .orElseThrow(() -> new IllegalArgumentException("requested read status not found. ❌"));
         readStatus.setUpdatedAt();
         this.readStatusRepository.save(readStatus);
 
-        log.info("ReadStatus has been updated successfully. ✅ [ID: {}]", readStatus.getId());
+        log.info("read status has been updated successfully. ✅ [ID: {}]", readStatus.getId());
         return readStatus.toResponse();
     }
 
     @Override
     public void deleteReadStatus(UUID id) {
-        ReadStatus readStatus = this.readStatusRepository.findById(id);
+        ReadStatus readStatus = this.readStatusRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("requested read status not found. ❌"));
 
         this.readStatusRepository.delete(readStatus);
 
-        log.info("ReadStatus has been deleted successfully. ✅ [ID: {}]", readStatus.getId());
+        log.info("read status has been deleted successfully. ✅ [ID: {}]", readStatus.getId());
     }
 }

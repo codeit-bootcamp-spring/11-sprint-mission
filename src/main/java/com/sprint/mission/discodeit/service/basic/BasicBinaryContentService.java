@@ -23,13 +23,14 @@ public class BasicBinaryContentService implements BinaryContentService {
         BinaryContent binaryContent = new BinaryContent(binaryContentCreateRequest);
         this.binaryContentRepository.save(binaryContent);
 
-        log.info("BinaryContent has been created successfully. ✅ [ID: {}]", binaryContent.getId());
+        log.info("binary content has been created successfully. ✅ [ID: {}]", binaryContent.getId());
         return binaryContent.toResponse();
     }
 
     @Override
     public BinaryContentResponse findById(UUID id) {
-        BinaryContent binaryContent = this.binaryContentRepository.findById(id);
+        BinaryContent binaryContent = this.binaryContentRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("requested binary content not found. ❌"));
         return binaryContent.toResponse();
     }
 
@@ -42,10 +43,11 @@ public class BasicBinaryContentService implements BinaryContentService {
 
     @Override
     public void deleteBinaryContent(UUID id) {
-        BinaryContent binaryContent = this.binaryContentRepository.findById(id);
+        BinaryContent binaryContent = this.binaryContentRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("requested binary content not found. ❌"));
 
         this.binaryContentRepository.delete(binaryContent);
 
-        log.info("BinaryContent has been deleted successfully. ✅ [ID: {}]", binaryContent.getId());
+        log.info("binary content has been deleted successfully. ✅ [ID: {}]", binaryContent.getId());
     }
 }

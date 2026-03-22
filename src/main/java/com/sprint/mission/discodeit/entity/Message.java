@@ -27,6 +27,11 @@ public class Message extends BaseEntity {
         this.setUpdatedAt();
     }
 
+    public void replaceAttachments(List<BinaryContent> attachments) {
+        this.attachments = new ArrayList<>(attachments.stream().map(BinaryContent::getId).toList());
+        this.setUpdatedAt();
+    }
+
     public MessageResponse toResponse(List<BinaryContent> attachments) {
         return new MessageResponse(
                 this.content,

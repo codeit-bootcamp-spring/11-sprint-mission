@@ -4,15 +4,17 @@ import com.sprint.mission.discodeit.entity.ReadStatus;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
 public interface ReadStatusRepository {
     void save(ReadStatus readStatus);
-    ReadStatus findById(UUID id);
-    boolean existByUserIdAndChannelId(UUID userId, UUID channelId);
+    Optional<ReadStatus> findById(UUID id);
     List<ReadStatus> findAll();
-    List<ReadStatus> findAllByChannelId(UUID id);
+    List<ReadStatus> findAllByChannelId(UUID channelId);
     List<ReadStatus> findAllByUserId(UUID userId);
+    boolean existByUserIdAndChannelId(UUID userId, UUID channelId);
     void delete(ReadStatus readStatus);
+    void deleteByChannelId(UUID channelId);
 }
