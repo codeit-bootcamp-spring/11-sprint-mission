@@ -1,12 +1,12 @@
 package com.sprint.mission.discodeit.service.jcf;
 
+import com.sprint.mission.discodeit.dto.message.MessageUpdateRequest;
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.service.ChannelService;
 import com.sprint.mission.discodeit.service.MessageService;
 import com.sprint.mission.discodeit.service.UserService;
 
 import java.util.*;
-import java.util.stream.Stream;
 
 public class JCFMessageService implements MessageService {
 
@@ -77,7 +77,7 @@ public class JCFMessageService implements MessageService {
     }
 
     @Override
-    public void save(Message message) {
+    public void update(UUID messageId, MessageUpdateRequest request) {
         if(messageData.containsKey(message.getId())){
             messageData.put(message.getId(), message);
         } else{

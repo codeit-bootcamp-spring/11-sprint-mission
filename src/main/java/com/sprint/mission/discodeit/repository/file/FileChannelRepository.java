@@ -2,6 +2,7 @@ package com.sprint.mission.discodeit.repository.file;
 
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
+import org.springframework.stereotype.Repository;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -12,6 +13,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Stream;
 
+@Repository
 public class FileChannelRepository implements ChannelRepository {
 
     private final Path directory;
@@ -57,7 +59,11 @@ public class FileChannelRepository implements ChannelRepository {
                 FileInputStream fis = new FileInputStream(filePath.toFile());
                 ObjectInputStream ois = new ObjectInputStream(fis)
         ) {
-            return (Channel) ois.readObject();
+            Channel channel = (Channel) ois.readObject();
+            if (channel.isDeleted()) {
+                return null;
+            }
+            return channel;
         } catch (IOException | ClassNotFoundException e) {
             throw new RuntimeException("Channel 파일 불러오기 실패.", e);
         }
@@ -81,6 +87,7 @@ public class FileChannelRepository implements ChannelRepository {
                             throw new RuntimeException(e);
                         }
                     })
+                    .filter(channel -> !channel.isDeleted())
                     .toList();
         } catch (IOException e) {
             throw new RuntimeException("채널 목록 조회 중 오류 발생", e);
@@ -90,11 +97,10 @@ public class FileChannelRepository implements ChannelRepository {
     // 삭제 delete
     @Override
     public void deleteById(UUID id) {
-        Path filePath = directory.resolve(id.toString().concat(".ser"));
-        try {
-            Files.deleteIfExists(filePath);
-        } catch (IOException e) {
-            throw new RuntimeException("채널 파일 삭제 실패", e);
+        Channel channel = findById(id);
+        if (channel != null) {
+            channel.softDelete();
+            save(channel);
         }
     }
 }

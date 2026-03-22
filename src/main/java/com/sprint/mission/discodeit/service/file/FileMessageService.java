@@ -1,5 +1,6 @@
 package com.sprint.mission.discodeit.service.file;
 
+import com.sprint.mission.discodeit.dto.message.MessageUpdateRequest;
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.service.ChannelService;
 import com.sprint.mission.discodeit.service.MessageService;
@@ -134,7 +135,7 @@ public class FileMessageService implements MessageService {
     }
 
     @Override
-    public void save(Message message) {
+    public void update(UUID messageId, MessageUpdateRequest request) {
         Path filePath = directory.resolve(message.getId().toString().concat(".ser"));
         if (Files.exists(filePath)) {
             saveToFile(message);

@@ -2,16 +2,18 @@ package com.sprint.mission.discodeit.repository.jcf;
 
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
+import org.springframework.stereotype.Repository;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-
+import java.util.concurrent.ConcurrentHashMap;
+// @Repository
 public class JCFChannelRepository implements ChannelRepository {
 
-    private final Map<UUID, Channel> channelData = new HashMap<>();
+    private final Map<UUID, Channel> channelData = new ConcurrentHashMap<>();
 
     @Override
     public void save(Channel channel) {
@@ -20,7 +22,11 @@ public class JCFChannelRepository implements ChannelRepository {
 
     @Override
     public Channel findById(UUID id) {
-        return channelData.get(id);
+        Channel channel = channelData.get(id);
+        if (channel != null && channel.isDeleted()) {
+            return null;
+        }
+        return channel;
     }
 
     @Override
@@ -28,11 +34,17 @@ public class JCFChannelRepository implements ChannelRepository {
         if (channelData.isEmpty()) {
             return new ArrayList<>();
         }
-        return new ArrayList<>(channelData.values());
+        return channelData.values().stream()
+                .filter(channel -> !channel.isDeleted())
+                .toList();
     }
 
     @Override
     public void deleteById(UUID id) {
-        channelData.remove(id);
+        Channel channel = findById(id);
+        if (channel != null) {
+            channel.softDelete();
+            save(channel);
+        }
     }
 }
