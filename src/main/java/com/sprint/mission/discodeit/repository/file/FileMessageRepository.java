@@ -2,37 +2,51 @@ package com.sprint.mission.discodeit.repository.file;
 
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.repository.MessageRepository;
+import com.sprint.mission.discodeit.util.FileIOUtil;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
-public class FileMessageRepository extends FileRepository<Message> implements MessageRepository {
+public class FileMessageRepository implements MessageRepository {
+    private final FileIOUtil<Message> fileIOUtil;
+
     public FileMessageRepository() {
-        super(Message.class);
+        this.fileIOUtil = new FileIOUtil<>(Message.class);
     }
 
     @Override
     public void save(Message message) {
-        super.save(message);
+        this.fileIOUtil.save(message);
     }
 
     @Override
-    public Message findById(UUID id) {
-        Message message = super.findById(id);
-        if (message == null) throw new IllegalArgumentException("requested message not found. ❌");
-
-        return message;
+    public Optional<Message> findById(UUID id) {
+        return Optional.ofNullable(this.fileIOUtil.findById(id));
     }
 
     @Override
     public List<Message> findAll() {
-        return super.findAll();
+        return this.fileIOUtil.findAll();
+    }
+
+    @Override
+    public List<Message> findAllByChannelId(UUID channelId) {
+        return this.fileIOUtil.findAll().stream()
+                .filter(message -> message.getChannel().getId().equals(channelId))
+                .toList();
     }
 
     @Override
     public void delete(Message message) {
-        super.delete(message);
+        this.fileIOUtil.delete(message);
+    }
+
+    @Override
+    public void deleteAllByChannelId(UUID channelId) {
+        this.findAllByChannelId(channelId)
+                .forEach(this.fileIOUtil::delete);
     }
 }

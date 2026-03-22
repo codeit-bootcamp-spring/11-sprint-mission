@@ -2,9 +2,11 @@ package com.sprint.mission.discodeit.repository.jcf;
 
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.repository.UserRepository;
+import org.springframework.stereotype.Repository;
 
 import java.util.*;
 
+@Repository
 public class JCFUserRepository implements UserRepository {
     private final Map<UUID, User> data;
 
@@ -18,11 +20,25 @@ public class JCFUserRepository implements UserRepository {
     }
 
     @Override
-    public User findById(UUID id) {
-        User user = this.data.get(id);
-        if (user == null) throw new IllegalArgumentException("requested user not found. ❌");
+    public Optional<User> findById(UUID id) {
+        return Optional.ofNullable(this.data.get(id));
+    }
 
-        return user;
+    @Override
+    public Optional<User> findByUsername(String username) {
+        return this.data.values().stream()
+                .filter(user -> user.getUsername().equals(username))
+                .findFirst();
+    }
+
+    @Override
+    public List<User> findAll() {
+        return new ArrayList<>(this.data.values());
+    }
+
+    @Override
+    public boolean existById(UUID id) {
+        return this.data.containsKey(id);
     }
 
     @Override
@@ -35,11 +51,6 @@ public class JCFUserRepository implements UserRepository {
     public boolean existByEmail(String email) {
         return this.data.values().stream()
                 .anyMatch(user -> user.getEmail().equals(email));
-    }
-
-    @Override
-    public List<User> findAll() {
-        return new ArrayList<>(this.data.values());
     }
 
     @Override

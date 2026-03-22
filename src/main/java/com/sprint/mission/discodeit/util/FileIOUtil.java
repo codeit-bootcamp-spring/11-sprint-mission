@@ -1,6 +1,6 @@
-package com.sprint.mission.discodeit.repository.file;
+package com.sprint.mission.discodeit.util;
 
-import com.sprint.mission.discodeit.entity.BaseEntity;
+import com.sprint.mission.discodeit.entity.Identifiable;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -11,11 +11,11 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Stream;
 
-public class FileRepository<T extends BaseEntity> {
+public class FileIOUtil<T extends Serializable & Identifiable> {
     private final Class<T> type;
     private final Path dir;
 
-    public FileRepository(Class<T> type) {
+    public FileIOUtil(Class<T> type) {
         this.type = type;
         this.dir = Paths.get(System.getProperty("java.io.tmpdir"), "discodeit", type.getSimpleName().toLowerCase());
         this.init(dir);
@@ -45,7 +45,7 @@ public class FileRepository<T extends BaseEntity> {
         return this.dir.resolve(id.toString());
     }
 
-    protected void save(T data) {
+    public void save(T data) {
         Path path = uuidToPath(data.getId());
         try (
                 FileOutputStream fos = new FileOutputStream(path.toFile());
@@ -57,7 +57,7 @@ public class FileRepository<T extends BaseEntity> {
         }
     }
 
-    protected T findById(UUID id) {
+    public T findById(UUID id) {
         return findByPath(uuidToPath(id));
     }
 
@@ -76,7 +76,7 @@ public class FileRepository<T extends BaseEntity> {
         }
     }
 
-    protected List<T> findAll() {
+    public List<T> findAll() {
         if (!Files.exists(this.dir)) return new ArrayList<>();
         try (Stream<Path> paths = Files.list(this.dir)) {
             return paths
@@ -87,7 +87,7 @@ public class FileRepository<T extends BaseEntity> {
         }
     }
 
-    protected void delete(T data) {
+    public void delete(T data) {
         Path path = uuidToPath(data.getId());
         try {
             Files.delete(path);

@@ -7,7 +7,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Getter
-public class BaseEntity implements Serializable {
+public class BaseEntity implements Serializable, Identifiable {
     private static final long serialVersionUID = 1L;
     private final UUID id;
     private final Instant createdAt;

@@ -2,43 +2,44 @@ package com.sprint.mission.discodeit.repository.file;
 
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
+import com.sprint.mission.discodeit.util.FileIOUtil;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
-public class FileChannelRepository extends FileRepository<Channel> implements ChannelRepository {
+public class FileChannelRepository implements ChannelRepository {
+    private final FileIOUtil<Channel> fileIOUtil;
+
     public FileChannelRepository() {
-        super(Channel.class);
+        this.fileIOUtil = new FileIOUtil<>(Channel.class);
     }
 
     @Override
     public void save(Channel channel) {
-        super.save(channel);
+        this.fileIOUtil.save(channel);
     }
 
     @Override
-    public Channel findById(UUID id) {
-        Channel channel = super.findById(id);
-        if (channel == null) throw new IllegalArgumentException("requested channel not found. ❌");
-
-        return channel;
-    }
-
-    @Override
-    public boolean existByName(String name) {
-        return super.findAll().stream()
-                .anyMatch(channel -> channel.getName().equals(name));
+    public Optional<Channel> findById(UUID id) {
+        return Optional.ofNullable(this.fileIOUtil.findById(id));
     }
 
     @Override
     public List<Channel> findAll() {
-        return super.findAll();
+        return this.fileIOUtil.findAll();
+    }
+
+    @Override
+    public boolean existByName(String name) {
+        return this.fileIOUtil.findAll().stream()
+                .anyMatch(channel -> channel.getName().equals(name));
     }
 
     @Override
     public void delete(Channel channel) {
-        super.delete(channel);
+        this.fileIOUtil.delete(channel);
     }
 }
