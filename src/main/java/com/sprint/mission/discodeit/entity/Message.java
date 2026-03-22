@@ -1,10 +1,15 @@
 package com.sprint.mission.discodeit.entity;
+
 import com.sprint.mission.discodeit.util.StringUtil;
+import lombok.Getter;
 
 import java.io.Serial;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
-public class Message extends BaseEntity{
+@Getter
+public class Message extends BaseEntity {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -12,6 +17,9 @@ public class Message extends BaseEntity{
     private String content;
     private UUID channelId;
     private UUID senderId;
+
+    // 첨부파일 ID 리스트(BinaryContent의 id들, 첨부파일이 여러개일 수 있어서 리스트로)
+    private final List<UUID> attachmentIds = new ArrayList<>();
 
     //생성자
     public Message(String content, UUID channelId, UUID senderId){
@@ -21,27 +29,23 @@ public class Message extends BaseEntity{
         this.senderId = senderId;
     }
 
-    //getter
-    public String getContent(){
-        return content;
-    }
-    public UUID getChannelId(){
-        return channelId;
-    }
-    public UUID getSenderId(){
-        return senderId;
-    }
-
     //업데이트 메소드
-    public void update(String content, UUID channelId, UUID senderId) {//메시지 내용 수정?
-        if(StringUtil.isValid(content) && channelId != null && senderId != null){ //유효한지 검사
+    public void update(String content) { //channelid, senderid 수정할 일은 없으니 content만 수정하도록 변경함
+        if(StringUtil.isValid(content)){ // 유효한 텍스트인지 검사
             this.content = content;
-            this.channelId = channelId;
-            this.senderId = senderId;
+            updateTime();
+        } else {
+            System.out.println("메시지 내용이 유효하지 않습니다.");
+        }
+    }
 
-            updateTime(); // 업데이트 시간 갱신
-        } else System.out.println("메시지 정보를 갱신에 적절하지 않은 값이 있습니다.");
-        return;
+    //파일 첨부용 메서드
+    //파일 첨부는 선택사항이므로 생성자로 받지 않음
+    public void addAttachment(UUID attachmentId) {
+        if (attachmentId != null) {
+            this.attachmentIds.add(attachmentId);
+            updateTime(); //
+        }
     }
 
     @Override

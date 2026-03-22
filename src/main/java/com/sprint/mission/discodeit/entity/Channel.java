@@ -1,12 +1,15 @@
 package com.sprint.mission.discodeit.entity;
+
 import com.sprint.mission.discodeit.util.StringUtil;
+import lombok.Getter;
 
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-public class Channel extends BaseEntity{
+@Getter
+public class Channel extends BaseEntity {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -15,9 +18,6 @@ public class Channel extends BaseEntity{
     private UUID adminId;
     private final List<UUID> memberId = new ArrayList<>();
 
-    //추가 필드?
-    //private String type; // 채팅? 음성?
-
     //생성자
     public Channel(String channelName, UUID adminId){
         super();
@@ -25,19 +25,6 @@ public class Channel extends BaseEntity{
         this.adminId = adminId;
         memberId.add(adminId);
     }
-
-    //getter
-    public String getChannelName(){
-        return channelName;
-    }
-    public UUID getAdminId(){
-        return adminId;
-    }
-    public List<UUID> getMemberId(){
-        return memberId;
-    }
-
-
 
     //업데이트 메소드
     public void update(String channelName, UUID adminId) {
@@ -48,8 +35,9 @@ public class Channel extends BaseEntity{
                 memberId.add(adminId);
             }
             updateTime(); // 업데이트 시간 갱신
-        } else System.out.println("채널 정보를 갱신에 적절하지 않은 값이 있습니다.");
-        return;
+        } else {
+            System.out.println("채널 정보를 갱신에 적절하지 않은 값이 있습니다.");
+        }
     }
 
     @Override
@@ -70,6 +58,7 @@ public class Channel extends BaseEntity{
         memberId.add(userId);
         updateTime();
     }
+
     public void removeMember(UUID userId){
         if(userId == null){
             System.out.println("존재하지 않는 유저입니다.");

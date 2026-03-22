@@ -1,111 +1,133 @@
 package com.sprint.mission.discodeit.service.basic;
 
+import com.sprint.mission.discodeit.dto.message.MessageCreateRequest;
+import com.sprint.mission.discodeit.dto.message.MessageUpdateRequest;
 import com.sprint.mission.discodeit.entity.Message;
+import com.sprint.mission.discodeit.exception.binaryContent.BinaryContentNotFoundException;
+import com.sprint.mission.discodeit.exception.channel.ChannelNotFoundException;
+import com.sprint.mission.discodeit.exception.message.InvalidMessageRequestException;
+import com.sprint.mission.discodeit.exception.message.MessageNotFoundException;
+import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
+import com.sprint.mission.discodeit.repository.BinaryContentRepository;
+import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
+import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.ChannelService;
 import com.sprint.mission.discodeit.service.MessageService;
 import com.sprint.mission.discodeit.service.UserService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
+@Service
+@RequiredArgsConstructor
 public class BasicMessageService implements MessageService {
 
 
     private final MessageRepository messageRepository;
-
-    private UserService userService;
-    private ChannelService channelService;
-
-
-    public BasicMessageService(MessageRepository messageRepository) {
-        this.messageRepository = messageRepository;
-    }
-
-    // setter
-    @Override
-    public void setUserService(UserService userService) {
-        this.userService = userService;
-    }
+    private final UserRepository userRepository;
+    private final ChannelRepository channelRepository;
+    private final BinaryContentRepository binaryContentRepository;
 
     @Override
-    public void setChannelService(ChannelService channelService) {
-        this.channelService = channelService;
-    }
+    public void create(MessageCreateRequest request) {
+        if (userRepository.findById(request.getSenderId()) == null) {
+            throw new UserNotFoundException("메시지 생성 실패: 발송자 ID를 찾을 수 없습니다.");
+        }
+        if (channelRepository.findById(request.getChannelId()) == null) {
+            throw new ChannelNotFoundException("메시지 생성 실패: 수신할 채널 ID를 찾을 수 없습니다.");
+        }
+        if (request.getContent() == null || request.getContent().isBlank()) {
+            throw new InvalidMessageRequestException("메시지 내용이 비어있습니다.");
+        }
+        if (request.getAttachmentIds() != null && !request.getAttachmentIds().isEmpty()) {
+            request.getAttachmentIds().forEach(fileId -> {
+                if (binaryContentRepository.findById(fileId) == null) {
+                    throw new BinaryContentNotFoundException("첨부파일 생성 실패: 파일 ID(" + fileId + ")를 찾을 수 없습니다.");
+                }
+            });
+        }
 
-    @Override
-    public void create(Message message) {
-        if (message.getSenderId() == null) {
-            System.out.println("유저 id가 유효하지 않습니다.");
-            return;
-        }
-        if (message.getChannelId() == null) {
-            System.out.println("채널 id가 유효하지 않습니다.");
-            return;
+        Message message = new Message(request.getContent(), request.getSenderId(), request.getChannelId());
+
+        if (request.getAttachmentIds() != null && !request.getAttachmentIds().isEmpty()) {
+            request.getAttachmentIds().forEach(message::addAttachment);
         }
 
-        if (messageRepository.findById(message.getId()) == null) {
-            messageRepository.save(message);
-        } else {
-            System.out.println("이미 생성된 메시지입니다");
-        }
+        messageRepository.save(message);
+        System.out.println("메시지가 성공적으로 생성되었습니다.");
     }
 
     @Override
     public Message read(UUID id) {
         Message message = messageRepository.findById(id);
-        if (message != null) {
-            return message;
-        } else {
-            System.out.println("존재하지 않는 메시지입니다.");
-            return null;
+        if (message == null) {
+            throw new MessageNotFoundException("조회할 메시지를 찾을 수 없습니다. (ID: " + id + ")");
         }
+        return message;
     }
 
     @Override
-    public List<Message> readAll() {
-        List<Message> messages = messageRepository.findAll();
-        if (messages.isEmpty()) {
-            System.out.println("메시지가 존재하지 않습니다.");
-        }
-        return messages;
+    public List<Message> readAllByChannelId(UUID channelId) {
+        return messageRepository.findAll().stream()
+                .filter(message -> message.getChannelId().equals(channelId))
+                .toList();
+    }
+
+    public List<Message> readAllBySenderId(UUID userId) {
+        return messageRepository.findAll().stream()
+                .filter(message -> message.getSenderId().equals(userId))
+                .toList();
     }
 
     @Override
-    public void save(Message message) {
-        if (messageRepository.findById(message.getId()) != null) {
-            messageRepository.save(message);
-        } else {
-            System.out.println("존재하지 않는 메시지입니다.");
+    public void update(UUID messageId, MessageUpdateRequest request) {
+        Message message = messageRepository.findById(messageId);
+        if (message == null) {
+            throw new MessageNotFoundException("수정할 메시지를 찾을 수 없습니다. (ID: " + messageId + ")");
         }
+        if (request.getContent() == null || request.getContent().isBlank()) {
+            throw new InvalidMessageRequestException("수정할 메시지 내용이 비어있습니다.");
+        }
+
+        message.update(request.getContent());
+        messageRepository.save(message);
     }
 
     @Override
     public void delete(UUID id) {
-
-        if (messageRepository.findById(id) != null) {
-            messageRepository.deleteById(id);
-        } else {
-            System.out.println("삭제 할 수 없음(존재하지 않는 id)");
+        Message message = messageRepository.findById(id);
+        if (message == null) {
+            throw new MessageNotFoundException("삭제할 메시지를 찾을 수 없습니다. (ID: " + id + ")");
         }
+
+        if (message.getAttachmentIds() != null && !message.getAttachmentIds().isEmpty()) {
+            message.getAttachmentIds().forEach(binaryContentRepository::deleteById);
+        }
+
+        messageRepository.deleteById(id);
     }
+
     @Override
     public void clearMessagesInChannel(UUID channelId) {
-        List<Message> messages = readAll();
-        if (messages != null) {
-            messages.stream()
-                    .filter(message -> message.getChannelId().equals(channelId))
-                    .forEach(message -> this.delete(message.getId()));
-        }
+        // 채널 내 모든 메시지 삭제
+        List<Message> channelMessages = this.readAllByChannelId(channelId);
+        channelMessages.forEach(message -> this.delete(message.getId()));
     }
 
     @Override
     public void clearMessagesByUser(UUID userId) {
-        List<Message> messages = readAll();
-        if (messages != null) {
-            messages.stream()
-                    .filter(message -> message.getSenderId().equals(userId))
-                    .forEach(message -> this.delete(message.getId()));
-        }
+        // 유저가 쓴 모든 메시지 삭제
+        List<Message> userMessages = this.readAllBySenderId(userId);
+        userMessages.forEach(message -> this.delete(message.getId()));
     }
+
+    @Override
+    public void setUserService(UserService userService) {}
+
+    @Override
+    public void setChannelService(ChannelService channelService) {}
 }

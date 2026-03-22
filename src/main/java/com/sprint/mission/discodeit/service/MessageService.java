@@ -1,5 +1,7 @@
 package com.sprint.mission.discodeit.service;
 
+import com.sprint.mission.discodeit.dto.message.MessageCreateRequest;
+import com.sprint.mission.discodeit.dto.message.MessageUpdateRequest;
 import com.sprint.mission.discodeit.entity.Message;
 
 import java.util.List;
@@ -8,10 +10,10 @@ import java.util.UUID;
 public interface MessageService {
     //create, read, readAll, update, delete
 
-    void create(Message message);
+    void create(MessageCreateRequest request);
     Message read(UUID id);
-    List<Message> readAll();
-    void save(Message message);
+    List<Message> readAllByChannelId(UUID channelId);
+    void update(UUID messageId, MessageUpdateRequest request);
     void delete(UUID id);
 
     void setUserService(UserService userService);

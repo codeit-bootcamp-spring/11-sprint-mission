@@ -2,6 +2,7 @@ package com.sprint.mission.discodeit.repository.file;
 
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.repository.MessageRepository;
+import org.springframework.stereotype.Repository;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -12,6 +13,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Stream;
 
+@Repository
 public class FileMessageRepository implements MessageRepository {
 
     private final Path directory;
@@ -58,7 +60,11 @@ public class FileMessageRepository implements MessageRepository {
                 FileInputStream fis = new FileInputStream(filePath.toFile());
                 ObjectInputStream ois = new ObjectInputStream(fis)
         ) {
-            return (Message) ois.readObject();
+            Message message = (Message) ois.readObject();
+            if (message.isDeleted()) {
+                return null;
+            }
+            return message;
         } catch (IOException | ClassNotFoundException e) {
             throw new RuntimeException("Message 파일 불러오기 실패.", e);
         }
@@ -82,6 +88,7 @@ public class FileMessageRepository implements MessageRepository {
                             throw new RuntimeException(e);
                         }
                     })
+                    .filter(message -> !message.isDeleted())
                     .toList();
         } catch (IOException e) {
             throw new RuntimeException("메시지 목록 조회 중 오류 발생", e);
@@ -91,11 +98,10 @@ public class FileMessageRepository implements MessageRepository {
     // 삭제 delete
     @Override
     public void deleteById(UUID id) {
-        Path filePath = directory.resolve(id.toString().concat(".ser"));
-        try {
-            Files.deleteIfExists(filePath); // delete 대신 deleteIfExists를 쓰면 파일이 없을 때의 예외를 깔끔하게 방지할 수 있어
-        } catch (IOException e) {
-            throw new RuntimeException("메시지 파일 삭제 실패", e);
+        Message message = findById(id);
+        if (message != null) {
+            message.softDelete();
+            save(message);
         }
     }
 }

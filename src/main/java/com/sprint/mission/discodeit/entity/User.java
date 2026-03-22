@@ -1,25 +1,25 @@
 package com.sprint.mission.discodeit.entity;
+
 import com.sprint.mission.discodeit.util.StringUtil;
+import lombok.Getter;
 
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-public class User extends BaseEntity{
+@Getter // getter 메소드를 @Getter로 대체
+public class User extends BaseEntity {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private String userName; //닉네임
-    private String email; //이메일 or 아이디?
-    private String password; // 비밀번호
-    private final List<UUID> joinedChannelId = new ArrayList<>(); // 속한 채널
+    private String userName;
+    private String email;
+    private String password;
+    private final List<UUID> joinedChannelId = new ArrayList<>();
 
-    //추가 필드
-    //private String status;
-    //private String profileImage;
-
+    private UUID profileId;// 프로필 사진id
 
     //생성자
     public User(String userName, String email, String password){
@@ -29,31 +29,17 @@ public class User extends BaseEntity{
         this.email = email;
     }
 
-    //getter
-    public String getUserName(){
-        return userName;
-    }
-    public String getPassword(){
-        return password;
-    }
-    public String getEmail(){
-        return email;
-    }
-    public List<UUID> getJoinedChannelId(){
-        return joinedChannelId;
-    }
-
-
     //업데이트 메소드
-    public void update(String userName, String email, String password) {//유저이름, 비밀번호
-        if(StringUtil.isValid(userName) && StringUtil.isValid(email) && StringUtil.isValid(password)){ //유효한지 검사
+    public void update(String userName, String email, String password) {
+        if(StringUtil.isValid(userName) && StringUtil.isValid(email) && StringUtil.isValid(password)){
             this.userName = userName;
             this.email = email;
             this.password = password;
 
-            updateTime(); // 업데이트 시간 갱신
-        } else System.out.println("유저 정보를 갱신에 적절하지 않은 값이 있습니다.");
-        return;
+            updateTime();
+        } else {
+            System.out.println("유저 정보를 갱신에 적절하지 않은 값이 있습니다.");
+        }
     }
 
     @Override
@@ -74,6 +60,7 @@ public class User extends BaseEntity{
         this.joinedChannelId.add(channelId);
         updateTime();
     }
+
     public void leaveChannel(UUID channelId){
         if(channelId == null){
             System.out.println("채널 id가 null입니다.");
@@ -81,9 +68,14 @@ public class User extends BaseEntity{
         }
         if(!joinedChannelId.contains(channelId)){
             System.out.println("이 채널에 속해있지 않습니다.");
+            return;
         }
         this.joinedChannelId.remove(channelId);
         updateTime();
     }
 
+    public void updateProfileId(UUID profileId) {
+        this.profileId = profileId;
+        updateTime();
+    }
 }
