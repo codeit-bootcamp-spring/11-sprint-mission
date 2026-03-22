@@ -14,11 +14,16 @@ import java.util.stream.Stream;
 public class FileIOUtil<T extends Serializable & Identifiable> {
     private final Class<T> type;
     private final Path dir;
+    private static String rootDirectory;
 
     public FileIOUtil(Class<T> type) {
         this.type = type;
-        this.dir = Paths.get(System.getProperty("java.io.tmpdir"), "discodeit", type.getSimpleName().toLowerCase());
+        this.dir = Paths.get(this.rootDirectory, type.getSimpleName().toLowerCase());
         this.init(dir);
+    }
+
+    public static void setRootDirectory(String configDir) {
+        rootDirectory = configDir;
     }
 
     private void init(Path dir) {

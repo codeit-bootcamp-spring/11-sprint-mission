@@ -41,3 +41,6 @@ out/
 
 ### LOG Formatter ###
 src/main/resources/logback.xml
+
+### FILE IO ###
+.discodeit
