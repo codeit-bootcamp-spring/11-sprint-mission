@@ -67,7 +67,7 @@ public class BasicUserService implements UserService {
         User user = new User(userCreateRequest, profile);
         this.userRepository.save(user);
 
-        UserStatus status = new UserStatus(user.getId());
+        UserStatus status = new UserStatus(user);
         this.userStatusRepository.save(status);
 
         log.info("{} has been created successfully. ✅ [ID: {}]", user.getNickname(), user.getId());

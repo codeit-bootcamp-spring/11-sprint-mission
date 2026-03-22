@@ -10,8 +10,8 @@ import java.util.UUID;
 public class UserStatus extends BaseEntity {
     private final UUID userId;
 
-    public UserStatus(UUID userId) {
-        this.userId = userId;
+    public UserStatus(User user) {
+        this.userId = user.getId();
     }
 
     public UserStatusResponse toResponse() {
