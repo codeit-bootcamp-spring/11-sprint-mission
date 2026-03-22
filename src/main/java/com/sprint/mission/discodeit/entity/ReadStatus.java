@@ -1,6 +1,6 @@
 package com.sprint.mission.discodeit.entity;
 
-import com.sprint.mission.discodeit.dto.ReadStatusResponse;
+import com.sprint.mission.discodeit.dto.readstatus.ReadStatusResponse;
 import lombok.Getter;
 
 import java.util.UUID;

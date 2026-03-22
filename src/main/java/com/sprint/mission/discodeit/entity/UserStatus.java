@@ -1,6 +1,6 @@
 package com.sprint.mission.discodeit.entity;
 
-import com.sprint.mission.discodeit.dto.UserStatusResponse;
+import com.sprint.mission.discodeit.dto.userstatus.UserStatusResponse;
 import lombok.Getter;
 
 import java.time.Instant;
