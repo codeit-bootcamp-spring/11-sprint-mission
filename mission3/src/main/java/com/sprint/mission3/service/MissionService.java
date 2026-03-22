@@ -6,13 +6,17 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-
 public class MissionService {
 
-    private final RepositoryInterface repository;
+    // 이제 리포지토리를 직접 부르지 않고, UserService(전문가)를 부릅니다.
+    private final UserService userService;
 
     public void run() {
-        System.out.println("서비스가 실행됩니다!");
-        repository.save("미션 데이터 저장 완료");
+        System.out.println("MissionService: 매니저가 업무를 배분합니다.");
+
+        // 유저 서비스에게 일을 시킵니다.
+        userService.registerUser("최우준");
+
+        System.out.println("MissionService: 모든 업무 지시 완료!");
     }
 }
