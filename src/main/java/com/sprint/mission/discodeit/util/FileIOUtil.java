@@ -15,20 +15,27 @@ public class FileIOUtil<T extends Serializable & Identifiable> {
     private final Class<T> type;
     private final Path dir;
     private static String rootDirectory;
+    private static String ddlAuto;
 
     public FileIOUtil(Class<T> type) {
         this.type = type;
-        this.dir = Paths.get(this.rootDirectory, type.getSimpleName().toLowerCase());
+        this.dir = Paths.get(rootDirectory, type.getSimpleName().toLowerCase());
         this.init(dir);
     }
 
-    public static void setRootDirectory(String configDir) {
-        rootDirectory = configDir;
+    public static void setInitValue(String rootDirectory, String ddlAuto) {
+        FileIOUtil.rootDirectory = rootDirectory;
+        FileIOUtil.ddlAuto = ddlAuto;
     }
 
     private void init(Path dir) {
         try {
-            if (Files.exists(dir)) {
+            if (!Files.exists(dir)) {
+                Files.createDirectories(dir);
+                return;
+            }
+
+            if ("create".equalsIgnoreCase(ddlAuto)) {
                 try (Stream<Path> paths = Files.list(dir)) {
                     paths.forEach(path -> {
                         try {
@@ -38,8 +45,6 @@ public class FileIOUtil<T extends Serializable & Identifiable> {
                         }
                     });
                 }
-            } else {
-                Files.createDirectories(dir);
             }
         } catch (IOException e) {
             throw new RuntimeException("failed to create " + dir + ". ❌", e);
