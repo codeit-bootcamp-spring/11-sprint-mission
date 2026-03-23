@@ -8,12 +8,13 @@ import org.springframework.stereotype.Repository;
 import java.io.*;
 import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Repository
 @ConditionalOnProperty(name = "discodeit.repository.type", havingValue = "file")
 public class FileUserStatusRepository implements UserStatusRepository {
-    private Map<UUID, UserStatus> data = new HashMap<>();
-    private Map<UUID, UserStatus> data_at = new HashMap<>();
+    private Map<UUID, UserStatus> data = new ConcurrentHashMap<>();
+    private Map<UUID, UserStatus> data_at = new ConcurrentHashMap<>();
     private final String fileDirectory;
     private final String filePath;
 
@@ -21,7 +22,6 @@ public class FileUserStatusRepository implements UserStatusRepository {
         this.fileDirectory = fileDirectory;
         this.filePath = fileDirectory + "UserStatus.ser";
         new File(fileDirectory).mkdirs(); // 디렉토리 없으면 생성
-        this.data = new HashMap<>();
         loadFromFile();
     }
 
@@ -42,7 +42,7 @@ public class FileUserStatusRepository implements UserStatusRepository {
         if (!file.exists()) return;
         try (FileInputStream fis = new FileInputStream(file);
              ObjectInputStream ois = new ObjectInputStream(fis)) {
-            this.data = (Map<UUID, UserStatus>) ois.readObject();
+            this.data = new ConcurrentHashMap<>((Map<UUID, UserStatus>) ois.readObject());
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }

@@ -1,5 +1,6 @@
 package com.sprint.mission.discodeit.repository.file;
 
+import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.repository.MessageRepository;
 import org.springframework.beans.factory.annotation.Value;
@@ -8,12 +9,13 @@ import org.springframework.stereotype.Repository;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Repository
 @ConditionalOnProperty(name = "discodeit.repository.type", havingValue = "file")
 public class FileMessageRepository implements MessageRepository {
-    private Map<UUID, Message> data;
-    private Map<UUID, Message> data_at;
+    private Map<UUID, Message> data= new ConcurrentHashMap<>();
+    private Map<UUID, Message> data_at= new ConcurrentHashMap<>();
 
     private final String fileDirectory;
     private final String filePath;
@@ -22,7 +24,6 @@ public class FileMessageRepository implements MessageRepository {
         this.fileDirectory = fileDirectory;
         this.filePath = fileDirectory + "Message.ser";
         new File(fileDirectory).mkdirs(); // 디렉토리 없으면 생성
-        this.data = new HashMap<>();
         loadFromFile();
     }
 
@@ -45,7 +46,7 @@ public class FileMessageRepository implements MessageRepository {
         }
         try (FileInputStream fis = new FileInputStream(file);
              ObjectInputStream ois = new ObjectInputStream(fis)) {
-            this.data = (Map<UUID, Message>) ois.readObject();
+            this.data = new ConcurrentHashMap<>((Map<UUID, Message>) ois.readObject());
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
@@ -86,7 +87,7 @@ public class FileMessageRepository implements MessageRepository {
 
     @Override
     public void delete(UUID id) {
-        data_at = new HashMap<>();
+        data_at = new ConcurrentHashMap<>();
         data_at.put(id, data.get(id));
         data.remove(id);
         saveToFile();

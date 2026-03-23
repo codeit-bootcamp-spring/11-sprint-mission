@@ -1,5 +1,6 @@
 package com.sprint.mission.discodeit.repository.file;
 
+import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Value;
@@ -8,12 +9,13 @@ import org.springframework.stereotype.Repository;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Repository
 @ConditionalOnProperty(name = "discodeit.repository.type", havingValue = "file")
 public class FileUserRepository implements UserRepository {
-    private Map<UUID, User> data;
-    private Map<UUID, User> data_at;
+    private Map<UUID, User> data = new ConcurrentHashMap<>();
+    private Map<UUID, User> data_at = new ConcurrentHashMap<>();
     private final String fileDirectory;
     private final String filePath;
 
@@ -21,7 +23,6 @@ public class FileUserRepository implements UserRepository {
         this.fileDirectory = fileDirectory;
         this.filePath = fileDirectory + "users.ser";
         new File(fileDirectory).mkdirs(); // 디렉토리 없으면 생성
-        this.data = new HashMap<>();
         loadFromFile();
     }
 
@@ -43,7 +44,7 @@ public class FileUserRepository implements UserRepository {
 
         try (FileInputStream fis = new FileInputStream(filePath);
              ObjectInputStream ois = new ObjectInputStream(fis)) {
-            this.data = (Map<UUID, User>) ois.readObject();
+            this.data = new ConcurrentHashMap<>((Map<UUID, User>) ois.readObject());
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
@@ -69,7 +70,7 @@ public class FileUserRepository implements UserRepository {
 
     @Override
     public void delete(UUID id) {
-        data_at = new HashMap<>();
+        data_at = new ConcurrentHashMap<>();
         data_at.put(id, data.get(id));
         data.remove(id);
         saveToFile();
@@ -77,6 +78,7 @@ public class FileUserRepository implements UserRepository {
 
     @Override
     public User update(User user) {
+        data.put(user.getId(), user);
         saveToFile();  // create랑 동일한 로직
         return user;
     }

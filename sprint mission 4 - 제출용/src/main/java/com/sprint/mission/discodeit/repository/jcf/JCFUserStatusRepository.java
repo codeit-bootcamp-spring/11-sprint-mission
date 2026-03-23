@@ -6,12 +6,13 @@ import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Repository
 @ConditionalOnProperty(name = "discodeit.repository.type", havingValue = "jcf", matchIfMissing = true)
 public class JCFUserStatusRepository implements UserStatusRepository {
-    private final Map<UUID, UserStatus> data = new HashMap<>();
-    private Map<UUID, UserStatus> data_at = new HashMap<>();
+    private final Map<UUID, UserStatus> data = new ConcurrentHashMap<>();
+    private Map<UUID, UserStatus> data_at = new ConcurrentHashMap<>();
     @Override
     public UserStatus create(UserStatus userStatus){
         data.put(userStatus.getUserId(), userStatus);

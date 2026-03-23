@@ -10,11 +10,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Repository
 @ConditionalOnProperty(name = "discodeit.repository.type", havingValue = "jcf", matchIfMissing = true)
 public class JCFReadStatusRepository implements ReadStatusRepository {
-    private final Map<UUID, ReadStatus> data = new HashMap<>();
+    private final Map<UUID, ReadStatus> data = new ConcurrentHashMap<>();
 
     @Override
     public ReadStatus create(ReadStatus readStatus){

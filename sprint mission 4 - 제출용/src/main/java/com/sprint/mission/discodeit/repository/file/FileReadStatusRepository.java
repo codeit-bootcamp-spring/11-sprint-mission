@@ -1,5 +1,4 @@
 package com.sprint.mission.discodeit.repository.file;
-
 import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import org.springframework.beans.factory.annotation.Value;
@@ -8,15 +7,15 @@ import org.springframework.stereotype.Repository;
 
 import java.io.*;
 import java.time.Instant;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Repository
 @ConditionalOnProperty(name = "discodeit.repository.type", havingValue = "file")
 public class FileReadStatusRepository implements ReadStatusRepository {
-    private Map<UUID, ReadStatus> data = new HashMap<>();
+    private Map<UUID, ReadStatus> data = new ConcurrentHashMap<>();
     private final String fileDirectory;
     private final String filePath;
 
@@ -24,7 +23,6 @@ public class FileReadStatusRepository implements ReadStatusRepository {
         this.fileDirectory = fileDirectory;
         this.filePath = fileDirectory + "ReadStatus.ser";
         new File(fileDirectory).mkdirs(); // 디렉토리 없으면 생성
-        this.data = new HashMap<>();
         loadFromFile();
     }
 
@@ -45,7 +43,7 @@ public class FileReadStatusRepository implements ReadStatusRepository {
         if (!file.exists()) return;
         try (FileInputStream fis = new FileInputStream(file);
              ObjectInputStream ois = new ObjectInputStream(fis)) {
-            this.data = (Map<UUID, ReadStatus>) ois.readObject();
+            this.data = new ConcurrentHashMap<>((Map<UUID, ReadStatus>) ois.readObject());
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }

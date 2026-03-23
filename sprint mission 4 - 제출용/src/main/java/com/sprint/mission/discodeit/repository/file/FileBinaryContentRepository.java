@@ -11,11 +11,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Repository
 @ConditionalOnProperty(name = "discodeit.repository.type", havingValue = "file")
 public class FileBinaryContentRepository implements BinaryContentRepository {
-    private Map<UUID, BinaryContent> data = new HashMap<>();
+    private Map<UUID, BinaryContent> data = new ConcurrentHashMap<>();
     private final String fileDirectory;
     private final String filePath;
 
