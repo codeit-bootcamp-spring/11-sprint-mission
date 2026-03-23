@@ -55,7 +55,7 @@ public class UserController {
     }
 
     // restore
-    @RequestMapping(value = "/{id}/restore", method = RequestMethod.POST)
+    @RequestMapping(value = "/{id}/", method = RequestMethod.POST)
     public ResponseEntity<Void> restore(@PathVariable UUID id){
         userService.restore(id);
         return ResponseEntity.ok().build();
