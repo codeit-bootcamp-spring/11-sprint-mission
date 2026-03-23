@@ -2,10 +2,12 @@ package com.sprint.mission.discodeit.service.basic;
 
 import com.sprint.mission.discodeit.dto.readstatus.ReadStatusCreateRequestDto;
 import com.sprint.mission.discodeit.dto.readstatus.ReadStatusResponseDto;
+import com.sprint.mission.discodeit.dto.readstatus.ReadStatusUpdateRequestDto;
 import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.exception.channel.ChannelNotFoundException;
 import com.sprint.mission.discodeit.exception.readstatus.ReadStatusAlreadyExistsException;
 import com.sprint.mission.discodeit.exception.readstatus.ReadStatusNotFoundException;
+import com.sprint.mission.discodeit.exception.readstatus.ReadStatusOfUserAndChannelNotFoundException;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
@@ -26,19 +28,19 @@ public class BasicReadStatusService implements ReadStatusService {
     private final ReadStatusRepository readStatusRepo;
 
     @Override
-    public ReadStatusResponseDto create(ReadStatusCreateRequestDto dto) {
-        channelRepo.findById(dto.channelId())
-                .orElseThrow(() -> new ChannelNotFoundException(dto.channelId()));
+    public ReadStatusResponseDto create(UUID channelId, ReadStatusCreateRequestDto dto) {
+        channelRepo.findById(channelId)
+                .orElseThrow(() -> new ChannelNotFoundException(channelId));
 
         userRepo.findById(dto.userId())
                 .orElseThrow(() -> new UserNotFoundException(dto.userId()));
 
         boolean exists = readStatusRepo.findAll().stream()
-                .anyMatch(p -> p.getChannelId().equals(dto.channelId())
+                .anyMatch(p -> p.getChannelId().equals(channelId)
                 && p.getUserId().equals(dto.userId()));
-        if(exists) throw new ReadStatusAlreadyExistsException(dto.userId(), dto.channelId());
+        if(exists) throw new ReadStatusAlreadyExistsException(dto.userId(), channelId);
 
-        ReadStatus readStatus = new ReadStatus(dto.userId(), dto.channelId());
+        ReadStatus readStatus = new ReadStatus(dto.userId(), channelId);
         readStatusRepo.save(readStatus);
         return toDto(readStatus);
     }
@@ -66,6 +68,21 @@ public class BasicReadStatusService implements ReadStatusService {
     public void update(UUID id) {
         ReadStatus readStatus = readStatusRepo.findById(id)
                 .orElseThrow(() -> new ReadStatusNotFoundException(id));
+
+        readStatus.update();
+        readStatusRepo.save(readStatus);
+    }
+
+    @Override
+    public void updateByChannelId(UUID channelId, ReadStatusUpdateRequestDto dto) {
+        channelRepo.findById(channelId)
+                .orElseThrow(() -> new ChannelNotFoundException(channelId));
+
+        userRepo.findById(dto.userId())
+                .orElseThrow(() -> new UserNotFoundException(dto.userId()));
+
+        ReadStatus readStatus = readStatusRepo.findByUserIdAndChannelId(dto.userId(), channelId)
+                        .orElseThrow(() -> new ReadStatusOfUserAndChannelNotFoundException(dto.userId(), channelId));
 
         readStatus.update();
         readStatusRepo.save(readStatus);
