@@ -18,37 +18,36 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/users")
 @RequiredArgsConstructor
 public class UserController {
 
     private final UserService userService;
     private final UserStatusService userStatusService;
 
-    @RequestMapping(method = RequestMethod.POST)
+    @RequestMapping(value = "/users", method = RequestMethod.POST)
     public ResponseEntity<Void> create(@RequestBody UserCreateRequestDto dto) {
         userService.create(dto);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-    @RequestMapping(value = "/{id}", method = RequestMethod.PUT)
+    @RequestMapping(value = "/users/{id}", method = RequestMethod.PUT)
     public ResponseEntity<Void> update(@PathVariable UUID id, @RequestBody UserUpdateRequestDto dto) {
         userService.update(id, dto);
         return ResponseEntity.ok().build();
     }
 
-    @RequestMapping(value = "/{id}", method = RequestMethod.DELETE)
+    @RequestMapping(value = "/users/{id}", method = RequestMethod.DELETE)
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
         userService.delete(id);
         return ResponseEntity.noContent().build();
     }
 
-    @RequestMapping(method = RequestMethod.GET)
+    @RequestMapping(value = "/users", method = RequestMethod.GET)
     public ResponseEntity<List<UserResponseDto>> findAll() {
         return ResponseEntity.ok(userService.findAll());
     }
 
-    @RequestMapping(value = "/{id}", method = RequestMethod.PATCH)
+    @RequestMapping(value = "/users/{id}", method = RequestMethod.PATCH)
     public ResponseEntity<Void> updateStatus(@PathVariable UUID id) {
         userStatusService.updateByUserId(id);
         return ResponseEntity.ok().build();

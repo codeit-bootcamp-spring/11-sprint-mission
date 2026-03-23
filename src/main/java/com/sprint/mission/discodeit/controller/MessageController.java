@@ -18,32 +18,31 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/messages")
 @RequiredArgsConstructor
 public class MessageController {
 
     private final MessageService messageService;
 
-    @RequestMapping(method = RequestMethod.POST)
+    @RequestMapping(value = "/messages", method = RequestMethod.POST)
     public ResponseEntity<Void> create(@RequestBody MessageCreateRequestDto dto) {
         messageService.create(dto);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-    @RequestMapping(value = "/{id}", method = RequestMethod.PUT)
+    @RequestMapping(value = "/messages/{id}", method = RequestMethod.PUT)
     public ResponseEntity<Void> update(@PathVariable UUID id, @RequestBody MessageUpdateRequestDto dto) {
         messageService.update(id, dto);
         return ResponseEntity.ok().build();
     }
 
-    @RequestMapping(value = "/{id}", method = RequestMethod.DELETE)
+    @RequestMapping(value = "/messages/{id}", method = RequestMethod.DELETE)
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
         messageService.delete(id);
         return ResponseEntity.noContent().build();
     }
 
-    @RequestMapping(method = RequestMethod.GET)
-    public ResponseEntity<List<MessageResponseDto>> findAllByChannelId(@RequestParam UUID channelId) {
+    @RequestMapping(value = "/channels/{channelId}/messages", method = RequestMethod.GET)
+    public ResponseEntity<List<MessageResponseDto>> findAllByChannelId(@PathVariable UUID channelId) {
         return ResponseEntity.ok(messageService.findAllByChannelId(channelId));
     }
 

@@ -11,13 +11,12 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/auth")
 @RequiredArgsConstructor
 public class AuthController {
 
     private final AuthService authService;
 
-    @RequestMapping(value = "/login", method = RequestMethod.POST)
+    @RequestMapping(value = "/auth/login", method = RequestMethod.POST)
     public ResponseEntity<LoginResponseDto> login(@RequestBody LoginRequestDto dto) {
         return ResponseEntity.ok(authService.login(dto));
     }
