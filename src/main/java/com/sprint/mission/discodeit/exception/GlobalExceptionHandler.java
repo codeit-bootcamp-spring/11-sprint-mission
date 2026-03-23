@@ -3,6 +3,7 @@ package com.sprint.mission.discodeit.exception;
 import com.sprint.mission.discodeit.exception.channel.ChannelNotFoundException;
 import com.sprint.mission.discodeit.exception.channel.PrivateChannelUpdateNotAllowedException;
 import com.sprint.mission.discodeit.exception.login.InvalidPasswordException;
+import com.sprint.mission.discodeit.exception.message.MessageNotFoundException;
 import com.sprint.mission.discodeit.exception.repository.DirectoryCreationException;
 import com.sprint.mission.discodeit.exception.repository.FileDeleteException;
 import com.sprint.mission.discodeit.exception.repository.FileLoadException;
@@ -36,7 +37,8 @@ public class GlobalExceptionHandler {
             UserNotFoundException.class,
             UserStatusOfUserNotFoundException.class,
             UserStatusNotFoundException.class,
-            ChannelNotFoundException.class
+            ChannelNotFoundException.class,
+            MessageNotFoundException.class
     })
     public ResponseEntity<String> handleNotFound(RuntimeException e) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());

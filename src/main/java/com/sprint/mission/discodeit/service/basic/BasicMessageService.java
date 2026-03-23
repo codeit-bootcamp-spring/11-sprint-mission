@@ -1,6 +1,7 @@
 package com.sprint.mission.discodeit.service.basic;
 
 import com.sprint.mission.discodeit.dto.message.MessageCreateRequestDto;
+import com.sprint.mission.discodeit.dto.message.MessageResponseDto;
 import com.sprint.mission.discodeit.dto.message.MessageUpdateRequestDto;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.Message;
@@ -28,7 +29,8 @@ public class BasicMessageService implements MessageService {
     private final UserRepository userRepo;
     private final BinaryContentRepository binaryContentRepo;
 
-    public Message create(MessageCreateRequestDto dto) {
+    @Override
+    public MessageResponseDto create(MessageCreateRequestDto dto) {
         channelRepo.findById(dto.channelId())
                 .orElseThrow(() -> new ChannelNotFoundException(dto.channelId()));
 
@@ -37,23 +39,28 @@ public class BasicMessageService implements MessageService {
 
         Message message = new Message(dto.contents(), dto.userId(), dto.channelId(), dto.attachmentIds());
         messageRepo.save(message);
-        return message;
+        return toDto(message);
     }
 
-    public Message findById(UUID id) {
-        return messageRepo.findById(id)
+    @Override
+    public MessageResponseDto findById(UUID id) {
+        Message message = messageRepo.findById(id)
                 .orElseThrow(() -> new MessageNotFoundException(id));
+        return toDto(message);
     }
 
-    public List<Message> findAllByChannelId(UUID id) {
+    @Override
+    public List<MessageResponseDto> findAllByChannelId(UUID id) {
         channelRepo.findById(id)
                 .orElseThrow(() -> new ChannelNotFoundException(id));
 
         return messageRepo.findAll().stream()
                 .filter(p -> p.getChannelId().equals(id))
+                .map(this::toDto)
                 .toList();
     }
 
+    @Override
     public void update(UUID id, MessageUpdateRequestDto dto) {
         Message message = messageRepo.findById(id)
                 .orElseThrow(() -> new MessageNotFoundException(id));
@@ -65,6 +72,7 @@ public class BasicMessageService implements MessageService {
         messageRepo.save(message);
     }
 
+    @Override
     public void delete(UUID id) {
         Message message = messageRepo.findById(id)
                 .orElseThrow(() -> new MessageNotFoundException(id));
@@ -76,5 +84,15 @@ public class BasicMessageService implements MessageService {
         }
 
         messageRepo.delete(message);
+    }
+
+    private MessageResponseDto toDto(Message message) {
+        return new MessageResponseDto(
+                message.getId(),
+                message.getContents(),
+                message.getUserId(),
+                message.getChannelId(),
+                message.getAttachmentIds()
+        );
     }
 }
