@@ -1,5 +1,6 @@
 package com.sprint.mission.discodeit.exception;
 
+import com.sprint.mission.discodeit.exception.login.InvalidPasswordException;
 import com.sprint.mission.discodeit.exception.repository.DirectoryCreationException;
 import com.sprint.mission.discodeit.exception.repository.FileDeleteException;
 import com.sprint.mission.discodeit.exception.repository.FileLoadException;
@@ -21,7 +22,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({
             DuplicateEmailException.class,
             DuplicateNameException.class,
-            UserStatusAlreadyExistsException.class
+            UserStatusAlreadyExistsException.class,
+            InvalidPasswordException.class
     })
     public ResponseEntity<String> handleBadRequest(RuntimeException e) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
