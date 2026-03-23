@@ -40,7 +40,8 @@ public class BasicUserService implements UserService {
         UserStatus userStatus = new UserStatus(user.getId());
         userStatusRepo.save(userStatus);
 
-        return new UserResponseDto(user.getId(), user.getName(), user.getEmail(), user.getProfileId(), userStatus.passed());
+        return new UserResponseDto(user.getId(), user.getCreatedAt(), user.getUpdatedAt(),
+                user.getName(), user.getEmail(), user.getProfileId(), userStatus.passed());
     }
 
     @Override
@@ -50,7 +51,8 @@ public class BasicUserService implements UserService {
         UserStatus userStatus = userStatusRepo.findByUserId(id)
                 .orElseThrow(() -> new UserStatusOfUserNotFoundException(id));
 
-        return new UserResponseDto(user.getId(), user.getName(), user.getEmail(), user.getProfileId(), userStatus.passed());
+        return new UserResponseDto(user.getId(), user.getCreatedAt(), user.getUpdatedAt(),
+                user.getName(), user.getEmail(), user.getProfileId(), userStatus.passed());
     }
 
     @Override
@@ -62,6 +64,8 @@ public class BasicUserService implements UserService {
 
                             return new UserResponseDto(
                                     user.getId(),
+                                    user.getCreatedAt(),
+                                    user.getUpdatedAt(),
                                     user.getName(),
                                     user.getEmail(),
                                     user.getProfileId(),
