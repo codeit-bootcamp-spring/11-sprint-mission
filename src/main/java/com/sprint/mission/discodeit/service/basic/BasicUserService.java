@@ -63,53 +63,53 @@ public class BasicUserService implements UserService {
         List<User> users = userRepository.findAll();
         return users.stream()
                 .map(user -> {UserStatus status = userStatusRepository.findByUserId(user.getId())
-                        .orElseThrow(() -> new IllegalArgumentException("유저가 존재하지 않습니다."));
+                        .orElseGet(() -> new UserStatus(user.getId()));
                 return UserDto.from(user, status);
                 })
                 .collect(Collectors.toList());
     }
 
     @Override
-    public UserDto deleteUser(UUID id, String password) {
+    public void deleteUser(UUID id, String password) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("삭제할 유저가 존재하지 않습니다."));
         if(!user.getPassword().equals(password)) {
             throw new InputMismatchException("패스워드가 일치하지 않습니다.");
         }
 
-        UserStatus status = userStatusRepository.findByUserId(id).orElse(null);
-        UserDto response = UserDto.from(user, status);
-
         if(user.getProfileId() != null) {
             binaryContentRepository.delete(user.getProfileId());
         }
         userStatusRepository.deleteByUserId(id);
         userRepository.delete(id);
-
-        return response;
     }
 
     @Override
     public void updateUser(UUID id, UserUpdateRequest request) {
-        String name = request.name();
-        String email = request.email();
-        String password = request.password();
-        byte[] profileImage = request.profileImage();
-
         User user = userRepository.findById(id)
                         .orElseThrow(() -> new IllegalArgumentException("검색하신 유저가 존재하지 않습니다."));
-        userRepository.findByName(name)
-                .filter(u -> !u.getId().equals(id))
-                .ifPresent(u -> {throw new IllegalArgumentException("이미 사용중인 이름 입니다.");});
-        userRepository.findByEmail(email)
-                .filter(u -> !u.getId().equals(id))
-                .ifPresent(u -> {throw new IllegalArgumentException("이미 사용중인 이메일 입니다.");});
-        if(profileImage != null) {
+        String name = user.getUsername();
+        if(request.name() != null) {
+            userRepository.findByName(request.name())
+                    .filter(u -> !u.getId().equals(id))
+                    .ifPresent(u -> {throw new IllegalArgumentException("이미 사용중인 이름 입니다.");});
+            name = request.name();
+        }
+        String email = user.getEmail();
+        if(request.email() != null) {
+            userRepository.findByEmail(email)
+                    .filter(u -> !u.getId().equals(id))
+                    .ifPresent(u -> {throw new IllegalArgumentException("이미 사용중인 이메일 입니다.");});
+            email = request.email();
+        }
+
+        String password = (request.password() != null) ? request.password() : user.getPassword();
+
+        if(request.profileImage() != null) {
             if(user.getProfileId() != null) {
                 binaryContentRepository.delete(user.getProfileId());
             }
-            BinaryContent content = new BinaryContent(profileImage);
-
+            BinaryContent content = new BinaryContent(request.profileImage());
             binaryContentRepository.save(content);
             user.setProfileId(content.getId());
         }

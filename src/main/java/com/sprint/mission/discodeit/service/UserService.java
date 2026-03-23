@@ -12,6 +12,6 @@ public interface UserService {
     UserDto createUser(UserCreateRequest request);
     UserDto readUser(UUID id);
     List<UserDto> allReadUser();
-    UserDto deleteUser(UUID id, String password);
+    void deleteUser(UUID id, String password);
     void updateUser(UUID id, UserUpdateRequest request);
 }

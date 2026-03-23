@@ -80,16 +80,23 @@ public class BasicChannelService implements ChannelService {
 
     @Override
     public List<ChannelResponse> findAllByUserId(UUID userId) {
+        List<Channel> allChannels = channelRepository.findAll();
+
         Set<UUID> channelIds = readStatusRepository.findAllByChannelId(userId).stream()
                 .map(ReadStatus::getChannelId)
                 .collect(Collectors.toSet());
 
-        return channelRepository.findAll().stream()
-                .filter(channel -> channel.getType() == ChannelType.PUBLIC || channelIds.contains(channel.getId()))
+        return allChannels.stream()
+                .filter(channel -> {
+                    boolean isPublic = (channel.getType() == ChannelType.PUBLIC);
+                    boolean isMember = channelIds.contains(channel.getId());
+
+                    return isPublic || isMember;
+                })
                 .map(channel -> {
                     Instant lastMessageAt = messageRepository.findLatestMessage(channel.getId())
-                        .map(Message::getCreatedAt)
-                        .orElse(channel.getCreatedAt());
+                            .map(Message::getCreatedAt)
+                            .orElse(channel.getCreatedAt());
 
                     List<UUID> memberIds = Collections.emptyList();
                     if(channel.getType() == ChannelType.PRIVATE) {
@@ -98,13 +105,13 @@ public class BasicChannelService implements ChannelService {
                                 .toList();
                     }
                     return new ChannelResponse(
-                      channel.getId(),
-                      channel.getName(),
-                      channel.getType(),
-                      channel.getDescription(),
-                      channel.getOwnerId(),
-                      lastMessageAt,
-                      memberIds
+                            channel.getId(),
+                            channel.getName(),
+                            channel.getType(),
+                            channel.getDescription(),
+                            channel.getOwnerId(),
+                            lastMessageAt,
+                            memberIds
                     );
                 })
                 .sorted(Comparator.comparing(ChannelResponse::lastMessageAt).reversed())
@@ -124,15 +131,18 @@ public class BasicChannelService implements ChannelService {
     }
 
     @Override
-    public void updateChannel(ChannelUpdate request) {
-        Channel channel = channelRepository.findById(request.id())
+    public void updateChannel(UUID id, ChannelUpdate request) {
+        Channel channel = channelRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("채널이 존재하지 않습니다."));
 
         if(channel.getType() == ChannelType.PRIVATE) {
             throw new IllegalArgumentException("PRIVATE채널은 수정할 수 없습니다.");
         }
 
-        channel.update(request.name(), request.description());
+        String name = (request.name() != null) ? request.name() : channel.getName();
+        String description = (request.description() != null) ? request.description() : channel.getDescription();
+
+        channel.update(name, description);
         channelRepository.save(channel);
     }
 }
