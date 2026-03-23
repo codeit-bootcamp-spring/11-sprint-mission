@@ -17,4 +17,11 @@ public interface UserRepository {
     User update(User user);
 
     void restore(UUID id);
+
+    boolean existsByUserName(String userName);
+    boolean existsByEmail(String userEmail);
+    User findByUserName(String userName);
+
+    boolean existsByUserNameExcluding(String userName, UUID excludeId);
+    boolean existsByEmailExcluding(String userEmail, UUID excludeId);
 }

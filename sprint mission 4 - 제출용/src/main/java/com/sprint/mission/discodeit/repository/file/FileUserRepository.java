@@ -92,6 +92,40 @@ public class FileUserRepository implements UserRepository {
     }
 
     @Override
+    public boolean existsByUserName(String userName) {
+        return data.values().stream()
+                .anyMatch(u -> u.getUserName().equals(userName));
+    }
+
+    @Override
+    public boolean existsByEmail(String userEmail) {
+        return data.values().stream()
+                .anyMatch(u -> u.getUserEmail().equals(userEmail));
+    }
+
+    @Override
+    public User findByUserName(String userName) {
+        return data.values().stream()
+                .filter(u -> u.getUserName().equals(userName))
+                .findFirst()
+                .orElse(null);
+    }
+
+    @Override
+    public boolean existsByUserNameExcluding(String userName, UUID excludeId) {
+        return data.values().stream()
+                .filter(u -> !u.getId().equals(excludeId))
+                .anyMatch(u -> u.getUserName().equals(userName));
+    }
+
+    @Override
+    public boolean existsByEmailExcluding(String userEmail, UUID excludeId) {
+        return data.values().stream()
+                .filter(u -> !u.getId().equals(excludeId))
+                .anyMatch(u -> u.getUserEmail().equals(userEmail));
+    }
+
+    @Override
     public String toString() {
         return data.toString();
     }

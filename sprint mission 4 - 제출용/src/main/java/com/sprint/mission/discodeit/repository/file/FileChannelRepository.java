@@ -89,4 +89,19 @@ public class FileChannelRepository implements ChannelRepository {
         data_at.remove(id);
         saveToFile();
     }
+
+    @Override
+    public boolean existsByChannelName(String channelName) {
+        return data.values().stream()
+                .filter(c -> c.getChannelName() != null)
+                .anyMatch(c -> c.getChannelName().equals(channelName));
+    }
+
+    @Override
+    public boolean existsByChannelNameExcluding(String channelName, UUID excludeId) {
+        return data.values().stream()
+                .filter(c -> !c.getId().equals(excludeId))
+                .filter(c -> c.getChannelName() != null)
+                .anyMatch(c -> c.getChannelName().equals(channelName));
+    }
 }

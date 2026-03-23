@@ -27,15 +27,11 @@ public class BasicUserService implements UserService {
 
     @Override
     public UserResponse create(UserCreateRequest request) {
-        boolean isDuplicateName = userRepository.readAll().stream()
-                .anyMatch(u -> u.getUserName().equals(request.getUserName()));
-        boolean isDuplicateEmail = userRepository.readAll().stream()
-                .anyMatch(u -> u.getUserEmail().equals(request.getUserEmail()));
-        if (isDuplicateName) {
+        if (userRepository.existsByUserName(request.getUserName())) {
             throw DiscodeitException.duplicateUser(request.getUserName());
         }
-        if (isDuplicateEmail) {
-            throw DiscodeitException.duplicateUser(request.getUserEmail());
+        if (userRepository.existsByEmail(request.getUserEmail())) {
+            throw DiscodeitException.duplicateEmail(request.getUserEmail());
         }
 
         User user = new User(request.getUserName(), request.getUserEmail(), request.getUserPassword());
@@ -75,18 +71,14 @@ public class BasicUserService implements UserService {
     @Override
     public void update(UserUpdateRequest request) {
         User user = userRepository.read(request.getId());
-        if (user == null) DiscodeitException.userNotFound(request.getId());
+        if (user == null) throw DiscodeitException.userNotFound(request.getId());
 
-        boolean isDuplicateName = userRepository.readAll().stream()
-                .filter(u -> !u.getId().equals(request.getId()))
-                .anyMatch(u -> u.getUserName().equals(request.getUserName()));
-        if (isDuplicateName) throw DiscodeitException.duplicateUser(request.getUserName());
-
-        boolean isDuplicateEmail = userRepository.readAll().stream()
-                .filter(u -> !u.getId().equals(request.getId()))
-                .anyMatch(u -> u.getUserEmail().equals(request.getUserEmail()));
-        if (isDuplicateEmail) throw DiscodeitException.duplicateUser(request.getUserEmail());
-
+        if (userRepository.existsByUserNameExcluding(request.getUserName(), request.getId())) {
+            throw DiscodeitException.duplicateUser(request.getUserName());
+        }
+        if (userRepository.existsByEmailExcluding(request.getUserEmail(), request.getId())) {
+            throw DiscodeitException.duplicateEmail(request.getUserEmail());
+        }
         if(request.getFileName() != null){
             binaryContentRepository.deleteByUserId(user.getId());
             BinaryContent binaryContent = BinaryContent.forProfile(user.getId(), request.getFileName(), request.getFileContent(),request.getContentType());

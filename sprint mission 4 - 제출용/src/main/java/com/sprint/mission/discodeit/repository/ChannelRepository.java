@@ -17,4 +17,8 @@ public interface ChannelRepository {
     void delete(UUID id);
 
     void restore(UUID id);
+
+    boolean existsByChannelName(String channelName);
+
+    boolean existsByChannelNameExcluding(String channelName, UUID excludeId);
 }

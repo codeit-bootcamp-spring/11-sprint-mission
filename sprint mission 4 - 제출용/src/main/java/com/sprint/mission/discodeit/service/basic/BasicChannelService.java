@@ -31,9 +31,7 @@ public class BasicChannelService implements ChannelService {
 
     @Override
     public ChannelResponse createPublicChannel(PublicChannelCreateRequest request) {
-        boolean isDuplicate = channelRepository.readAll().stream()
-                .anyMatch(c -> c.getChannelName().equals(request.getChannelName()));
-        if (isDuplicate) {
+        if (channelRepository.existsByChannelName(request.getChannelName())) {
             throw DiscodeitException.duplicateChannel(request.getChannelName());
         }
 
@@ -104,17 +102,11 @@ public class BasicChannelService implements ChannelService {
     @Override
     public void update(ChannelUpdateRequest request) {
         Channel channel = channelRepository.read(request.getChannelId());
-        if (channel == null) {
-            throw DiscodeitException.channelNotFound(request.getChannelId());
-        }
+        if (channel == null) throw DiscodeitException.channelNotFound(request.getChannelId());
         if (channel.getChannelType() == ChannelType.PRIVATE) {
             throw new IllegalArgumentException("PRIVATE 채널은 수정이 불가합니다.");
         }
-        boolean isDuplicate = channelRepository.readAll().stream()
-                .filter(c -> !c.getId().equals(request.getChannelId()))
-                .filter(c -> c.getChannelName() != null)
-                .anyMatch(c -> c.getChannelName().equals(request.getChannelName()));
-        if (isDuplicate) {
+        if (channelRepository.existsByChannelNameExcluding(request.getChannelName(), request.getChannelId())) {
             throw DiscodeitException.duplicateChannel(request.getChannelName());
         }
         channel.updateChannel(request.getChannelName(), request.getChannelDescription());
