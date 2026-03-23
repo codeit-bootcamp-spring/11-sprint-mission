@@ -1,5 +1,7 @@
 package com.sprint.mission.discodeit.exception;
 
+import com.sprint.mission.discodeit.exception.channel.ChannelNotFoundException;
+import com.sprint.mission.discodeit.exception.channel.PrivateChannelUpdateNotAllowedException;
 import com.sprint.mission.discodeit.exception.login.InvalidPasswordException;
 import com.sprint.mission.discodeit.exception.repository.DirectoryCreationException;
 import com.sprint.mission.discodeit.exception.repository.FileDeleteException;
@@ -23,7 +25,8 @@ public class GlobalExceptionHandler {
             DuplicateEmailException.class,
             DuplicateNameException.class,
             UserStatusAlreadyExistsException.class,
-            InvalidPasswordException.class
+            InvalidPasswordException.class,
+            PrivateChannelUpdateNotAllowedException.class
     })
     public ResponseEntity<String> handleBadRequest(RuntimeException e) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
@@ -32,7 +35,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({
             UserNotFoundException.class,
             UserStatusOfUserNotFoundException.class,
-            UserStatusNotFoundException.class
+            UserStatusNotFoundException.class,
+            ChannelNotFoundException.class
     })
     public ResponseEntity<String> handleNotFound(RuntimeException e) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
