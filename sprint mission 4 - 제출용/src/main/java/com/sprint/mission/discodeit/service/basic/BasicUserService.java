@@ -1,5 +1,6 @@
 package com.sprint.mission.discodeit.service.basic;
 
+import com.sprint.mission.discodeit.dto.user.UserDto;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.entity.UserStatus;
@@ -105,5 +106,25 @@ public class BasicUserService implements UserService {
     public void restore(UUID id) {
         userRepository.restore(id);
         userStatusRepository.restore(id);
+    }
+
+    @Override
+    public List<UserDto> readAllDto(){
+        return userRepository.readAll().stream()
+                .map(user -> {
+                    UserStatus userStatus = userStatusRepository.readByUserId(user.getId());
+                    BinaryContent profile = binaryContentRepository.readByUserId(user.getId());
+                    UUID profileId = profile == null ? null: profile.getId();
+                    return new UserDto(
+                            user.getId(),
+                            user.getCreatedAt(),
+                            user.getUpdatedAt(),
+                            user.getUserName(),
+                            user.getUserEmail(),
+                            profileId,
+                            userStatus.isOnline()
+                    );
+                })
+                .toList();
     }
 }

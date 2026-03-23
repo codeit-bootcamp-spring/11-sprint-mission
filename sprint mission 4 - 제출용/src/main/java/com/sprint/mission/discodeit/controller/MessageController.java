@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/message")
+@RequestMapping("/api/message")
 @RequiredArgsConstructor
 public class MessageController {
     private final MessageService messageService;

@@ -11,15 +11,15 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/binarycontent")
+@RequestMapping("/api/binaryContent")
 @RequiredArgsConstructor
 public class BinaryContentController {
     private final BinaryContentService binaryContentService;
 
     // read
     @RequestMapping(value = "/{id}", method = RequestMethod.GET)
-    public ResponseEntity<BinaryContent> read(@PathVariable UUID id){
-        return ResponseEntity.ok(binaryContentService.read(id));
+    public ResponseEntity<BinaryContent> read(@PathVariable UUID BinaryContent){
+        return ResponseEntity.ok(binaryContentService.read(BinaryContent));
     }
 
     // readAllByIdIn

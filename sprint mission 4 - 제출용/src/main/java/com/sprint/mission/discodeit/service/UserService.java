@@ -1,6 +1,7 @@
 package com.sprint.mission.discodeit.service;
 
 import com.sprint.mission.discodeit.dto.user.UserCreateRequest;
+import com.sprint.mission.discodeit.dto.user.UserDto;
 import com.sprint.mission.discodeit.dto.user.UserResponse;
 import com.sprint.mission.discodeit.dto.user.UserUpdateRequest;
 
@@ -19,4 +20,6 @@ public interface UserService {
     void delete(UUID id);
 
     void restore(UUID id);
+
+    List<UserDto> readAllDto();
 }

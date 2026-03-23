@@ -1,6 +1,7 @@
 package com.sprint.mission.discodeit.controller;
 
 import com.sprint.mission.discodeit.dto.user.UserCreateRequest;
+import com.sprint.mission.discodeit.dto.user.UserDto;
 import com.sprint.mission.discodeit.dto.user.UserResponse;
 import com.sprint.mission.discodeit.dto.user.UserUpdateRequest;
 import com.sprint.mission.discodeit.dto.userStatus.UserStatusUpdateRequest;
@@ -15,7 +16,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/user")
+@RequestMapping("/api/user")
 @RequiredArgsConstructor
 public class UserController {
     private final UserService userService;
@@ -55,7 +56,7 @@ public class UserController {
     }
 
     // restore
-    @RequestMapping(value = "/{id}/", method = RequestMethod.POST)
+    @RequestMapping(value = "/{id}/restore", method = RequestMethod.POST)
     public ResponseEntity<Void> restore(@PathVariable UUID id){
         userService.restore(id);
         return ResponseEntity.ok().build();
@@ -66,5 +67,11 @@ public class UserController {
     public ResponseEntity<Void> updateStatus(@PathVariable UUID id, @RequestBody UserStatusUpdateRequest request){
         userStatusService.update(request);
         return ResponseEntity.ok().build();
+    }
+
+    // readAllDto
+    @RequestMapping(value = "readAllDto", method = RequestMethod.GET)
+    public ResponseEntity<List<UserDto>> readAllDto(){
+        return ResponseEntity.ok(userService.readAllDto());
     }
 }
