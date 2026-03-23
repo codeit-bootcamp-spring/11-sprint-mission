@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -20,9 +21,9 @@ public class BinaryContentController {
 
     private final BinaryContentService binaryContentService;
 
-    @RequestMapping(value = "/binary-contents/{id}", method = RequestMethod.GET)
-    public ResponseEntity<BinaryContentResponseDto> find(@PathVariable UUID id) {
-        return ResponseEntity.ok(binaryContentService.find(id));
+    @RequestMapping(value = "/binary-contents/find", method = RequestMethod.GET)
+    public ResponseEntity<BinaryContentResponseDto> find(@RequestParam UUID binaryContentId) {
+        return ResponseEntity.ok(binaryContentService.find(binaryContentId));
     }
 
     @RequestMapping(value = "/binary-contents/search", method = RequestMethod.POST)
