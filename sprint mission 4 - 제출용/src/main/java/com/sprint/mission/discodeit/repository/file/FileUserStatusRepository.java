@@ -7,10 +7,7 @@ import org.springframework.stereotype.Repository;
 
 import java.io.*;
 import java.time.Instant;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 @Repository
 @ConditionalOnProperty(name = "discodeit.repository.type", havingValue = "file")
@@ -65,7 +62,7 @@ public class FileUserStatusRepository implements UserStatusRepository {
 
     @Override
     public List<UserStatus> readAll(){
-        return data.values().stream().toList();
+        return new ArrayList<>(data.values());
 
     }
 
