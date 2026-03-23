@@ -25,30 +25,30 @@ public class UserController {
     private final UserService userService;
     private final UserStatusService userStatusService;
 
-    @RequestMapping(value = "/users", method = RequestMethod.POST)
+    @RequestMapping(value = "/user", method = RequestMethod.POST)
     public ResponseEntity<Void> create(@RequestBody UserCreateRequestDto dto) {
         userService.create(dto);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-    @RequestMapping(value = "/users/{id}", method = RequestMethod.PUT)
+    @RequestMapping(value = "/user/{id}", method = RequestMethod.PUT)
     public ResponseEntity<Void> update(@PathVariable UUID id, @RequestBody UserUpdateRequestDto dto) {
         userService.update(id, dto);
         return ResponseEntity.ok().build();
     }
 
-    @RequestMapping(value = "/users/{id}", method = RequestMethod.DELETE)
+    @RequestMapping(value = "/user/{id}", method = RequestMethod.DELETE)
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
         userService.delete(id);
         return ResponseEntity.noContent().build();
     }
 
-    @RequestMapping(value = "/users/findAll", method = RequestMethod.GET)
+    @RequestMapping(value = "/user/findAll", method = RequestMethod.GET)
     public ResponseEntity<List<UserResponseDto>> findAll() {
         return ResponseEntity.ok(userService.findAll());
     }
 
-    @RequestMapping(value = "/users/{id}", method = RequestMethod.PATCH)
+    @RequestMapping(value = "/user/{id}", method = RequestMethod.PATCH)
     public ResponseEntity<Void> updateStatus(@PathVariable UUID id) {
         userStatusService.updateByUserId(id);
         return ResponseEntity.ok().build();

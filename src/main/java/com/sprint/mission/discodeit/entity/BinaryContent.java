@@ -9,11 +9,13 @@ import java.util.Arrays;
 public class BinaryContent extends Common {
 
     private String fileName;
+    private String contentType;
     private byte[] data;
 
-    public BinaryContent(String fileName, byte[] data) {
+    public BinaryContent(String fileName, String contentType, byte[] data) {
         super();
         this.fileName = fileName;
+        this.contentType = contentType;
         this.data = Arrays.copyOf(data, data.length);
     }
 

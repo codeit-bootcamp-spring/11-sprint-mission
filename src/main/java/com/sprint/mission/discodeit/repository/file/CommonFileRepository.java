@@ -81,6 +81,7 @@ public abstract class CommonFileRepository<T extends Common> {
                     Stream<Path> paths = Files.list(directory);
             ){
                 return paths
+                        .filter(path -> path.getFileName().toString().endsWith(".ser"))
                         .map(path -> {
                             try (
                                     FileInputStream fis = new FileInputStream(path.toFile());

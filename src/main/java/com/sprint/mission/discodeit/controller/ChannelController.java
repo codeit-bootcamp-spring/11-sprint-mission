@@ -24,25 +24,25 @@ public class ChannelController {
 
     private final ChannelService channelService;
 
-    @RequestMapping(value = "/channels/public", method = RequestMethod.POST)
+    @RequestMapping(value = "/channel/public", method = RequestMethod.POST)
     public ResponseEntity<Void> createPublicChannel(@RequestBody PublicChannelCreateRequestDto dto) {
         channelService.createPublicChannel(dto);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-    @RequestMapping(value = "/channels/private", method = RequestMethod.POST)
+    @RequestMapping(value = "/channel/private", method = RequestMethod.POST)
     public ResponseEntity<Void> createPrivateChannel(@RequestBody PrivateChannelCreateRequestDto dto) {
         channelService.createPrivateChannel(dto);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-    @RequestMapping(value = "/channels/{id}", method = RequestMethod.PUT)
+    @RequestMapping(value = "/channel/{id}", method = RequestMethod.PUT)
     public ResponseEntity<Void> update(@PathVariable UUID id, @RequestBody ChannelUpdateRequestDto dto) {
         channelService.update(id, dto);
         return ResponseEntity.ok().build();
     }
 
-    @RequestMapping(value = "/channels/{id}", method = RequestMethod.DELETE)
+    @RequestMapping(value = "/channel/{id}", method = RequestMethod.DELETE)
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
         channelService.delete(id);
         return ResponseEntity.noContent().build();
