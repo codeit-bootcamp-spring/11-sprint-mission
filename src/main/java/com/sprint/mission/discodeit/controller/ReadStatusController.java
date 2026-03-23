@@ -22,19 +22,19 @@ public class ReadStatusController {
 
     private final ReadStatusService readStatusService;
 
-    @RequestMapping(value = "/channels/{channelId}/readstatuses", method = RequestMethod.POST)
+    @RequestMapping(value = "/channels/{channelId}/read-statuses", method = RequestMethod.POST)
     public ResponseEntity<Void> create(@PathVariable UUID channelId, @RequestBody ReadStatusCreateRequestDto dto) {
         readStatusService.create(channelId, dto);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-    @RequestMapping(value = "/channels/{channelId}/readstatuses", method = RequestMethod.PUT)
+    @RequestMapping(value = "/channels/{channelId}/read-statuses", method = RequestMethod.PUT)
     public ResponseEntity<Void> update(@PathVariable UUID channelId, @RequestBody ReadStatusUpdateRequestDto dto) {
         readStatusService.updateByChannelId(channelId, dto);
         return ResponseEntity.ok().build();
     }
 
-    @RequestMapping(value = "/users/{userId}/readstatuses", method = RequestMethod.GET)
+    @RequestMapping(value = "/users/{userId}/read-statuses", method = RequestMethod.GET)
     public ResponseEntity<List<ReadStatusResponseDto>> findAllByUserId(@PathVariable UUID userId) {
         return ResponseEntity.ok(readStatusService.findAllByUserId(userId));
     }

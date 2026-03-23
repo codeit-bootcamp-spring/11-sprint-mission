@@ -1,5 +1,6 @@
 package com.sprint.mission.discodeit.exception;
 
+import com.sprint.mission.discodeit.exception.binarycontent.BinaryContentNotFoundException;
 import com.sprint.mission.discodeit.exception.channel.ChannelNotFoundException;
 import com.sprint.mission.discodeit.exception.channel.PrivateChannelUpdateNotAllowedException;
 import com.sprint.mission.discodeit.exception.login.InvalidPasswordException;
@@ -44,7 +45,8 @@ public class GlobalExceptionHandler {
             ChannelNotFoundException.class,
             MessageNotFoundException.class,
             ReadStatusNotFoundException.class,
-            ReadStatusOfUserAndChannelNotFoundException.class
+            ReadStatusOfUserAndChannelNotFoundException.class,
+            BinaryContentNotFoundException.class
     })
     public ResponseEntity<String> handleNotFound(RuntimeException e) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
