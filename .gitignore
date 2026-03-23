@@ -44,3 +44,6 @@ src/main/resources/logback.xml
 
 ### FILE IO ###
 .discodeit
+
+### application.yaml ###
+application.yaml
