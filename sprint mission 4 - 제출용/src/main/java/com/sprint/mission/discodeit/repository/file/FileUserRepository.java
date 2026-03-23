@@ -2,6 +2,7 @@ package com.sprint.mission.discodeit.repository.file;
 
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Repository;
 
@@ -13,10 +14,20 @@ import java.util.*;
 public class FileUserRepository implements UserRepository {
     private Map<UUID, User> data;
     private Map<UUID, User> data_at;
+    private final String fileDirectory;
+    private final String filePath;
+
+    public FileUserRepository(@Value("${discodeit.repository.file-directory}") String fileDirectory) {
+        this.fileDirectory = fileDirectory;
+        this.filePath = fileDirectory + "users.ser";
+        new File(fileDirectory).mkdirs(); // 디렉토리 없으면 생성
+        this.data = new HashMap<>();
+        loadFromFile();
+    }
 
     private void saveToFile(){
-        File change = new File("users.ser");
-        File temp = new File("users.ser.temp");
+        File change = new File(filePath);
+        File temp = new File(filePath+".temp");
 
         try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(temp))) {
             oos.writeObject(data);
@@ -27,20 +38,15 @@ public class FileUserRepository implements UserRepository {
         }
     }
     private void loadFromFile(){
-        File file = new File("users.ser");
+        File file = new File(filePath);
         if (!file.exists()) return;
 
-        try (FileInputStream fis = new FileInputStream("users.ser");
+        try (FileInputStream fis = new FileInputStream(filePath);
              ObjectInputStream ois = new ObjectInputStream(fis)) {
             this.data = (Map<UUID, User>) ois.readObject();
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
-    }
-
-    public FileUserRepository(){
-        this.data = new HashMap<>();
-        loadFromFile();
     }
 
     @Override

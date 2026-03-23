@@ -2,6 +2,7 @@ package com.sprint.mission.discodeit.repository.file;
 
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.repository.MessageRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Repository;
 
@@ -13,9 +14,21 @@ import java.util.*;
 public class FileMessageRepository implements MessageRepository {
     private Map<UUID, Message> data;
     private Map<UUID, Message> data_at;
+
+    private final String fileDirectory;
+    private final String filePath;
+
+    public FileMessageRepository(@Value("${discodeit.repository.file-directory}") String fileDirectory) {
+        this.fileDirectory = fileDirectory;
+        this.filePath = fileDirectory + "Message.ser";
+        new File(fileDirectory).mkdirs(); // 디렉토리 없으면 생성
+        this.data = new HashMap<>();
+        loadFromFile();
+    }
+
     private void saveToFile(){
-        File change = new File("Message.ser");
-        File temp = new File("Message.ser.temp");
+        File change = new File(filePath);
+        File temp = new File(filePath+".temp");
 
         try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(temp))) {
             oos.writeObject(data);
@@ -26,7 +39,7 @@ public class FileMessageRepository implements MessageRepository {
         }
     }
     private void loadFromFile(){
-        File file = new File("Message.ser");
+        File file = new File(filePath);
         if (!file.exists()) {
             return;
         }
@@ -36,10 +49,6 @@ public class FileMessageRepository implements MessageRepository {
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
-    }
-    public FileMessageRepository() {
-        this.data = new HashMap<>();
-        loadFromFile();
     }
 
     @Override
@@ -86,6 +95,7 @@ public class FileMessageRepository implements MessageRepository {
     @Override
     public void deleteAllByChannelId(UUID channelId){
         data.entrySet().removeIf(entry -> entry.getValue().getChannelId().equals(channelId));
+        saveToFile();
     }
     @Override
     public String toString() {

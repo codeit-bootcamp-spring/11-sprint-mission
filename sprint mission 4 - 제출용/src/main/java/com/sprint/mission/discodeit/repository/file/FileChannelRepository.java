@@ -2,6 +2,7 @@ package com.sprint.mission.discodeit.repository.file;
 
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Repository;
 
@@ -13,9 +14,21 @@ import java.util.*;
 public class FileChannelRepository implements ChannelRepository {
     private Map<UUID, Channel> data ;
     private Map<UUID, Channel> data_at;
+
+    private final String fileDirectory;
+    private final String filePath;
+
+    public FileChannelRepository(@Value("${discodeit.repository.file-directory}") String fileDirectory) {
+        this.fileDirectory = fileDirectory;
+        this.filePath = fileDirectory + "Channel.ser";
+        new File(fileDirectory).mkdirs(); // 디렉토리 없으면 생성
+        this.data = new HashMap<>();
+        loadFromFile();
+    }
+
     private void saveToFile(){
-        File change = new File("Channel.ser");
-        File temp = new File("Channel.ser.temp");
+        File change = new File(filePath);
+        File temp = new File(filePath+".temp");
 
         try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(temp))) {
             oos.writeObject(data);
@@ -26,20 +39,15 @@ public class FileChannelRepository implements ChannelRepository {
         }
     }
     private void loadFromFile(){
-        File file = new File("Channel.ser");
+        File file = new File(filePath);
         if (!file.exists()) return;
 
-        try (FileInputStream fis = new FileInputStream("Channel.ser");
+        try (FileInputStream fis = new FileInputStream(filePath);
              ObjectInputStream ois = new ObjectInputStream(fis)) {
             this.data = (Map<UUID, Channel>) ois.readObject();
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
-    }
-
-    public FileChannelRepository() {
-        this.data = new HashMap<>();
-        loadFromFile();
     }
 
     @Override

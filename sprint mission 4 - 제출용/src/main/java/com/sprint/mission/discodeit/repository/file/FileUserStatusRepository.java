@@ -1,6 +1,7 @@
 package com.sprint.mission.discodeit.repository.file;
 import com.sprint.mission.discodeit.entity.UserStatus;
 import com.sprint.mission.discodeit.repository.UserStatusRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Repository;
 
@@ -16,10 +17,20 @@ import java.util.UUID;
 public class FileUserStatusRepository implements UserStatusRepository {
     private Map<UUID, UserStatus> data = new HashMap<>();
     private Map<UUID, UserStatus> data_at = new HashMap<>();
+    private final String fileDirectory;
+    private final String filePath;
+
+    public FileUserStatusRepository(@Value("${discodeit.repository.file-directory}") String fileDirectory) {
+        this.fileDirectory = fileDirectory;
+        this.filePath = fileDirectory + "UserStatus.ser";
+        new File(fileDirectory).mkdirs(); // 디렉토리 없으면 생성
+        this.data = new HashMap<>();
+        loadFromFile();
+    }
 
     private void saveToFile() {
-        File change = new File("UserStatus.ser");
-        File temp = new File("UserStatus.ser.temp");
+        File change = new File(filePath);
+        File temp = new File(filePath+".temp");
         try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(temp))) {
             oos.writeObject(data);
             temp.renameTo(change);
@@ -30,7 +41,7 @@ public class FileUserStatusRepository implements UserStatusRepository {
     }
 
     private void loadFromFile() {
-        File file = new File("UserStatus.ser");
+        File file = new File(filePath);
         if (!file.exists()) return;
         try (FileInputStream fis = new FileInputStream(file);
              ObjectInputStream ois = new ObjectInputStream(fis)) {
@@ -38,11 +49,6 @@ public class FileUserStatusRepository implements UserStatusRepository {
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
-    }
-
-    public FileUserStatusRepository(){
-        this.data = new HashMap<>();
-        loadFromFile();
     }
 
     @Override

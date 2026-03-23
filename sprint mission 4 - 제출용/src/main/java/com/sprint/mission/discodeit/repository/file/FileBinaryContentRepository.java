@@ -2,6 +2,7 @@ package com.sprint.mission.discodeit.repository.file;
 
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Repository;
 
@@ -15,10 +16,22 @@ import java.util.UUID;
 @ConditionalOnProperty(name = "discodeit.repository.type", havingValue = "file")
 public class FileBinaryContentRepository implements BinaryContentRepository {
     private Map<UUID, BinaryContent> data = new HashMap<>();
+    private final String fileDirectory;
+    private final String filePath;
+
+    public FileBinaryContentRepository(@Value("${discodeit.repository.file-directory}") String fileDirectory) {
+        this.fileDirectory = fileDirectory;
+        this.filePath = fileDirectory + "BinaryContent.ser";
+        new File(fileDirectory).mkdirs(); // 디렉토리 없으면 생성
+        this.data = new HashMap<>();
+        loadFromFile();
+    }
+
 
     private void saveToFile() {
-        File change = new File("BinaryContent.ser");
-        File temp = new File("BinaryContent.ser.temp");
+        File change = new File(filePath);
+        File temp = new File(filePath+".temp");
+
         try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(temp))) {
             oos.writeObject(data);
             temp.renameTo(change);
@@ -29,7 +42,7 @@ public class FileBinaryContentRepository implements BinaryContentRepository {
     }
 
     private void loadFromFile() {
-        File file = new File("BinaryContent.ser");
+        File file = new File(filePath);
         if (!file.exists()) return;
         try (FileInputStream fis = new FileInputStream(file);
              ObjectInputStream ois = new ObjectInputStream(fis)) {
@@ -39,10 +52,6 @@ public class FileBinaryContentRepository implements BinaryContentRepository {
         }
     }
 
-    public FileBinaryContentRepository() {
-        this.data = new HashMap<>();
-        loadFromFile();
-    }
 
     @Override
     public BinaryContent create(BinaryContent binaryContent){
