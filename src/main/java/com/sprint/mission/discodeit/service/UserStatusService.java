@@ -13,4 +13,6 @@ public interface UserStatusService {
     List<UserStatusResponseDto> findAll();
     void update(UUID id);
     void delete(UUID id);
+
+    void updateByUserId(UUID id);
 }

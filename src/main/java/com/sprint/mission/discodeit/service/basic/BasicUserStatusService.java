@@ -47,6 +47,9 @@ public class BasicUserStatusService implements UserStatusService {
 
     @Override
     public UserStatusResponseDto findByUserId(UUID id) {
+        userRepo.findById(id)
+                .orElseThrow(() -> new UserNotFoundException(id));
+
         UserStatus userStatus = userStatusRepo.findByUserId(id)
                 .orElseThrow(() -> new UserStatusOfUserNotFoundException(id));
 
@@ -64,6 +67,18 @@ public class BasicUserStatusService implements UserStatusService {
     public void update(UUID id) {
         UserStatus userStatus = userStatusRepo.findById(id)
                 .orElseThrow(() -> new UserStatusNotFoundException(id));
+
+        userStatus.update();
+        userStatusRepo.save(userStatus);
+    }
+
+    @Override
+    public void updateByUserId(UUID id) {
+        userRepo.findById(id)
+                .orElseThrow(() -> new UserNotFoundException(id));
+
+        UserStatus userStatus = userStatusRepo.findByUserId(id)
+                .orElseThrow(() -> new UserStatusOfUserNotFoundException(id));
 
         userStatus.update();
         userStatusRepo.save(userStatus);
