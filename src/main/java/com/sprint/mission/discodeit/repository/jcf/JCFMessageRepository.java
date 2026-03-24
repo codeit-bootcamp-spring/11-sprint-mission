@@ -2,36 +2,39 @@ package com.sprint.mission.discodeit.repository.jcf;
 
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.repository.MessageRepository;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.stereotype.Repository;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
+@Repository
+@ConditionalOnProperty(name = "discodeit.repository.type", havingValue = "jcf")
 public class JCFMessageRepository implements MessageRepository {
 
-    private final Map<String, Message> data ;
+    private final Map<UUID, Message> data;
 
-    public JCFMessageRepository() {
+    public JCFMessageRepository(){
         data = new HashMap<>();
     }
 
-
     @Override
     public boolean saveMessage(Message message) {
-
-        if(data.containsKey(message.getMessageId()))
-            return false;
-
-        data.put(message.getMessageId(),message);
+        data.put(message.getId(), message);
         return true;
+    }
+
+    @Override
+    public Optional<Message> getMessage(UUID messageId) {
+        return Optional.of(data.get(messageId));
 
     }
 
     @Override
-    public Message getMessage(String messageId) {
-        return data.getOrDefault(messageId,null);
+    public Optional<Message> getLastMessagebyChannelId(UUID channelId) {
+        return data.values().stream()
+                .filter(message -> message.getChannelId().equals(channelId))
+                .max(Comparator.comparing(Message::getCreatedAt));
     }
 
     @Override
@@ -40,36 +43,27 @@ public class JCFMessageRepository implements MessageRepository {
     }
 
     @Override
-    public boolean updateMessage(Message message) {
+    public List<Message> getAllByChannelId(UUID channelId) {
+        return data.values().stream()
+                .filter(message -> message.getChannelId().equals(channelId))
+                .toList();
+    }
 
-        data.put(message.getMessageId(), message);
-        return true;
 
+    @Override
+    public boolean deleteMessage(UUID messageId) {
+        return data.remove(messageId) != null;
     }
 
     @Override
-
-    public boolean deleteMessage(String messageId) {
-
-        data.remove(messageId);
-        return true;
-    }
-
-    @Override
-    public boolean isExistMessage(String messageId) {
+    public boolean isExistMessage(UUID messageId) {
         return data.containsKey(messageId);
     }
 
-
-    //메시지 전체 삭제 (채널 삭제때)
     @Override
-    public boolean channelsMessagedelete(String channelId) {
-
-        data.values().stream()
-                .filter(msg -> msg.getChannelId().equals(channelId))
-                .forEach(msg-> deleteMessage(msg.getMessageId()));
-
-
+    public boolean channelsMessagedelete(UUID channelId) {
+        data.values().removeIf(message -> message.getChannelId()
+                .equals(channelId));
         return true;
     }
 }

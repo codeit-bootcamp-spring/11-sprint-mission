@@ -2,139 +2,86 @@ package com.sprint.mission.discodeit.repository.file;
 
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.stereotype.Repository;
 
 import java.io.*;
+
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.*;
 
+@Repository
+@ConditionalOnProperty(name = "discodeit.repository.type", havingValue = "file")
 public class FILEChannelRepository implements ChannelRepository {
 
+    private final FileSaveLoad<Channel> saveLoad;
     private final Path directory;
 
-    public FILEChannelRepository() {
+    public FILEChannelRepository(@Value("${discodeit.repository.file-dir}") String path) {
 
-        directory = Path.of("src/main/resources/Channels/");
+        saveLoad = new FileSaveLoad<>();
+        directory = Path.of(path + "/Channels/");
     }
 
     @Override
     public boolean saveChannel(Channel channel) {
-        if(isExistChannel(channel.getChannelId())){
+        if(channel == null)
             return false;
-        }
 
-        save(pathToUserId(channel.getChannelId()),channel);
+        save(idToPath(channel.getId()),channel);
         return true;
-
-
     }
 
     @Override
-    public Channel getChannel(String channelId) {
-        Map<String,Channel> map = load(directory);
+    public Optional<Channel> getChannel(UUID channelId) {
+        Map<UUID,Channel> channels = load(directory);
+        return Optional.ofNullable(channels.get(channelId));
 
-        return map.getOrDefault(channelId,null);
     }
 
     @Override
     public List<Channel> getAllChannel() {
-        Map<String,Channel> map = load(directory);
 
-        return map.values().stream().toList();
+        Map<UUID,Channel> channels = load(directory);
+        return channels.values().stream().toList();
     }
 
     @Override
-    public boolean updateChannel(Channel channel) {
+    public boolean deleteChannel(UUID channelId) {
 
-        Map<String,Channel> map = load(directory);
-
-        map.put(channel.getChannelId(), channel);
-
-        save(pathToUserId(channel.getChannelId()),channel);
-
-
-        return true;
-
-    }
-
-    @Override
-    public boolean deleteChannel(String channelId) {
-
-        if(!isExistChannel(channelId))
+        if(!isExistChannel(channelId)){
             return false;
-
+        }
         try {
-            Files.deleteIfExists(pathToUserId(channelId));
+            Files.deleteIfExists(idToPath(channelId));
+            return true;
         }
         catch(IOException e){
             return false;
-
-
         }
-        return true;
-    }
 
+    }
 
     @Override
-    public boolean isExistChannel(String channelId) {
-        Map<String, Channel> map = load(directory);
+    public boolean isExistChannel(UUID channelId) {
+        Map<UUID,Channel> channels = load(directory);
+        return channels.containsKey(channelId);
 
-        return map.containsKey(channelId);
 
     }
 
-    private Map<String,Channel> load(Path directory) {
-        if (Files.exists(directory)) {
-
-
-            try (Stream<Path> stream =  Files.list(directory))
-
-            {
-                Map<String,Channel> map;
-
-
-                map = stream.map(path -> {
-                            try (
-                                    FileInputStream fis = new FileInputStream(path.toFile());
-                                    ObjectInputStream ois = new ObjectInputStream(fis)
-                            ) {
-                                Object data = ois.readObject();
-                                return  (Channel)data;
-                            } catch (IOException | ClassNotFoundException e) {
-                                throw new RuntimeException(e);
-                            }
-                        })
-                        .collect(Collectors.toMap(
-                                Channel::getChannelId,
-                                Function.identity()
-
-                        ));
-                return map;
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        } else {
-            return new HashMap<>();
-        }
+    private Map<UUID,Channel> load(Path directory) {
+        return saveLoad.load(directory);
     }
 
     private void save(Path filePath, Channel channel) {
-        try(
-                FileOutputStream fos = new FileOutputStream(filePath.toFile());
-                ObjectOutputStream oos = new ObjectOutputStream(fos)
-        ) {
-            oos.writeObject(channel);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+
+        saveLoad.save(filePath, channel);
 
     }
-    private Path pathToUserId(String channelId){
+    private Path idToPath(UUID channelId){
 
         return directory.resolve(channelId + ".dat");
 

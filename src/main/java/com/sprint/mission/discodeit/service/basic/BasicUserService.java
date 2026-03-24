@@ -1,254 +1,197 @@
 package com.sprint.mission.discodeit.service.basic;
 
-import com.sprint.mission.discodeit.entity.Channel;
+import com.sprint.mission.discodeit.binary.BinaryFile;
+import com.sprint.mission.discodeit.dto.userdto.*;
+import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.User;
-import com.sprint.mission.discodeit.repository.ChannelRepository;
-import com.sprint.mission.discodeit.repository.MessageRepository;
-import com.sprint.mission.discodeit.repository.UserRepository;
+import com.sprint.mission.discodeit.entity.UserStatus;
+import com.sprint.mission.discodeit.exception.service.DiffPasswordException;
+import com.sprint.mission.discodeit.exception.service.DupEmailException;
+import com.sprint.mission.discodeit.exception.service.DupNameException;
+import com.sprint.mission.discodeit.repository.*;
 import com.sprint.mission.discodeit.service.UserService;
-
-import java.util.ArrayList;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 import java.util.List;
-import java.util.Objects;
+import java.util.UUID;
 
+
+@Service
+@RequiredArgsConstructor
 public class BasicUserService implements UserService {
 
-    UserRepository userRepository;
-    ChannelRepository channelRepository;
-    MessageRepository messageRepository;
+    private final UserRepository userRepository;
+    private final UserStatusRepository userStatusRepository;
+    private final BinaryContentRepository binaryContentRepository;
 
-    public BasicUserService(UserRepository userRepository, ChannelRepository channelRepository, MessageRepository messageRepository) {
 
-        this.userRepository = userRepository;
-        this.channelRepository = channelRepository;
-        this.messageRepository = messageRepository;
-    }
+
 
 
     @Override
-    public void createUser(String nickname, String password, String userId) {
+    public UserInfoDto create(CreateUserDto createUserDTO) {
+
+
 
         //유저 생성
-        User user = new User(userId, password, nickname);
+        User user = new User(
+                createUserDTO.nickname(),
+                createUserDTO.email(),
+                createUserDTO.password(),
+                null
+        );
+        //프로필 생성
+        BinaryContent content = null;
+        if(createUserDTO.binaryFile() != null) {
+            content = binaryContentRepository.saveBinaryContent(new BinaryContent(user.getId(), createUserDTO.binaryFile()));
 
-        //리포지토리에 저장. (이미 있는 아이디라면 false 반환)
-        if(!userRepository.saveUser(user)){
-
-            System.out.println("이미 존재하는 유저 아이디 입니다.");
-            return;
+            user.updateProfileImage(content.getId(), createUserDTO.password());
         }
 
-        //출력
-        System.out.println(user.getNickname()+ " 님 생성 완료!");
+        // 닉네임 체크
+        if(userRepository.isExistUserByNickname(createUserDTO.nickname())){
+            throw new DupNameException();
+        }
+
+        //이메일 체크
+        if(userRepository.isExistUserByEmail(createUserDTO.email())){
+           throw new DupEmailException();
+        }
 
 
+        //유저 스테이터스 중복 체크
+        if(userStatusRepository.isExistUserStatus(user.getId())){
+            throw new ArithmeticException("이미 존재하는 유저 상태입니다.");
+        }
 
+        //유저 저장
+        userRepository.saveUser(user);
+
+        //유저 상태 저장
+        userStatusRepository.saveUserStatus(new UserStatus(user.getId()));
+
+        //프로필 저장
+        if(content != null)
+            binaryContentRepository.saveBinaryContent(content);
+
+        return userToInfoDto(user);
     }
 
     @Override
-    public void readUser(String userId) {
+    public UserInfoDto find(UUID userId) {
 
         //유저 가져오기
-        User user = userRepository.getUser(userId);
-
-        //없는 유저라면
-        if(user == null){
-            System.out.println("존재하지 않는 유저입니다.");
-            return;
-        }
-
-        //출력
-        System.out.println(user);
-
-
+        User user = userRepository.getUser(userId).orElseThrow();
+        return userToInfoDto(user);
 
     }
 
     @Override
-    public void readAllUser() {
+    public List<UserDto> findAll() {
 
         //유저 리스트 가져오기
-        List<User> users = userRepository.getAllUser();
-
-
-        //리스트를 가져오는데 문제가 있는경우
-        if(users == null){
-            System.out.println("유저 리스트를 불러오는데 문제가 발생했습니다.");
-            return;
-        }
-
-
-        //stream으로 전체 출력
-        users.stream()
-                .sorted(User::compareTo)
-                .forEach(System.out::println);
-
-
-
+        return userRepository.getAllUser().stream()
+                .map(this::userToDto)
+                .toList();
 
     }
 
     @Override
-    public void updateNickname(String userId, String password, String nickname) {
+    public UserInfoDto updateUser(UpdateUserDto updateUserDto) {
 
         //유저 가져오기
-        User user = userRepository.getUser(userId);
+        User user = userRepository.getUser(updateUserDto.userId()).orElseThrow();
 
-        // 잘못된 유저 아이디 체크
-        if(user == null){
-            System.out.println("존재하지 않는 유저 아이디입니다.");
-            return;
+        //기존 닉네임과 다르면 중복 체크 후 변경
+        if(!user.getNickname().equals(updateUserDto.newNickname())){
+
+            if(userRepository.isExistUserByNickname(updateUserDto.newNickname())){
+                throw new DupNameException();
+            }
+            user.updateNickname(updateUserDto.newNickname(),updateUserDto.oldPassword());
         }
 
-        // 닉네임 업데이트
-        if(!user.updateNickname(nickname,password)){
-            //비밀번호 불일치
-            System.out.println("패스워드가 일치하지 않습니다.");
-            return;
-
+        if(!user.getEmail().equals(updateUserDto.newEmail())){
+            if(userRepository.isExistUserByEmail(updateUserDto.newEmail())){
+                throw new DupEmailException();
+            }
+            user.updateEmail(updateUserDto.newEmail(),updateUserDto.oldPassword());
         }
 
-        //repository에 반영
-        if(!userRepository.updateUser(user)){
-            System.out.println("유저 업데이트 중 이상이 발생했습니다.");
-            return;
+        if(!user.checkSamePassword(updateUserDto.oldPassword())){
+            throw new DiffPasswordException();
         }
+        user.updatePassword(updateUserDto.oldPassword(),updateUserDto.newPassword());
 
-        System.out.println( user.getUserId() + " 님 닉네임 " + user.getNickname()  + " 으로 변경 완료!" );
-
-
-
+        userRepository.saveUser(user);
+        return userToInfoDto(user);
 
     }
 
-    @Override
-    public void updatePassword(String userId, String oldPassword, String newPassword) {
 
-        User user = userRepository.getUser(userId);
 
-        // 잘못된 유저 아이디 체크
-        if(user == null){
-            System.out.println("존재하지 않는 유저 아이디입니다.");
-            return;
-        }
 
-        // 비밀번호 업데이트
-        if(!user.updatePassword(oldPassword,newPassword)){
-            //비밀번호 불일치
-            System.out.println("패스워드가 일치하지 않습니다.");
-            return;
 
-        }
 
-        //repository에 반영
-        if(!userRepository.updateUser(user)){
-            System.out.println("유저 업데이트 중 이상이 발생했습니다.");
-            return;
-        }
-
-        System.out.println("유저 비밀번호 업데이트 완료!");
-
-    }
 
     @Override
-    public void updateStatus(String userId, String password, User.Status status) {
-
-        User user = userRepository.getUser(userId);
-
-        // 잘못된 유저 아이디 체크
-        if(user == null){
-            System.out.println("존재하지 않는 유저 아이디입니다.");
-            return;
-        }
-
-        // 상태 업데이트
-        if(!user.updateStatus(status,password)){
-            //비밀번호 불일치
-            System.out.println("패스워드가 일치하지 않습니다.");
-            return;
-
-        }
-
-        //repository에 반영
-        if(!userRepository.updateUser(user)){
-            System.out.println("유저 업데이트 중 이상이 발생했습니다.");
-            return;
-
-        }
-
-
-        System.out.println("유저 상태 변경 완료 -> " + user.getStatus());
-
-
-
-    }
-
-    @Override
-    public void deleteUser(String userId, String password) {
-
-
+    public boolean delete(DeleteUserDto deleteUserDto) {
 
         // 유저 가져오기
-        User user = userRepository.getUser(userId);
+        User user = userRepository.getUser(deleteUserDto.userId()).orElseThrow();
 
 
-        // 잘못된 유저 아이디 체크
-        if(user == null){
-            System.out.println("존재하지 않는 유저 아이디입니다.");
-            return;
+        //비밀번호 체크
+        if(!user.checkSamePassword(deleteUserDto.password())){
+            throw new DiffPasswordException();
         }
-
-        //잘못된 비밀번호 체크
-        if(!user.checkSamePassword(password)){
-            System.out.println("패스워드가 일치하지 않습니다.");
-            return;
-
-        }
-
-
-
-
-
-
 
         //삭제
-        if(!userRepository.deleteUser(userId)){
-            System.out.println("삭제 도중 이상이 발생했습니다.");
-            return;
-        }
+        userRepository.deleteUser(deleteUserDto.userId());
+        userStatusRepository.deleteUserStatus(deleteUserDto.userId());
+
+        return true;
+    }
+
+
+    UserDto userToDto(User user){
+
+        BinaryContent content = binaryContentRepository.getProfileContentByUserId(user.getId()).orElse(null);
+
+        UUID profileId = content != null ? content.getId() : null;
+
+        return new UserDto(
+
+                user.getId(),
+                user.getCreatedAt(),
+                user.getUpdatedAt(),
+                user.getNickname(),
+                user.getEmail(),
+                profileId,
+                userStatusRepository.getUserStatus(user.getId()).orElseThrow().isOnline() == UserStatus.Status.ONLINE
+
+        );
+
+
+    }
 
 
 
-        List<Channel> channels = new ArrayList<>();
+    //유저 -> infoDto
+    UserInfoDto userToInfoDto(User user){
 
-        //모든 디폴트 메시지를 확인하면서
-        user.getDefaultMessages().stream()
-                        .map(message -> channelRepository.getChannel(message.getChannelId()))
-                                .filter(Objects::nonNull)
-                                        .forEach(channel ->{
 
-                                            //디폴트 메시지가 있는 채널에서 유저 삭제
-                                            channel.getMembers().remove(userId);
+        BinaryContent content = binaryContentRepository.getProfileContentByUserId(user.getId()).orElse(null);
+        BinaryFile binaryFile = content != null ? content.getBinaryFile() : null;
+        return new UserInfoDto(
 
-                                            //채널 주인인 경우 처리
-                                            if(channel.getOwnerId().equals(userId)){
-                                                //채널에 아무도 없게 되었다면 채널 삭제
-                                                if(channel.getMembers().isEmpty()){
-                                                    channelRepository.deleteChannel(channel.getChannelId());
-                                                    return;
-                                                }
-                                                //채널 남은 사람한테 채널장 넘겨주기
-                                                else{
-                                                    channel.updateOwner(channel.getMembers().get(0));
-                                                }
-                                            }
-                                            //리포지토리에 반영
-                                            channelRepository.updateChannel(channel);
-                                        });
+                user.getId(),
+                user.getNickname(),
+                user.getEmail(),
+                binaryFile,
+                userStatusRepository.getUserStatus(user.getId()).orElseThrow()
 
-        //출력
-        System.out.println(user.getNickname() + " 님 삭제 완료!");
-
+        );
     }
 
 

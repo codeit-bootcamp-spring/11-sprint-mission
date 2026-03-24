@@ -1,40 +1,37 @@
 package com.sprint.mission.discodeit.repository.jcf;
 
+import com.sprint.mission.discodeit.dto.userdto.CreateUserDto;
+import com.sprint.mission.discodeit.dto.userdto.UpdateUserDto;
+import com.sprint.mission.discodeit.dto.userdto.UserInfoDto;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.repository.UserRepository;
+import com.sprint.mission.discodeit.service.UserService;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.stereotype.Repository;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
+
+@Repository
+@ConditionalOnProperty(name = "discodeit.repository.type", havingValue = "jcf")
 public class JCFUserRepository implements UserRepository {
 
-    public final Map<String, User> data;
 
-    public JCFUserRepository(){
+    private final Map<UUID, User> data;
 
+    public JCFUserRepository() {
         data = new HashMap<>();
-
     }
 
     @Override
     public boolean saveUser(User user) {
-
-        if(data.containsKey(user.getUserId())){
-            return false;
-        }
-
-        data.put(user.getUserId(), user);
-
+        data.put(user.getId(), user);
         return true;
-
     }
 
     @Override
-    public User getUser(String userId) {
-
-        return data.getOrDefault(userId, null);
-
+    public Optional<User> getUser(UUID userId) {
+        return data.containsKey(userId) ? Optional.of(data.get(userId)) : Optional.empty();
     }
 
     @Override
@@ -43,29 +40,28 @@ public class JCFUserRepository implements UserRepository {
     }
 
     @Override
-    public boolean updateUser(User user) {
+    public Optional<User> getUserByNickname(String nickname) {
+        return data.values().stream().filter(user -> user.getNickname().equals(nickname)).findFirst();
+    }
 
 
-        data.put(user.getUserId(), user);
-        return true;
-
-
+    @Override
+    public boolean deleteUser(UUID userId) {
+        return data.remove(userId) != null;
     }
 
     @Override
-    public boolean deleteUser(String userId) {
-
-        data.remove(userId);
-        return true;
-
+    public boolean isExistUserByNickname(String nickname) {
+        return data.values().stream().anyMatch(user -> user.getNickname().equals(nickname));
     }
 
     @Override
-    public boolean isExistUser(String userId) {
+    public boolean isExistUserByEmail(String Email) {
+        return data.values().stream().anyMatch(user -> user.getEmail().equals(Email));
+    }
+
+    @Override
+    public boolean isExistUser(UUID userId) {
         return data.containsKey(userId);
     }
-
-
-
-
 }

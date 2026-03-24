@@ -1,86 +1,50 @@
 package com.sprint.mission.discodeit.entity;
 
+import lombok.Getter;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
-
+@Getter
 public class Channel extends Entity{
 
     private String channelName; //채널 이름
-    private final String channelId; //채널 아이디 (채널이름 + 숫자)
-    private String ownerId; //채널장
-    private final List<String> members; //채널 내 멤버아이디들
-    private final List<Message> defaultMessages;
+    private UUID ownerId; //채널장
+    private ChannelType channelType;
+    private String channelDescription;
 
-    public Channel(String channelName, String ownerId, String channelId) {
+
+
+    public enum ChannelType{
+        PUBLIC,
+        PRIVATE
+    }
+
+    public Channel(String channelName, UUID ownerId, ChannelType channelType, String channelDescription) {
         this.channelName = channelName;
-        this.channelId = channelId;
         this.ownerId = ownerId;
-        members = new ArrayList<>();
-        defaultMessages = new ArrayList<>();
-        members.add(ownerId);
-    }
-
-
-    public String getChannelName() {
-        return channelName;
-    }
-
-    public String getChannelId() {
-        return channelId;
-    }
-
-    public String getOwnerId() {
-        return ownerId;
-    }
-
-    public List<String> getMembers() {
-        return members;
+        this.channelDescription = channelDescription;
+        this.channelType = channelType;
     }
 
     public void updateChannelName(String channelName) {
         this.channelName = channelName;
         super.updateUpdatedAt();
     }
-    public void addMember(String memberId){
-        members.add(memberId);
-        super.updateUpdatedAt();
-    }
-    public int removeMember(String memberId){
 
-        members.remove(memberId);
-        if(members.isEmpty()) {
-
-            return 0;
-
-        }
-        else if (ownerId.equals(memberId)) {
-
-            String newOwnerId = members.get(0);
-            updateOwner(newOwnerId);
-
-
-        }
-        super.updateUpdatedAt();
-
-        return members.size();
-    }
-    public void updateOwner(String ownerId){
+    public void updateOwner(UUID ownerId){
         this.ownerId = ownerId;
         super.updateUpdatedAt();
     }
-
-
-
-
-
-    @Override
-    public String toString() {
-        return "Channel{" +
-                "channelName='" + channelName + '\'' +
-                ", channelId='" + channelId + '\'' +
-                ", ownerID=" + ownerId +
-                ", members=" + members +
-                '}';
+    public void updateChannelType(ChannelType channelType){
+        this.channelType = channelType;
+        super.updateUpdatedAt();
     }
+    public void updateChannelDescription(String channelDescription){
+        this.channelDescription = channelDescription;
+        super.updateUpdatedAt();
+    }
+
+
 }

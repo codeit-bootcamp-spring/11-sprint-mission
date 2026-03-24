@@ -1,347 +1,266 @@
 package com.sprint.mission.discodeit.service.basic;
 
+import com.sprint.mission.discodeit.dto.channeldto.*;
+import com.sprint.mission.discodeit.dto.messagedto.CreateMessageDto;
+import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.Message;
-import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.entity.ReadStatus;
+import com.sprint.mission.discodeit.exception.service.AlreadyExistException;
+import com.sprint.mission.discodeit.exception.service.NonExistException;
+import com.sprint.mission.discodeit.exception.service.WrongChannelTypeException;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
+import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.ChannelService;
+import com.sprint.mission.discodeit.service.MessageService;
+import com.sprint.mission.discodeit.service.UserService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 
+import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
+@Service
+@RequiredArgsConstructor
 public class BasicChannelService implements ChannelService {
 
-    ChannelRepository channelRepository;
-    UserRepository userRepository;
-    MessageRepository messageRepository;
+    private final ChannelRepository channelRepository;
+    private final ReadStatusRepository readStatusRepository;
+    private final MessageRepository messageRepository;
+    private final UserRepository userRepository;
 
-    public BasicChannelService(ChannelRepository channelRepository, UserRepository userRepository, MessageRepository messageRepository) {
-        this.channelRepository = channelRepository;
-        this.userRepository = userRepository;
-        this.messageRepository = messageRepository;
-    }
 
     @Override
-    public void createChannel(String channelName, String ownerID, String channelId) {
+    public PublicChannelInfoDto createPublic(CreatePublicChannelDto createPublicChannelDto) {
+
+        Channel channel = new Channel(
+
+                            createPublicChannelDto.channelName(),
+                            createPublicChannelDto.ownerId(),
+                            Channel.ChannelType.PUBLIC,
+                            createPublicChannelDto.channelDescription()
+                );
+
+        //ReadStatus 생성(addMember 호출)
+        createPublicChannelDto.membersId().stream()
+                .filter(userRepository::isExistUser)
+                .forEach(userId ->
+                        addMember(new ChannelMemberDto(userId, channel.getId()))
+                );
+
+        //default Message
+        messageRepository.saveMessage(new Message(
+
+                channel.getOwnerId(),
+                channel.getId(),
+                "default message",
+                new ArrayList<>()
+
+        ));
 
 
-        //채널 생성
-        Channel channel = new Channel(channelName,ownerID,channelId);
-
-        //채널 주인 가져오기
-        User user = userRepository.getUser(ownerID);
-
-        //디폴트 메시지 생성
-        Message msg = new Message(ownerID,channelId,"default message");
-        msg.setStatus(Message.messageStatus.INACTIVE);
-
-        //유효 유저 확인
-        if(user == null){
-            System.out.println("존재하지 않는 유저입니다.");
-            return;
-        }
-
-        //디폴트 메시지 추가
-        user.addDefaultMessage(msg);
-
-
-        //채널 저장.
-        if(!channelRepository.saveChannel(channel)){
-            System.out.println("이미 존재하는 채널입니다.");
-            return;
-
-        }
-
-        //디폴트 메시지 저장, 유저 업데이트
-        userRepository.updateUser(user);
-        messageRepository.saveMessage(msg);
-
-        System.out.println(channelName + " 채널 생성 완료!");
-
+        channelRepository.saveChannel(channel);
+        return channelToPublicInfoDto(channel);
 
 
     }
 
     @Override
-    public void readChannel(String channelId) {
+    public PrivateChannelInfoDto createPrivate(CreatePrivateChannelDto createPrivateChannelDto) {
 
-        //채널 가져오기
-        Channel channel = channelRepository.getChannel(channelId);
+        Channel channel = new Channel(
+                null,
+                createPrivateChannelDto.ownerId(),
+                Channel.ChannelType.PRIVATE,
+                null
+        );
 
-        //채널 여부 체크
-        if(channel == null){
-            System.out.println("존재하지 않는 채널입니다.");
-            return;
-        }
+        //ReadStatus 생성
+        createPrivateChannelDto.membersId().stream()
+                .filter(userRepository::isExistUser)
+                .forEach(userId ->
+                        addMember(new ChannelMemberDto(userId, channel.getId()))
+                );
 
-        //출력
-        System.out.println(channel);
+
+
+
+        //default Message
+
+        messageRepository.saveMessage(new Message(
+
+                channel.getOwnerId(),
+                channel.getId(),
+                "default message",
+                new ArrayList<>()
+
+        ));
+
+
+
+        channelRepository.saveChannel(channel);
+
+        return channelToPrivateInfoDto(channel);
+
+
+
+    }
+
+
+    @Override
+    public PrivateChannelInfoDto findPrivate(UUID channelId, UUID memberId) {
+
+        return channelToPrivateInfoDto(channelRepository.getChannel(channelId).orElseThrow());
+
+    }
+
+    @Override
+    public PublicChannelInfoDto findPublic(UUID channelId) {
+        return channelToPublicInfoDto(channelRepository.getChannel(channelId).orElseThrow());
+    }
+
+
+    @Override
+    public List<PublicChannelInfoDto> findAllById(UUID userId) {
+
+
+        return channelRepository.getAllChannel().stream()
+                .filter(channel -> {
+
+                    ReadStatus readStatus = readStatusRepository.get(userId, channel.getId()).orElse(null);
+
+                    return (readStatus != null) && ((channel.getChannelType() == Channel.ChannelType.PRIVATE) || channel.getChannelType() == Channel.ChannelType.PUBLIC);
+
+                })
+                .map(channel -> {
+                    if(channel.getChannelType() == Channel.ChannelType.PUBLIC)
+                        return channelToPublicInfoDto(channel);
+                    else
+                        return privateChannelToPublicInfoDto(channel);
+                })
+                .toList();
+
+    }
+
+    @Override
+    public PublicChannelInfoDto updateChannel(UpdateChannelDto updateChannelDto) {
+
+
+
+
+
+        //ownerId 가 기존 멤버중 한명인지 체크
+        if(!readStatusRepository.isExist(updateChannelDto.ownerId(),updateChannelDto.channelId()))
+            throw new NonExistException("해당 유저는 기존 멤버가 아닙니다.");
+
+
+        Channel channel = channelRepository.getChannel(updateChannelDto.channelId()).orElseThrow();
+
+        //public check                                                              
+        if(channel.getChannelType() == Channel.ChannelType.PRIVATE)
+            throw new WrongChannelTypeException("Private 타입 채널은 변경할 수 없습니다.");
+        channel.updateChannelName(updateChannelDto.ChannelName());
+        channel.updateChannelDescription(updateChannelDto.ChannelDescription());
+        channel.updateOwner(updateChannelDto.ownerId());
+
+        channelRepository.saveChannel(channel);
+
+        return channelToPublicInfoDto(channel);
 
 
     }
 
     @Override
-    public void readAllChannel() {
-
-        //채널 가져오기
-        List<Channel> channels = channelRepository.getAllChannel();
-
-        //리스트 null 체크
-        if(channels == null){
-            System.out.println("채널 리스트를 불러오는데 문제가 발생했습니다.");
-            return;
+    public void addMember(ChannelMemberDto channelMemberDto) {
+        if(readStatusRepository.isExist(channelMemberDto.memberId(),channelMemberDto.channelId())){
+            throw new AlreadyExistException("이미 존재하는 멤버입니다");
         }
 
-        //출력
-        channels.stream()
-                .sorted(Channel::compareTo)
-                .forEach(System.out::println);
+        readStatusRepository.save(new ReadStatus(channelMemberDto.memberId(),channelMemberDto.channelId()));
 
     }
 
     @Override
-    public void updateChannelName(String channelId, String channelName) {
-
-
-        Channel channel = channelRepository.getChannel(channelId);
-
-        //채널 여부 체크
-        if(channel == null){
-            System.out.println("존재하지 않는 채널입니다.");
-            return;
-        }
-        //출력용 예전 닉네임
-        String oldName = channel.getChannelName();
-
-        //TODO : 비밀번호 체크 로직 넣기. 인터페이스 및 이전 코드들 약간씩 수정 필요
-
-//        User user = userRepository.getUser(channel.getOwnerId());
-//
-//        if(!user.checkSamePassword(password)){
-//
-//            System.out.println("비밀번호가 일치하지 않습니다.");
-//            return;
-//
-//        }
-
-        //채널 인스턴스 수정
-        channel.updateChannelName(channelName);
-
-
-        //repository에 반영
-        if(!channelRepository.updateChannel(channel)){
-
-            System.out.println("채널 업데이트 중 문제가 발생했습니다.");
+    public void removeMember(ChannelMemberDto channelMemberDto) {
+        if(!readStatusRepository.isExist(channelMemberDto.memberId(),channelMemberDto.channelId())){
+            throw new NonExistException("존재하지 않는 유저입니다.");
         }
 
-
-
-        System.out.println("채널 이름 변경 완료! " + oldName  + " -> " + channel.getChannelName() );
+       readStatusRepository.delete(channelMemberDto.memberId(),channelMemberDto.channelId());
 
     }
 
     @Override
-    public void updateChannelOwner(String channelId, String ownerId) {
+    public void deleteChannel(DeleteChannelDto deleteChannelDto) {
 
-        Channel channel = channelRepository.getChannel(channelId);
+        if(!channelRepository.isExistChannel(deleteChannelDto.channelId()))
+            throw new NonExistException("존재하는 채널이 아닙니다.");
 
-        //채널 여부 체크
-        if(channel == null){
-            System.out.println("존재하지 않는 채널입니다.");
-            return;
-        }
-
-
-        //TODO : 비밀번호 체크 로직 넣기. 인터페이스 및 이전 코드들 약간씩 수정 필요
-
-
-
-        //채널 멤버인지 체크
-        List<String> channelsUserIdList = channel.getMembers();
-
-
-        if(!channelsUserIdList.contains(ownerId)){
-            System.out.println("해당 유저가 채널에 없습니다.");
-            return;
-        }
-
-
-
-        //채널 인스턴스 수정
-        channel.updateOwner(ownerId);
-
-
-        //repository에 반영
-        if(!channelRepository.updateChannel(channel)){
-
-            System.out.println("채널 업데이트 중 문제가 발생했습니다.");
-            return;
-        }
-
-
-        User member = userRepository.getUser(ownerId);
-
-        System.out.println(channel.getChannelName() +  " 채널에서 " + member.getNickname() + " 님이 채널장이 되셨습니다.");
+        readStatusRepository.getAllByChannelId(deleteChannelDto.channelId())
+                .forEach(readStatus -> readStatusRepository.delete(readStatus.getUserId(),deleteChannelDto.channelId()));
 
 
 
 
     }
 
-    @Override
-    public void addMember(String channelId, String memberId) {
+    public PrivateChannelInfoDto channelToPrivateInfoDto(Channel channel){
 
 
-        Channel channel = channelRepository.getChannel(channelId);
+        if(channel.getChannelType() != Channel.ChannelType.PRIVATE)
+            throw new WrongChannelTypeException("잘못된 채널 타입입니다");
 
-        //채널 여부 체크
-        if(channel == null){
-            System.out.println("존재하지 않는 채널입니다.");
-            return;
-        }
+        return new PrivateChannelInfoDto(
 
-        //유저 가져오기
-        User user = userRepository.getUser(memberId);
+                channel.getId(),
+                channel.getOwnerId(),
+                Channel.ChannelType.PRIVATE,
+                messageRepository.getLastMessagebyChannelId(channel.getId())
+                        .map(Message::getCreatedAt).orElseThrow()
 
-        //유효 유저 확인
-        if(user == null){
-            System.out.println("존재하지 않는 유저입니다.");
-            return;
-        }
+        );
 
-        //채널에 멤버 추가
-        channel.addMember(memberId);
+    }
 
+    public PublicChannelInfoDto channelToPublicInfoDto(Channel channel){
 
-        Message msg = new Message(memberId,channelId,"default message");
-        msg.setStatus(Message.messageStatus.INACTIVE);
-        messageRepository.saveMessage(msg);
+        if(channel.getChannelType() != Channel.ChannelType.PUBLIC)
+            throw new WrongChannelTypeException("잘못된 채널 타입입니다");
 
+        return new PublicChannelInfoDto(
 
-        //repository에 반영
-        if(!channelRepository.updateChannel(channel)){
-            System.out.println("채널 업데이트 중 문제가 발생했습니다.");
-            return;
+                channel.getId(),
+                channel.getOwnerId(),
+                channel.getChannelName(),
+                Channel.ChannelType.PUBLIC,
+                channel.getChannelDescription(),
+                messageRepository.getLastMessagebyChannelId(channel.getId())
+                        .map(Message::getCreatedAt).orElseThrow()
 
-        }
-
-        User member = userRepository.getUser(memberId);
-
-        System.out.println(channel.getChannelName() +  " 채널에서 " + member.getNickname() + " 멤버 추가 완료!");
+        );
 
 
 
     }
+    public  PublicChannelInfoDto privateChannelToPublicInfoDto (Channel channel){
 
-    @Override
-    public void removeMember(String channelId, String memberId) {
+         if(channel.getChannelType() != Channel.ChannelType.PRIVATE)
+             throw new WrongChannelTypeException("잘못된 채널 타입입니다.");
 
-        Channel channel = channelRepository.getChannel(channelId);
+         return new PublicChannelInfoDto(
 
-        //채널 여부 체크
-        if(channel == null){
-            System.out.println("존재하지 않는 채널입니다.");
-            return;
-        }
-
-
-        //채널 멤버인지 체크
-        List<String> channelsUserIdList = channel.getMembers();
-
-
-        if(!channelsUserIdList.contains(memberId)){
-            System.out.println("해당 유저가 채널에 없습니다.");
-            return;
-        }
-
-
-        //TODO : 비밀번호 체크 로직 넣기. 인터페이스 및 이전 코드들 약간씩 수정 필요. owner or member 둘중 아무나 맞으면 통과
-
-        channel.removeMember(memberId);
-
-        //삭제한 멤버가 채널장이었을때
-        if(channel.getOwnerId().equals(memberId)){
-
-
-            //채널이 비었으면 삭제
-            if(channel.getMembers().isEmpty()){
-
-                System.out.println(channel.getChannelName()+ " 채널의 멤버가 0명이므로 삭제됩니다. ");
-                deleteChannel(channelId);
-                return;
-            }
-            //그렇지 않다면 리스트의 첫번째 멤버를 채널장으로 지정
-            else{
-
-                List<String> newMembers = channel.getMembers();
-                String newOwnerId = newMembers.get(0);
-
-                updateChannelOwner(channelId,newOwnerId);
-
-            }
-
-
-        }
-
-        if(!channelRepository.updateChannel(channel)){
-            System.out.println("채널 업데이트 중 문제가 발생했습니다.");
-            return;
-        }
-
-
-        User member = userRepository.getUser(memberId);
-
-        System.out.println(channel.getChannelName() +  " 채널에서 " + member.getNickname() + " 멤버 삭제 완료!");
-
-
+                 channel.getId(),
+                 channel.getOwnerId(),
+                 channel.getChannelName(),
+                 Channel.ChannelType.PRIVATE,
+                 channel.getChannelDescription(),
+                 messageRepository.getLastMessagebyChannelId(channel.getId())
+                         .map(Message::getCreatedAt).orElseThrow()
+         );
     }
 
-    @Override
-    public void deleteChannel(String channelId) {
-
-        Channel channel = channelRepository.getChannel(channelId);
-
-        //채널 여부 체크
-        if(channel == null){
-            System.out.println("존재하지 않는 채널입니다.");
-            return;
-        }
-
-        //TODO : 비밀번호 체크 로직 넣기. 인터페이스 및 이전 코드들 약간씩 수정 필요
-
-
-
-        if(!channelRepository.deleteChannel(channelId)){
-            System.out.println("채널 삭제중 문제가 발생했습니다.");
-            return;
-        }
-
-        //채널 삭제시 메시지 전부 삭제
-        messageRepository.channelsMessagedelete(channelId);
-
-        //메시지 출력
-        System.out.println(channel.getChannelName() + " 채널 삭제 완료!");
-
-    }
-
-
-
-    //BasicService 에서는 사용 안함
-
-    @Override
-    public boolean isExistChannel(String channelId) {
-        //채널 가져오기
-        Channel channel = channelRepository.getChannel(channelId);
-        return channel != null;
-
-    }
-
-    @Override
-    public boolean isChannelsMember(String channelId, String memberId) {
-        //채널 가져오기
-        Channel channel = channelRepository.getChannel(channelId);
-        //채널이 없거나 멤버가 없으면 false
-        return channel != null && channel.getMembers().contains(memberId);
-    }
 }

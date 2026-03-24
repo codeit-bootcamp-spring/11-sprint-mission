@@ -1,161 +1,153 @@
 package com.sprint.mission.discodeit.service.basic;
 
-import com.sprint.mission.discodeit.entity.Channel;
+import com.sprint.mission.discodeit.dto.messagedto.CreateMessageDto;
+import com.sprint.mission.discodeit.dto.messagedto.DeleteMessageDto;
+import com.sprint.mission.discodeit.dto.messagedto.MessageInfoDto;
+import com.sprint.mission.discodeit.dto.messagedto.UpdateMessageDto;
+import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.Message;
-import com.sprint.mission.discodeit.repository.ChannelRepository;
+import com.sprint.mission.discodeit.exception.service.NonExistException;
+import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
-import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.MessageService;
-import com.sprint.mission.discodeit.service.UserService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 
-public class BasicMessageService  implements MessageService {
+import java.util.List;
+import java.util.UUID;
+
+
+@Service
+@RequiredArgsConstructor
+public class BasicMessageService implements MessageService {
 
 
     private final MessageRepository messageRepository;
-    private final ChannelRepository channelRepository;
-    private final UserRepository userRepository;
+    private final BinaryContentRepository binaryContentRepository;
 
 
-    public BasicMessageService(MessageRepository messageRepository, ChannelRepository channelRepository, UserRepository userRepository) {
-        this.messageRepository = messageRepository;
-        this.channelRepository = channelRepository;
-        this.userRepository = userRepository;
+    @Override
+    public MessageInfoDto create(CreateMessageDto createMessageDto) {
+
+
+        Message message = new Message(
+
+
+                createMessageDto.userId(),
+                createMessageDto.channelId(),
+                createMessageDto.content(),
+                null
+
+
+        );
+        if(createMessageDto.binaryFile() != null)
+            createMessageDto.binaryFile().forEach(binaryFile -> {
+                binaryContentRepository.saveBinaryContent(new BinaryContent(
+                    createMessageDto.userId(),
+                    message.getId(),
+                    BinaryContent.Type.IMAGE,
+                    binaryFile
+                ));
+
+            });
+
+        //binaryContent id 리스트 뽑아서
+        List<UUID> attachmentIds = binaryContentRepository.getAllByMessageId(message.getId()).stream()
+                .map(BinaryContent::getId)
+                .toList();
+        //콘텐츠 리스트 수정
+        message.updateAttachmentIds(attachmentIds);
+        messageRepository.saveMessage(message);
+
+
+        return messageToInfo(message);
     }
 
     @Override
-    public String sendMessage(String senderId, String channelId, String message) {
+    public MessageInfoDto find(UUID messageId) {
 
-        Channel channel = channelRepository.getChannel(channelId);
-        //채널 여부 체크
-        if(channel == null){
-            System.out.println("존재하지 않는 채널입니다.");
-            return null;
-        }
-
-        //유효 유저 체크
-        if(!channel.getMembers().contains(senderId)){
-            System.out.println("해당 채널에 존재하지 않는 유저입니다.");
-            return null;
-        }
-
-        //메시지 생성
-        Message msg = new Message(senderId,channelId,message);
-
-        if(!messageRepository.saveMessage(msg)){
-            System.out.println("메시지 저장 중 문제가 발생했습니다.");
-
-        }
-
-        // 출력 메시지
-        System.out.println("메시지 보내기 완료!");
-        return msg.getMessageId();
-
-
-
-
-
-
-
-    }
-
-    @Override
-    public void readMessage(String messageId) {
-
-        //메시지 생성
-        Message message = messageRepository.getMessage(messageId);
-
-        //메시지 유효 체크
-        if(message == null){
-            System.out.println("존재하지 않는 메시지 입니다.");
-            return;
-
-        }
-        //메시지 출력
-        System.out.println(message);
-
-
+        Message message = messageRepository.getMessage(messageId).orElseThrow();
+        return messageToInfo(message);
 
     }
 
     @Override
-    public void readAllMessage() {
-
-        //메시지 리스트 체크
-        if(messageRepository.getAllMessage() == null){
-
-            System.out.println("메시지 리스트를 불러오는데 문제가 발생했습니다.");
-            return;
-
-        }
-
-        //stream으로 출력
-        messageRepository.getAllMessage().stream()
-                .sorted(Message::compareTo)
-                .forEach(System.out::println);
-
-
-
+    public List<MessageInfoDto> findAllById(UUID channelId) {
+        return messageRepository.getAllByChannelId(channelId)
+                .stream()
+                .map(this::messageToInfo)
+                .toList();
     }
 
     @Override
-    public void updateMessage(String messageId, String message) {
+    public boolean updateMessage(UpdateMessageDto updateMessageDto) {
 
-        Message messageEntity = messageRepository.getMessage(messageId);
+        Message message = messageRepository.getMessage(updateMessageDto.messageId()).orElseThrow();
 
-        //메시지 유효 체크
-        if(messageEntity == null){
-            System.out.println("존재하지 않는 메시지 입니다.");
-            return;
+        message.updateMessage(updateMessageDto.content());
 
-        }
+        //이전 삭제
+        binaryContentRepository.getAllByMessageId(updateMessageDto.messageId()).forEach(binaryContent -> {
+            binaryContentRepository.deleteBinaryContent(binaryContent.getId());
+        });
 
-        //메시지 활성화 체크
-        if(messageEntity.getStatus() != Message.messageStatus.ACTIVE){
+        //새로 생성
+        if(updateMessageDto.binaryFile() != null)
+            updateMessageDto.binaryFile().forEach(binaryFile -> {
+                binaryContentRepository.saveBinaryContent(new BinaryContent(
+                        message.getSenderId(),
+                        message.getId(),
+                        BinaryContent.Type.IMAGE,
+                        binaryFile
+                ));
 
-            System.out.println("비활성화된 메시지 입니다.");
-            return;
+            });
 
-        }
+        //binaryContent id 리스트 뽑아서
+         List<UUID> attachmentIds = binaryContentRepository.getAllByMessageId(updateMessageDto.messageId()).stream()
+                .map(BinaryContent::getId)
+                 .toList();
+         //콘텐츠 리스트 수정
+        message.updateAttachmentIds(attachmentIds);
 
-        //TODO : 메시지 비번 체크
+        messageRepository.saveMessage(message);
 
-        //메시지 수정
-        messageEntity.updateMessage(message);
-
-        //저장소에 반영
-        if(!messageRepository.updateMessage(messageEntity)){
-            System.out.println("메시지 저장중 문제가 발생했습니다.");
-            return;
-        }
-
-        //출력 메시지
-        System.out.println("메시지 수정 완료!");
-
+        return true;
     }
 
     @Override
-    public void deleteMessage(String messageId) {
-
-        //메시지 가져오기
-        Message messageEntity = messageRepository.getMessage(messageId);
-
-        //메시지 유효 체크
-        if(messageEntity == null){
-            System.out.println("존재하지 않는 메시지 입니다.");
-            return;
-
-        }
+    public boolean deleteMessage(DeleteMessageDto deleteMessageDto) {
 
 
-        // TODO : 비밀번호 체크 로직
+        if(!messageRepository.isExistMessage(deleteMessageDto.messageId()))
+            throw new NonExistException("해당 메시지가 존재하지 않습니다.");
 
-        if(!messageRepository.deleteMessage(messageId)){
-            System.out.println("삭제 도중 문제가 발생했습니다.");
-            return;
+        messageRepository.deleteMessage(deleteMessageDto.messageId());
+        binaryContentRepository.deleteBinaryContentByMessageId(deleteMessageDto.messageId());
 
-        }
-        //출력 메시지
-        System.out.println("메시지 삭제 완료!");
-
+        return true;
     }
+
+
+    MessageInfoDto messageToInfo(Message message){
+
+        return new MessageInfoDto(
+
+                message.getId(),
+                message.getSenderId(),
+                message.getChannelId(),
+                message.getMessage(),
+                binaryContentRepository.getAllByMessageId(message.getId()).stream().toList()
+        );
+    }
+
+
+
+
+
+
+
+
+
+
 }

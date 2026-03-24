@@ -2,144 +2,104 @@ package com.sprint.mission.discodeit.repository.file;
 
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.stereotype.Repository;
 
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.*;
 
+@Repository
+@ConditionalOnProperty(name = "discodeit.repository.type", havingValue = "file")
 public class FILEUserRepository  implements UserRepository {
 
+    private final FileSaveLoad<User> saveLoad;
     private final Path directory;
 
-
-    public FILEUserRepository() {
-        directory = Path.of("src/main/resources/Users/");
+    public FILEUserRepository(@Value("${discodeit.repository.file-dir}") String path) {
+        this.saveLoad = new FileSaveLoad<>();
+        this.directory = Path.of(path + "/Users/");
     }
+
 
     @Override
     public boolean saveUser(User user) {
 
-        if(isExistUser(user.getUserId())){
+        if(user == null)
             return false;
-        }
-
-        save(pathToUserId(user.getUserId()),user);
+        save(idToPath(user.getId()),user);
         return true;
-
     }
 
     @Override
-    public User getUser(String userId) {
+    public Optional<User> getUser(UUID userId) {
 
-        Map<String,User> map = load(directory);
-
-        return map.getOrDefault(userId,null);
-
-
-
+        Map<UUID,User> users = load(directory);
+        return Optional.ofNullable(users.get(userId));
     }
 
     @Override
     public List<User> getAllUser() {
 
-        Map<String,User> map = load(directory);
-
-        return map.values().stream().toList();
-
-    }
-
-    @Override
-    public boolean updateUser(User user) {
-        Map<String,User> map = load(directory);
-
-        map.put(user.getUserId(),user);
-
-        save(pathToUserId(user.getUserId()),user);
-        return true;
-    }
-
-    @Override
-    public boolean deleteUser(String userId) {
-
-
-       if(!isExistUser(userId))
-           return false;
-
-       try {
-           Files.deleteIfExists(pathToUserId(userId));
-       }
-       catch(IOException e){
-           return false;
-
-
-       }
-       return true;
-
-
+        Map<UUID,User> users = load(directory);
+        return users.values().stream().toList();
 
     }
 
     @Override
-    public boolean isExistUser(String userId) {
-        Map<String, User> map = load(directory);
+    public Optional<User> getUserByNickname(String nickname) {
 
-        return map.containsKey(userId);
-
+        Map<UUID,User> users = load(directory);
+        return users.values().stream().filter(user -> user.getNickname().equals(nickname)).findFirst();
     }
-    
-     private Map<String,User> load(Path directory) {
-        if (Files.exists(directory)) {
 
-
-            try (Stream<Path> stream =  Files.list(directory))
-
-            {
-                Map<String,User> map;
-
-
-                map = stream.map(path -> {
-                        try (
-                                    FileInputStream fis = new FileInputStream(path.toFile());
-                                    ObjectInputStream ois = new ObjectInputStream(fis)
-                            ) {
-                                Object data = ois.readObject();
-                                return  (User)data;
-                            } catch (IOException | ClassNotFoundException e) {
-                                throw new RuntimeException(e);
-                            }
-                        })
-                        .collect(Collectors.toMap(
-                                User::getUserId,
-                                Function.identity()
-
-                        ));
-                return map;
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        } else {
-            return new HashMap<>();
+    @Override
+    public boolean deleteUser(UUID userId) {
+        if(!isExistUser(userId)){
+            return false;
         }
+        try {
+            Files.deleteIfExists(idToPath(userId));
+        }
+        catch(IOException e){
+            return false;
+
+        }
+        return true;
+
+    }
+
+    @Override
+    public boolean isExistUserByNickname(String nickname) {
+        Map<UUID,User> users = load(directory);
+        return users.values().stream().anyMatch(user -> user.getNickname().equals(nickname));
+    }
+
+    @Override
+    public boolean isExistUserByEmail(String Email) {
+
+        Map<UUID,User> users = load(directory);
+        return users.values().stream().anyMatch(user -> user.getEmail().equals(Email));
+    }
+
+    @Override
+    public boolean isExistUser(UUID userId) {
+        Map<UUID,User> users = load(directory);
+        return users.containsKey(userId);
+    }
+
+
+    private Map<UUID,User> load(Path directory) {
+        return saveLoad.load(directory);
     }
 
      private void save(Path filePath, User user) {
-        try(
-                FileOutputStream fos = new FileOutputStream(filePath.toFile());
-                ObjectOutputStream oos = new ObjectOutputStream(fos)
-        ) {
-            oos.writeObject(user);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        saveLoad.save(filePath, user);
 
     }
-    private Path pathToUserId(String userId){
+    private Path idToPath(UUID userId){
 
         return directory.resolve(userId + ".dat");
 

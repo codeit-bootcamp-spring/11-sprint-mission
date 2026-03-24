@@ -3,62 +3,45 @@ package com.sprint.mission.discodeit.repository.jcf;
 import com.sprint.mission.discodeit.entity.Channel;
 
 import com.sprint.mission.discodeit.repository.ChannelRepository;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.stereotype.Repository;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
+@Repository
+@ConditionalOnProperty(name = "discodeit.repository.type", havingValue = "jcf")
 public class JCFChannelRepository implements ChannelRepository {
 
-    private final Map<String, Channel> data;
+    private final Map<UUID, Channel> data;
 
-    public JCFChannelRepository() {
-
+    public JCFChannelRepository(){
         data = new HashMap<>();
-
     }
 
     @Override
     public boolean saveChannel(Channel channel) {
-        if(data.containsKey(channel.getChannelId())){
-            return false;
-        }
-        data.put(channel.getChannelId(), channel);
+        data.put(channel.getId(), channel);
         return true;
-
     }
 
     @Override
-    public Channel getChannel(String channelId) {
-
-        return data.getOrDefault(channelId, null);
+    public Optional<Channel> getChannel(UUID channelId) {
+        return data.containsKey(channelId) ? Optional.of(data.get(channelId)) : Optional.empty();
     }
 
     @Override
     public List<Channel> getAllChannel() {
-        return data.values().stream().toList();
+        return data.values().stream()
+                .toList();
     }
 
     @Override
-    public boolean updateChannel(Channel channel) {
-
-
-
-        data.put(channel.getChannelId(), channel);
-        return true;
-
+    public boolean deleteChannel(UUID channelId) {
+        return data.remove(channelId) != null;
     }
 
     @Override
-    public boolean deleteChannel(String channelId) {
-
-        data.remove(channelId);
-        return true;
-
-    }
-
-    @Override
-    public boolean isExistChannel(String channelId) {
+    public boolean isExistChannel(UUID channelId) {
         return data.containsKey(channelId);
     }
 }
