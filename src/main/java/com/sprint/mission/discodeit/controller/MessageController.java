@@ -4,6 +4,7 @@ import com.sprint.mission.discodeit.dto.message.MessageCreateRequestDto;
 import com.sprint.mission.discodeit.dto.message.MessageResponseDto;
 import com.sprint.mission.discodeit.dto.message.MessageUpdateRequestDto;
 import com.sprint.mission.discodeit.service.MessageService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,13 +25,13 @@ public class MessageController {
     private final MessageService messageService;
 
     @RequestMapping(value = "/message", method = RequestMethod.POST)
-    public ResponseEntity<Void> create(@RequestBody MessageCreateRequestDto dto) {
+    public ResponseEntity<Void> create(@Valid @RequestBody MessageCreateRequestDto dto) {
         messageService.create(dto);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @RequestMapping(value = "/message/{id}", method = RequestMethod.PUT)
-    public ResponseEntity<Void> update(@PathVariable UUID id, @RequestBody MessageUpdateRequestDto dto) {
+    public ResponseEntity<Void> update(@PathVariable UUID id, @Valid @RequestBody MessageUpdateRequestDto dto) {
         messageService.update(id, dto);
         return ResponseEntity.ok().build();
     }

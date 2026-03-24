@@ -5,6 +5,7 @@ import com.sprint.mission.discodeit.dto.channel.ChannelUpdateRequestDto;
 import com.sprint.mission.discodeit.dto.channel.PrivateChannelCreateRequestDto;
 import com.sprint.mission.discodeit.dto.channel.PublicChannelCreateRequestDto;
 import com.sprint.mission.discodeit.service.ChannelService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,7 +26,7 @@ public class ChannelController {
     private final ChannelService channelService;
 
     @RequestMapping(value = "/channel/public", method = RequestMethod.POST)
-    public ResponseEntity<Void> createPublicChannel(@RequestBody PublicChannelCreateRequestDto dto) {
+    public ResponseEntity<Void> createPublicChannel(@Valid @RequestBody PublicChannelCreateRequestDto dto) {
         channelService.createPublicChannel(dto);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
@@ -37,7 +38,7 @@ public class ChannelController {
     }
 
     @RequestMapping(value = "/channel/{id}", method = RequestMethod.PUT)
-    public ResponseEntity<Void> update(@PathVariable UUID id, @RequestBody ChannelUpdateRequestDto dto) {
+    public ResponseEntity<Void> update(@PathVariable UUID id, @Valid @RequestBody ChannelUpdateRequestDto dto) {
         channelService.update(id, dto);
         return ResponseEntity.ok().build();
     }

@@ -5,6 +5,7 @@ import com.sprint.mission.discodeit.dto.user.UserResponseDto;
 import com.sprint.mission.discodeit.dto.user.UserUpdateRequestDto;
 import com.sprint.mission.discodeit.service.UserService;
 import com.sprint.mission.discodeit.service.UserStatusService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,13 +27,13 @@ public class UserController {
     private final UserStatusService userStatusService;
 
     @RequestMapping(value = "/user", method = RequestMethod.POST)
-    public ResponseEntity<Void> create(@RequestBody UserCreateRequestDto dto) {
+    public ResponseEntity<Void> create(@Valid @RequestBody UserCreateRequestDto dto) {
         userService.create(dto);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @RequestMapping(value = "/user/{id}", method = RequestMethod.PUT)
-    public ResponseEntity<Void> update(@PathVariable UUID id, @RequestBody UserUpdateRequestDto dto) {
+    public ResponseEntity<Void> update(@PathVariable UUID id, @Valid @RequestBody UserUpdateRequestDto dto) {
         userService.update(id, dto);
         return ResponseEntity.ok().build();
     }
