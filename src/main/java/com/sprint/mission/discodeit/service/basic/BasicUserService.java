@@ -27,10 +27,10 @@ public class BasicUserService implements UserService {
 
     @Override
     public UserDto createUser(UserCreateRequest request) {
-        String name = request.name();
-        String email = request.email();
-        String password = request.password();
-        if(userRepository.findByName(name).isPresent()) {
+        String name = request.name().trim();
+        String email = request.email().trim();
+        String password = request.password().trim();
+        if(userRepository.findByUserName(name).isPresent()) {
             throw new IllegalArgumentException("이미 존재하는 이름입니다.");
         }
         if(userRepository.findByEmail(email).isPresent()) {
@@ -90,7 +90,7 @@ public class BasicUserService implements UserService {
                         .orElseThrow(() -> new IllegalArgumentException("검색하신 유저가 존재하지 않습니다."));
         String name = user.getUsername();
         if(request.name() != null) {
-            userRepository.findByName(request.name())
+            userRepository.findByUserName(request.name())
                     .filter(u -> !u.getId().equals(id))
                     .ifPresent(u -> {throw new IllegalArgumentException("이미 사용중인 이름 입니다.");});
             name = request.name();

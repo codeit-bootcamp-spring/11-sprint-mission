@@ -63,14 +63,12 @@ public class BasicReadStatusService implements ReadStatusService {
     }
 
     @Override
-    public ReadStatus updateStatus(ReadStatusUpdateDto request) {
-        ReadStatus readStatus = readStatusRepository.findById(request.id())
-                .orElseThrow(() -> new IllegalArgumentException("수정할 상태 기록이 존재하지 않습니다."));
+    public ReadStatus updateStatus(UUID userId, UUID channelId, ReadStatusUpdateDto request) {
+        ReadStatus readStatus = readStatusRepository.findByUserIdAndChannelId(userId, channelId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 채널의 수신 정보를 찾을 수 없습니다."));
 
         readStatus.update(request.lastReadAt());
 
-        ReadStatus updateStatus = readStatusRepository.save(readStatus);
-
-        return updateStatus;
+        return readStatusRepository.save(readStatus);
     }
 }

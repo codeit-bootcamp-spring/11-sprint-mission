@@ -35,6 +35,7 @@ public class BasicMessageService implements MessageService {
             throw new IllegalArgumentException("메세지 내용은 비어있을 수 없습니다.");
         }
         Message message = Message.builder()
+                .id(UUID.randomUUID())
                 .channelId(request.channelId())
                 .authorId(request.authorId())
                 .message(request.message())
@@ -67,6 +68,7 @@ public class BasicMessageService implements MessageService {
     public List<Message> readMessagesByChannel(UUID channelId) {
         return messageRepository.findAll().stream()
                 .filter(m -> m.getChannelId().equals(channelId))
+                .sorted(Comparator.comparing(Message::getCreatedAt))
                 .collect(Collectors.toList());
     }
 
@@ -94,12 +96,12 @@ public class BasicMessageService implements MessageService {
     }
 
     @Override
-    public void updateMessage(MessageUpdate request) {
+    public void updateMessage(UUID id, MessageUpdate request) {
         if(request.message() == null || request.message().isBlank()) {
             throw new IllegalArgumentException("메세지 내용은 비어있을 수 없습니다.");
         }
 
-        Message mes = messageRepository.findById(request.id())
+        Message mes = messageRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("수정할 메시지가 존재하지 않습니다."));
         if(mes.getMessage().equals(request.message())) {
             System.out.println("변경사항이 없습니다.");

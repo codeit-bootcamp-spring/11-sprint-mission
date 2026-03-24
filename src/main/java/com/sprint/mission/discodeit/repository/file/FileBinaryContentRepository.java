@@ -26,8 +26,6 @@ public class FileBinaryContentRepository implements BinaryContentRepository {
 
         this.file = new File(dir, CONTENT_FILE);
 
-        System.err.println("📍 [실제 파일 저장 경로] : " + this.file.getAbsolutePath());
-
         this.binaryContentMap = loadContents();
     }
 

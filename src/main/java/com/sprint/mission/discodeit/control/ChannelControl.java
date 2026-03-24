@@ -3,6 +3,7 @@ package com.sprint.mission.discodeit.control;
 import com.sprint.mission.discodeit.dto.*;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.service.ChannelService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -12,13 +13,10 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/channels")
+@RequiredArgsConstructor
 public class ChannelControl {
 
     private final ChannelService channelService;
-
-    public ChannelControl(ChannelService channelService) {
-        this.channelService = channelService;
-    }
 
     @RequestMapping(value = "/public", method = RequestMethod.POST)
     public ResponseEntity<ChannelDto> createPublicChannel(@RequestBody PublicChannelRequest request) {
@@ -48,7 +46,7 @@ public class ChannelControl {
         return ResponseEntity.ok(responses);
     }
 
-    @RequestMapping(value = "{id}", method = RequestMethod.DELETE)
+    @RequestMapping(value = "/{id}", method = RequestMethod.DELETE)
     public ResponseEntity<Void> deleteChannel(@PathVariable UUID id) {
         channelService.deleteChannel(id);
 
