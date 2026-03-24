@@ -13,4 +13,6 @@ public interface UserRepository {
     void delete(User user);
     boolean existsByName(String name);
     boolean existsByEmail(String email);
+
+    Optional<User> findByName(String name);
 }

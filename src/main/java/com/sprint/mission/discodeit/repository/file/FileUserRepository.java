@@ -7,6 +7,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 @ConditionalOnProperty(
@@ -40,6 +41,17 @@ public class FileUserRepository extends CommonFileRepository<User> implements Us
             }
         }
         return false;
+    }
+
+    @Override
+    public Optional<User> findByName(String name) {
+        List<User> userList = findAll();
+        for(User user : userList) {
+            if(user.getName().equals(name)) {
+                return Optional.of(user);
+            }
+        }
+        return Optional.empty();
     }
 
 }

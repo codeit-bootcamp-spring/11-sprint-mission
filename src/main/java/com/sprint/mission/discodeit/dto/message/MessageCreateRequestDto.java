@@ -1,6 +1,7 @@
 package com.sprint.mission.discodeit.dto.message;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import java.util.List;
@@ -12,10 +13,10 @@ public record MessageCreateRequestDto(
         @Size(max = 300, message = "메시지는 300자 이하로 작성해야 합니다.")
         String contents,
 
-        @NotBlank(message = "메시지가 업로드되는 채널은 필수로 기재해야 합니다.")
+        @NotNull(message = "메시지가 업로드되는 채널은 필수로 기재해야 합니다.")
         UUID channelId,
 
-        @NotBlank(message = "메시지를 보내는 유저는 필수로 기재해야 합니다.")
+        @NotNull(message = "메시지를 보내는 유저는 필수로 기재해야 합니다.")
         UUID userId,
 
         List<UUID> attachmentIds

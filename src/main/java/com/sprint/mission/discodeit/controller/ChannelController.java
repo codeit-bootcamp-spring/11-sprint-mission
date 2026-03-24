@@ -49,7 +49,7 @@ public class ChannelController {
         return ResponseEntity.noContent().build();
     }
 
-    @RequestMapping(value = "/users/{userId}/channels", method = RequestMethod.GET)
+    @RequestMapping(value = "/user/{userId}/channel", method = RequestMethod.GET)
     public ResponseEntity<List<ChannelResponseDto>> findAllByUserId(@PathVariable UUID userId) {
         return ResponseEntity.ok(channelService.findAllByUserId(userId));
     }

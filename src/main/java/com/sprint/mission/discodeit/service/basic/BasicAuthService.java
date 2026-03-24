@@ -19,16 +19,13 @@ public class BasicAuthService implements AuthService {
     private final UserRepository userRepo;
 
     public LoginResponseDto login(LoginRequestDto dto) {
-        List<User> userList = userRepo.findAll();
-        for(User user : userList) {
-            if(user.getName().equals(dto.name())) {
-                if(user.getPassword().equals(dto.password())) {
-                    return new LoginResponseDto(user.getId(), user.getName(), user.getEmail());
-                } else {
-                    throw new InvalidPasswordException();
-                }
-            }
+        User user = userRepo.findByName(dto.name())
+                .orElseThrow(() -> new UserNotFoundException(dto.name()));
+
+        if(!user.getPassword().equals(dto.password())) {
+            throw new InvalidPasswordException();
         }
-        throw new UserNotFoundException(dto.name());
+
+        return new LoginResponseDto(user.getId(), user.getName(), user.getEmail());
     }
 }
