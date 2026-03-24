@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -21,10 +22,19 @@ public class FileReadStatusRepository extends CommonFileRepository<ReadStatus> i
         super("readstatuses", ReadStatus.class, basedir);
     }
 
+    @Override
     public Optional<ReadStatus> findByUserIdAndChannelId(UUID userId, UUID channelId) {
         return findAll().stream()
                 .filter(p -> p.getUserId().equals(userId))
                 .filter(p -> p.getChannelId().equals(channelId))
                 .findFirst();
+    }
+
+    @Override
+    public List<UUID> findUserIdsByChannelId(UUID channelId) {
+        return findAll().stream()
+                .filter(p -> (p.getChannelId().equals(channelId)))
+                .map(ReadStatus::getUserId)
+                .toList();
     }
 }

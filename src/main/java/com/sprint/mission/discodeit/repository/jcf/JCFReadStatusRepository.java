@@ -5,6 +5,7 @@ import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -19,10 +20,20 @@ public class JCFReadStatusRepository extends CommonJCFRepository<ReadStatus> imp
         super();
     }
 
+    @Override
     public Optional<ReadStatus> findByUserIdAndChannelId(UUID userId, UUID channelId) {
         return findAll().stream()
                 .filter(p -> p.getUserId().equals(userId))
                 .filter(p -> p.getChannelId().equals(channelId))
                 .findFirst();
     }
+
+    @Override
+    public List<UUID> findUserIdsByChannelId(UUID channelId) {
+        return findAll().stream()
+                .filter(p -> (p.getChannelId().equals(channelId)))
+                .map(ReadStatus::getUserId)
+                .toList();
+    }
+
 }
