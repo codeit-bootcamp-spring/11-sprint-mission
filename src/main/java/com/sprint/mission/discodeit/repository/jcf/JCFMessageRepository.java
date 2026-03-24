@@ -2,9 +2,13 @@ package com.sprint.mission.discodeit.repository.jcf;
 
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.repository.MessageRepository;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.stereotype.Repository;
 
 import java.util.*;
 
+@ConditionalOnProperty(name = "discodeit.repository.type", havingValue = "jcf", matchIfMissing = true)
+@Repository
 public class JCFMessageRepository implements MessageRepository {
     private final Map<UUID, Message> data;
 
@@ -18,11 +22,8 @@ public class JCFMessageRepository implements MessageRepository {
     }
 
     @Override
-    public Message findById(UUID id) {
-        Message message = this.data.get(id);
-        if (message == null) throw new IllegalArgumentException("requested message not found. ❌");
-
-        return message;
+    public Optional<Message> findById(UUID id) {
+        return Optional.ofNullable(this.data.get(id));
     }
 
     @Override
@@ -31,7 +32,19 @@ public class JCFMessageRepository implements MessageRepository {
     }
 
     @Override
+    public List<Message> findAllByChannelId(UUID channelId) {
+        return this.data.values().stream()
+                .filter(message -> message.getChannel().getId().equals(channelId))
+                .toList();
+    }
+
+    @Override
     public void delete(Message message) {
         this.data.remove(message.getId());
+    }
+
+    @Override
+    public void deleteAllByChannelId(UUID channelId) {
+        this.data.values().removeIf(message -> message.getChannel().getId().equals(channelId));
     }
 }

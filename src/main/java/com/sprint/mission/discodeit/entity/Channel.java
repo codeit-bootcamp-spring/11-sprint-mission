@@ -1,21 +1,27 @@
 package com.sprint.mission.discodeit.entity;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.sprint.mission.discodeit.dto.channel.ChannelResponse;
+import com.sprint.mission.discodeit.dto.channel.PublicChannelCreateRequest;
+import lombok.Getter;
 
+import java.util.Comparator;
+import java.util.List;
+import java.util.UUID;
+
+@Getter
 public class Channel extends BaseEntity {
     private String name;
-    private List<User> participants;
-    private List<Message> messages;
+    private String description;
+    private boolean isPrivate;
 
-    public Channel(String name) {
-        this.name = name;
-        this.participants = new ArrayList<>();
-        this.messages = new ArrayList<>();
+    public Channel(PublicChannelCreateRequest publicChannelCreateRequest) {
+        this.name = publicChannelCreateRequest.name();
+        this.description = publicChannelCreateRequest.description();
+        this.isPrivate = false;
     }
 
-    public String getName() {
-        return this.name;
+    public Channel() {
+        this.isPrivate = true;
     }
 
     public void updateName(String name) {
@@ -23,26 +29,21 @@ public class Channel extends BaseEntity {
         this.setUpdatedAt();
     }
 
-    public List<User> getParticipants() {
-        return this.participants;
+    public void updateDescription(String description) {
+        this.description = description;
+        this.setUpdatedAt();
     }
 
-    public void removeParticipant(User user) {
-        this.participants.remove(user);
-    }
-
-    public List<Message> getMessages() {
-        return this.messages;
-    }
-
-    public void addMessage(Message message) {
-        this.messages.add(message);
-    }
-
-    @Override
-    public String toString() {
-        return "Channel{" +
-                "name='" + this.name + '\'' +
-                '}';
+    public ChannelResponse toResponse(List<Message> messages, List<UUID> participants) {
+        return new ChannelResponse(
+                this.name,
+                this.description,
+                this.isPrivate,
+                messages.stream()
+                        .map(Message::getCreatedAt)
+                        .max(Comparator.naturalOrder())
+                        .orElse(null),
+                this.isPrivate ? participants : null
+        );
     }
 }

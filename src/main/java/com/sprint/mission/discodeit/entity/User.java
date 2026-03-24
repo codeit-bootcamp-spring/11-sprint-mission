@@ -1,29 +1,27 @@
 package com.sprint.mission.discodeit.entity;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.sprint.mission.discodeit.dto.user.UserCreateRequest;
+import com.sprint.mission.discodeit.dto.user.UserResponse;
+import lombok.Getter;
 
+import java.util.UUID;
+
+@Getter
 public class User extends BaseEntity {
     private String nickname;
     private String username;
     private String email;
     private String password;
     private String phoneNumber;
-    private List<Channel> channels;
-    private List<Message> messages;
+    private UUID profileId;
 
-    public User(String nickname, String username, String email, String password, String phoneNumber) {
-        this.nickname = nickname;
-        this.username = username;
-        this.email = email;
-        this.password = password;
-        this.phoneNumber = phoneNumber;
-        this.channels = new ArrayList<>();
-        this.messages = new ArrayList<>();
-    }
-
-    public String getNickname() {
-        return this.nickname;
+    public User(UserCreateRequest userCreateRequest, BinaryContent profile) {
+        this.nickname = userCreateRequest.nickname();
+        this.username = userCreateRequest.username();
+        this.email = userCreateRequest.email();
+        this.password = userCreateRequest.password();
+        this.phoneNumber = userCreateRequest.phoneNumber();
+        this.profileId = profile != null ? profile.getId() : null;
     }
 
     public void updateNickname(String nickname) {
@@ -31,17 +29,9 @@ public class User extends BaseEntity {
         this.setUpdatedAt();
     }
 
-    public String getUsername() {
-        return this.username;
-    }
-
     public void updateUsername(String username) {
         this.username = username;
         this.setUpdatedAt();
-    }
-
-    public String getEmail() {
-        return this.email;
     }
 
     public void updateEmail(String email) {
@@ -49,17 +39,9 @@ public class User extends BaseEntity {
         this.setUpdatedAt();
     }
 
-    public String getPassword() {
-        return this.password;
-    }
-
     public void updatePassword(String password) {
         this.password = password;
         this.setUpdatedAt();
-    }
-
-    public String getPhoneNumber() {
-        return this.phoneNumber;
     }
 
     public void updatePhoneNumber(String phoneNumber) {
@@ -67,25 +49,19 @@ public class User extends BaseEntity {
         this.setUpdatedAt();
     }
 
-    public List<Channel> getChannels() {
-        return this.channels;
+    public void updateProfile(BinaryContent profile) {
+        this.profileId = profile.getId();
+        this.setUpdatedAt();
     }
 
-    public List<Message> getMessages() {
-        return this.messages;
-    }
-
-    public void addMessage(Message message) {
-        this.messages.add(message);
-    }
-
-    @Override
-    public String toString() {
-        return "User{" +
-                "nickname='" + this.nickname + '\'' +
-                ", username='" + this.username + '\'' +
-                ", email='" + this.email + '\'' +
-                ", phoneNumber='" + this.phoneNumber + '\'' +
-                '}';
+    public UserResponse toResponse(BinaryContent profile, UserStatus status) {
+        return new UserResponse(
+                this.nickname,
+                this.username,
+                this.email,
+                this.phoneNumber,
+                profile != null ? profile.toResponse() : null,
+                status.toResponse()
+        );
     }
 }
