@@ -1,27 +1,65 @@
 package com.sprint.mission.discodeit.entity;
 
+import java.io.Serializable;
+import java.time.Instant;
 import java.util.UUID;
 
-public class Channel {
+public class Channel implements Serializable {
+    private static final long serialVersionUID = 1L;
     private UUID id;
-    private Long createdAtL;
-    private Long updatedAtL;
-    private String channel;
+    private Long createdAt;
+    private Long updatedAt;
+    //
+    private ChannelType type;
+    private String name;
+    private String description;
 
-    public Channel(String channel) {
+    public Channel(ChannelType type, String name, String description) {
         this.id = UUID.randomUUID();
-        this.createdAtL = System.currentTimeMillis();
-        this.updatedAtL = this.createdAtL;
-        this.channel = channel;
+        this.createdAt = Instant.now().getEpochSecond();
+        //
+        this.type = type;
+        this.name = name;
+        this.description = description;
     }
 
-    public void setUpdated(String channel){
-        this.updatedAtL = System.currentTimeMillis();
-        this.channel = channel;
+    public UUID getId() {
+        return id;
     }
 
-    public UUID getId(){return id;}
-    public Long getCreatedAtL() {return createdAtL;}
-    public Long getUpdatedAtL() {return updatedAtL;}
-    public String getChannel() {return channel;}
+    public Long getCreatedAt() {
+        return createdAt;
+    }
+
+    public Long getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public ChannelType getType() {
+        return type;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void update(String newName, String newDescription) {
+        boolean anyValueUpdated = false;
+        if (newName != null && !newName.equals(this.name)) {
+            this.name = newName;
+            anyValueUpdated = true;
+        }
+        if (newDescription != null && !newDescription.equals(this.description)) {
+            this.description = newDescription;
+            anyValueUpdated = true;
+        }
+
+        if (anyValueUpdated) {
+            this.updatedAt = Instant.now().getEpochSecond();
+        }
+    }
 }
