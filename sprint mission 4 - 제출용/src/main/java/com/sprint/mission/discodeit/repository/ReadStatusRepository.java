@@ -15,6 +15,8 @@ public interface ReadStatusRepository {
 
     List<ReadStatus> readAllByChannelId(UUID channelId);
 
+    List<ReadStatus> readAllByUserId(UUID userId);
+
     ReadStatus update(UUID userId, UUID channelId, Instant lastMessageReadAt);
 
     void deleteByChannelId(UUID channelId);

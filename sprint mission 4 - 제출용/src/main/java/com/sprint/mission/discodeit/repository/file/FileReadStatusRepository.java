@@ -77,6 +77,13 @@ public class FileReadStatusRepository implements ReadStatusRepository {
     }
 
     @Override
+    public List<ReadStatus> readAllByUserId(UUID userId) {
+        return data.values().stream()
+                .filter(readStatus -> readStatus.getUserId().equals(userId))
+                .toList();
+    }
+
+    @Override
     public ReadStatus update(UUID userId, UUID channelId, Instant lastMessageReadAt){
         ReadStatus readStatus = readByUserIdAndChannelId(userId, channelId);
         if(readStatus == null){

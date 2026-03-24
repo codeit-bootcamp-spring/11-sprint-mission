@@ -47,9 +47,8 @@ public class BasicReadStatusService implements ReadStatusService {
 
     @Override
     public List<ReadStatus> readAllByUserId(UUID userId) {
-        return readStatusRepository.readAllByChannelId(userId);
+        return readStatusRepository.readAllByUserId(userId);
     }
-
     @Override
     public void update(ReadStatusUpdateRequest request) {
         ReadStatus readStatus = readStatusRepository.readByUserIdAndChannelId(request.getUserId(), request.getChannelId());

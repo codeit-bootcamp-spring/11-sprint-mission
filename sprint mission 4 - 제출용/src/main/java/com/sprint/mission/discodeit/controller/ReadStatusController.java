@@ -31,8 +31,8 @@ public class ReadStatusController {
     }
 
     // update
-    @RequestMapping(value = "/{id}", method = RequestMethod.PUT)
-    public ResponseEntity<Void> update(@PathVariable UUID id, @RequestBody ReadStatusUpdateRequest request){
+    @RequestMapping(method = RequestMethod.PUT)
+    public ResponseEntity<Void> update(@RequestBody ReadStatusUpdateRequest request){
         readStatusService.update(request);
         return ResponseEntity.ok().build();
     }
