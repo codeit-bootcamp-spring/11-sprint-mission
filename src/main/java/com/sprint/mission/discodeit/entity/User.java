@@ -2,52 +2,42 @@ package com.sprint.mission.discodeit.entity;
 
 import java.io.Serializable;
 import java.util.UUID;
+import lombok.Getter;
+import java.time.Instant;
 
+@Getter
 public class User implements Serializable {
     private static final long serialVersionUID = 1L;
-
     private final UUID id;
-    private final Long createdAt;
-    private Long updateAt;
+    private final Instant createdAt;
+    private Instant updatedAt;
 
     private String username;
     private String email;
     private String password;
 
+    private UUID profileId;
+
     public User(String username, String email, String password) {
+        Instant now = Instant.now();
         this.id = UUID.randomUUID();
-        this.createdAt = System.currentTimeMillis();
-        this.updateAt = this.createdAt;
+        this.createdAt = now;
+        this.updatedAt = now;
         this.username = username;
         this.email = email;
         this.password = password;
+        this.profileId = null;
     }
 
     public void update(String username, String email, String password) {
         this.username = username;
         this.email = email;
         this.password = password;
-        this.updateAt = System.currentTimeMillis();
+        this.updatedAt = Instant.now();
     }
 
-    public UUID getId() {
-        return id;
-    }
-
-    public Long getCreatedAt() {
-        return createdAt;
-    }
-    public Long getUpdateAt() {
-        return updateAt;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-    public String getEmail() {
-        return email;
-    }
-    public String getPassword() {
-        return password;
+    public void updateProfile(UUID profileId) {
+        this.profileId = profileId;
+        this.updatedAt = Instant.now();
     }
 }

@@ -6,7 +6,7 @@ import com.sprint.mission.discodeit.service.ChannelService;
 import com.sprint.mission.discodeit.service.UserService;
 import java.util.*;
 
-public class JCFMessageService implements MessageService {
+public class JCFMessageService {
     private final Map<UUID, Message> data;
 
     private final UserService userService;
@@ -18,27 +18,27 @@ public class JCFMessageService implements MessageService {
         this.channelService = channelService;
     }
 
-    @Override
+
     public Message create(UUID userId, UUID channelId, String content) {
-        if (userService.findById(userId) == null) {
+        if (userService.find(userId).isEmpty()) {
             throw new IllegalArgumentException("존재하지 않는 사용자");
         }
-        if (channelService.findById(channelId) == null) {
+        if (channelService.find(channelId).isEmpty()) {
             throw new IllegalArgumentException("존재하지 않는 채널");
         }
         Message message = new Message(userId, channelId, content);
         data.put(message.getId(), message);
         return message;
     }
-    @Override
-    public Message findById(UUID id) {
-        return data.get(id);
+
+    public Optional<Message> findById(UUID id) {
+        return Optional.ofNullable(data.get(id));
     }
-    @Override
+
     public List<Message> findAll() {
         return new ArrayList<>(data.values());
     }
-    @Override
+
     public Message update(UUID id, String content) {
         Message message = data.get(id);
 
@@ -49,7 +49,7 @@ public class JCFMessageService implements MessageService {
         message.update(content);
         return message;
     }
-    @Override
+
     public void delete(UUID id) {
         data.remove(id);
     }

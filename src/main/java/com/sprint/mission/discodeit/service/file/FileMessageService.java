@@ -8,7 +8,7 @@ import com.sprint.mission.discodeit.service.UserService;
 import java.io.*;
 import java.util.*;
 
-public class FileMessageService implements MessageService {
+public class FileMessageService {
 
     private final File file;
     private final UserService userService;
@@ -20,13 +20,13 @@ public class FileMessageService implements MessageService {
         this.channelService = channelService;
     }
 
-    @Override
+
     public Message create(UUID userId, UUID channelId, String content) {
-        if (userService.findById(userId) == null) {
+        if (userService.find(userId).isEmpty()) {
             throw new IllegalArgumentException("존재하지 않는 사용자입니다.");
         }
 
-        if (channelService.findById(channelId) == null) {
+        if (channelService.find(channelId).isEmpty()) {
             throw new IllegalArgumentException("존재하지 않는 채널입니다.");
         }
 
@@ -37,17 +37,16 @@ public class FileMessageService implements MessageService {
         return message;
     }
 
-    @Override
-    public Message findById(UUID id) {
-        return load().get(id);
+    public Optional<Message> findById(UUID id) {
+        return Optional.ofNullable(load().get(id));
     }
 
-    @Override
+
     public List<Message> findAll() {
         return new ArrayList<>(load().values());
     }
 
-    @Override
+
     public Message update(UUID id, String content) {
         Map<UUID, Message> data = load();
         Message message = data.get(id);
@@ -61,7 +60,7 @@ public class FileMessageService implements MessageService {
         return message;
     }
 
-    @Override
+
     public void delete(UUID id) {
         Map<UUID, Message> data = load();
         data.remove(id);

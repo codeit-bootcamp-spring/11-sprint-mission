@@ -1,61 +1,90 @@
 package com.sprint.mission.discodeit.repository.file;
 
+import org.springframework.stereotype.Repository;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 
 import java.io.*;
+import java.nio.file.*;
 import java.util.*;
+
 
 public class FileChannelRepository implements ChannelRepository {
 
-    private final File file;
+    private final Path directory;
 
-    public FileChannelRepository() {
-        this.file = new File("channels.ser");
-    }
-
-    @Override
-    public Channel save(Channel channel) {
-        Map<UUID, Channel> data = load();
-        data.put(channel.getId(), channel);
-        write(data);
-        return channel;
-    }
-
-    @Override
-    public Channel findById(UUID id) {
-        return load().get(id);
-    }
-
-    @Override
-    public List<Channel> findAll() {
-        return new ArrayList<>(load().values());
-    }
-
-    @Override
-    public void delete(UUID id) {
-        Map<UUID, Channel> data = load();
-        data.remove(id);
-        write(data);
-    }
-
-    private void write(Map<UUID, Channel> data) {
-        try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(file))) {
-            out.writeObject(data);
+    public FileChannelRepository(String rootDirectory) {
+        this.directory = Path.of(rootDirectory, "channels");
+        try {
+            Files.createDirectories(directory);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    @SuppressWarnings("unchecked")
-    private Map<UUID, Channel> load() {
-        if (!file.exists()) {
-            return new HashMap<>();
-        }
+    @Override
+    public Channel save(Channel channel) {
+        Path filePath = directory.resolve(channel.getId() + ".ser");
 
-        try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(file))) {
-            return (Map<UUID, Channel>) in.readObject();
+        try (ObjectOutputStream out = new ObjectOutputStream(
+                new FileOutputStream(filePath.toFile()))) {
+            out.writeObject(channel);
+            return channel;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private UUID getId() {
+        return UUID.randomUUID();
+    }
+
+    @Override
+    public Optional<Channel> findById(UUID id) {
+        Path filePath = directory.resolve(id + ".ser");
+        if (!Files.exists(filePath)) {
+            return Optional.empty();
+        }
+        try (ObjectInputStream in = new ObjectInputStream(
+                new FileInputStream(filePath.toFile()))) {
+            return Optional.of((Channel) in.readObject());
         } catch (IOException | ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public List<Channel> findAll() {
+        List<Channel> channels = new ArrayList<>();
+
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(directory, "*.ser")) {
+            for (Path filePath : stream) {
+                try (ObjectInputStream in = new ObjectInputStream(
+                        new FileInputStream(filePath.toFile()))) {
+                    channels.add((Channel) in.readObject());
+                }
+            }
+        } catch (IOException | ClassNotFoundException e) {
+                        throw new RuntimeException(e);
+                    }
+                    return channels;
+    }
+
+    @Override
+    public void delete(UUID id) {
+        Path filePath = directory.resolve(id + ".ser");
+
+        try {
+            Files.deleteIfExists(filePath);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void createDicectory() {
+        try {
+            Files.createDirectories(directory);
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }

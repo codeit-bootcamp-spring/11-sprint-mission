@@ -6,7 +6,7 @@ import com.sprint.mission.discodeit.service.ChannelService;
 import java.io.*;
 import java.util.*;
 
-public class FileChannelService implements ChannelService {
+public class FileChannelService {
 
     private final File file;
 
@@ -14,7 +14,7 @@ public class FileChannelService implements ChannelService {
         this.file = new File("channels.ser");
     }
 
-    @Override
+
     public Channel create(String name, String description) {
         Map<UUID, Channel> data = load();
         Channel channel = new Channel(name, description);
@@ -23,17 +23,17 @@ public class FileChannelService implements ChannelService {
         return channel;
     }
 
-    @Override
-    public Channel findById(UUID id) {
-        return load().get(id);
+
+    public Optional<Channel> findById(UUID id) {
+        return Optional.ofNullable(load().get(id));
     }
 
-    @Override
+
     public List<Channel> findAll() {
         return new ArrayList<>(load().values());
     }
 
-    @Override
+
     public Channel update(UUID id, String name, String description) {
         Map<UUID, Channel> data = load();
         Channel channel = data.get(id);
@@ -47,7 +47,7 @@ public class FileChannelService implements ChannelService {
         return channel;
     }
 
-    @Override
+
     public void delete(UUID id) {
         Map<UUID, Channel> data = load();
         data.remove(id);
