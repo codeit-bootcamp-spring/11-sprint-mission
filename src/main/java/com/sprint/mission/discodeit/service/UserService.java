@@ -1,23 +1,22 @@
 package com.sprint.mission.discodeit.service;
 
+import com.sprint.mission.discodeit.dto.UserCreateDto;
+import com.sprint.mission.discodeit.dto.UserReadDto;
+import com.sprint.mission.discodeit.dto.UserUpdateDto;
 import com.sprint.mission.discodeit.entity.User;
-import com.sprint.mission.discodeit.entity.UserStatus;
 
+import java.util.List;
 import java.util.UUID;
 
 public interface UserService {
     // 코드 탬플릿에 맞게 create 메서드 수정
-    User create(String name, String email, String password);
-//    void createUser(User user);
+//    User create(String name, String email, String password);
+    User create(UserCreateDto dto);
 
-    void readUserAll(UUID id);
+    UserReadDto find(UUID id);
+    List<UserReadDto> findAll();
 
-    void updateUserName(UUID id, String newName);
-    void updateUserNickname(UUID id, String newNickname);
-    void updateUserEmail(UUID id, String newEmail);
-    void updatePhoneNumber(UUID id, String newPhoneNumber);
-    void updateUserProfileImageURL(UUID id, String newProfileImageURL);
-    void updateUserStatus(UUID id, UserStatus newStatus);
+    User update(UUID id, UserUpdateDto dto);
 
-    void deleteUser(UUID id);
+    void delete(UUID id);
 }

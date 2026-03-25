@@ -1,79 +1,84 @@
 package com.sprint.mission.discodeit.service.basic;
 
-import com.sprint.mission.discodeit.entity.Channel;
+import com.sprint.mission.discodeit.dto.MessageCreateDto;
+import com.sprint.mission.discodeit.dto.MessageUpdateDto;
+import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.Message;
-import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.MessageService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.UUID;
 
+@Service
+@RequiredArgsConstructor
 public class BasicMessageService implements MessageService {
     private final MessageRepository messageRepository;
-
     private final ChannelRepository channelRepository;
     private final UserRepository userRepository;
-
-    public BasicMessageService(MessageRepository messageRepository,
-                               ChannelRepository channelRepository,
-                               UserRepository userRepository) {
-        this.messageRepository = messageRepository;
-        this.channelRepository = channelRepository;
-        this.userRepository = userRepository;
-    }
+    private final BinaryContentRepository binaryContentRepository;
 
     // Create
     @Override
-    public Message create(String content, UUID channelId, UUID userId) {
-        Channel channel = channelRepository.findChannel(channelId);
-        User author = userRepository.findUser(userId);
-        Message message = new Message(content, channel, author);
-        messageRepository.insertMessage(message);
-        System.out.println("메시지를 생성하였습니다.");
-        System.out.println();
+    public Message create(MessageCreateDto dto) {
+        channelRepository.findById(dto.channelId());
+        userRepository.findById(dto.authorId());
+        Message message = Message.create(dto.content(), dto.channelId(), dto.authorId());
+
+        // 첨부파일 등록(선택)
+        if (dto.attachments() != null) {
+            dto.attachments().stream()
+                    .map(attachment -> BinaryContent.messageAttachment(
+                            message.getId(),
+                            attachment.bytes(),
+                            attachment.fileName(),
+                            attachment.fileType()
+                    ))
+                    .forEach(binaryContent -> {
+                        binaryContentRepository.insert(binaryContent);
+                        message.getAttachmentIds().add(binaryContent.getId());
+                    });
+        }
+
+        messageRepository.insert(message);
 
         return message;
     }
 
     // Read
     @Override
-    public void readMessageAll(UUID id) {
-        // NPE 방지
-        if (!messageRepository.isExistsMessage(id)) { System.out.println("해당 메시지가 존재하지 않습니다."); }
-        else {
-            Message message = messageRepository.findMessage(id);
-            System.out.println("=====메시지 정보=====\n" + message);
-        }
-        System.out.println();
+    public List<Message> findAllByChannelId(UUID channelId) {
+        List<Message> message = messageRepository.findAllByChannelId(channelId);
+
+        return message;
     }
 
     // Update
     @Override
-    public void updateMessageContent(UUID id, String newContent) {
-        // NPE 방지
-        if (!messageRepository.isExistsMessage(id)) { System.out.println("해당 메시지가 존재하지 않습니다."); }
-        else {
-            Message message = messageRepository.findMessage(id);
-            System.out.println("수정 전 메시지 : " + message.getContent());
-            message.updateContent(newContent);
-            System.out.println("수정 후 메시지 : " + message.getContent());
-            messageRepository.updateMessage(message);
-        }
+    public Message update(UUID id, MessageUpdateDto dto) {
+        Message message = messageRepository.findById(id);
+        message.updateContent(dto.newContent());
+        messageRepository.update(message);
         System.out.println();
+
+        return message;
     }
 
     // Delete
+    // 기존 메시지만 삭제
+    // 고도화 후 첨부파일 삭제 추가
     @Override
-    public void deleteMessage(UUID id) {
-        // NPE 방지
-        if (!messageRepository.isExistsMessage(id)) { System.out.println("해당 메시지가 존재하지 않습니다."); }
-        else {
-            Message message = messageRepository.findMessage(id);
-            System.out.println("메시지 \"" + message.getContent() + "\"이(가) 삭제되었습니다.");
-            messageRepository.deleteMessage(id);
-        }
-        System.out.println();
+    public void delete(UUID id) {
+        Message message = messageRepository.findById(id);
+        // 첨부파일 삭제
+        message.getAttachmentIds().forEach(binaryContentRepository::delete);
+
+        // 메시지 삭제
+        messageRepository.delete(id);
     }
 }

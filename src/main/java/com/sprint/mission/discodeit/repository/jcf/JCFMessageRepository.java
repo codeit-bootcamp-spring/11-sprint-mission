@@ -2,23 +2,52 @@ package com.sprint.mission.discodeit.repository.jcf;
 
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.repository.MessageRepository;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.stereotype.Repository;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
+@Repository
+// application.yaml의 설정값에 따라 Bean을 설정 / name : 설정값의 이름, havingValue : type 지정, matchIfMissing : 설정이 안되있으면 jcf
+@ConditionalOnProperty(name = "discodeit.repository.type", havingValue = "jcf", matchIfMissing = true)
 public class JCFMessageRepository implements MessageRepository {
 
     private final Map<UUID, Message> messages = new HashMap<>();
 
     @Override
-    public void insertMessage(Message message) { messages.put(message.getId(), message); }
+    public void insert(Message message) {
+        messages.put(message.getId(), message);
+    }
+
     @Override
-    public boolean isExistsMessage(UUID id) { return messages.containsKey(id); }
+    public Message findById(UUID id) {
+        Message message = messages.get(id);
+        if (message == null) {
+            throw new NoSuchElementException("해당 메시지가 존재하지 않습니다. id : " + id);
+        }
+        return messages.get(id);
+    }
+
     @Override
-    public Message findMessage(UUID id) { return messages.get(id); }
+    public List<Message> findAllByChannelId(UUID channelId) {
+        return messages.values().stream()
+                .filter(message -> message.getChannelId().equals(channelId))
+                .collect(Collectors.toList());
+    }
+
     @Override
-    public void updateMessage(Message message) { }
+    public void update(Message message) {
+        messages.put(message.getId(), message);
+    }
+
     @Override
-    public void deleteMessage(UUID id) { messages.remove(id); }
+    public void delete(UUID id) {
+        messages.remove(id);
+    }
+
+    @Override
+    public void deleteAllByChannelId(UUID channelId) {
+        messages.values().removeIf(message -> message.getChannelId().equals(channelId));
+    }
 }

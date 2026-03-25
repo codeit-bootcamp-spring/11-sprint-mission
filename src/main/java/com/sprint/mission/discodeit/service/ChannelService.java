@@ -1,22 +1,32 @@
 package com.sprint.mission.discodeit.service;
 
+import com.sprint.mission.discodeit.dto.ChannelCreatePrivateDto;
+import com.sprint.mission.discodeit.dto.ChannelCreatePublicDto;
+import com.sprint.mission.discodeit.dto.ChannelReadDto;
+import com.sprint.mission.discodeit.dto.ChannelUpdateDto;
 import com.sprint.mission.discodeit.entity.Channel;
-import com.sprint.mission.discodeit.entity.ChannelType;
-import com.sprint.mission.discodeit.entity.User;
 
+import java.util.List;
 import java.util.UUID;
 
 public interface ChannelService {
-    // 코드 탬플릿에 맞게 create 메서드 수정
-    Channel create(ChannelType channelType, String name, String description);
-//    void createChannel(Channel channel);
+    // Create
+//    Channel create(Channel.ChannelType channelType, String name, String description);
+    Channel createPublic(ChannelCreatePublicDto dto);
+    Channel createPrivate(ChannelCreatePrivateDto dto);
 
-    void readChannelAll(UUID id);
+    // Read
+//    Channel readAll(UUID id);
+    ChannelReadDto find(UUID id);
+    List<ChannelReadDto> findAllByUserId(UUID userId);
 
-    void updateChannelName(UUID id, String newName);
-    void updateChannelGroup(UUID id, String newGroup);
-    void updateChannelMembersAdd(UUID id, String addMember);
-    void updateChannelMembersRemove(UUID id, String removeMember);
+    // Update
+//    Channel updateName(UUID id, String newName);
+//    Channel updateGroup(UUID id, String newGroup);
+//    Channel updateMembersAdd(UUID id, String addMember);
+//    Channel updateMembersRemove(UUID id, String removeMember);
+    Channel update(UUID id, ChannelUpdateDto dto);
 
-    void deleteChannel(UUID id);
+    // Delete
+    void delete(UUID id);
 }

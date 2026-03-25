@@ -1,15 +1,49 @@
 package com.sprint.mission.discodeit.entity;
 
-public enum UserStatus {
-    ONLINE("온라인"), AWAY("자리비움"), DO_NOT_DISTURB("방해 금지"), OFFLINE("오프라인");
+import lombok.Getter;
 
-    private final String description;
+import java.io.Serializable;
+import java.time.Instant;
+import java.util.UUID;
 
-    UserStatus(String description) {
-        this.description = description;
+@Getter
+public class UserStatus implements Serializable {
+
+    // 객체 직렬화
+    private static final long serialVersionUID = 1L;
+
+    //필드
+    private final UUID id;
+    private final Instant createdAt;
+    private Instant updatedAt;
+    private Instant lastOnlineAt;
+
+    // 연관관계 필드
+    private final UUID userId; // User의 UUID id
+
+
+    public UserStatus(UUID userId, Instant lastOnlineAt) {
+        this.id = UUID.randomUUID();
+        this.createdAt = Instant.now();
+        this.updatedAt = this.createdAt;
+        this.lastOnlineAt = lastOnlineAt;
+        this.userId = userId;
     }
 
-    public String getDescription() {
-        return description;
+    // 온라인인지 아닌지 (5분 이내이면 true, 아니면 false)
+    public User.Status isStatus() {
+        // 현재(Instant.now()) -(minusSeconds) 5분(5 * 60) 이 이후이면(isAfter)
+        if (lastOnlineAt.isAfter(Instant.now().minusSeconds(5 * 60))) {
+            return User.Status.ONLINE;
+        }
+        return User.Status.OFFLINE;
+    }
+
+    private void update() {
+        this.updatedAt = Instant.now();
+    }
+    public void updateLastOnline() {
+        this.lastOnlineAt = Instant.now();
+        update();
     }
 }
