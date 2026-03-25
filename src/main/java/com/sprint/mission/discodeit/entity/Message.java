@@ -1,57 +1,37 @@
 package com.sprint.mission.discodeit.entity;
 
+import lombok.Getter;
+
 import java.io.Serializable;
+import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
+@Getter
 public class Message implements Serializable {
     private UUID id;
-    private Long createdAt, updatedAt;
-    private String name;
-    private static final Long serialVersionUID = 1L;
-    private UUID userId;
+    private UUID authorId;
     private UUID channelId;
+    private List<UUID> attachmentIds;
+    private Instant createdAt;
+    private Instant updatedAt;
+    private String content;
+    private static final long serialVersionUID = 1L;
 
-    public Message(String name, UUID userId, UUID channelId) {
+    public Message(String content, UUID userId, UUID channelId) {
         this.id = UUID.randomUUID();
-        this.createdAt = System.currentTimeMillis();
-        this.name = name;
-        this.userId = userId;
+        this.createdAt = Instant.now();
+        this.content = content;
+        this.authorId = userId;
         this.channelId = channelId;
     }
 
-    public UUID getId() {
-        return this.id;
+    public void update(String content) {
+       this.content = content;
+       this.updatedAt = Instant.now();
     }
 
-    public UUID getUserId() {
-        return userId;
-    }
-
-    public UUID getChannelId() {
-        return channelId;
-    }
-
-    public Long getCreatedAt() {
-        return this.createdAt;
-    }
-
-    public Long getUpdatedAt() {
-        return this.updatedAt;
-    }
-
-    public Long update(String name) {
-        return this.updatedAt = System.currentTimeMillis();
-    }
-
-    @Override
-    public String toString() {
-        return "Message{" +
-                "id: " + id +
-                ", name: " + name +
-                ", userId: " + userId +
-                ", channelId: " + channelId +
-                ", createdAt: " + createdAt +
-                ", updatedAt: " + updatedAt +
-                "}";
+    public void setAttachmentIds(List<UUID> attachmentIds) {
+        this.attachmentIds = attachmentIds;
     }
 }

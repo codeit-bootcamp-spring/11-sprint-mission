@@ -1,0 +1,8 @@
+spring:
+  application:
+    name: discodeit
+
+discodit:
+  repository:
+    type: file
+    file-directory: .discodeit

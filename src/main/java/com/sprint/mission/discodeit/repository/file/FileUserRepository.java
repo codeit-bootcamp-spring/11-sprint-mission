@@ -2,14 +2,19 @@ package com.sprint.mission.discodeit.repository.file;
 
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.repository.UserRepository;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.stereotype.Repository;
 
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
+@Repository
+@ConditionalOnProperty(prefix = "discodeit.repository", name = "type", havingValue = "file")
 public class FileUserRepository implements UserRepository {
-    public static void saveUsers(List<User> users) {
+    private void saveUsers(List<User> users) {
         try (FileOutputStream fos = new FileOutputStream("user.ser");
              ObjectOutputStream oos = new ObjectOutputStream(fos);
         ) {
@@ -31,7 +36,7 @@ public class FileUserRepository implements UserRepository {
             return (List<User>) ois.readObject();
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
-            return new ArrayList<>();
+            throw new RuntimeException(e);
         }
     }
 
@@ -44,10 +49,10 @@ public class FileUserRepository implements UserRepository {
     }
 
     @Override
-    public User findById(UUID id) {
+    public Optional<User> findById(UUID id) {
         return loadUsers().stream()
                 .filter(user -> user.getId().equals(id))
-                .findFirst().orElse(null);
+                .findFirst();
     }
 
     @Override
@@ -61,4 +66,13 @@ public class FileUserRepository implements UserRepository {
         users.removeIf(user -> user.getId().equals(id));
         saveUsers(users);
     }
+
+    @Override
+    public boolean existsByName(String name) { return false; }
+
+    @Override
+    public boolean existsByEmail(String email) { return false; }
+
+    @Override
+    public Optional<User> findByName(String name) { return Optional.empty(); }
 }
