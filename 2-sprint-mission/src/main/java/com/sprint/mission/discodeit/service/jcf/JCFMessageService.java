@@ -1,3 +1,4 @@
+/*
 package com.sprint.mission.discodeit.service.jcf;
 
 import com.sprint.mission.discodeit.entity.Channel;
@@ -7,9 +8,12 @@ import com.sprint.mission.discodeit.service.ChannelService;
 import com.sprint.mission.discodeit.service.MessageService;
 import com.sprint.mission.discodeit.service.UserService;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Collection;
+import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.UUID;
 
 public class JCFMessageService implements MessageService {
@@ -25,65 +29,43 @@ public class JCFMessageService implements MessageService {
     }
 
     @Override
-    public void create(Message message) {
-        // 유저 검증
-        if (userService.findById(message.getSenderId()) == null) {
-            System.out.println("존재하지 않는 유저입니다. 메시지 전송 실패");
-            return;
-        }
+    public Message create(String content, UUID authorId, UUID channelId, List<UUID> attachmentIds) {
+        userService.findById(authorId); // 유저 검증
+        Channel channel = channelService.findById(channelId); // 채널 검증
 
-        // 채널 검증
-        Channel channel = channelService.findById(message.getChannelId());
-        if (channelService.findById(message.getChannelId()) == null) {
-            System.out.println("존재하지 않는 채널입니다. 메시지 전송 실패");
-            return;
-        }
-
-        // 채널 멤버 검증
+        // 채널 접근 권한 검증
         if (channel.getType() == ChannelType.PRIVATE || channel.getType() == ChannelType.DM) {
-            if (!channel.getMemberIds().contains(message.getSenderId())) {
-                System.out.println("해당 채널의 멤버가 아닙니다. 메시지 전송 실패");
-                return;
+            if (channel.getMemberIds() == null || !channel.getMemberIds().contains(authorId)) {
+                throw new IllegalArgumentException("User " + authorId + " is not a member of channel " + channelId);
             }
         }
 
-        // 중복 생성 방지
-        if (data.containsKey(message.getId())) {
-            System.out.println("이미 존재하는 메시지입니다. 메시지 전송 실패");
-            return;
-        }
+        Message message = new Message(content, authorId, channelId, attachmentIds);
         data.put(message.getId(), message);
-        System.out.println("메시지가 전송 되었습니다.");
+        return message;
     }
 
     @Override
     public Message findById(UUID id) {
-        return data.get(id);
+        return Optional.ofNullable(data.get(id))
+                .orElseThrow(() -> new NoSuchElementException("Message with id " + id + " not found"));
     }
 
     @Override
-    public Collection<Message> findAll() {
-        return data.values();
+    public List<Message> findAll() {
+        return new ArrayList<>(data.values());
     }
 
     @Override
-    public void update(UUID id, String content) {
-        Message message = data.get(id);
-        if (message != null) {
-            message.update(content);
-            System.out.println(content + "로 메시지가 수정되었습니다.");
-        } else {
-            System.out.println("해당 메시지를 찾을 수 없습니다.");
-        }
+    public Message update(UUID id, String content) {
+        Message message = findById(id);
+        message.update(content);
+        return message;
     }
 
     @Override
     public void delete(UUID id) {
-        Message removedMessage = data.remove(id);
-        if (removedMessage != null) {
-            System.out.println("메시지가 정상적으로 삭제되었습니다.");
-        } else {
-            System.out.println("해당 메시지를 찾을 수 없습니다.");
-        }
+        findById(id);
+        data.remove(id);
     }
-}
+}*/

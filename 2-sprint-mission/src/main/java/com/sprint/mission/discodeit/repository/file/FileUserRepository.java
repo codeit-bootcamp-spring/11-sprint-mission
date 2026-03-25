@@ -2,64 +2,119 @@ package com.sprint.mission.discodeit.repository.file;
 
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.stereotype.Repository;
 
 import java.io.*;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
+@Repository
+@ConditionalOnProperty(name = "discodeit.repository.type", havingValue = "file")
 public class FileUserRepository implements UserRepository {
-    private static final String FILE_PATH = "users.ser";
-    private final Map<UUID, User> data;
+    private final Path DIRECTORY;
+    private final String EXTENSION = ".ser";
 
-    public FileUserRepository() {
-        this.data = loadFile();
+    public FileUserRepository(
+            @Value("${discodeit.repository.file-directory:.discodeit}") String baseDir) {
+        this.DIRECTORY = Paths.get(System.getProperty("user.dir"), baseDir, User.class.getSimpleName());
+        if (Files.notExists(DIRECTORY)) {
+            try {
+                Files.createDirectories(DIRECTORY);
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to create directory: " + DIRECTORY, e);
+            }
+        }
     }
 
-    private void saveFile() {
-        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(FILE_PATH))) {
-            oos.writeObject(data);
-            System.out.println("파일 저장 완료: " + FILE_PATH);
+    private Path resolvePath(UUID id) {
+        return DIRECTORY.resolve(id + EXTENSION);
+    }
+
+    private void saveToFile(User user) {
+        Path path = resolvePath(user.getId());
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(path.toFile()))) {
+            oos.writeObject(user);
         } catch (IOException e) {
-            System.out.println("파일 저장 실패" + e.getMessage());
-            e.printStackTrace();
+            throw new RuntimeException("Failed to save file: " + path, e);
         }
     }
 
-    @SuppressWarnings("unchecked")
-    private Map<UUID, User> loadFile() {
-        File file = new File(FILE_PATH);
-        if (!file.exists()) {
-            return new HashMap<>();
-        }
-        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))) {
-            return (Map<UUID, User>) ois.readObject();
+    private User loadFromFile(Path path) {
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(path.toFile()))) {
+            return (User) ois.readObject();
         } catch (IOException | ClassNotFoundException e) {
-            e.printStackTrace();
-            return new HashMap<>();
+            throw new RuntimeException("Failed to read file: " + path, e);
         }
     }
 
     @Override
-    public void save(User user) {
-        data.put(user.getId(), user);
-        saveFile();
+    public User save(User user) {
+        saveToFile(user);
+        return user;
     }
 
     @Override
-    public User findById(UUID id) {
-        return data.get(id);
+    public Optional<User> findById(UUID id) {
+        Path path = resolvePath(id);
+        if (Files.notExists(path)) {
+            return Optional.empty();
+        }
+        return Optional.of(loadFromFile(path));
     }
 
     @Override
-    public Collection<User> findAll() {
-        return data.values();
+    public List<User> findAll() {
+        try (var pathStream = Files.list(DIRECTORY)) {
+            return pathStream
+                    .filter(path -> path.toString().endsWith(EXTENSION))
+                    .map(this::loadFromFile)
+                    .collect(Collectors.toList());
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to read directory: " + DIRECTORY, e);
+        }
     }
 
     @Override
-    public void delete(UUID id) {
-        data.remove(id);
-        saveFile();
+    public boolean existsById(UUID id) {
+        return Files.exists(resolvePath(id));
+    }
+
+    @Override
+    public void deleteById(UUID id) {
+        Path path = resolvePath(id);
+        try {
+            Files.deleteIfExists(path); // 존재할 때에만 삭제
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to delete file: " + path, e);
+        }
+    }
+
+    @Override
+    public boolean existsByEmail(String email) {
+        // 모든 파일을 읽어서 이메일이 일치하는 게 하나라도 있는지 확인
+        return findAll().stream()
+                .anyMatch(user -> user.getEmail().equals(email));
+    }
+
+    @Override
+    public boolean existsByName(String name) {
+        // 모든 파일을 읽어서 이름이 일치하는 게 하나라도 있는지 확인
+        return findAll().stream()
+                .anyMatch(user -> user.getUserName().equals(name));
+    }
+
+    @Override
+    public Optional<User> findByName(String userName) {
+        // 모든 파일을 읽어서 이름이 일치하는 첫 번째 유저 반환
+        return findAll().stream()
+                .filter(user -> user.getUserName().equals(userName))
+                .findFirst();
     }
 }

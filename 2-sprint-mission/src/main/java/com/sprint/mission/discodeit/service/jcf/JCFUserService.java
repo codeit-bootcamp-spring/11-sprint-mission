@@ -1,11 +1,15 @@
+/*
 package com.sprint.mission.discodeit.service.jcf;
 
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.service.UserService;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Collection;
+import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.UUID;
 
 public class JCFUserService implements UserService {
@@ -16,44 +20,34 @@ public class JCFUserService implements UserService {
     }
 
     @Override
-    public void create(User user) {
-        // 중복 생성 방지
-        if (data.containsKey(user.getId())) {
-            System.out.println("이미 존재하는 유저 ID입니다.");
-            return;
-        }
+    public User create(String userName, String nickname, String description, String email, String password, UUID profileImageId) {
+        User user = new User(userName, nickname, description, email, password, profileImageId);
         data.put(user.getId(), user);
-        System.out.println(user.getUserName() + " 유저가 생성되었습니다.");
+        return user;
     }
 
     @Override
     public User findById(UUID id) {
-        return data.get(id);
+        return Optional.ofNullable(data.get(id))
+                .orElseThrow(() -> new NoSuchElementException("User with id " + id + " not found"));
     }
 
     @Override
-    public Collection<User> findAll() {
-        return data.values();
+    public List<User> findAll() {
+        return new ArrayList<>(data.values());
     }
 
     @Override
-    public void update(UUID id, String userName, String nickname, String description, String email, String profileImage) {
-        User user = data.get(id);
-        if (user != null) {
-            user.update(userName, nickname, description, email, profileImage);
-            System.out.println(userName + " 유저 정보가 수정되었습니다.");
-        } else {
-            System.out.println("해당 유저를 찾을 수 없습니다.");
-        }
+    public User update(UUID id, String userName, String nickname, String description, String email, String password, UUID profileImageId) {
+        User user = findById(id);
+        user.update(userName, nickname, description, email, password);
+        user.updateProfileImage(profileImageId);
+        return user;
     }
 
     @Override
     public void delete(UUID id) {
-        User removedUser = data.remove(id);
-        if (removedUser != null) {
-            System.out.println("유저가 정상적으로 삭제되었습니다.");
-        } else {
-            System.out.println("해당 유저를 찾을 수 없습니다.");
-        }
+        User user = findById(id);
+        data.remove(id);
     }
-}
+}*/

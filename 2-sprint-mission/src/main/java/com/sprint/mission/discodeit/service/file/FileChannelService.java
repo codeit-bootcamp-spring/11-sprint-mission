@@ -1,99 +1,100 @@
+/*
 package com.sprint.mission.discodeit.service.file;
 
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.ChannelType;
-import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.service.ChannelService;
 
 import java.io.*;
-import java.util.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 public class FileChannelService implements ChannelService {
-    private static final String FILE_PATH = "channel.ser";
-    private final Map<UUID, Channel> data;
+    private final Path DIRECTORY;
+    private final String EXTENSION = ".ser";
 
     public FileChannelService() {
-        this.data = load();
+        this.DIRECTORY = Paths.get(System.getProperty("user.dir"), "file-data-map", Channel.class.getSimpleName());
+        if (Files.notExists(DIRECTORY)) {
+            try {
+                Files.createDirectories(DIRECTORY);
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to create directory: " + DIRECTORY, e);
+            }
+        }
     }
 
-    // 직렬화
-    private void save() {
-        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(FILE_PATH))) {
-            oos.writeObject(data);
-            System.out.println("파일 저장 완료: " + FILE_PATH);
+    private Path resolvePath(UUID id) {
+        return DIRECTORY.resolve(id + EXTENSION);
+    }
+
+    private void saveToFile(Channel channel) {
+        Path path = resolvePath(channel.getId());
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(path.toFile()))) {
+            oos.writeObject(channel);
         } catch (IOException e) {
-            System.out.println("파일 저장 실패" + e.getMessage());
-            e.printStackTrace();
+            throw new RuntimeException("Failed to save file: " + path, e);
         }
     }
 
-    // 역직렬화
-    @SuppressWarnings("unchecked") // 타입캐스팅 경고 무시
-    private Map<UUID, Channel> load() {
-        File file = new File(FILE_PATH);
-
-        // 파일 검증
-        if (!file.exists()) {
-            return new HashMap<>();
-        }
-
-        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))) {
-            return (Map<UUID, Channel>) ois.readObject();
+    private Channel loadFromFile(Path path) {
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(path.toFile()))) {
+            return (Channel) ois.readObject();
         } catch (IOException | ClassNotFoundException e) {
-            System.out.println("파일 불러오기 실패");
-            e.printStackTrace();
-            return new HashMap<>();
+            throw new RuntimeException("Failed to read file: " + path, e);
         }
     }
 
     @Override
-    public void create(Channel channel) {
-        // 중복 생성 방지
-        if (data.containsKey(channel.getId())) {
-            System.out.println("이미 존재하는 채널 ID입니다.");
-            return;
-        }
-        data.put(channel.getId(), channel);
-        System.out.println(channel.getName() + " 채널이 생성되었습니다.");
-
-        // 파일에 저장
-        save();
+    public Channel create(ChannelType type, String name, String description, List<UUID> memberIds) {
+        Channel channel = new Channel(type, name, description, memberIds);
+        saveToFile(channel);
+        return channel;
     }
 
     @Override
     public Channel findById(UUID id) {
-        return data.get(id);
-    }
-
-    @Override
-    public Collection<Channel> findAll() {
-        return data.values();
-    }
-
-    @Override
-    public void update(UUID id, ChannelType type, String name, List<UUID> memberIds) {
-        Channel channel = data.get(id);
-        if (channel != null) {
-            channel.update(type, name, memberIds);
-            System.out.println(name + " 채널 정보가 수정되었습니다.");
-
-            // 파일에 저장
-            save();
-        } else {
-            System.out.println("해당 채널을 찾을 수 없습니다.");
+        Path path = resolvePath(id);
+        if (Files.notExists(path)) {
+            throw new NoSuchElementException("Channel with id " + id + " not found");
         }
+        return loadFromFile(path);
+    }
+
+    @Override
+    public List<Channel> findAll() {
+        try (var pathStream = Files.list(DIRECTORY)) {
+            return pathStream
+                    .filter(path -> path.toString().endsWith(EXTENSION))
+                    .map(this::loadFromFile)
+                    .collect(Collectors.toList());
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to read directory: " + DIRECTORY, e);
+        }
+    }
+
+    @Override
+    public Channel update(UUID id, ChannelType type, String name, String description, List<UUID> memberIds) {
+        Channel channel = findById(id);
+        channel.update(type, name, description, memberIds);
+        saveToFile(channel);
+        return channel;
     }
 
     @Override
     public void delete(UUID id) {
-        Channel removedChannel = data.remove(id);
-        if (removedChannel != null) {
-            System.out.println("채널이 정상적으로 삭제되었습니다.");
+        findById(id);
+        Path path = resolvePath(id);
 
-            // 파일에 저장
-            save();
-        } else {
-            System.out.println("해당 채널을 찾을 수 없습니다.");
+        try {
+            Files.delete(path);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to delete file: " + path, e);
         }
     }
-}
+}*/

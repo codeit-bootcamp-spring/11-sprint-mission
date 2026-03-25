@@ -1,34 +1,42 @@
 package com.sprint.mission.discodeit.entity;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
+@Getter
+@Builder
+@AllArgsConstructor
 public class Message extends BaseEntity {
     private String content;
-    private final UUID senderId;
+    private final UUID authorId;
     private final UUID channelId;
 
-    public Message(String content, UUID senderId, UUID channelId) {
-        super();
-        this.content = content;
-        this.senderId = senderId;
-        this.channelId = channelId;
-    }
+    @Builder.Default // 빈 값으로 빌드
+    private List<UUID> attachmentIds = new ArrayList<>();
 
-    public String getContent() {
-        return content;
-    }
-
-    public UUID getSenderId() {
-        return senderId;
-    }
-
-    public UUID getChannelId() {
-        return channelId;
-    }
 
     // 메시지 내용만 수정 가능
-    public void update(String content) {
-        this.content = content;
+    public void update(String newContent) {
+        boolean anyValueUpdated = false;
+
+        if (newContent != null && !newContent.equals(this.content)) {
+            this.content = newContent;
+            anyValueUpdated = true;
+        }
+
+        if (anyValueUpdated) {
+            super.timeUpdate();
+        }
+    }
+
+    // 첨부파일 추가
+    public void addAttachment(UUID attachmentId) {
+        this.attachmentIds.add(attachmentId);
         super.timeUpdate();
     }
 
@@ -36,7 +44,7 @@ public class Message extends BaseEntity {
     public String toString() {
         return "Message [" +
                 "UUID: " + getId() +
-                "\n발신자 ID: " + getSenderId() +
+                "\n발신자 ID: " + getAuthorId() +
                 ", 채널 ID: " + getChannelId() +
                 ", 내용: " + getContent() +
                 ", 작성 시간: " + getCreatedAt() +
