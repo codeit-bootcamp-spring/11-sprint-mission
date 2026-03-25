@@ -49,8 +49,11 @@ public class BasicMessageService implements MessageService {
                 binaryContentRepository.findById(contentId).ifPresent(content -> {
                     content.setMessageId(savedMessage.getId());
                     binaryContentRepository.save(content);
+
+                    savedMessage.getAttachmentIds().add(contentId);
                 });
             }
+            messageRepository.save(savedMessage);
         }
 
         System.out.println("메시지 전송 완료 : [채널 ID : " + request.channelId() + ", 작성자 ID : " + request.authorId() + "]" );
@@ -81,7 +84,8 @@ public class BasicMessageService implements MessageService {
                         message.getChannelId(),
                         message.getAuthorId(),
                         message.getMessage(),
-                        message.getCreatedAt()
+                        message.getCreatedAt(),
+                        message.getAttachmentIds()
                 ))
                 .toList();
     }

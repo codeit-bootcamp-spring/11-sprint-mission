@@ -3,6 +3,7 @@ package com.sprint.mission.discodeit.dto;
 import com.sprint.mission.discodeit.entity.Message;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 public record MessageResponseDto(
@@ -10,7 +11,8 @@ public record MessageResponseDto(
         UUID channelId,
         UUID userId,
         String message,
-        Instant createdAt
+        Instant createdAt,
+        List<UUID> attachmentIds
 ) {
     public static MessageResponseDto from(Message message) {
         return new MessageResponseDto(
@@ -18,7 +20,8 @@ public record MessageResponseDto(
                 message.getChannelId(),
                 message.getAuthorId(),
                 message.getMessage(),
-                message.getCreatedAt()
+                message.getCreatedAt(),
+                message.getAttachmentIds()
         );
     }
 }

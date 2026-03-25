@@ -13,5 +13,5 @@ public interface UserStatusService {
     List<UserStatus> findAllUserStatus();
     void deleteUserStatus(UUID userId);
     UserStatus updateUserStatus(UserStatusUpdateDto request);
-    UserStatus updateUserIdStatus(UserStatusUpdateDto request);
+    UserStatus updateUserIdStatus(UUID userId);
 }

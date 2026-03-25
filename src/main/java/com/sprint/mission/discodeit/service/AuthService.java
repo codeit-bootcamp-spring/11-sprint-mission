@@ -28,6 +28,11 @@ public class AuthService {
         }
         UserStatus status = userStatusRepository.findByUserId(user.getId())
                 .orElseThrow(() -> new RuntimeException("상태 정보를 찾을 수 없습니다."));
+
+        status.update();
+
+        userStatusRepository.save(status);
+
         return UserDto.from(user, status);
     }
 }

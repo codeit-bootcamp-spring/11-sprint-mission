@@ -77,8 +77,8 @@ public class BasicUserStatusService implements UserStatusService {
     }
 
     @Override
-    public UserStatus updateUserIdStatus(UserStatusUpdateDto request) {
-        return userStatusRepository.findByUserId(request.userId())
+    public UserStatus updateUserIdStatus(UUID userId) {
+        return userStatusRepository.findByUserId(userId)
                 .map(status -> {
                     status.update();
                     userStatusRepository.save(status);

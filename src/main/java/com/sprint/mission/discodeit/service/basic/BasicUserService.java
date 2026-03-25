@@ -36,7 +36,7 @@ public class BasicUserService implements UserService {
         if(userRepository.findByEmail(email).isPresent()) {
             throw new IllegalArgumentException("이미 존재하는 이메일입니다. 다른 이메일을 사용해주세요.");
         }
-        User newUser = new User(name, email, password);
+        User newUser = new User(name, email, password, request.profileImageId());
         UserStatus newStatus = new UserStatus(newUser.getId());
         try {
             userRepository.save(newUser);
@@ -105,16 +105,16 @@ public class BasicUserService implements UserService {
 
         String password = (request.password() != null) ? request.password() : user.getPassword();
 
-        if(request.profileImage() != null) {
-            if(user.getProfileId() != null) {
+        UUID profileId = user.getProfileId();
+
+        if(request.profileImageId() != null) {
+            if(user.getProfileId() != null && !user.getProfileId().equals(request.profileImageId())) {
                 binaryContentRepository.delete(user.getProfileId());
             }
-            BinaryContent content = new BinaryContent(request.profileImage());
-            binaryContentRepository.save(content);
-            user.setProfileId(content.getId());
+            profileId = request.profileImageId();
         }
 
-        user.update(name, email, password);
+        user.update(name, email, password, profileId);
         userRepository.save(user);
     }
 }

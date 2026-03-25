@@ -26,24 +26,13 @@ public class UserControl {
     @RequestMapping(method = RequestMethod.POST)
     public ResponseEntity<UserDto> createUser(@RequestBody UserCreateRequest request) {
         UserDto createdUser = userService.createUser(request);
-        userStatusService.createUserStatus(new UserStatusCreateDto(createdUser.id()));
         return ResponseEntity.status(HttpStatus.CREATED).body(createdUser);
     }
 
     @RequestMapping(method = RequestMethod.GET)
-    public ResponseEntity<List<UserResponseWithStatus>> getAllUsers() {
+    public ResponseEntity<List<UserDto>> getAllUsers() {
         List<UserDto> users = userService.allReadUser();
-        List<UserStatus> statuses = userStatusService.findAllUserStatus();
-
-        List<UserResponseWithStatus> response = users.stream().map(user -> {
-            UserStatus status = statuses.stream()
-                    .filter(s -> s.getUserId().equals(user.id()))
-                    .findFirst()
-                    .orElse(null);
-            return new UserResponseWithStatus(user, status);
-        }).toList();
-
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(users);
     }
 
     @RequestMapping(value = "/{id}/status", method = RequestMethod.GET)
@@ -54,7 +43,6 @@ public class UserControl {
 
     @RequestMapping(value = "/{id}", method = RequestMethod.DELETE)
     public ResponseEntity<Void> deleteUser(@PathVariable UUID id, @RequestParam String password) {
-        userStatusService.deleteUserStatus(id);
         userService.deleteUser(id, password);
         return ResponseEntity.noContent().build();
     }
@@ -66,8 +54,8 @@ public class UserControl {
     }
 
     @RequestMapping(value = "/{id}/status", method = RequestMethod.PATCH)
-    public ResponseEntity<UserStatus> updateOnlineStatus(@PathVariable UUID id, @RequestBody UserStatusUpdateDto request) {
-        UserStatus updatedStatus = userStatusService.updateUserIdStatus(request);
+    public ResponseEntity<UserStatus> updateOnlineStatus(@PathVariable UUID id) {
+        UserStatus updatedStatus = userStatusService.updateUserIdStatus(id);
         return ResponseEntity.ok(updatedStatus);
     }
 }

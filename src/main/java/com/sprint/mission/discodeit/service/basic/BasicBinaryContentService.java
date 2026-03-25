@@ -24,6 +24,9 @@ public class BasicBinaryContentService implements BinaryContentService {
         BinaryContent content = BinaryContent.builder()
                 .id(UUID.randomUUID())
                 .data(request.data())
+                .fileName(request.fileName())
+                .contentType(request.contentType())
+                .size(request.data().length)
                 .createdAt(Instant.now())
                 .messageId(null)
                 .build();

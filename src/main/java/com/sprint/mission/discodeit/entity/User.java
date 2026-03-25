@@ -26,7 +26,7 @@ public class User implements Serializable {
     private String email;
 
 
-    public User(String username, String email, String password) {
+    public User(String username, String email, String password, UUID profileId) {
         this.id = UUID.randomUUID();
         this.currentUserId = UUID.randomUUID();
         this.createdAt = Instant.now();
@@ -34,6 +34,7 @@ public class User implements Serializable {
         this.username = username;
         this.email = email;
         this.password = password;
+        this.profileId = profileId;
     }
 
     public void setProfileId(UUID profileId) {
@@ -41,10 +42,11 @@ public class User implements Serializable {
     }
 
     // 필드를 수정하는 update 함수
-    public void update(String name, String email, String password) {
+    public void update(String name, String email, String password, UUID profileId) {
         this.username = name;
         this.email = email;
         this.password = password;
+        this.profileId = profileId;
         this.updatedAt = Instant.now();
     }
 
