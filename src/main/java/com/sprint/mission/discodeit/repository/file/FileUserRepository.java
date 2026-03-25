@@ -2,14 +2,19 @@ package com.sprint.mission.discodeit.repository.file;
 
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.repository.UserRepository;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.stereotype.Repository;
 
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
+@Repository
+@ConditionalOnProperty(name = "discodeit.repository.type", havingValue = "file")
 public class FileUserRepository implements UserRepository {
 
     private static final String FILE_PATH = "user.ser";
@@ -22,7 +27,6 @@ public class FileUserRepository implements UserRepository {
                     ObjectInputStream ois = new ObjectInputStream(fis);
             ) {
                 return (Map<UUID, User>) ois.readObject();
-
             } catch (IOException | ClassNotFoundException e) {
                 throw new RuntimeException("파일에서 유저 데이터 불러오기 실패", e);
             }
@@ -57,12 +61,17 @@ public class FileUserRepository implements UserRepository {
     }
 
     @Override
-    public User findById(UUID id) {
+    public Optional<User> findById(UUID id) {
         Map<UUID, User> data = load();
-        if (data.get(id) == null) {
-            throw new IllegalArgumentException("[user] 없는 id 입니다.");
-        }
-        return data.get(id);
+        return Optional.ofNullable(data.get(id));
+    }
+
+    @Override
+    public Optional<User> findByName(String name) {
+        Map<UUID, User> data = load();
+        return data.values().stream()
+                .filter(u -> u.getName().equals(name))
+                .findAny();
     }
 
     @Override

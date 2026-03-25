@@ -1,59 +1,41 @@
 package com.sprint.mission.discodeit.entity;
 
 import com.sprint.mission.discodeit.service.MessageService;
+import lombok.Getter;
 
 import java.io.Serializable;
+import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
+@Getter
 public class Message implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
     private UUID id;
-    private Long createdAt;
-    private Long updatedAt;
+    private Instant createdAt;
+    private Instant updatedAt;
 
     private UUID userId;
     private UUID channelId;
     private String content;
+    private List<UUID> attachmentIds;
 
-    public Message(UUID userId, UUID channelId, String content) {
+    public Message(UUID userId, UUID channelId, String content, List<UUID> attachmentIds) {
         this.id = UUID.randomUUID();
-        this.createdAt = System.currentTimeMillis();
-        this.updatedAt = System.currentTimeMillis();
+        this.createdAt = Instant.now();
+        this.updatedAt = Instant.now();
 
         this.userId = userId;
         this.channelId = channelId;
         this.content = content;
+        this.attachmentIds = attachmentIds;
     }
 
-    public UUID getId() {
-        return id;
-    }
-
-    public Long getCreatedAt() {
-        return createdAt;
-    }
-
-    public Long getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public UUID getUserId() {
-        return userId;
-    }
-
-    public UUID getChannelId() {
-        return channelId;
-    }
-
-    public String getContent() {
-        return content;
-    }
-
-    public void updateContent(String content) {
+    public void update(String content) {
         this.content = content;
-        updatedAt = System.currentTimeMillis();
+        updatedAt = Instant.now();
     }
 
     @Override
@@ -62,6 +44,7 @@ public class Message implements Serializable {
                 "content='" + content + '\'' +
                 ", userName='" + userId + '\'' +
                 ", channelId='" + channelId + '\'' +
+                ", attachments='" + attachmentIds + '\'' +
                 "}";
     }
 }

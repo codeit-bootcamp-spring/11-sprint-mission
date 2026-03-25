@@ -2,14 +2,16 @@ package com.sprint.mission.discodeit.repository.file;
 
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.repository.MessageRepository;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.stereotype.Repository;
 
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
+@Repository
+@ConditionalOnProperty(name = "discodeit.repository.type", havingValue = "file")
 public class FileMessageRepository implements MessageRepository {
 
     private static final String FILE_PATH = "message.ser";
@@ -55,22 +57,32 @@ public class FileMessageRepository implements MessageRepository {
     }
 
     @Override
-    public Message findById(UUID id) {
+    public Optional<Message> findById(UUID id) {
         List<Message> data = load();
         return data.stream()
                 .filter(m -> m.getId().equals(id))
-                .findAny()
-                .orElseThrow(() -> new IllegalArgumentException("[message] 없는 id 입니다."));
+                .findAny();
+    }
+
+    @Override
+    public Optional<Message> findLatestMessageByChannelId(UUID channelId) {
+        List<Message> data = load();
+        return data.stream()
+                .filter(m -> m.getChannelId().equals(channelId))
+                .max(Comparator.comparing(Message::getCreatedAt));
     }
 
     @Override
     public void delete(UUID id) {
         List<Message> data = load();
-        Message message = data.stream()
-                .filter(m -> m.getId().equals(id))
-                .findAny()
-                .orElseThrow(() -> new IllegalArgumentException("[message] 없는 id 입니다."));
-        data.remove(message);
+        data.removeIf(m -> m.getId().equals(id));
+        saveListToFile(data);
+    }
+
+    @Override
+    public void deleteByChannelId(UUID channelId) {
+        List<Message> data = load();
+        data.removeIf(m -> m.getChannelId().equals(channelId));
         saveListToFile(data);
     }
 }

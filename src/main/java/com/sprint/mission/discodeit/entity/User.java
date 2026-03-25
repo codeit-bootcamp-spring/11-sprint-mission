@@ -1,63 +1,53 @@
 package com.sprint.mission.discodeit.entity;
 
+import lombok.Getter;
+
 import java.io.Serializable;
+import java.time.Instant;
 import java.util.UUID;
 
+@Getter
 public class User implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
     private UUID id;
-    private Long createdAt;
-    private Long updatedAt;
+    private Instant createdAt;
+    private Instant updatedAt;
 
     private String name;
-    private String status;
+    private String email;
+    private String password;
 
-    public User(String name, String status) {
+    private UUID profileImageId;
+
+    public User(String name, String email, String password, UUID profileImageId) {
         this.id = UUID.randomUUID();
-        this.createdAt = System.currentTimeMillis();
-        this.updatedAt = System.currentTimeMillis();
+        this.createdAt = Instant.now();
+        this.updatedAt = Instant.now();
 
         this.name = name;
-        this.status = status;
+        this.email = email;
+        this.password = password;
+        this.profileImageId = profileImageId;
     }
 
-    public UUID getId() {
-        return id;
-    }
-
-    public Long getCreatedAt() {
-        return createdAt;
-    }
-
-    public Long getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void updateName(String name) {
+    public void update(String name, String email, String password, UUID profileImageId) {
         this.name = name;
-        updatedAt = System.currentTimeMillis();
+        this.email = email;
+        this.password = password;
+        this.profileImageId = profileImageId;
+        updatedAt = Instant.now();
     }
 
-    public void updateStatus(String status) {
-        this.status = status;
-        updatedAt = System.currentTimeMillis();
-    }
 
     @Override
     public String toString() {
         return "User{" +
                 "name='" + name + '\'' +
-                ", status='" + status + '\'' +
+                ", email='" + email + '\'' +
+                ", password='" + password + '\'' +
+                ", profileImageId='" + profileImageId + '\'' +
                 "}";
     }
 }

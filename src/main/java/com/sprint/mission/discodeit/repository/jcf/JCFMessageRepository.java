@@ -2,11 +2,13 @@ package com.sprint.mission.discodeit.repository.jcf;
 
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.repository.MessageRepository;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.stereotype.Repository;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
+@Repository
+@ConditionalOnProperty(name = "discodeit.repository.type", havingValue = "jcf", matchIfMissing = true)
 public class JCFMessageRepository implements MessageRepository {
 
     private final List<Message> data;
@@ -28,16 +30,25 @@ public class JCFMessageRepository implements MessageRepository {
     }
 
     @Override
-    public Message findById(UUID id) {
+    public Optional<Message> findById(UUID id) {
         return data.stream()
                 .filter(m -> m.getId().equals(id))
-                .findAny()
-                .orElseThrow(() -> new IllegalArgumentException("[message] 없는 id 입니다."));
+                .findAny();
+    }
+
+    public Optional<Message> findLatestMessageByChannelId(UUID channelId) {
+        return data.stream()
+                .filter(m -> m.getChannelId().equals(channelId))
+                .max(Comparator.comparing(Message::getCreatedAt));
     }
 
     @Override
     public void delete(UUID id) {
-        Message message = findById(id);
-        data.remove(message);
+        data.removeIf(m -> m.getId().equals(id));
+    }
+
+    @Override
+    public void deleteByChannelId(UUID channelId) {
+        data.removeIf(m -> m.getChannelId().equals(channelId));
     }
 }

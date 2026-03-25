@@ -3,14 +3,19 @@ package com.sprint.mission.discodeit.repository.file;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.stereotype.Repository;
 
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
+@Repository
+@ConditionalOnProperty(name = "discodeit.repository.type", havingValue = "file")
 public class FileChannelRepository implements ChannelRepository {
 
     private static final String FILE_PATH = "channel.ser";
@@ -58,12 +63,9 @@ public class FileChannelRepository implements ChannelRepository {
     }
 
     @Override
-    public Channel findById(UUID id) {
+    public Optional<Channel> findById(UUID id) {
         Map<UUID, Channel> data = load();
-        if (data.get(id) == null) {
-            throw new IllegalArgumentException("[channel] 없는 id 입니다.");
-        }
-        return data.get(id);
+        return Optional.ofNullable(data.get(id));
     }
 
     @Override

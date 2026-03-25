@@ -1,67 +1,38 @@
 package com.sprint.mission.discodeit.entity;
 
+import lombok.Getter;
+
 import java.io.Serializable;
+import java.time.Instant;
 import java.util.UUID;
 
+@Getter
 public class Channel implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
     private UUID id;
-    private Long createdAt;
-    private Long updatedAt;
+    private Instant createdAt;
+    private Instant updatedAt;
 
     private String name;
     private String description;
-    private String type;
+    private ChannelType type;
 
-    public Channel(String name, String description, String type) {
+    public Channel(String name, String description, ChannelType type) {
         this.id = UUID.randomUUID();
-        this.createdAt = System.currentTimeMillis();
-        this.updatedAt = System.currentTimeMillis();
+        this.createdAt = Instant.now();
+        this.updatedAt = Instant.now();
 
         this.name = name;
         this.description = description;
         this.type = type;
     }
 
-    public UUID getId() {
-        return id;
-    }
-
-    public Long getCreatedAt() {
-        return createdAt;
-    }
-
-    public Long getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public void updateName(String name) {
+    public void update(String name, String description) {
         this.name = name;
-        updatedAt = System.currentTimeMillis();
-    }
-
-    public void updateDescription(String description) {
         this.description = description;
-        updatedAt = System.currentTimeMillis();
-    }
-
-    public void updateType(String type) {
-        this.type = type;
-        updatedAt = System.currentTimeMillis();
+        updatedAt = Instant.now();
     }
 
     @Override
