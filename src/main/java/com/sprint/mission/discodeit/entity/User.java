@@ -1,5 +1,10 @@
 package com.sprint.mission.discodeit.entity;
 
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
 import java.io.Serializable;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -7,23 +12,32 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
+@Getter
 public class User implements Serializable {
-    private final UUID id;
     private static final long serialVersionUID = 1L;
-    private final long createdAt;
-    private long updatedAt;
+
+    private final UUID id;
+    private final UUID currentUserId;
+    private UUID profileId;
+    private final Instant createdAt;
+    private Instant updatedAt;
     private String username;
     private String password;
     private String email;
 
-    // 생성자 초기화
+
     public User(String username, String email, String password) {
         this.id = UUID.randomUUID();
-        this.createdAt = System.currentTimeMillis();
-        this.updatedAt = System.currentTimeMillis();
+        this.currentUserId = UUID.randomUUID();
+        this.createdAt = Instant.now();
+        this.updatedAt = Instant.now();
         this.username = username;
         this.email = email;
         this.password = password;
+    }
+
+    public void setProfileId(UUID profileId) {
+        this.profileId = profileId;
     }
 
     // 필드를 수정하는 update 함수
@@ -31,43 +45,16 @@ public class User implements Serializable {
         this.username = name;
         this.email = email;
         this.password = password;
-        this.updatedAt = System.currentTimeMillis();
-        System.out.println("유저의 정보가 수정되었습니다. 수정시간: " + getUpdatedAt());
+        this.updatedAt = Instant.now();
     }
 
-    // id 반환
-    public UUID getId() {
-        return id;
-    }
-
-    // 생성시간 반환
-    public String getCreatedAt() {
-        LocalDateTime dateTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(createdAt), ZoneId.systemDefault());
-        String formattedDate = dateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-        return formattedDate;
-    }
-
-    // 업데이트 시간 반환
-    public String getUpdatedAt() {
-        LocalDateTime dateTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(updatedAt), ZoneId.systemDefault());
-        String formattedDate = dateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-        return formattedDate;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public String getPassword() {
-        return password;
-    }
 
     @Override
     public String toString() {
-        return "User{ name: " + username + ", userEmail: " + email + " }";
+        return "User{" +
+                "id=" + id +
+                ", username='" + username + '\'' +
+                ", email='" + email + '\'' +
+                '}';
     }
 }

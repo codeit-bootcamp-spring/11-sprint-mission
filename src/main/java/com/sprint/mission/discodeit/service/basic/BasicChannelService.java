@@ -1,62 +1,138 @@
 package com.sprint.mission.discodeit.service.basic;
 
+import com.sprint.mission.discodeit.dto.ChannelResponse;
+import com.sprint.mission.discodeit.dto.ChannelUpdate;
+import com.sprint.mission.discodeit.dto.PrivateChannelRequest;
+import com.sprint.mission.discodeit.dto.PublicChannelRequest;
 import com.sprint.mission.discodeit.entity.Channel;
+import com.sprint.mission.discodeit.entity.ChannelType;
+import com.sprint.mission.discodeit.entity.Message;
+import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
+import com.sprint.mission.discodeit.repository.MessageRepository;
+import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.service.ChannelService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 
-import java.util.InputMismatchException;
-import java.util.List;
-import java.util.UUID;
+import java.time.Instant;
+import java.util.*;
+import java.util.stream.Collectors;
 
+@Service
+@RequiredArgsConstructor
 public class BasicChannelService implements ChannelService {
     private final ChannelRepository channelRepository;
+    private final ReadStatusRepository readStatusRepository;
+    private final MessageRepository messageRepository;
 
-    public  BasicChannelService(ChannelRepository channelRepository) {
-        this.channelRepository = channelRepository;
+    @Override
+    public Channel createPublicChannel(PublicChannelRequest request) {
+        Channel channel = new Channel(
+                request.name(),
+                request.description(),
+                request.type(),
+                request.ownerId()
+        );
+        Channel savedChannel = channelRepository.save(channel);
+        System.out.println(savedChannel.getName() + " 채널이 생성되었습니다.");
+        return savedChannel;
     }
 
     @Override
-    public void createChannel(String name, String password) {
-        if(channelRepository.findByPassword(password).isPresent()) {
-            throw new IllegalArgumentException("이미 존재하는 패스워드입니다.");
-        }
-        Channel channel = new Channel(name, password);
-        channelRepository.save(channel);
-        System.out.println(channel.getName() + " 채널이 생성되었습니다. 채널 생성시간 : " + channel.getCreatedAt());
+    public Channel createPrivateChannel(PrivateChannelRequest request) {
+        Channel channel = Channel.builder()
+                .type(ChannelType.PRIVATE)
+                .ownerId(request.ownerId())
+                .name("")
+                .description("")
+                .build();
+
+        return channelRepository.save(channel);
     }
 
     @Override
-    public Channel readChannel(UUID id) {
-        return channelRepository.findById(id)
+    public ChannelResponse readChannel(UUID id) {
+        Channel channel = channelRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("해당 채널이 존재하지 않습니다."));
-    }
 
-    @Override
-    public List<Channel> allReadChannel() {
-        return channelRepository.findAll();
-    }
-
-    @Override
-    public void deleteChannel(UUID id, String password) {
-        Channel channel = channelRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("채널이 존재하지 않습니다."));
-        if(!channel.getChannelPassword().equals(password)) {
-            throw new InputMismatchException("패스워드가 일치하지 않습니다.");
+        List<UUID> memberIds = null;
+        if(channel.getType() == ChannelType.PRIVATE) {
+            memberIds = readStatusRepository.findAllByChannelId(id).stream()
+                    .map(ReadStatus::getUserId)
+                    .toList();
         }
 
-        channelRepository.delete(channel);
+        Instant lastMessageAt = messageRepository.findLatestMessage(id)
+                .map(Message::getCreatedAt)
+                .orElse(channel.getCreatedAt());
+
+        return new ChannelResponse(
+                channel.getId(),
+                channel.getName(),
+                channel.getType(),
+                channel.getDescription(),
+                channel.getOwnerId(),
+                lastMessageAt,
+                memberIds
+        );
     }
 
     @Override
-    public void updateChannel(UUID id, String name, String password) {
-        Channel channel = channelRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("채널이 존재하지 않습니다."));
-        if(channel.getName().equals(name) && channel.getChannelPassword().equals(password)) {
-            System.out.println("변경사항이 없습니다.");
-            return;
+    public List<ChannelResponse> findAllByUserId(UUID userId) {
+        Set<UUID> channelIds = readStatusRepository.findAllByChannelId(userId).stream()
+                .map(ReadStatus::getChannelId)
+                .collect(Collectors.toSet());
+
+        return channelRepository.findAll().stream()
+                .filter(channel -> channel.getType() == ChannelType.PUBLIC || channelIds.contains(channel.getId()))
+                .map(channel -> {
+                    Instant lastMessageAt = messageRepository.findLatestMessage(channel.getId())
+                        .map(Message::getCreatedAt)
+                        .orElse(channel.getCreatedAt());
+
+                    List<UUID> memberIds = Collections.emptyList();
+                    if(channel.getType() == ChannelType.PRIVATE) {
+                        memberIds = readStatusRepository.findAllByChannelId(channel.getId()).stream()
+                                .map(ReadStatus::getUserId)
+                                .toList();
+                    }
+                    return new ChannelResponse(
+                      channel.getId(),
+                      channel.getName(),
+                      channel.getType(),
+                      channel.getDescription(),
+                      channel.getOwnerId(),
+                      lastMessageAt,
+                      memberIds
+                    );
+                })
+                .sorted(Comparator.comparing(ChannelResponse::lastMessageAt).reversed())
+                .toList();
+    }
+
+    @Override
+    public void deleteChannel(UUID id) {
+        if(!channelRepository.findById(id).isPresent()) {
+            throw new IllegalArgumentException("삭제할 채널이 존재하지 않습니다.");
         }
 
-        channel.update(name, password);
-        channelRepository.update(channel);
+        messageRepository.deleteAllByChannelId(id);
+        readStatusRepository.deleteAllByChannelId(id);
+
+        channelRepository.delete(id);
+    }
+
+    @Override
+    public void updateChannel(ChannelUpdate request) {
+        Channel channel = channelRepository.findById(request.id())
+                .orElseThrow(() -> new IllegalArgumentException("채널이 존재하지 않습니다."));
+
+        if(channel.getType() == ChannelType.PRIVATE) {
+            throw new IllegalArgumentException("PRIVATE채널은 수정할 수 없습니다.");
+        }
+
+        channel.update(request.name(), request.description());
+        channelRepository.save(channel);
     }
 }

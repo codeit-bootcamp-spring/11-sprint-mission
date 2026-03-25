@@ -2,48 +2,49 @@ package com.sprint.mission.discodeit.repository.jcf;
 
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.repository.UserRepository;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.stereotype.Repository;
 
 import java.util.*;
 
+@Repository
+@ConditionalOnProperty(name = "discodeit.repository.type", havingValue = "jcf", matchIfMissing = true)
 public class JCFUserRepository implements UserRepository {
-    private List<User> users = new ArrayList<>();
+    private final Map<UUID, User> users = new HashMap<>();
 
     @Override
-    public void save(User user) {
-        users.add(user);
+    public User save(User user) {
+        users.put(user.getId(), user);
+        return user;
     }
 
     @Override
     public Optional<User> findByEmail(String email) {
-        return users.stream()
+        return users.values().stream()
                 .filter(user -> user.getEmail().equals(email))
                 .findFirst();
     }
 
     @Override
-    public Optional<User> findById(UUID id) {
-        return users.stream()
-                .filter(user -> user.getId().equals(id))
+    public Optional<User> findByName(String userName) {
+        return users.values().stream()
+                .filter(name -> name.getUsername().equals(userName))
                 .findFirst();
     }
 
     @Override
+    public Optional<User> findById(UUID id) {
+        return Optional.ofNullable(users.get(id));
+    }
+
+    @Override
     public List<User> findAll() {
-        return users;
+        return new ArrayList<>(users.values());
     }
 
     @Override
-    public void delete(User user) {
-        users.remove(user);
+    public void delete(UUID id) {
+        users.remove(id);
     }
 
-    @Override
-    public void update(User user) {
-        for (int i = 0; i < users.size(); i++) {
-            if(users.get(i).getId().equals(user.getId())) {
-                users.set(i, user);
-                return;
-            }
-        }
-    }
 }
