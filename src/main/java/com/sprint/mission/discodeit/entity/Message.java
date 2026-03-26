@@ -18,11 +18,15 @@ import java.util.UUID;
 @Builder
 @AllArgsConstructor
 public class Message implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     private final UUID id;
     private final UUID channelId;
     private final UUID authorId;
+
+    @Builder.Default
     private final List<UUID> attachmentIds = new ArrayList<>();
-    private static final long serialVersionUID = 1L;
+
     private final Instant createdAt;
     private Instant updatedAt;
     private String message;
@@ -34,6 +38,13 @@ public class Message implements Serializable {
         this.createdAt = Instant.now();
         this.updatedAt = Instant.now();
         this.message = message;
+    }
+
+    public void addAttachment(UUID binaryContentId) {
+        if(binaryContentId != null) {
+            this.attachmentIds.add(binaryContentId);
+            this.updatedAt = Instant.now();
+        }
     }
 
     // 필드를 수정하는 update 함수

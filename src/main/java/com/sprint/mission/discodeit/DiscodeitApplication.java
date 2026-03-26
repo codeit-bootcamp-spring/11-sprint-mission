@@ -89,11 +89,11 @@ public class DiscodeitApplication {
 				// AuthService 테스트
 				System.out.println("\n--- AuthService 테스트 ---");
 				LoginRequest loginRequest = new LoginRequest("테스터", "password123");
-				UserDto loginUser = authService.login(newUser.id(), loginRequest);
+				UserDto loginUser = authService.login(loginRequest);
 				System.out.println("✅ 로그인 성공 : " + loginUser.name() + "님 환영합니다.");
 
 				LoginRequest loginRequest1 = new LoginRequest("코드잇", "password12");
-				UserDto loginUser1 = authService.login(newUser1.id(), loginRequest1);
+				UserDto loginUser1 = authService.login(loginRequest1);
 				System.out.println("✅ 로그인 성공 : " + loginUser1.name() + "님 환영합니다.");
 
 				// 유저 전체 조회
