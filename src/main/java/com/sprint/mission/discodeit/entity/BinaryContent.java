@@ -15,7 +15,6 @@ public class BinaryContent implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private UUID id;
-    private UUID messageId;
     private Instant createdAt;
 
     private byte[] data;
