@@ -1,3 +1,4 @@
+/*
 package com.sprint.mission.discodeit.service.jcf;
 
 import com.sprint.mission.discodeit.entity.Message;
@@ -23,7 +24,7 @@ public class JCFMessageService implements MessageService {
     // 메세지를 만들때, 검증
     @Override
     public Message create(Message message) {
-        if (userService.findById(message.getUserId()) == null) {
+        if (userService.findById(message.getAuthorId()) == null) {
             throw new IllegalStateException("존재하지 않는 유저입니다.");
         }
 
@@ -49,7 +50,7 @@ public class JCFMessageService implements MessageService {
             throw new IllegalStateException("존재하지 않는 채널입니다.");
         }
 
-        if (userService.findById(message.getUserId()) == null){
+        if (userService.findById(message.getAuthorId()) == null){
             throw new IllegalStateException("존재하지 않는 유저입니다.");
         }
 
@@ -64,3 +65,4 @@ public class JCFMessageService implements MessageService {
         messageRepository.delete(id);
     }
 }
+*/

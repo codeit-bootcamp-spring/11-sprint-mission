@@ -1,3 +1,4 @@
+/*
 package com.sprint.mission.discodeit.service.jcf;
 
 import com.sprint.mission.discodeit.entity.Channel;
@@ -42,3 +43,4 @@ public class JCFUserService implements UserService {
         userRepository.delete(id);
     }
 }
+*/

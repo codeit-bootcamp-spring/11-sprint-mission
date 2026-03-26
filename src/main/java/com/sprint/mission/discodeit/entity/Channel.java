@@ -1,29 +1,38 @@
 package com.sprint.mission.discodeit.entity;
 
+import lombok.Getter;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
+@Getter
 public class Channel extends BaseEntity {
     private String channelName;
     private String description;
+    private final ChannelType type;
+    private final List<UUID> participantIds;
 
+    // PUBLIC 채널 생성
     public Channel(String channelName, String description) {
         super();
         this.channelName = channelName;
         this.description = description;
+        this.type = ChannelType.PUBLIC;
+        this.participantIds = new ArrayList<>();
     }
 
-    public String getChannelName() {
-        return channelName;
+    // PRIVATE 채널 생성
+    public Channel(List<UUID> participantIds) {
+        super();
+        this.channelName = null;
+        this.description = null;
+        this.type = ChannelType.PRIVATE;
+        this.participantIds = new ArrayList<>(participantIds);
     }
 
-    public String getDescription() {
-        return description;
-    }
-
-    public void updateChannelName(String channelName) {
+    public void update(String channelName, String description) {
         this.channelName = channelName;
-        touch();
-    }
-
-    public void updateDescription(String description) {
         this.description = description;
         touch();
     }

@@ -1,3 +1,4 @@
+/*
 package com.sprint.mission.discodeit.service.file;
 
 import com.sprint.mission.discodeit.entity.Message;
@@ -22,7 +23,7 @@ public class FileMessageService implements MessageService {
 
     @Override
     public Message create(Message message) {
-        if (userService.findById(message.getUserId()) == null) {
+        if (userService.findById(message.getAuthorId()) == null) {
             throw new IllegalStateException("존재하지 않는 유저입니다.");
         }
         if (channelService.findById(message.getChannelId()) == null) {
@@ -43,7 +44,7 @@ public class FileMessageService implements MessageService {
 
     @Override
     public Message update(Message message) {
-        if (userService.findById(message.getUserId()) == null) {
+        if (userService.findById(message.getAuthorId()) == null) {
             throw new IllegalStateException("존재하지 않는 유저입니다.");
         }
         if (channelService.findById(message.getChannelId()) == null) {
@@ -57,3 +58,4 @@ public class FileMessageService implements MessageService {
         messageRepository.delete(id);
     }
 }
+*/

@@ -1,9 +1,20 @@
+# Mac
 .DS_Store
+
+# IntelliJ
 .idea/
+*.iml
+
+# Gradle
 .gradle/
-build/build/
-*.class
-users.ser
-.serbuild/
 build/
+
+# Java
+*.class
+
+# local serialized data
 *.ser
+data/
+
+# logs
+*.log

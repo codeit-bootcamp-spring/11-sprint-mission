@@ -1,0 +1,12 @@
+spring:
+  application:
+    name: discodeit
+
+server:
+  port: 8080
+# default이지만 8081로 바꿀때 참고하라고.
+
+discodeit:
+  repository:
+    type: jcf
+    file-directory: .discodeit

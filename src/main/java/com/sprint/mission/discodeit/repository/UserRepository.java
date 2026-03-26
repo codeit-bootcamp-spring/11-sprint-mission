@@ -15,6 +15,8 @@ public interface UserRepository {
     // User update(User user);
     // >> 레포지토리는 save 하나로 저장,업데이트 다 할수 있으니까
 
-
     void delete(UUID id);
+
+    User findByUserName(String userName);
+    User findByEmail(String email);
 }

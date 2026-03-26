@@ -1,3 +1,4 @@
+/*
 package com.sprint.mission.discodeit.service.file;
 
 import com.sprint.mission.discodeit.entity.Channel;
@@ -39,3 +40,4 @@ public class FileChannelService implements ChannelService {
         channelRepository.delete(id);
     }
 }
+*/
