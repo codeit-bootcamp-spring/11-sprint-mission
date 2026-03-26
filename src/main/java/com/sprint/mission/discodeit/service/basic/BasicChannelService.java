@@ -44,11 +44,18 @@ public class BasicChannelService implements ChannelService {
         Channel channel = Channel.builder()
                 .type(ChannelType.PRIVATE)
                 .ownerId(request.ownerId())
-                .name("")
-                .description("")
                 .build();
 
-        return channelRepository.save(channel);
+        Channel createdChannel = channelRepository.save(channel);
+
+        Set<UUID> allParticipants = new HashSet<>(request.participantsIds());
+        allParticipants.add(request.ownerId());
+
+        allParticipants.stream()
+                .map(userId -> new ReadStatus(userId, createdChannel.getId(), Instant.MIN))
+                .forEach(readStatusRepository::save);
+
+        return createdChannel;
     }
 
     @Override

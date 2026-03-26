@@ -18,7 +18,6 @@ import java.util.UUID;
 public class BasicUserStatusService implements UserStatusService {
     private final UserRepository userRepository;
     private final UserStatusRepository userStatusRepository;
-    private final UserService userService;
 
     @Override
     public UserStatus createUserStatus(UserStatusCreateDto statusCreateDto) {

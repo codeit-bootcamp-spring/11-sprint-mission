@@ -20,6 +20,13 @@ public class ReadStatus implements Serializable {
     private final UUID userId;
     private Instant lastReadAt;
 
+    public ReadStatus(UUID userId, UUID channelId, Instant lastReadAt) {
+        this.id = UUID.randomUUID();
+        this.userId = userId;
+        this.channelId = channelId;
+        this.lastReadAt = lastReadAt;
+    }
+
     public void update(Instant lastReadAt) {
         if(lastReadAt == null) {
             throw new IllegalArgumentException("업데이트할 시각이 존재하지 않습니다");
