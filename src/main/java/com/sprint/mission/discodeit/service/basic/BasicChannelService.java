@@ -89,7 +89,7 @@ public class BasicChannelService implements ChannelService {
     public List<ChannelResponse> findAllByUserId(UUID userId) {
         List<Channel> allChannels = channelRepository.findAll();
 
-        Set<UUID> channelIds = readStatusRepository.findAllByChannelId(userId).stream()
+        Set<UUID> channelIds = readStatusRepository.findAllByUserId(userId).stream()
                 .map(ReadStatus::getChannelId)
                 .collect(Collectors.toSet());
 

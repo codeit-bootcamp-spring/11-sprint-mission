@@ -28,7 +28,6 @@ public class BasicBinaryContentService implements BinaryContentService {
                 .contentType(request.contentType())
                 .size(request.data().length)
                 .createdAt(Instant.now())
-                .messageId(null)
                 .build();
 
         return binaryContentRepository.save(content);

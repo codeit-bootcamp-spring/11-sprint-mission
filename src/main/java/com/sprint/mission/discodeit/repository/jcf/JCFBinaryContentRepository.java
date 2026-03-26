@@ -34,7 +34,12 @@ public class JCFBinaryContentRepository implements BinaryContentRepository {
         binaryContentMap.remove(id);
     }
 
-    public void deleteAllByMessageId(UUID id) {
-        binaryContentMap.values().removeIf(content -> content.getMessageId().equals(id));
+    public void deleteAllByAttachmentIds(List<UUID> attachmentIds) {
+        if(attachmentIds == null || attachmentIds.isEmpty()) {
+            return;
+        }
+        for(UUID id : attachmentIds) {
+            binaryContentMap.remove(id);
+        }
     }
 }

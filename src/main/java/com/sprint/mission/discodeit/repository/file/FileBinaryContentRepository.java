@@ -113,28 +113,23 @@ public class FileBinaryContentRepository implements BinaryContentRepository {
     }
 
     @Override
-    public void deleteAllByMessageId(UUID messageId) {
-        List<BinaryContent> contentsToDelete = binaryContentMap.values().stream()
-                .filter(content -> content.getMessageId() != null && content.getMessageId().equals(messageId))
-                .collect(Collectors.toList());
-
-        if(contentsToDelete.isEmpty()) {
+    public void deleteAllByAttachmentIds(List<UUID> attachmentIds) {
+        if(attachmentIds == null || attachmentIds.isEmpty()) {
             return;
         }
 
-        for(BinaryContent content : contentsToDelete) {
-            File actualFile = new File(dir, content.getId().toString() + ".bin");
-            if(actualFile.exists()) {
-                boolean isDeleted = actualFile.delete();
+        for(UUID id : attachmentIds) {
+            BinaryContent content = binaryContentMap.remove(id);
 
-                if(!isDeleted) {
-                    System.err.println("⚠️ 경고 : 실제 파일 삭제에 실패했습니다. (경로 : " + actualFile.getAbsolutePath() + ")");
+            if(content != null) {
+                File actualFile = new File(dir, id.toString() + ".bin");
+                if(actualFile.exists()) {
+                    if(!actualFile.delete()) {
+                        System.out.println("⚠️ 실제 파일 삭제 실패 (경로 : " + actualFile.getAbsolutePath() + ")");
+                    }
                 }
             }
-
-            binaryContentMap.remove(content.getId());
         }
-
         saveMetadata();
     }
 }

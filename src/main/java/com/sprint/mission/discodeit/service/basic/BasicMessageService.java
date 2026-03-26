@@ -4,9 +4,7 @@ import com.sprint.mission.discodeit.dto.ChannelMessageList;
 import com.sprint.mission.discodeit.dto.CreateMessageRequest;
 import com.sprint.mission.discodeit.dto.MessageResponseDto;
 import com.sprint.mission.discodeit.dto.MessageUpdate;
-import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.Message;
-import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
@@ -16,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
@@ -39,22 +38,19 @@ public class BasicMessageService implements MessageService {
                 .channelId(request.channelId())
                 .authorId(request.authorId())
                 .message(request.message())
+                .attachmentIds(new ArrayList<>())
                 .createdAt(Instant.now())
                 .build();
-
-        Message savedMessage = messageRepository.save(message);
 
         if(request.binaryContentIds() != null && !request.binaryContentIds().isEmpty()) {
             for(UUID contentId : request.binaryContentIds()) {
                 binaryContentRepository.findById(contentId).ifPresent(content -> {
-                    content.setMessageId(savedMessage.getId());
-                    binaryContentRepository.save(content);
-
-                    savedMessage.getAttachmentIds().add(contentId);
+                    message.getAttachmentIds().add(contentId);
                 });
             }
-            messageRepository.save(savedMessage);
         }
+
+        Message savedMessage = messageRepository.save(message);
 
         System.out.println("메시지 전송 완료 : [채널 ID : " + request.channelId() + ", 작성자 ID : " + request.authorId() + "]" );
 
@@ -94,7 +90,9 @@ public class BasicMessageService implements MessageService {
     public void deleteMessage(UUID id) {
         Message mes = readMessage(id);
 
-        binaryContentRepository.deleteAllByMessageId(id);
+        if(mes.getAttachmentIds() != null && !mes.getAttachmentIds().isEmpty()) {
+            binaryContentRepository.deleteAllByAttachmentIds(mes.getAttachmentIds());
+        }
 
         messageRepository.delete(mes);
     }
