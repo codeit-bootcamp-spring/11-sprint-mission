@@ -7,6 +7,7 @@ import com.sprint.mission.discodeit.dto.user.UserUpdateRequest;
 import com.sprint.mission.discodeit.dto.userStatus.UserStatusUpdateRequest;
 import com.sprint.mission.discodeit.service.UserService;
 import com.sprint.mission.discodeit.service.UserStatusService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,7 +25,7 @@ public class UserController {
 
     // create
     @RequestMapping(method = RequestMethod.POST)
-    public ResponseEntity<UserResponse> create(@RequestBody UserCreateRequest request){
+    public ResponseEntity<UserResponse> create(@Valid @RequestBody UserCreateRequest request){
         return ResponseEntity.status(HttpStatus.CREATED).body(userService.create(request));
     }
 
@@ -43,7 +44,7 @@ public class UserController {
     // update
     @RequestMapping(value = "/{id}",method = RequestMethod.PUT)
     public ResponseEntity<Void> update(@PathVariable UUID id,
-                                       @RequestBody UserUpdateRequest request){
+                                       @Valid @RequestBody UserUpdateRequest request){
         userService.update(request);
         return ResponseEntity.ok().build();
     }
@@ -64,7 +65,7 @@ public class UserController {
 
     // UserUpdate
     @RequestMapping(value = "/{id}/status", method = RequestMethod.PUT)
-    public ResponseEntity<Void> updateStatus(@PathVariable UUID id, @RequestBody UserStatusUpdateRequest request){
+    public ResponseEntity<Void> updateStatus(@PathVariable UUID id, @Valid @RequestBody UserStatusUpdateRequest request){
         userStatusService.update(request);
         return ResponseEntity.ok().build();
     }

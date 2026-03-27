@@ -39,7 +39,6 @@ public class BasicMessageService implements MessageService {
         }
 
         Message message = new Message(request.getContent(), request.getChannelId(), request.getAuthorId(), request.getReceiverId());
-        message.validateService();
         messageRepository.create(message);
 
         if (request.getFileName() != null) {
@@ -70,7 +69,6 @@ public class BasicMessageService implements MessageService {
             throw DiscodeitException.messageNotFound(request.getMessageId());
         }
         message.updateContent(request.getMessageContent());
-        message.validateService();
         messageRepository.create(message);
     }
 

@@ -4,6 +4,7 @@ import com.sprint.mission.discodeit.dto.message.MessageCreateRequest;
 import com.sprint.mission.discodeit.dto.message.MessageUpdateRequest;
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.service.MessageService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,7 +21,7 @@ public class MessageController {
 
     // create
     @RequestMapping(method = RequestMethod.POST)
-    public ResponseEntity<Message> create(@RequestBody MessageCreateRequest request){
+    public ResponseEntity<Message> create(@Valid @RequestBody MessageCreateRequest request){
         return ResponseEntity.status(HttpStatus.CREATED).body(messageService.create(request));
     }
 
@@ -38,7 +39,7 @@ public class MessageController {
 
     // update
     @RequestMapping(value = "/{id}", method = RequestMethod.PUT)
-    public ResponseEntity<Void> update(@PathVariable UUID id, @RequestBody MessageUpdateRequest request){
+    public ResponseEntity<Void> update(@PathVariable UUID id, @Valid @RequestBody MessageUpdateRequest request){
         messageService.update(request);
         return ResponseEntity.ok().build();
     }

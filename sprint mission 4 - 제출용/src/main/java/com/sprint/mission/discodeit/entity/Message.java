@@ -27,12 +27,6 @@ public class Message extends BaseEntity implements Serializable {
         updateTimestamp();
     }
 
-    public void validateService(){
-        if (this.messageContent == null || this.messageContent.isBlank()) {
-            throw DiscodeitException.blankField("messagecontent");
-        }
-    }
-
     @Override
     public String toString() {
         return "Message ---- [" +

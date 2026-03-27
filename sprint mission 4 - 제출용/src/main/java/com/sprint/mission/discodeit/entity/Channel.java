@@ -25,12 +25,6 @@ public class Channel extends BaseEntity implements Serializable {
         updateTimestamp();
     }
 
-    public void validateService() {
-        if (this.channelName == null || this.channelName.isBlank()) {
-            throw DiscodeitException.blankField("channelname");
-        }
-    }
-
     @Override
     public String toString() {
         return

@@ -36,7 +36,6 @@ public class BasicChannelService implements ChannelService {
         }
 
         Channel channel = new Channel(request.getChannelName(), request.getChannelDescription(), PUBLIC);
-        channel.validateService();
         channelRepository.create(channel);
         return new ChannelResponse(channel.getId(), channel.getChannelName(), channel.getChannelDescription(), null, null);
 
@@ -110,7 +109,6 @@ public class BasicChannelService implements ChannelService {
             throw DiscodeitException.duplicateChannel(request.getChannelName());
         }
         channel.updateChannel(request.getChannelName(), request.getChannelDescription());
-        channel.validateService();
         channelRepository.create(channel);
     }
 

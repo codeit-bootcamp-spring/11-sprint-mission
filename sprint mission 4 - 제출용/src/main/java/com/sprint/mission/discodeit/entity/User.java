@@ -24,17 +24,6 @@ public class User extends BaseEntity implements Serializable {
         updateTimestamp();
     }
 
-    public void validateService(){
-        if (this.userName == null || this.userName.isBlank()) {
-            throw DiscodeitException.blankField("username");
-        }
-        if (this.userEmail == null || this.userEmail.isBlank()) {
-            throw DiscodeitException.blankField("useremail");
-        }
-        if (this.userPassword == null || this.userPassword.isBlank()) {
-            throw DiscodeitException.blankField("userpassword");
-        }
-    }
 
     @Override
     public String toString() {return "User ---- " +

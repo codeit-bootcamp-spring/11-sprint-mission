@@ -36,7 +36,6 @@ public class BasicUserService implements UserService {
         }
 
         User user = new User(request.getUserName(), request.getUserEmail(), request.getUserPassword());
-        user.validateService();
         userRepository.create(user);
 
         if (request.getFileName() != null) {
@@ -87,7 +86,6 @@ public class BasicUserService implements UserService {
         }
 
         user.updateUser(request.getUserName(), request.getUserEmail(), request.getUserPassword());
-        user.validateService();
         userRepository.update(user);
     }
 
