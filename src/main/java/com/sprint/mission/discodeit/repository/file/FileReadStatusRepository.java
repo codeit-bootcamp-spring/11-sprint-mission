@@ -89,7 +89,7 @@ public class FileReadStatusRepository implements ReadStatusRepository {
 
     @Override
     public void deleteAllByChannelId(UUID channelId) {
-        boolean removed = readStatusMap.values().removeIf(status -> status.getChannelId().equals(channelId));
+        boolean removed = readStatusMap.values().removeIf(status -> channelId.equals(status.getChannelId()));
 
         if(removed) {
             saveStatus();

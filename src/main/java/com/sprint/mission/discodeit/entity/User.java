@@ -29,14 +29,6 @@ public class User implements Serializable {
         this.profileId = profileId;
     }
 
-    public void updateProfile(String name, String email, String password, UUID profileId) {
-        this.username = name;
-        this.email = email;
-        this.password = password;
-        this.profileId = profileId;
-        this.updatedAt = Instant.now();
-    }
-
     public void setProfileId(UUID profileId) {
         this.profileId = profileId;
         this.updatedAt = Instant.now();

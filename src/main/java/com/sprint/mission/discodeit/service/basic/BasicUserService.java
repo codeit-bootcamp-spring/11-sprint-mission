@@ -37,7 +37,7 @@ public class BasicUserService implements UserService {
         if(userRepository.findByEmail(email).isPresent()) {
             throw new BusinessLogicException(ExceptionCode.EMAIL_EXISTS);
         }
-        User newUser = new User(name, email, password, request.profileImageId());
+        User newUser = new User(name, email, password, request.profileId());
         UserStatus newStatus = new UserStatus(newUser.getId());
         try {
             userRepository.save(newUser);
@@ -107,12 +107,15 @@ public class BasicUserService implements UserService {
         String password = (request.password() != null) ? request.password() : user.getPassword();
 
         UUID profileId = user.getProfileId();
-
-        if(request.profileImageId() != null) {
-            if(user.getProfileId() != null && !user.getProfileId().equals(request.profileImageId())) {
-                binaryContentRepository.delete(user.getProfileId());
+        if(request.profileId() != null) {
+            if(user.getProfileId() != null && !user.getProfileId().equals(request.profileId())) {
+                try {
+                    binaryContentRepository.delete(user.getProfileId());
+                } catch(IllegalArgumentException e) {
+                    System.out.println("기존 프로필 파일이 이미 존재하지 않아 삭제를 건너뜁니다.");
+                }
             }
-            profileId = request.profileImageId();
+            profileId = request.profileId();
         }
 
         user.update(name, email, password, profileId);

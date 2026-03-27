@@ -1,6 +1,7 @@
 package com.sprint.mission.discodeit.control;
 
 import com.sprint.mission.discodeit.dto.BinaryContentCreateDto;
+import com.sprint.mission.discodeit.dto.BinaryContentResponse;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.service.BinaryContentService;
 import lombok.RequiredArgsConstructor;
@@ -18,11 +19,12 @@ public class BinaryContentControl {
     private final BinaryContentService binaryContentService;
 
     @RequestMapping(method = RequestMethod.POST)
-    public ResponseEntity<BinaryContent> createBinaryContent(
+    public ResponseEntity<BinaryContentResponse> createBinaryContent(
             @RequestBody BinaryContentCreateDto request
             ) {
         BinaryContent createdContent = binaryContentService.createBinaryContent(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdContent);
+        BinaryContentResponse response = BinaryContentResponse.from(createdContent);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @RequestMapping(value = "/find", method = RequestMethod.GET)

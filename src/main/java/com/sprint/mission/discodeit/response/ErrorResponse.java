@@ -1,7 +1,10 @@
 package com.sprint.mission.discodeit.response;
 
 import com.sprint.mission.discodeit.exception.ExceptionCode;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 
+@Getter
 public class ErrorResponse {
     private int status;
     private String message;

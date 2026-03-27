@@ -6,6 +6,6 @@ public record UserCreateRequest(
         String name,
         String email,
         String password,
-        UUID profileImageId
+        UUID profileId
 ) {
 }
