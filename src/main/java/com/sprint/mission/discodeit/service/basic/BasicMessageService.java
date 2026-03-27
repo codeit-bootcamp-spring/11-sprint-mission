@@ -1,8 +1,8 @@
 package com.sprint.mission.discodeit.service.basic;
 
-import com.sprint.mission.discodeit.dto.message.MessageCreateRequestDto;
-import com.sprint.mission.discodeit.dto.message.MessageResponseDto;
-import com.sprint.mission.discodeit.dto.message.MessageUpdateRequestDto;
+import com.sprint.mission.discodeit.dto.message.MessageCreateRequest;
+import com.sprint.mission.discodeit.dto.message.MessageDto;
+import com.sprint.mission.discodeit.dto.message.MessageUpdateRequest;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.exception.binarycontent.BinaryContentNotFoundException;
@@ -30,7 +30,7 @@ public class BasicMessageService implements MessageService {
     private final BinaryContentRepository binaryContentRepo;
 
     @Override
-    public MessageResponseDto create(MessageCreateRequestDto dto) {
+    public MessageDto create(MessageCreateRequest dto) {
         channelRepo.findById(dto.channelId())
                 .orElseThrow(() -> new ChannelNotFoundException(dto.channelId()));
 
@@ -43,14 +43,14 @@ public class BasicMessageService implements MessageService {
     }
 
     @Override
-    public MessageResponseDto findById(UUID id) {
+    public MessageDto findById(UUID id) {
         Message message = messageRepo.findById(id)
                 .orElseThrow(() -> new MessageNotFoundException(id));
         return toDto(message);
     }
 
     @Override
-    public List<MessageResponseDto> findAllByChannelId(UUID id) {
+    public List<MessageDto> findAllByChannelId(UUID id) {
         channelRepo.findById(id)
                 .orElseThrow(() -> new ChannelNotFoundException(id));
 
@@ -61,7 +61,7 @@ public class BasicMessageService implements MessageService {
     }
 
     @Override
-    public void update(UUID id, MessageUpdateRequestDto dto) {
+    public void update(UUID id, MessageUpdateRequest dto) {
         Message message = messageRepo.findById(id)
                 .orElseThrow(() -> new MessageNotFoundException(id));
 
@@ -86,8 +86,8 @@ public class BasicMessageService implements MessageService {
         messageRepo.delete(message);
     }
 
-    private MessageResponseDto toDto(Message message) {
-        return new MessageResponseDto(
+    private MessageDto toDto(Message message) {
+        return new MessageDto(
                 message.getId(),
                 message.getContents(),
                 message.getUserId(),

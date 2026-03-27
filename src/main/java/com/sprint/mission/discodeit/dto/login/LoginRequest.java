@@ -2,7 +2,7 @@ package com.sprint.mission.discodeit.dto.login;
 
 import jakarta.validation.constraints.NotBlank;
 
-public record LoginRequestDto(
+public record LoginRequest(
 
         @NotBlank(message = "이름은 필수로 기재해야 합니다.")
         String name,

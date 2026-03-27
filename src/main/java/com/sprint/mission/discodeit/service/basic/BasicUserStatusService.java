@@ -1,7 +1,8 @@
 package com.sprint.mission.discodeit.service.basic;
 
-import com.sprint.mission.discodeit.dto.userstatus.UserStatusCreateRequestDto;
-import com.sprint.mission.discodeit.dto.userstatus.UserStatusResponseDto;
+import com.sprint.mission.discodeit.dto.userstatus.UserStatusCreateRequest;
+import com.sprint.mission.discodeit.dto.userstatus.UserStatusDto;
+import com.sprint.mission.discodeit.dto.userstatus.UserStatusUpdateRequest;
 import com.sprint.mission.discodeit.entity.UserStatus;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.exception.userstatus.UserStatusAlreadyExistsException;
@@ -24,7 +25,7 @@ public class BasicUserStatusService implements UserStatusService {
     private final UserRepository userRepo;
 
     @Override
-    public UserStatusResponseDto create(UserStatusCreateRequestDto dto) {
+    public UserStatusDto create(UserStatusCreateRequest dto) {
         userRepo.findById(dto.userId())
                 .orElseThrow(() -> new UserNotFoundException(dto.userId()));
 
@@ -32,13 +33,13 @@ public class BasicUserStatusService implements UserStatusService {
                 .anyMatch(p -> p.getUserId().equals(dto.userId()));
         if(exists) throw new UserStatusAlreadyExistsException(dto.userId());
 
-        UserStatus userStatus = new UserStatus(dto.userId());
+        UserStatus userStatus = new UserStatus(dto.userId(), dto.lastActiveAt());
         userStatusRepo.save(userStatus);
         return toDto(userStatus);
     }
 
     @Override
-    public UserStatusResponseDto find(UUID id) {
+    public UserStatusDto find(UUID id) {
         UserStatus userStatus = userStatusRepo.findById(id)
                 .orElseThrow(() -> new UserStatusNotFoundException(id));
 
@@ -46,7 +47,7 @@ public class BasicUserStatusService implements UserStatusService {
     }
 
     @Override
-    public UserStatusResponseDto findByUserId(UUID id) {
+    public UserStatusDto findByUserId(UUID id) {
         userRepo.findById(id)
                 .orElseThrow(() -> new UserNotFoundException(id));
 
@@ -57,29 +58,31 @@ public class BasicUserStatusService implements UserStatusService {
     }
 
     @Override
-    public List<UserStatusResponseDto> findAll() {
+    public List<UserStatusDto> findAll() {
         return userStatusRepo.findAll().stream()
                 .map(this::toDto)
                 .toList();
     }
 
     @Override
-    public void update(UUID id) {
+    public void update(UUID id, UserStatusUpdateRequest dto) {
         UserStatus userStatus = userStatusRepo.findById(id)
                 .orElseThrow(() -> new UserStatusNotFoundException(id));
 
+        userStatus.setLastActiveAt(dto.newLastActiveAt());
         userStatus.update();
         userStatusRepo.save(userStatus);
     }
 
     @Override
-    public void updateByUserId(UUID id) {
+    public void updateByUserId(UUID id, UserStatusUpdateRequest dto) {
         userRepo.findById(id)
                 .orElseThrow(() -> new UserNotFoundException(id));
 
         UserStatus userStatus = userStatusRepo.findByUserId(id)
                 .orElseThrow(() -> new UserStatusOfUserNotFoundException(id));
 
+        userStatus.setLastActiveAt(dto.newLastActiveAt());
         userStatus.update();
         userStatusRepo.save(userStatus);
     }
@@ -92,8 +95,7 @@ public class BasicUserStatusService implements UserStatusService {
         userStatusRepo.delete(userStatus);
     }
 
-    private UserStatusResponseDto toDto(UserStatus userStatus) {
-        return new UserStatusResponseDto(
-                userStatus.getId(), userStatus.getUserId(), userStatus.getUpdatedAt());
+    private UserStatusDto toDto(UserStatus userStatus) {
+        return new UserStatusDto(userStatus.getId(), userStatus.getUserId(), userStatus.getLastActiveAt());
     }
 }

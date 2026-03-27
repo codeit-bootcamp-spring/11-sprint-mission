@@ -1,6 +1,6 @@
 package com.sprint.mission.discodeit.service.basic;
 
-import com.sprint.mission.discodeit.dto.login.LoginRequestDto;
+import com.sprint.mission.discodeit.dto.login.LoginRequest;
 import com.sprint.mission.discodeit.dto.login.LoginResponseDto;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.exception.login.InvalidPasswordException;
@@ -10,15 +10,13 @@ import com.sprint.mission.discodeit.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-
 @Service
 @RequiredArgsConstructor
 public class BasicAuthService implements AuthService {
 
     private final UserRepository userRepo;
 
-    public LoginResponseDto login(LoginRequestDto dto) {
+    public LoginResponseDto login(LoginRequest dto) {
         User user = userRepo.findByName(dto.name())
                 .orElseThrow(() -> new UserNotFoundException(dto.name()));
 

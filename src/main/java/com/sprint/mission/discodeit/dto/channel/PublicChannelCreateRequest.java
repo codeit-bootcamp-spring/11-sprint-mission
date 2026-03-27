@@ -3,7 +3,7 @@ package com.sprint.mission.discodeit.dto.channel;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
-public record PublicChannelCreateRequestDto(
+public record PublicChannelCreateRequest(
 
         @NotBlank(message = "이름은 필수로 기재해야 합니다.")
         String name,

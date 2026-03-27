@@ -1,8 +1,8 @@
 package com.sprint.mission.discodeit.service.basic;
 
-import com.sprint.mission.discodeit.dto.user.UserCreateRequestDto;
-import com.sprint.mission.discodeit.dto.user.UserResponseDto;
-import com.sprint.mission.discodeit.dto.user.UserUpdateRequestDto;
+import com.sprint.mission.discodeit.dto.user.UserCreateRequest;
+import com.sprint.mission.discodeit.dto.user.UserDto;
+import com.sprint.mission.discodeit.dto.user.UserUpdateRequest;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.entity.UserStatus;
@@ -18,6 +18,7 @@ import com.sprint.mission.discodeit.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -30,39 +31,39 @@ public class BasicUserService implements UserService {
     private final BinaryContentRepository binaryContentRepo;
 
     @Override
-    public UserResponseDto create(UserCreateRequestDto dto) {
+    public UserDto create(UserCreateRequest dto) {
         if(userRepo.existsByName(dto.name())) throw new DuplicateNameException(dto.name());
         if(userRepo.existsByEmail(dto.email())) throw new DuplicateEmailException(dto.email());
 
         User user = new User(dto.name(), dto.email(), dto.password(), dto.profileId());
         userRepo.save(user);
 
-        UserStatus userStatus = new UserStatus(user.getId());
+        UserStatus userStatus = new UserStatus(user.getId(), Instant.now());
         userStatusRepo.save(userStatus);
 
-        return new UserResponseDto(user.getId(), user.getCreatedAt(), user.getUpdatedAt(),
+        return new UserDto(user.getId(), user.getCreatedAt(), user.getUpdatedAt(),
                 user.getName(), user.getEmail(), user.getProfileId(), userStatus.passed());
     }
 
     @Override
-    public UserResponseDto findById(UUID id) {
+    public UserDto findById(UUID id) {
         User user = userRepo.findById(id)
                 .orElseThrow(() -> new UserNotFoundException(id));
         UserStatus userStatus = userStatusRepo.findByUserId(id)
                 .orElseThrow(() -> new UserStatusOfUserNotFoundException(id));
 
-        return new UserResponseDto(user.getId(), user.getCreatedAt(), user.getUpdatedAt(),
+        return new UserDto(user.getId(), user.getCreatedAt(), user.getUpdatedAt(),
                 user.getName(), user.getEmail(), user.getProfileId(), userStatus.passed());
     }
 
     @Override
-    public List<UserResponseDto> findAll() {
+    public List<UserDto> findAll() {
         return userRepo.findAll().stream()
                 .map(user -> {
                             UserStatus userStatus = userStatusRepo.findByUserId(user.getId())
                                     .orElseThrow(() -> new UserStatusOfUserNotFoundException(user.getId()));
 
-                            return new UserResponseDto(
+                            return new UserDto(
                                     user.getId(),
                                     user.getCreatedAt(),
                                     user.getUpdatedAt(),
@@ -77,7 +78,7 @@ public class BasicUserService implements UserService {
     }
 
     @Override
-    public void update(UUID id, UserUpdateRequestDto dto) {
+    public void update(UUID id, UserUpdateRequest dto) {
         User user = userRepo.findById(id)
                 .orElseThrow(() -> new UserNotFoundException(id));
 

@@ -6,7 +6,7 @@ import jakarta.validation.constraints.Size;
 
 import java.util.UUID;
 
-public record UserUpdateRequestDto(
+public record UserCreateRequest(
 
         @NotBlank(message = "이름은 필수로 기재해야 합니다.")
         String name,
@@ -21,5 +21,4 @@ public record UserUpdateRequestDto(
 
         UUID profileId
 ) {
-
 }

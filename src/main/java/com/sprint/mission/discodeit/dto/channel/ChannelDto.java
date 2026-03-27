@@ -6,7 +6,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
-public record ChannelResponseDto(
+public record ChannelDto(
         UUID id,
         ChannelType channelType,
         String name,
