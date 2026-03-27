@@ -32,17 +32,17 @@ public class BasicUserService implements UserService {
 
     @Override
     public UserDto create(UserCreateRequest dto) {
-        if(userRepo.existsByName(dto.name())) throw new DuplicateNameException(dto.name());
+        if(userRepo.existsByName(dto.username())) throw new DuplicateNameException(dto.username());
         if(userRepo.existsByEmail(dto.email())) throw new DuplicateEmailException(dto.email());
 
-        User user = new User(dto.name(), dto.email(), dto.password(), dto.profileId());
+        User user = new User(dto.username(), dto.email(), dto.password(), dto.profileId());
         userRepo.save(user);
 
         UserStatus userStatus = new UserStatus(user.getId(), Instant.now());
         userStatusRepo.save(userStatus);
 
         return new UserDto(user.getId(), user.getCreatedAt(), user.getUpdatedAt(),
-                user.getName(), user.getEmail(), user.getProfileId(), userStatus.passed());
+                user.getUsername(), user.getEmail(), user.getProfileId(), userStatus.passed());
     }
 
     @Override
@@ -53,7 +53,7 @@ public class BasicUserService implements UserService {
                 .orElseThrow(() -> new UserStatusOfUserNotFoundException(id));
 
         return new UserDto(user.getId(), user.getCreatedAt(), user.getUpdatedAt(),
-                user.getName(), user.getEmail(), user.getProfileId(), userStatus.passed());
+                user.getUsername(), user.getEmail(), user.getProfileId(), userStatus.passed());
     }
 
     @Override
@@ -67,7 +67,7 @@ public class BasicUserService implements UserService {
                                     user.getId(),
                                     user.getCreatedAt(),
                                     user.getUpdatedAt(),
-                                    user.getName(),
+                                    user.getUsername(),
                                     user.getEmail(),
                                     user.getProfileId(),
                                     userStatus.passed()
@@ -82,12 +82,12 @@ public class BasicUserService implements UserService {
         User user = userRepo.findById(id)
                 .orElseThrow(() -> new UserNotFoundException(id));
 
-        if(!user.getName().equals(dto.name()) && userRepo.existsByName(dto.name())) throw new DuplicateNameException(dto.name());
-        if(!user.getEmail().equals(dto.email()) && userRepo.existsByEmail(dto.email())) throw new DuplicateEmailException(dto.email());
+        if(!user.getUsername().equals(dto.newUsername()) && userRepo.existsByName(dto.newUsername())) throw new DuplicateNameException(dto.newUsername());
+        if(!user.getEmail().equals(dto.newEmail()) && userRepo.existsByEmail(dto.newEmail())) throw new DuplicateEmailException(dto.newEmail());
 
-        user.setName(dto.name());
-        user.setEmail(dto.email());
-        user.setPassword(dto.password());
+        user.setUsername(dto.newUsername());
+        user.setEmail(dto.newEmail());
+        user.setPassword(dto.newPassword());
         if(dto.profileId() != null) user.setProfileId(dto.profileId());
         user.update();
 

@@ -25,7 +25,7 @@ public class FileUserRepository extends CommonFileRepository<User> implements Us
     public boolean existsByName(String name) {
         List<User> userList = findAll();
         for(User user : userList) {
-            if(user.getName().equals(name)) {
+            if(user.getUsername().equals(name)) {
                 return true;
             }
         }
@@ -47,7 +47,7 @@ public class FileUserRepository extends CommonFileRepository<User> implements Us
     public Optional<User> findByName(String name) {
         List<User> userList = findAll();
         for(User user : userList) {
-            if(user.getName().equals(name)) {
+            if(user.getUsername().equals(name)) {
                 return Optional.of(user);
             }
         }

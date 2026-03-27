@@ -31,15 +31,15 @@ public class MessageController {
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-    @RequestMapping(value = "/{id}", method = RequestMethod.PATCH)
-    public ResponseEntity<Void> update(@PathVariable UUID id, @Valid @RequestBody MessageUpdateRequest dto) {
-        messageService.update(id, dto);
+    @RequestMapping(value = "/{messageId}", method = RequestMethod.PATCH)
+    public ResponseEntity<Void> update(@PathVariable UUID messageId, @Valid @RequestBody MessageUpdateRequest dto) {
+        messageService.update(messageId, dto);
         return ResponseEntity.ok().build();
     }
 
-    @RequestMapping(value = "/{id}", method = RequestMethod.DELETE)
-    public ResponseEntity<Void> delete(@PathVariable UUID id) {
-        messageService.delete(id);
+    @RequestMapping(value = "/{messageId}", method = RequestMethod.DELETE)
+    public ResponseEntity<Void> delete(@PathVariable UUID messageId) {
+        messageService.delete(messageId);
         return ResponseEntity.noContent().build();
     }
 

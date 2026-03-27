@@ -9,7 +9,7 @@ import java.util.UUID;
 public record UserCreateRequest(
 
         @NotBlank(message = "이름은 필수로 기재해야 합니다.")
-        String name,
+        String username,
 
         @NotBlank(message = "이메일은 필수로 기재해야 합니다.")
         @Email(message = "올바른 이메일 형식이어야 합니다.")

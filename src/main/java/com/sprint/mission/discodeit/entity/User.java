@@ -8,21 +8,21 @@ import java.util.UUID;
 @Getter
 public class User extends UpdatableEntity {
 
-    private String name;
+    private String username;
     private String email;
     private String password;
     private UUID profileId;
 
-    public User(String name, String email, String password, UUID profileId) {
+    public User(String username, String email, String password, UUID profileId) {
         super();
-        this.name = name;
+        this.username = username;
         this.email = email;
         this.password = password;
         this.profileId = profileId;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setUsername(String username) {
+        this.username = username;
     }
 
     public void setEmail(String email) {
@@ -40,7 +40,7 @@ public class User extends UpdatableEntity {
     @Override
     public String toString() {
         return "User{" +
-                "name='" + name + '\'' +
+                "name='" + username + '\'' +
                 ", email='" + email + '\'' +
                 ", password='" + password + '\'' +
                 '}';

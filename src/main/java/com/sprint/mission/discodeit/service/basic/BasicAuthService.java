@@ -24,6 +24,6 @@ public class BasicAuthService implements AuthService {
             throw new InvalidPasswordException();
         }
 
-        return new LoginResponseDto(user.getId(), user.getName(), user.getEmail());
+        return new LoginResponseDto(user.getId(), user.getUsername(), user.getEmail());
     }
 }

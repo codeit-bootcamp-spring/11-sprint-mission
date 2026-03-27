@@ -38,15 +38,15 @@ public class ChannelController {
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-    @RequestMapping(value = "/{id}", method = RequestMethod.PATCH)
-    public ResponseEntity<Void> update(@PathVariable UUID id, @Valid @RequestBody ChannelUpdateRequest dto) {
-        channelService.update(id, dto);
+    @RequestMapping(value = "/{channelId}", method = RequestMethod.PATCH)
+    public ResponseEntity<Void> update(@PathVariable UUID channelId, @Valid @RequestBody ChannelUpdateRequest dto) {
+        channelService.update(channelId, dto);
         return ResponseEntity.ok().build();
     }
 
-    @RequestMapping(value = "/{id}", method = RequestMethod.DELETE)
-    public ResponseEntity<Void> delete(@PathVariable UUID id) {
-        channelService.delete(id);
+    @RequestMapping(value = "/{channelId}", method = RequestMethod.DELETE)
+    public ResponseEntity<Void> delete(@PathVariable UUID channelId) {
+        channelService.delete(channelId);
         return ResponseEntity.noContent().build();
     }
 

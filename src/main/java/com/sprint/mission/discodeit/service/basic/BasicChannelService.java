@@ -46,7 +46,7 @@ public class BasicChannelService implements ChannelService {
         Channel channel = new Channel(ChannelType.PRIVATE, null, null);
         channelRepo.save(channel);
 
-        for(UUID userId : dto.userIdList()) {
+        for(UUID userId : dto.participantIds()) {
             if(readStatusRepo.findByUserIdAndChannelId(userId, channel.getId()).isPresent()) {
                 throw new ReadStatusAlreadyExistsException(userId, channel.getId());
             }
@@ -54,7 +54,7 @@ public class BasicChannelService implements ChannelService {
         }
 
         return new ChannelDto(channel.getId(), ChannelType.PRIVATE, null, null,
-                null, dto.userIdList());
+                null, dto.participantIds());
     }
 
     public ChannelDto findById(UUID id) {
@@ -103,8 +103,8 @@ public class BasicChannelService implements ChannelService {
 
         if(channel.getChannelType() == ChannelType.PRIVATE) throw new PrivateChannelUpdateNotAllowedException();
 
-        channel.setName(dto.name());
-        channel.setDescription(dto.description());
+        channel.setName(dto.newName());
+        channel.setDescription(dto.newDescription());
         channel.update();
 
         channelRepo.save(channel);

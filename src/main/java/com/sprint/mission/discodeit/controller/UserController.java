@@ -33,15 +33,15 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-    @RequestMapping(value = "/{id}", method = RequestMethod.PATCH)
-    public ResponseEntity<Void> update(@PathVariable UUID id, @Valid @RequestBody UserUpdateRequest dto) {
-        userService.update(id, dto);
+    @RequestMapping(value = "/{userId}", method = RequestMethod.PATCH)
+    public ResponseEntity<Void> update(@PathVariable UUID userId, @Valid @RequestBody UserUpdateRequest dto) {
+        userService.update(userId, dto);
         return ResponseEntity.ok().build();
     }
 
-    @RequestMapping(value = "/{id}", method = RequestMethod.DELETE)
-    public ResponseEntity<Void> delete(@PathVariable UUID id) {
-        userService.delete(id);
+    @RequestMapping(value = "/{userId}", method = RequestMethod.DELETE)
+    public ResponseEntity<Void> delete(@PathVariable UUID userId) {
+        userService.delete(userId);
         return ResponseEntity.noContent().build();
     }
 
@@ -50,9 +50,9 @@ public class UserController {
         return ResponseEntity.ok(userService.findAll());
     }
 
-    @RequestMapping(value = "/{id}/userStatus", method = RequestMethod.PATCH)
-    public ResponseEntity<Void> updateStatus(@PathVariable UUID id, @RequestBody UserStatusUpdateRequest dto) {
-        userStatusService.updateByUserId(id, dto);
+    @RequestMapping(value = "/{userId}/userStatus", method = RequestMethod.PATCH)
+    public ResponseEntity<Void> updateStatus(@PathVariable UUID userId, @RequestBody UserStatusUpdateRequest dto) {
+        userStatusService.updateByUserId(userId, dto);
         return ResponseEntity.ok().build();
     }
 }

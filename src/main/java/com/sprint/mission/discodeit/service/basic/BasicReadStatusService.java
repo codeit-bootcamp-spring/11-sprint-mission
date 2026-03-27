@@ -83,6 +83,12 @@ public class BasicReadStatusService implements ReadStatusService {
 
     private ReadStatusDto toDto(ReadStatus readStatus) {
         return new ReadStatusDto(
-                readStatus.getId(), readStatus.getUserId(), readStatus.getChannelId(), readStatus.getLastReadAt());
+                readStatus.getId(),
+                readStatus.getCreatedAt(),
+                readStatus.getUpdatedAt(),
+                readStatus.getUserId(),
+                readStatus.getChannelId(),
+                readStatus.getLastReadAt()
+        );
     }
 }

@@ -65,7 +65,7 @@ public class BasicMessageService implements MessageService {
         Message message = messageRepo.findById(id)
                 .orElseThrow(() -> new MessageNotFoundException(id));
 
-        message.setContents(dto.contents());
+        message.setContents(dto.newContent());
         message.setAttachmentIds(dto.attachmentIds());
         message.update();
 
@@ -89,6 +89,8 @@ public class BasicMessageService implements MessageService {
     private MessageDto toDto(Message message) {
         return new MessageDto(
                 message.getId(),
+                message.getCreatedAt(),
+                message.getUpdatedAt(),
                 message.getContents(),
                 message.getUserId(),
                 message.getChannelId(),

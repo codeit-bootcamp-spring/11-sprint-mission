@@ -19,11 +19,11 @@ import java.util.concurrent.ConcurrentHashMap;
 )
 public class JCFUserRepository extends CommonJCFRepository<User> implements UserRepository {
 
-    private final Map<String, UUID> nameToId;
+    private final Map<String, UUID> usernameToId;
 
     public JCFUserRepository() {
         super();
-        nameToId = new ConcurrentHashMap<>();
+        usernameToId = new ConcurrentHashMap<>();
     }
 
     @Override
@@ -32,24 +32,24 @@ public class JCFUserRepository extends CommonJCFRepository<User> implements User
 
         if(oldUserOpt.isPresent()) {
             User oldUser = oldUserOpt.get();
-            if(!oldUser.getName().equals(obj.getName())) {
-                nameToId.remove(oldUser.getName());
+            if(!oldUser.getUsername().equals(obj.getUsername())) {
+                usernameToId.remove(oldUser.getUsername());
             }
         }
 
         super.save(obj);
-        nameToId.put(obj.getName(), obj.getId());
+        usernameToId.put(obj.getUsername(), obj.getId());
     }
 
     @Override
     public void delete(User obj) {
         super.delete(obj);
-        nameToId.remove(obj.getName());
+        usernameToId.remove(obj.getUsername());
     }
 
     @Override
     public boolean existsByName(String name) {
-        return nameToId.containsKey(name);
+        return usernameToId.containsKey(name);
     }
 
     @Override
@@ -64,8 +64,8 @@ public class JCFUserRepository extends CommonJCFRepository<User> implements User
     }
 
     @Override
-    public Optional<User> findByName(String name) {
-        return findById(nameToId.get(name));
+    public Optional<User> findByName(String username) {
+        return findById(usernameToId.get(username));
     }
 
 }

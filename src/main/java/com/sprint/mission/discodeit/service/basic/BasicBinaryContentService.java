@@ -51,12 +51,14 @@ public class BasicBinaryContentService implements BinaryContentService {
     }
 
     private BinaryContentDto toDto(BinaryContent binaryContent) {
-        String base64 = Base64.getEncoder().encodeToString(binaryContent.getData());
+        String bytes = Base64.getEncoder().encodeToString(binaryContent.getData());
 
         return new BinaryContentDto(
                 binaryContent.getId(),
+                binaryContent.getCreatedAt(),
                 binaryContent.getFileName(),
+                (long) binaryContent.getData().length,
                 binaryContent.getContentType(),
-                base64);
+                bytes);
     }
 }
