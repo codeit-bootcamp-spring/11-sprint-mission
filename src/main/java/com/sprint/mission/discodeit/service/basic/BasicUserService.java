@@ -26,7 +26,7 @@ public class BasicUserService implements UserService {
     private final UserStatusRepository userStatusRepository;
     private final ReadStatusRepository readStatusRepository;
     private static final String EMAIL_REGEX = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$";
-    private static final String PHONE_REGEX = "^\\d{3}-\\d{3}-\\d{4}$";
+    private static final String PHONE_REGEX = "^\\d{3}-\\d{3,4}-\\d{4}$";
 
     @Override
     public UserResponse createUser(UserCreateRequest userCreateRequest, Optional<BinaryContentCreateRequest> binaryContentCreateRequest) {

@@ -56,11 +56,12 @@ public class User extends BaseEntity {
 
     public UserResponse toResponse(BinaryContent profile, UserStatus status) {
         return new UserResponse(
+                this.getId(),
                 this.nickname,
                 this.username,
                 this.email,
                 this.phoneNumber,
-                profile != null ? profile.toResponse() : null,
+                profile != null ? profile.getId() : null,
                 status.toResponse()
         );
     }
