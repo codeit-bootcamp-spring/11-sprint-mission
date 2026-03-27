@@ -26,9 +26,9 @@ public class MessageController {
     private final MessageService messageService;
 
     @RequestMapping(method = RequestMethod.POST)
-    public ResponseEntity<Void> create(@Valid @RequestBody MessageCreateRequest dto) {
-        messageService.create(dto);
-        return ResponseEntity.status(HttpStatus.CREATED).build();
+    public ResponseEntity<MessageDto> create(@Valid @RequestBody MessageCreateRequest dto) {
+        MessageDto result = messageService.create(dto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(result);
     }
 
     @RequestMapping(value = "/{messageId}", method = RequestMethod.PATCH)
@@ -45,7 +45,8 @@ public class MessageController {
 
     @RequestMapping(method = RequestMethod.GET)
     public ResponseEntity<List<MessageDto>> findAllByChannelId(@RequestParam UUID channelId) {
-        return ResponseEntity.ok(messageService.findAllByChannelId(channelId));
+        List<MessageDto> result = messageService.findAllByChannelId(channelId);
+        return ResponseEntity.ok(result);
     }
 
 }

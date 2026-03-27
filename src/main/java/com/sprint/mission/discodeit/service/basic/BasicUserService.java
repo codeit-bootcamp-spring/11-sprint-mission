@@ -88,7 +88,7 @@ public class BasicUserService implements UserService {
         user.setUsername(dto.newUsername());
         user.setEmail(dto.newEmail());
         user.setPassword(dto.newPassword());
-        if(dto.profileId() != null) user.setProfileId(dto.profileId());
+        if(dto.newProfileId() != null) user.setProfileId(dto.newProfileId());
         user.update();
 
         userRepo.save(user);

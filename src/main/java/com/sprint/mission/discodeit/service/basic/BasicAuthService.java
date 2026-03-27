@@ -17,13 +17,13 @@ public class BasicAuthService implements AuthService {
     private final UserRepository userRepo;
 
     public LoginResponseDto login(LoginRequest dto) {
-        User user = userRepo.findByName(dto.name())
-                .orElseThrow(() -> new UserNotFoundException(dto.name()));
+        User user = userRepo.findByName(dto.username())
+                .orElseThrow(() -> new UserNotFoundException(dto.username()));
 
         if(!user.getPassword().equals(dto.password())) {
             throw new InvalidPasswordException();
         }
 
-        return new LoginResponseDto(user.getId(), user.getUsername(), user.getEmail());
+        return new LoginResponseDto(user.getId(), user.getUsername(), user.getEmail(), user.getProfileId());
     }
 }

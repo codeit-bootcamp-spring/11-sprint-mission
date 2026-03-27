@@ -34,10 +34,10 @@ public class BasicMessageService implements MessageService {
         channelRepo.findById(dto.channelId())
                 .orElseThrow(() -> new ChannelNotFoundException(dto.channelId()));
 
-        userRepo.findById(dto.userId())
-                .orElseThrow(() -> new UserNotFoundException(dto.userId()));
+        userRepo.findById(dto.authorId())
+                .orElseThrow(() -> new UserNotFoundException(dto.authorId()));
 
-        Message message = new Message(dto.contents(), dto.userId(), dto.channelId(), dto.attachmentIds());
+        Message message = new Message(dto.content(), dto.authorId(), dto.channelId(), dto.attachmentIds());
         messageRepo.save(message);
         return toDto(message);
     }
@@ -66,7 +66,7 @@ public class BasicMessageService implements MessageService {
                 .orElseThrow(() -> new MessageNotFoundException(id));
 
         message.setContents(dto.newContent());
-        message.setAttachmentIds(dto.attachmentIds());
+        message.setAttachmentIds(dto.newAttachmentIds());
         message.update();
 
         messageRepo.save(message);

@@ -27,15 +27,15 @@ public class ChannelController {
     private final ChannelService channelService;
 
     @RequestMapping(value = "/public", method = RequestMethod.POST)
-    public ResponseEntity<Void> createPublicChannel(@Valid @RequestBody PublicChannelCreateRequest dto) {
-        channelService.createPublicChannel(dto);
-        return ResponseEntity.status(HttpStatus.CREATED).build();
+    public ResponseEntity<ChannelDto> createPublicChannel(@Valid @RequestBody PublicChannelCreateRequest dto) {
+        ChannelDto result = channelService.createPublicChannel(dto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(result);
     }
 
     @RequestMapping(value = "/private", method = RequestMethod.POST)
-    public ResponseEntity<Void> createPrivateChannel(@RequestBody PrivateChannelCreateRequest dto) {
-        channelService.createPrivateChannel(dto);
-        return ResponseEntity.status(HttpStatus.CREATED).build();
+    public ResponseEntity<ChannelDto> createPrivateChannel(@RequestBody PrivateChannelCreateRequest dto) {
+        ChannelDto result = channelService.createPrivateChannel(dto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(result);
     }
 
     @RequestMapping(value = "/{channelId}", method = RequestMethod.PATCH)
@@ -52,7 +52,8 @@ public class ChannelController {
 
     @RequestMapping(method = RequestMethod.GET)
     public ResponseEntity<List<ChannelDto>> findAllByUserId(@RequestParam UUID userId) {
-        return ResponseEntity.ok(channelService.findAllByUserId(userId));
+        List<ChannelDto> result = channelService.findAllByUserId(userId);
+        return ResponseEntity.ok(result);
     }
 
 }

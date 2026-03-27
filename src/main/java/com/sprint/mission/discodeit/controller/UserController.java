@@ -28,9 +28,9 @@ public class UserController {
     private final UserStatusService userStatusService;
 
     @RequestMapping(method = RequestMethod.POST)
-    public ResponseEntity<Void> create(@Valid @RequestBody UserCreateRequest dto) {
-        userService.create(dto);
-        return ResponseEntity.status(HttpStatus.CREATED).build();
+    public ResponseEntity<UserDto> create(@Valid @RequestBody UserCreateRequest dto) {
+        UserDto result = userService.create(dto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(result);
     }
 
     @RequestMapping(value = "/{userId}", method = RequestMethod.PATCH)
@@ -47,7 +47,8 @@ public class UserController {
 
     @RequestMapping(method = RequestMethod.GET)
     public ResponseEntity<List<UserDto>> findAll() {
-        return ResponseEntity.ok(userService.findAll());
+        List<UserDto> result = userService.findAll();
+        return ResponseEntity.ok(result);
     }
 
     @RequestMapping(value = "/{userId}/userStatus", method = RequestMethod.PATCH)

@@ -22,12 +22,14 @@ public class BinaryContentController {
 
     @RequestMapping(value = "/{binaryContentId}", method = RequestMethod.GET)
     public ResponseEntity<BinaryContentDto> find(@PathVariable UUID binaryContentId) {
-        return ResponseEntity.ok(binaryContentService.find(binaryContentId));
+        BinaryContentDto result = binaryContentService.find(binaryContentId);
+        return ResponseEntity.ok(result);
     }
 
     @RequestMapping(method = RequestMethod.GET)
     public ResponseEntity<List<BinaryContentDto>> findAllByIdIn(@RequestParam List<UUID> binaryContentIds) {
-        return ResponseEntity.ok(binaryContentService.findAllByIdIn(binaryContentIds));
+        List<BinaryContentDto> result = binaryContentService.findAllByIdIn(binaryContentIds);
+        return ResponseEntity.ok(result);
     }
 
 }

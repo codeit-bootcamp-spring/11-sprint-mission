@@ -12,6 +12,6 @@ public record MessageUpdateRequest(
         @Size(max = 300, message = "메시지는 300자 이하로 작성해야 합니다.")
         String newContent,
 
-        List<UUID> attachmentIds
+        List<UUID> newAttachmentIds
 ) {
 }

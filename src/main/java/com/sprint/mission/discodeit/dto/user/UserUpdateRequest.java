@@ -19,7 +19,7 @@ public record UserUpdateRequest(
         @Size(min = 4, max = 20, message = "비밀번호는 4자 이상 20자 이하여야 합니다.")
         String newPassword,
 
-        UUID profileId
+        UUID newProfileId
 ) {
 
 }

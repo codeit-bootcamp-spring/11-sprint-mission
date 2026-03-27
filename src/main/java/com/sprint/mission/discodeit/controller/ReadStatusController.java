@@ -25,9 +25,9 @@ public class ReadStatusController {
     private final ReadStatusService readStatusService;
 
     @RequestMapping(method = RequestMethod.POST)
-    public ResponseEntity<Void> create(@RequestBody ReadStatusCreateRequest dto) {
-        readStatusService.create(dto);
-        return ResponseEntity.status(HttpStatus.CREATED).build();
+    public ResponseEntity<ReadStatusDto> create(@RequestBody ReadStatusCreateRequest dto) {
+        ReadStatusDto result = readStatusService.create(dto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(result);
     }
 
     @RequestMapping(value = "/{readStatusId}", method = RequestMethod.PATCH)
@@ -38,7 +38,8 @@ public class ReadStatusController {
 
     @RequestMapping(method = RequestMethod.GET)
     public ResponseEntity<List<ReadStatusDto>> findAllByUserId(@RequestParam UUID userId) {
-        return ResponseEntity.ok(readStatusService.findAllByUserId(userId));
+        List<ReadStatusDto> result = readStatusService.findAllByUserId(userId);
+        return ResponseEntity.ok(result);
     }
 
 }

@@ -4,7 +4,8 @@ import java.util.UUID;
 
 public record LoginResponseDto(
         UUID id,
-        String name,
-        String email
+        String username,
+        String email,
+        UUID profileId
 ) {
 }

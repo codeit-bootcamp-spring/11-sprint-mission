@@ -20,7 +20,8 @@ public class AuthController {
 
     @RequestMapping(value = "/login", method = RequestMethod.POST)
     public ResponseEntity<LoginResponseDto> login(@Valid @RequestBody LoginRequest dto) {
-        return ResponseEntity.ok(authService.login(dto));
+        LoginResponseDto result = authService.login(dto);
+        return ResponseEntity.ok(result);
     }
 
 }
