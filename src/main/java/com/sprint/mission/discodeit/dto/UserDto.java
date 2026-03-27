@@ -13,7 +13,8 @@ public record UserDto(
         String name,
         String email,
         boolean isOnline,
-        Instant lastActiveAt
+        Instant createdAt,
+        Instant updatedAt
 ) {
     public static UserDto from(User user, UserStatus status) {
         return new UserDto(
@@ -22,6 +23,7 @@ public record UserDto(
                 user.getUsername(),
                 user.getEmail(),
                 Optional.ofNullable(status).map(UserStatus::isOnline).orElse(false),
+                Optional.ofNullable(status).map(UserStatus::getCreatedAt).orElse(null),
                 Optional.ofNullable(status).map(UserStatus::getUpdatedAt).orElse(null)
         );
     }

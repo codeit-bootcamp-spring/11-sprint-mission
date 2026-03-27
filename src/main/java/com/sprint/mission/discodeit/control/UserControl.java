@@ -27,7 +27,7 @@ public class UserControl {
         return ResponseEntity.status(HttpStatus.CREATED).body(createdUser);
     }
 
-    @RequestMapping(method = RequestMethod.GET)
+    @RequestMapping(value = "/findAll", method = RequestMethod.GET)
     public ResponseEntity<List<UserDto>> getAllUsers() {
         List<UserDto> users = userService.allReadUser();
         return ResponseEntity.ok(users);

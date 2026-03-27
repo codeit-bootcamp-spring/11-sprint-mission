@@ -5,6 +5,8 @@ import com.sprint.mission.discodeit.dto.CreateMessageRequest;
 import com.sprint.mission.discodeit.dto.MessageResponseDto;
 import com.sprint.mission.discodeit.dto.MessageUpdate;
 import com.sprint.mission.discodeit.entity.Message;
+import com.sprint.mission.discodeit.exception.BusinessLogicException;
+import com.sprint.mission.discodeit.exception.ExceptionCode;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
@@ -31,7 +33,7 @@ public class BasicMessageService implements MessageService {
     @Override
     public MessageResponseDto createMessage(CreateMessageRequest request) {
         if(request.message() == null || request.message().isBlank()) {
-            throw new IllegalArgumentException("메세지 내용은 비어있을 수 없습니다.");
+            throw new BusinessLogicException(ExceptionCode.MESSAGE_CONTENT_EMPTY);
         }
         Message message = Message.builder()
                 .id(UUID.randomUUID())
@@ -60,7 +62,7 @@ public class BasicMessageService implements MessageService {
     @Override
     public Message readMessage(UUID id) {
         return messageRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("해당 메세지가 존재하지 않습니다."));
+                .orElseThrow(() -> new BusinessLogicException(ExceptionCode.MESSAGE_NOT_FOUND));
     }
 
     @Override
@@ -100,11 +102,11 @@ public class BasicMessageService implements MessageService {
     @Override
     public void updateMessage(UUID id, MessageUpdate request) {
         if(request.message() == null || request.message().isBlank()) {
-            throw new IllegalArgumentException("메세지 내용은 비어있을 수 없습니다.");
+            throw new BusinessLogicException(ExceptionCode.MESSAGE_CONTENT_EMPTY);
         }
 
         Message mes = messageRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("수정할 메시지가 존재하지 않습니다."));
+                .orElseThrow(() -> new BusinessLogicException(ExceptionCode.MESSAGE_NOT_FOUND));
         if(mes.getMessage().equals(request.message())) {
             System.out.println("변경사항이 없습니다.");
             return;

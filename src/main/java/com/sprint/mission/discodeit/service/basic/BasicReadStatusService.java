@@ -3,6 +3,8 @@ package com.sprint.mission.discodeit.service.basic;
 import com.sprint.mission.discodeit.dto.ReadStatusCreateDto;
 import com.sprint.mission.discodeit.dto.ReadStatusUpdateDto;
 import com.sprint.mission.discodeit.entity.ReadStatus;
+import com.sprint.mission.discodeit.exception.BusinessLogicException;
+import com.sprint.mission.discodeit.exception.ExceptionCode;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
@@ -24,12 +26,12 @@ public class BasicReadStatusService implements ReadStatusService {
     @Override
     public void createReadStatus(ReadStatusCreateDto statusCreateDto) {
         userRepository.findById(statusCreateDto.authorId())
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자 입니다 👉 " + statusCreateDto.authorId()));
+                .orElseThrow(() -> new BusinessLogicException(ExceptionCode.MEMBER_NOT_FOUND));
         channelRepository.findById(statusCreateDto.channelId())
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 채널 입니다 👉 " + statusCreateDto.channelId()));
+                .orElseThrow(() -> new BusinessLogicException(ExceptionCode.CHANNEL_NOT_FOUND));
 
         readStatusRepository.findByUserIdAndChannelId(statusCreateDto.authorId(), statusCreateDto.channelId())
-                .ifPresent(rs -> {throw new IllegalArgumentException("이미 채널에 대한 읽음 상태가 존재합니다.");});
+                .ifPresent(rs -> {throw new BusinessLogicException(ExceptionCode.READ_STATUS_EXISTS);});
 
         ReadStatus readStatus = ReadStatus.builder()
                 .id(UUID.randomUUID())
@@ -45,7 +47,7 @@ public class BasicReadStatusService implements ReadStatusService {
 
     public ReadStatus findById(UUID id) {
         return readStatusRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("해당 상태 기록이 존재하지 않습니다. ID : " + id));
+                .orElseThrow(() -> new BusinessLogicException(ExceptionCode.READ_STATUS_NOT_FOUND));
     }
 
     @Override
@@ -65,7 +67,7 @@ public class BasicReadStatusService implements ReadStatusService {
     @Override
     public ReadStatus updateStatus(UUID userId, UUID channelId, ReadStatusUpdateDto request) {
         ReadStatus readStatus = readStatusRepository.findByUserIdAndChannelId(userId, channelId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 채널의 수신 정보를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessLogicException(ExceptionCode.READ_STATUS_NOT_FOUND));
 
         readStatus.update(request.lastReadAt());
 

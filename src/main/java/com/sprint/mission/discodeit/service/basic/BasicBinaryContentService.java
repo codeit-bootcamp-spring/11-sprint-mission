@@ -2,6 +2,8 @@ package com.sprint.mission.discodeit.service.basic;
 
 import com.sprint.mission.discodeit.dto.BinaryContentCreateDto;
 import com.sprint.mission.discodeit.entity.BinaryContent;
+import com.sprint.mission.discodeit.exception.BusinessLogicException;
+import com.sprint.mission.discodeit.exception.ExceptionCode;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.service.BinaryContentService;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +20,7 @@ public class BasicBinaryContentService implements BinaryContentService {
     @Override
     public BinaryContent createBinaryContent(BinaryContentCreateDto request) {
         if(request.data() == null || request.data().length == 0) {
-            throw new IllegalArgumentException("파일 데이터가 비어있습니다.");
+            throw new BusinessLogicException(ExceptionCode.FILE_EMPTY);
         }
 
         BinaryContent content = BinaryContent.builder()
@@ -36,7 +38,7 @@ public class BasicBinaryContentService implements BinaryContentService {
     @Override
     public BinaryContent find(UUID id) {
         return binaryContentRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("해당 콘텐츠가 존재하지 않습니다."));
+                .orElseThrow(() -> new BusinessLogicException(ExceptionCode.FILE_NOT_FOUND));
     }
 
     @Override
