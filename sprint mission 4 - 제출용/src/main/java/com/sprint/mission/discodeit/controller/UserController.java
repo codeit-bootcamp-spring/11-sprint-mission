@@ -71,7 +71,7 @@ public class UserController {
     }
 
     // readAllDto
-    @RequestMapping(value = "readAllDto", method = RequestMethod.GET)
+    @RequestMapping(value = "/readAllDto", method = RequestMethod.GET)
     public ResponseEntity<List<UserDto>> readAllDto(){
         return ResponseEntity.ok(userService.readAllDto());
     }

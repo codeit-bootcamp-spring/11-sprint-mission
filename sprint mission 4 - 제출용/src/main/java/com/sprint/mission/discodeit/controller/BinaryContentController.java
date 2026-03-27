@@ -19,8 +19,8 @@ public class BinaryContentController {
 
     // read
     @RequestMapping(value = "/{id}", method = RequestMethod.GET)
-    public ResponseEntity<BinaryContent> read(@PathVariable UUID BinaryContent){
-        return ResponseEntity.ok(binaryContentService.read(BinaryContent));
+    public ResponseEntity<BinaryContent> read(@PathVariable UUID id){
+        return ResponseEntity.ok(binaryContentService.read(id));
     }
 
     // readAllByIdIn
