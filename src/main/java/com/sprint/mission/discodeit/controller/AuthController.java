@@ -20,7 +20,7 @@ public class AuthController {
     private final AuthService authService;
 
     @RequestMapping(
-            value = "/login",
+            path = "login",
             method = RequestMethod.POST
     )
     public ResponseEntity<UserResponse> login(

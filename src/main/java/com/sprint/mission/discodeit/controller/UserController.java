@@ -51,7 +51,7 @@ public class UserController {
     }
 
     @RequestMapping(
-            value = "/{userId}",
+            path = "{userId}",
             method = RequestMethod.PATCH,
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE
     )
@@ -70,7 +70,7 @@ public class UserController {
     }
 
     @RequestMapping(
-            value = "/{userId}",
+            path = "{userId}",
             method = RequestMethod.DELETE
     )
     public ResponseEntity<Void> delete(
@@ -95,7 +95,7 @@ public class UserController {
     }
 
     @RequestMapping(
-            value = "/{userId}/user-status",
+            path = "{userId}/user-status",
             method = RequestMethod.PATCH
     )
     public ResponseEntity<UserStatusResponse> updateUserStatus(
