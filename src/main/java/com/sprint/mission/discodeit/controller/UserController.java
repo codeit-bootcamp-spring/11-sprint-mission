@@ -16,6 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -79,5 +80,16 @@ public class UserController {
         return ResponseEntity
                 .status(HttpStatus.NO_CONTENT)
                 .build();
+    }
+
+    @RequestMapping(
+            method = RequestMethod.GET
+    )
+    public ResponseEntity<List<UserResponse>> findAll() {
+        List<UserResponse> users = this.userService.findAll();
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(users);
     }
 }
