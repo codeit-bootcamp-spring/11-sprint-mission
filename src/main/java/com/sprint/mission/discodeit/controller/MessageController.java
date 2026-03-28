@@ -79,4 +79,17 @@ public class MessageController {
                 .status(HttpStatus.NO_CONTENT)
                 .build();
     }
+
+    @RequestMapping(
+            method = RequestMethod.GET
+    )
+    public ResponseEntity<List<MessageResponse>> findAllByChannelId(
+            @RequestParam(value = "channelId") UUID channelId
+    ) {
+        List<MessageResponse> messages = this.messageService.findAllByChannelId(channelId);
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(messages);
+    }
 }
