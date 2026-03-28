@@ -34,11 +34,14 @@ public class Message extends BaseEntity {
 
     public MessageResponse toResponse(List<BinaryContent> attachments) {
         return new MessageResponse(
+                this.getId(),
+                this.getCreatedAt(),
+                this.getUpdatedAt(),
                 this.content,
                 this.sender.getId(),
                 this.channel.getId(),
                 attachments.stream()
-                        .map(BinaryContent::toResponse)
+                        .map(BinaryContent::getId)
                         .toList()
         );
     }
