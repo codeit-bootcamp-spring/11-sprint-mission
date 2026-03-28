@@ -65,4 +65,18 @@ public class MessageController {
                 .status(HttpStatus.OK)
                 .body(updatedMessage);
     }
+
+    @RequestMapping(
+            path = "{messageId}",
+            method = RequestMethod.DELETE
+    )
+    public ResponseEntity<Void> delete(
+            @PathVariable UUID messageId
+    ) {
+        this.messageService.deleteMessage(messageId);
+
+        return ResponseEntity
+                .status(HttpStatus.NO_CONTENT)
+                .build();
+    }
 }
