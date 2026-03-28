@@ -38,7 +38,7 @@ public class BasicMessageService implements MessageService {
         Channel channel = this.channelRepository.findById(messageCreateRequest.channelId())
                 .orElseThrow(() -> new IllegalArgumentException("requested channel not found. ❌"));
 
-        if (channel.isPrivate() && this.readStatusRepository.existByUserIdAndChannelId(sender.getId(), channel.getId())) {
+        if (channel.isPrivate() && !this.readStatusRepository.existByUserIdAndChannelId(sender.getId(), channel.getId())) {
             throw new IllegalArgumentException("sender cannot send message without channel participation. ❌");
         }
 
