@@ -3,20 +3,20 @@ package com.sprint.mission.discodeit.controller;
 import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentCreateRequest;
 import com.sprint.mission.discodeit.dto.message.MessageCreateRequest;
 import com.sprint.mission.discodeit.dto.message.MessageResponse;
+import com.sprint.mission.discodeit.dto.message.MessageUpdateRequest;
 import com.sprint.mission.discodeit.service.MessageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestPart;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
 
 import java.net.URI;
 import java.util.List;
+import java.util.UUID;
 
 @Slf4j
 @RequestMapping("/api/messages")
@@ -45,5 +45,24 @@ public class MessageController {
         return ResponseEntity
                 .created(location)
                 .body(createdMessage);
+    }
+
+    @RequestMapping(
+            path = "{messageId}",
+            method = RequestMethod.PATCH,
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
+    public ResponseEntity<MessageResponse> update(
+            @PathVariable UUID messageId,
+            @RequestPart(value = "messageUpdateRequest", required = false) MessageUpdateRequest messageUpdateRequest,
+            @RequestPart(value = "attachments", required = false) List<MultipartFile> attachments
+    ) {
+        List<BinaryContentCreateRequest> attachmentsRequest = BinaryContentCreateRequest.listFrom(attachments);
+
+        MessageResponse updatedMessage = this.messageService.updateMessage(messageId, messageUpdateRequest, attachmentsRequest);
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(updatedMessage);
     }
 }

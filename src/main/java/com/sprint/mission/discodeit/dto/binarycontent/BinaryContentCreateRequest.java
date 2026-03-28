@@ -3,6 +3,7 @@ package com.sprint.mission.discodeit.dto.binarycontent;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -31,6 +32,7 @@ public record BinaryContentCreateRequest(
     }
 
     public static List<BinaryContentCreateRequest> listFrom(List<MultipartFile> attachments) {
+        if (attachments == null || attachments.isEmpty()) return new ArrayList<>();
         return attachments.stream()
                 .flatMap(attachment -> BinaryContentCreateRequest.from(attachment).stream())
                 .toList();

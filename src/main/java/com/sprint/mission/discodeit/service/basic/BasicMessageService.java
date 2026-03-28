@@ -73,8 +73,10 @@ public class BasicMessageService implements MessageService {
         Message message = this.messageRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("requested message not found. ❌"));
 
-        if (messageUpdateRequest.content() != null && !messageUpdateRequest.content().isBlank())
-            message.updateContent(messageUpdateRequest.content());
+        if (messageUpdateRequest != null) {
+            if (messageUpdateRequest.content() != null && !messageUpdateRequest.content().isBlank())
+                message.updateContent(messageUpdateRequest.content());
+        }
 
         List<BinaryContent> newAttachments = new ArrayList<>();
         if (binaryContentCreateRequests != null && !binaryContentCreateRequests.isEmpty()) {
