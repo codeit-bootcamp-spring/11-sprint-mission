@@ -36,6 +36,7 @@ public class Channel extends BaseEntity {
 
     public ChannelResponse toResponse(List<Message> messages, List<UUID> participants) {
         return new ChannelResponse(
+                this.getId(),
                 this.name,
                 this.description,
                 this.isPrivate,

@@ -1,10 +1,18 @@
 package com.sprint.mission.discodeit.controller;
 
+import com.sprint.mission.discodeit.dto.channel.ChannelResponse;
+import com.sprint.mission.discodeit.dto.channel.PublicChannelCreateRequest;
 import com.sprint.mission.discodeit.service.ChannelService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
+
+import java.net.URI;
 
 @Slf4j
 @RequestMapping("/api/channels")
@@ -12,4 +20,23 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class ChannelController {
     private final ChannelService channelService;
+
+    @RequestMapping(
+            path = "public",
+            method = RequestMethod.POST
+    )
+    public ResponseEntity<ChannelResponse> create(
+            @RequestBody PublicChannelCreateRequest publicChannelCreateRequest
+    ) {
+        ChannelResponse createdChannel = this.channelService.createPublicChannel(publicChannelCreateRequest);
+        URI location = MvcUriComponentsBuilder
+                .fromController(ChannelController.class)
+                .path("/{id}")
+                .buildAndExpand(createdChannel.id())
+                .toUri();
+
+        return ResponseEntity
+                .created(location)
+                .body(createdChannel);
+    }
 }
