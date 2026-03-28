@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
 
 import java.net.URI;
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -87,5 +88,18 @@ public class ChannelController {
         return ResponseEntity
                 .status(HttpStatus.NO_CONTENT)
                 .build();
+    }
+
+    @RequestMapping(
+            method = RequestMethod.GET
+    )
+    public ResponseEntity<List<ChannelResponse>> findAllByUserId(
+            @RequestParam(value = "userId") UUID userId
+    ) {
+        List<ChannelResponse> channels = this.channelService.findAllByUserId(userId);
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(channels);
     }
 }
