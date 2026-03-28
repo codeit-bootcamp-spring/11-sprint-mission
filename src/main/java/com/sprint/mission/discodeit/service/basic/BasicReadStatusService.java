@@ -2,7 +2,6 @@ package com.sprint.mission.discodeit.service.basic;
 
 import com.sprint.mission.discodeit.dto.readstatus.ReadStatusCreateRequest;
 import com.sprint.mission.discodeit.dto.readstatus.ReadStatusResponse;
-import com.sprint.mission.discodeit.dto.readstatus.ReadStatusUpdateRequest;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.entity.User;
@@ -59,8 +58,8 @@ public class BasicReadStatusService implements ReadStatusService {
     }
 
     @Override
-    public ReadStatusResponse updateReadStatus(ReadStatusUpdateRequest readStatusUpdateRequest) {
-        ReadStatus readStatus = this.readStatusRepository.findById(readStatusUpdateRequest.id())
+    public ReadStatusResponse updateReadStatus(UUID id) {
+        ReadStatus readStatus = this.readStatusRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("requested read status not found. ❌"));
         readStatus.setUpdatedAt();
         this.readStatusRepository.save(readStatus);
