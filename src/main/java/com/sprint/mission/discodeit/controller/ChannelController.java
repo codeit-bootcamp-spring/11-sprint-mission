@@ -10,9 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
 
-import java.net.URI;
 import java.util.List;
 import java.util.UUID;
 
@@ -31,14 +29,9 @@ public class ChannelController {
             @RequestBody PublicChannelCreateRequest publicChannelCreateRequest
     ) {
         ChannelResponse createdChannel = this.channelService.createPublicChannel(publicChannelCreateRequest);
-        URI location = MvcUriComponentsBuilder
-                .fromController(ChannelController.class)
-                .path("/{id}")
-                .buildAndExpand(createdChannel.id())
-                .toUri();
 
         return ResponseEntity
-                .created(location)
+                .status(HttpStatus.CREATED)
                 .body(createdChannel);
     }
 
@@ -50,14 +43,9 @@ public class ChannelController {
             @RequestBody PrivateChannelCreateRequest privateChannelCreateRequest
     ) {
         ChannelResponse createdChannel = this.channelService.createPrivateChannel(privateChannelCreateRequest);
-        URI location = MvcUriComponentsBuilder
-                .fromController(ChannelController.class)
-                .path("/{id}")
-                .buildAndExpand(createdChannel.id())
-                .toUri();
 
         return ResponseEntity
-                .created(location)
+                .status(HttpStatus.CREATED)
                 .body(createdChannel);
     }
 

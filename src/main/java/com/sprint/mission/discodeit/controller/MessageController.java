@@ -12,9 +12,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
 
-import java.net.URI;
 import java.util.List;
 import java.util.UUID;
 
@@ -36,14 +34,9 @@ public class MessageController {
         List<BinaryContentCreateRequest> attachmentsRequest = BinaryContentCreateRequest.listFrom(attachments);
 
         MessageResponse createdMessage = this.messageService.createMessage(messageCreateRequest, attachmentsRequest);
-        URI location = MvcUriComponentsBuilder
-                .fromController(MessageController.class)
-                .path("/{id}")
-                .buildAndExpand(createdMessage.id())
-                .toUri();
 
         return ResponseEntity
-                .created(location)
+                .status(HttpStatus.CREATED)
                 .body(createdMessage);
     }
 
