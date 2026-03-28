@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -43,5 +44,18 @@ public class ReadStatusController {
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .body(updatedReadStatusResponse);
+    }
+
+    @RequestMapping(
+            method = RequestMethod.GET
+    )
+    public ResponseEntity<List<ReadStatusResponse>> findAllByUserId(
+            @RequestParam UUID userId
+    ) {
+        List<ReadStatusResponse> readStatusResponses = this.readStatusService.findAllByUserId(userId);
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(readStatusResponses);
     }
 }
