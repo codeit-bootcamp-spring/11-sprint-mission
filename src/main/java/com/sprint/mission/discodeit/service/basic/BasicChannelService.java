@@ -58,6 +58,9 @@ public class BasicChannelService implements ChannelService {
                 .filter(this.userRepository::existById)
                 .toList();
 
+        if (participants.isEmpty())
+            throw new IllegalArgumentException("no valid participants found. ❌");
+
         participants.forEach(userId -> {
             ReadStatus status = new ReadStatus(userId, channel.getId());
             this.readStatusRepository.save(status);

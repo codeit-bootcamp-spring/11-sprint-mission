@@ -1,6 +1,7 @@
 package com.sprint.mission.discodeit.controller;
 
 import com.sprint.mission.discodeit.dto.channel.ChannelResponse;
+import com.sprint.mission.discodeit.dto.channel.PrivateChannelCreateRequest;
 import com.sprint.mission.discodeit.dto.channel.PublicChannelCreateRequest;
 import com.sprint.mission.discodeit.service.ChannelService;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +30,25 @@ public class ChannelController {
             @RequestBody PublicChannelCreateRequest publicChannelCreateRequest
     ) {
         ChannelResponse createdChannel = this.channelService.createPublicChannel(publicChannelCreateRequest);
+        URI location = MvcUriComponentsBuilder
+                .fromController(ChannelController.class)
+                .path("/{id}")
+                .buildAndExpand(createdChannel.id())
+                .toUri();
+
+        return ResponseEntity
+                .created(location)
+                .body(createdChannel);
+    }
+
+    @RequestMapping(
+            path = "private",
+            method = RequestMethod.POST
+    )
+    public ResponseEntity<ChannelResponse> create(
+            @RequestBody PrivateChannelCreateRequest privateChannelCreateRequest
+    ) {
+        ChannelResponse createdChannel = this.channelService.createPrivateChannel(privateChannelCreateRequest);
         URI location = MvcUriComponentsBuilder
                 .fromController(ChannelController.class)
                 .path("/{id}")

@@ -12,7 +12,7 @@ import java.util.UUID;
 public class Channel extends BaseEntity {
     private String name;
     private String description;
-    private boolean isPrivate;
+    private final boolean isPrivate;
 
     public Channel(PublicChannelCreateRequest publicChannelCreateRequest) {
         this.name = publicChannelCreateRequest.name();
