@@ -17,9 +17,10 @@ public class ReadStatus extends BaseEntity {
 
     public ReadStatusResponse toResponse() {
         return new ReadStatusResponse(
+                this.getId(),
                 userId,
                 channelId,
-                getUpdatedAt()
+                this.getUpdatedAt()
         );
     }
 }
