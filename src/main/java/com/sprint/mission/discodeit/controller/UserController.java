@@ -4,6 +4,7 @@ import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentCreateRequest
 import com.sprint.mission.discodeit.dto.user.UserCreateRequest;
 import com.sprint.mission.discodeit.dto.user.UserResponse;
 import com.sprint.mission.discodeit.dto.user.UserUpdateRequest;
+import com.sprint.mission.discodeit.dto.userstatus.UserStatusResponse;
 import com.sprint.mission.discodeit.service.UserService;
 import com.sprint.mission.discodeit.service.UserStatusService;
 import lombok.RequiredArgsConstructor;
@@ -91,5 +92,19 @@ public class UserController {
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .body(users);
+    }
+
+    @RequestMapping(
+            value = "/{userId}/user-status",
+            method = RequestMethod.PATCH
+    )
+    public ResponseEntity<UserStatusResponse> updateUserStatus(
+            @PathVariable UUID userId
+    ) {
+        UserStatusResponse updatedUserStatus = this.userStatusService.updateUserStatusByUserId(userId);
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(updatedUserStatus);
     }
 }
