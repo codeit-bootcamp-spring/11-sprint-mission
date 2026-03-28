@@ -3,10 +3,12 @@ package com.sprint.mission.discodeit.controller;
 import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentCreateRequest;
 import com.sprint.mission.discodeit.dto.user.UserCreateRequest;
 import com.sprint.mission.discodeit.dto.user.UserResponse;
+import com.sprint.mission.discodeit.dto.user.UserUpdateRequest;
 import com.sprint.mission.discodeit.service.UserService;
 import com.sprint.mission.discodeit.service.UserStatusService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,6 +17,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
 import java.util.Optional;
+import java.util.UUID;
 
 @Slf4j
 @RequestMapping("/api/users")
@@ -43,5 +46,24 @@ public class UserController {
         return ResponseEntity
                 .created(location)
                 .body(createdUser);
+    }
+
+    @RequestMapping(
+            value = "/{userId}",
+            method = RequestMethod.PATCH,
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
+    public ResponseEntity<UserResponse> update(
+            @PathVariable UUID userId,
+            @RequestPart(value = "userUpdateRequest", required = false) UserUpdateRequest userUpdateRequest,
+            @RequestPart(value = "profile", required = false) MultipartFile profile
+    ) {
+        Optional<BinaryContentCreateRequest> profileRequest = BinaryContentCreateRequest.from(profile);
+
+        UserResponse updatedUser = this.userService.updateUser(userId, userUpdateRequest, profileRequest);
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(updatedUser);
     }
 }
