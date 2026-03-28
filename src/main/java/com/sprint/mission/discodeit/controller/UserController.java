@@ -66,4 +66,18 @@ public class UserController {
                 .status(HttpStatus.OK)
                 .body(updatedUser);
     }
+
+    @RequestMapping(
+            value = "/{userId}",
+            method = RequestMethod.DELETE
+    )
+    public ResponseEntity<Void> delete(
+            @PathVariable UUID userId
+    ) {
+        this.userService.deleteUser(userId);
+
+        return ResponseEntity
+                .status(HttpStatus.NO_CONTENT)
+                .build();
+    }
 }
