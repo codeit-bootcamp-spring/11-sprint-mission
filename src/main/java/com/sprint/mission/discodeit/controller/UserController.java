@@ -14,7 +14,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
 
 import java.net.URI;
 import java.util.List;
@@ -40,7 +40,8 @@ public class UserController {
         Optional<BinaryContentCreateRequest> profileRequest = BinaryContentCreateRequest.from(profile);
 
         UserResponse createdUser = this.userService.createUser(userCreateRequest, profileRequest);
-        URI location = ServletUriComponentsBuilder.fromCurrentRequest()
+        URI location = MvcUriComponentsBuilder
+                .fromController(UserController.class)
                 .path("/{id}")
                 .buildAndExpand(createdUser.id())
                 .toUri();
