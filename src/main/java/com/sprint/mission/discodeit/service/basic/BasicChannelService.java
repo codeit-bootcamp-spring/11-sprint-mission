@@ -129,12 +129,13 @@ public class BasicChannelService implements ChannelService {
     // 채널 정보 수정
     @Override
     public ChannelResponseDTO updateChannel(
+            UUID id,
             UpdateChannelRequestDTO dto
     ) {
         // 여기서 고민한 점 빠르게 방장인지 아닌지 체크하는게 좋은 것 같음
 
         // 채널 존재 유무 확인
-        Channel channel = getChannel(dto.channelId());
+        Channel channel = getChannel(id);
 
         if (!channel.isMaster(dto.requestUserId())) {
             throw new BusinessException(ErrorCode.UNAUTHORIZED_ACCESS);
@@ -157,10 +158,11 @@ public class BasicChannelService implements ChannelService {
     // 채널 삭제
     @Override
     public void deleteChannel(
+            UUID id,
             DeleteChannelRequestDTO dto
     ) {
         // 채널 존재 유무 확인
-        Channel channel = getChannel(dto.channelId());
+        Channel channel = getChannel(id);
 
         // 채널에 대한 권환 확인
         channel.verifyChannelUpdate(dto.requestUserId());

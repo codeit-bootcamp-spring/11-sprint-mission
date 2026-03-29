@@ -24,6 +24,28 @@ public class BasicUserService implements UserService {
     private final UserChannelRepository userChannelRepository;
     private final ReadStatusRepository readStatusRepository;
 
+    @Override
+    public List<UserDto> findAllUserDtos() {
+        return userRepository.findAll().stream()
+                .map(user -> {
+                    // UserStatus 조회 로직
+                    boolean isOnline = userStatusRepository.findByUserId(user.getId())
+                            .map(status -> "ONLINE".equals(status.calculateCurrentStatus()))
+                            .orElse(false);
+
+                    return new UserDto(
+                            user.getId(),
+                            user.getCreateAt(),
+                            user.getUpdateAt(),
+                            user.getUsername(),
+                            user.getEmail(),
+                            user.getProfileId(),
+                            isOnline
+                    );
+                })
+                .toList();
+    }
+
     // create
     // 선택적으로 프로필 사진을 같이 첨부할 수 있음
     // - 처음에는 여기서 만드는 걸로 구현을 했는데, 로그인 시 굳이 여기서 만들 필요가 없다고 판단

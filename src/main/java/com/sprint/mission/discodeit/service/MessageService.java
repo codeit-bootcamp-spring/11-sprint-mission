@@ -9,9 +9,9 @@ public interface MessageService {
     // create
     MessageResponseDTO sendMessage(SendMessageRequestDTO dto);
 
-    MessageResponseDTO updateMessage(UpdateMessageRequestDTO dto);
+    MessageResponseDTO updateMessage(UUID is, UpdateMessageRequestDTO dto);
 
     GetAllMessagesResponseDTO getMessagesByChannel(UUID requestUserId, UUID channelId);
 
-    void deleteMessage(DeleteMessageRequestDTO dto);
+    void deleteMessage(UUID id, DeleteMessageRequestDTO dto);
 }

@@ -5,26 +5,34 @@ import com.sprint.mission.discodeit.dto.userstatus.UpdateUserStatusByUserIdRespo
 import com.sprint.mission.discodeit.response.ApiResponse;
 import com.sprint.mission.discodeit.service.UserService;
 import com.sprint.mission.discodeit.service.UserStatusService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/members")
+@RequestMapping("/api/users")
 @RequiredArgsConstructor
-public class MemberController {
+public class UserController {
 
     private final UserService userService;
     private final UserStatusService userStatusService;
 
+    // 심화 요구사항
+    @RequestMapping(value = "/findAll", method = RequestMethod.GET)
+    public ResponseEntity<List<UserDto>> findAllByUserDto() {
+        return ResponseEntity.ok(userService.findAllUserDtos());
+    }
+
     // 사용자 등록
-    @RequestMapping(value = "/", method = RequestMethod.POST)
+    @RequestMapping(value = "", method = RequestMethod.POST)
     public ApiResponse<SignUpResponseDTO> add(
-            @RequestBody SignUpRequestDTO dto
+            @Valid @RequestBody SignUpRequestDTO dto
     ) {
         return ApiResponse.success(userService.signUp(dto));
     }
@@ -33,7 +41,7 @@ public class MemberController {
     @RequestMapping(value = "/{id}", method = RequestMethod.PATCH)
     public ApiResponse<UpdateUserInfoResponseDTO> update(
             @PathVariable UUID id,
-            @RequestBody UpdateUserInfoRequestDTO dto
+            @Valid @RequestBody UpdateUserInfoRequestDTO dto
     ) {
         return ApiResponse.success(userService.updateUserInfo(id, dto));
     }
@@ -54,7 +62,7 @@ public class MemberController {
     }
 
     // 사용자의 온라인 상태를 업데이트 - 단순 업데이트 PATCH
-    @RequestMapping(value = "/{id}/status}", method = RequestMethod.PATCH)
+    @RequestMapping(value = "/{id}/status", method = RequestMethod.PATCH)
     public ApiResponse<UpdateUserStatusByUserIdResponseDTO> updateUserStatus(
             @PathVariable UUID id
     ) {

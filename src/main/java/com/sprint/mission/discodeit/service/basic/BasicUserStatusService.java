@@ -5,6 +5,9 @@ import com.sprint.mission.discodeit.dto.userstatus.UpdateUserStatusByUserIdRespo
 import com.sprint.mission.discodeit.dto.userstatus.UpdateUserStatusRequestDTO;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.entity.UserStatus;
+import com.sprint.mission.discodeit.entity.UserStatusType;
+import com.sprint.mission.discodeit.exception.BusinessException;
+import com.sprint.mission.discodeit.exception.ErrorCode;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.repository.UserStatusRepository;
 import com.sprint.mission.discodeit.service.UserStatusService;
@@ -26,10 +29,10 @@ public class BasicUserStatusService implements UserStatusService {
             CreateUserStatusRequestDTO dto
     ) {
         User user = userRepository.findById(dto.userId())
-                .orElseThrow(() -> new RuntimeException("해당 유저는 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         if (userStatusRepository.findByUserId(user.getId()).isPresent()) {
-            throw new RuntimeException("해당 유저의 UserStatus는 이미 존재합니다.");
+            throw new BusinessException(ErrorCode.USER_STATUS_ALREADY_EXIST);
         }
 
         UserStatus newUserStatus = UserStatus.create(user.getId());
@@ -42,7 +45,7 @@ public class BasicUserStatusService implements UserStatusService {
             UUID userStatusId
     ) {
         return  userStatusRepository.findById(userStatusId)
-                .orElseThrow(() -> new RuntimeException("해당 UserStatus는 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_STATUS_NOT_FOUND));
     }
 
     @Override
@@ -61,14 +64,15 @@ public class BasicUserStatusService implements UserStatusService {
         return userStatusRepository.save(userStatus);
     }
 
-    @Override
+    @Override // 이거 그냥 온라인으로 강제로 업데이트하는 과정이라고 생각하자
     public UpdateUserStatusByUserIdResponseDTO updateByUserId(
             UUID userId
     ) {
         UserStatus userStatus = userStatusRepository.findByUserId(userId)
-                .orElseThrow(() -> new RuntimeException("해당 UserStatus는 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_STATUS_NOT_FOUND));
 
-        userStatus.updateLastOnlineTime();
+        userStatus.updateUserStatusType(UserStatusType.ONLINE);
+
         UpdateUserStatusByUserIdResponseDTO dto = UpdateUserStatusByUserIdResponseDTO.from(userStatusRepository.save(userStatus));
 
         return dto;

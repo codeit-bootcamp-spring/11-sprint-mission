@@ -24,10 +24,10 @@ public interface ChannelService {
     FindChannelsResponseDTO getUserChannels(UUID userId);
 
     // 채널 정보 수정
-    ChannelResponseDTO updateChannel(UpdateChannelRequestDTO dto);
+    ChannelResponseDTO updateChannel(UUID id, UpdateChannelRequestDTO dto);
 
     // 채널 삭제
-    void deleteChannel(DeleteChannelRequestDTO dto);
+    void deleteChannel(UUID id, DeleteChannelRequestDTO dto);
 
     // 채널 가입
     void joinChannel(JoinChannelRequestDTO dto);

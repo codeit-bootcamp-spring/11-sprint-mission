@@ -71,11 +71,12 @@ public class BasicMessageService implements MessageService {
 
     @Override
     public MessageResponseDTO updateMessage(
+            UUID id,
             UpdateMessageRequestDTO dto
     ) {
         // 검증 로직
         // - 메세지 존재 여부
-        Message message = getMessage(dto.messageId());
+        Message message = getMessage(id);
 
         message.verifySender(dto.requestUserId()); // 근데 이걸 여기서 하면 서버 리소스 소모를 안한다는 장점이 있는건 알겠는데, DDD 측면?
 
@@ -113,11 +114,12 @@ public class BasicMessageService implements MessageService {
 
     @Override
     public void deleteMessage(
+            UUID id,
             DeleteMessageRequestDTO dto
     ) {
         // 검증 로직
         // - 메세지 존재 여부
-        Message message = getMessage(dto.messageId());
+        Message message = getMessage(id);
         message.verifySender(dto.requestUserId());
 
         // 없다면 빈 리스트를 들고 있으므로 null 체크 X
@@ -131,13 +133,13 @@ public class BasicMessageService implements MessageService {
 
     private UserChannel userJoinThisChannel(UUID userId, UUID channelId) {
         UserChannel uc = userChannelRepository.findByUserIdAndChannelId(userId, channelId)
-                .orElseThrow(() -> new RuntimeException("가입된 채널에만 메세지를 보낼 수 있습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_JOINED_CHANNEL));
         return uc;
     }
 
     private Message getMessage(UUID messageId) {
         Message message = messageRepository.findById(messageId)
-                .orElseThrow(() -> new RuntimeException("해당 메세지는 존재하지 않습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.MESSAGE_NOT_FOUND));
         return message;
     }
 }
