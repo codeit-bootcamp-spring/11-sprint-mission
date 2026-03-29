@@ -8,6 +8,7 @@ import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.exception.ApiException;
 import com.sprint.mission.discodeit.repository.*;
 import com.sprint.mission.discodeit.service.MessageService;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,8 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+
+import static com.sprint.mission.discodeit.exception.ApiException.ERROR.*;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -31,16 +34,15 @@ public class BasicMessageService implements MessageService {
     @Override
     public MessageResponse createMessage(MessageCreateRequest messageCreateRequest, List<BinaryContentCreateRequest> binaryContentCreateRequests) {
         if (messageCreateRequest.content() == null || messageCreateRequest.content().isBlank())
-            throw new IllegalArgumentException("content is required. ❌");
+            throw new ApiException(MESSAGE_CONTENT_REQUIRED);
 
         User sender = this.userRepository.findById(messageCreateRequest.senderId())
-                .orElseThrow(() -> new IllegalArgumentException("requested sender not found. ❌"));
+                .orElseThrow(() -> new ApiException(USER_NOT_FOUND));
         Channel channel = this.channelRepository.findById(messageCreateRequest.channelId())
-                .orElseThrow(() -> new IllegalArgumentException("requested channel not found. ❌"));
+                .orElseThrow(() -> new ApiException(CHANNEL_NOT_FOUND));
 
-        if (channel.isPrivate() && !this.readStatusRepository.existByUserIdAndChannelId(sender.getId(), channel.getId())) {
-            throw new IllegalArgumentException("sender cannot send message without channel participation. ❌");
-        }
+        if (channel.isPrivate() && !this.readStatusRepository.existByUserIdAndChannelId(sender.getId(), channel.getId()))
+            throw new ApiException(MESSAGE_CHANNEL_ACCESS_REQUIRED);
 
         List<BinaryContent> attachments = new ArrayList<>();
         if (binaryContentCreateRequests != null && !binaryContentCreateRequests.isEmpty()) {
@@ -78,7 +80,7 @@ public class BasicMessageService implements MessageService {
     @Override
     public MessageResponse updateMessage(UUID id, MessageUpdateRequest messageUpdateRequest, List<BinaryContentCreateRequest> binaryContentCreateRequests) {
         Message message = this.messageRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("requested message not found. ❌"));
+                .orElseThrow(() -> new ApiException(MESSAGE_NOT_FOUND));
 
         if (messageUpdateRequest != null) {
             if (messageUpdateRequest.content() != null && !messageUpdateRequest.content().isBlank())
@@ -107,7 +109,7 @@ public class BasicMessageService implements MessageService {
     @Override
     public void deleteMessage(UUID id) {
         Message message = this.messageRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("requested message not found. ❌"));
+                .orElseThrow(() -> new ApiException(MESSAGE_NOT_FOUND));
 
         this.binaryContentRepository.deleteAllByIdIn(message.getAttachmentIds());
         this.messageRepository.delete(message);

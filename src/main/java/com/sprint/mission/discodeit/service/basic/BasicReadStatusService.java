@@ -5,6 +5,7 @@ import com.sprint.mission.discodeit.dto.readstatus.ReadStatusResponse;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.exception.ApiException;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
@@ -15,6 +16,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.UUID;
+
+import static com.sprint.mission.discodeit.exception.ApiException.ERROR.*;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -27,12 +30,12 @@ public class BasicReadStatusService implements ReadStatusService {
     @Override
     public ReadStatusResponse createReadStatus(ReadStatusCreateRequest readStatusCreateRequest) {
         User user = this.userRepository.findById(readStatusCreateRequest.userId())
-                .orElseThrow(() -> new IllegalArgumentException("requested user not found. ❌"));
+                .orElseThrow(() -> new ApiException(USER_NOT_FOUND));
         Channel channel = this.channelRepository.findById(readStatusCreateRequest.channelId())
-                .orElseThrow(() -> new IllegalArgumentException("requested channel not found. ❌"));
+                .orElseThrow(() -> new ApiException(CHANNEL_NOT_FOUND));
 
         if (this.readStatusRepository.existByUserIdAndChannelId(user.getId(), channel.getId())) {
-            throw new IllegalArgumentException("read status has same channel id and user id already exist. ❌");
+            throw new ApiException(READ_STATUS_DUPLICATED);
         }
 
         ReadStatus readStatus = new ReadStatus(user.getId(), channel.getId());
@@ -46,7 +49,7 @@ public class BasicReadStatusService implements ReadStatusService {
     @Override
     public ReadStatusResponse findById(UUID id) {
         return this.toResponse(this.readStatusRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("requested read status not found. ❌")));
+                .orElseThrow(() -> new ApiException(READ_STATUS_NOT_FOUND)));
     }
 
     @Override
@@ -59,7 +62,7 @@ public class BasicReadStatusService implements ReadStatusService {
     @Override
     public ReadStatusResponse updateReadStatus(UUID id) {
         ReadStatus readStatus = this.readStatusRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("requested read status not found. ❌"));
+                .orElseThrow(() -> new ApiException(READ_STATUS_NOT_FOUND));
 
         readStatus.setUpdatedAt();
         this.readStatusRepository.save(readStatus);
@@ -71,7 +74,7 @@ public class BasicReadStatusService implements ReadStatusService {
     @Override
     public void deleteReadStatus(UUID id) {
         ReadStatus readStatus = this.readStatusRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("requested read status not found. ❌"));
+                .orElseThrow(() -> new ApiException(READ_STATUS_NOT_FOUND));
 
         this.readStatusRepository.delete(readStatus);
 

@@ -7,6 +7,7 @@ import com.sprint.mission.discodeit.dto.channel.PublicChannelCreateRequest;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.entity.ReadStatus;
+import com.sprint.mission.discodeit.exception.ApiException;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
@@ -17,12 +18,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.sprint.mission.discodeit.exception.ApiException.ERROR.*;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -36,9 +35,9 @@ public class BasicChannelService implements ChannelService {
     @Override
     public ChannelResponse createPublicChannel(PublicChannelCreateRequest publicChannelCreateRequest) {
         if (publicChannelCreateRequest.name() == null || publicChannelCreateRequest.name().isBlank())
-            throw new IllegalArgumentException("name is required. ❌");
+            throw new ApiException(CHANNEL_NAME_REQUIRED);
         if (this.channelRepository.existByName(publicChannelCreateRequest.name()))
-            throw new IllegalArgumentException("name cannot be duplicated. ❌");
+            throw new ApiException(CHANNEL_NAME_DUPLICATED);
 
         Channel channel = new Channel(publicChannelCreateRequest.name(), publicChannelCreateRequest.description());
         this.channelRepository.save(channel);
@@ -50,7 +49,7 @@ public class BasicChannelService implements ChannelService {
     @Override
     public ChannelResponse createPrivateChannel(PrivateChannelCreateRequest privateChannelCreateRequest) {
         if (privateChannelCreateRequest.participants() == null || privateChannelCreateRequest.participants().isEmpty())
-            throw new IllegalArgumentException("participants is required. ❌");
+            throw new ApiException(CHANNEL_PARTICIPANTS_REQUIRED);
 
         Channel channel = new Channel();
         this.channelRepository.save(channel);
@@ -61,7 +60,7 @@ public class BasicChannelService implements ChannelService {
                 .toList();
 
         if (participants.isEmpty())
-            throw new IllegalArgumentException("no valid participants found. ❌");
+            throw new ApiException(CHANNEL_NO_VALID_PARTICIPANTS);
 
         participants.forEach(userId -> {
             ReadStatus status = new ReadStatus(userId, channel.getId());
@@ -75,7 +74,7 @@ public class BasicChannelService implements ChannelService {
     @Override
     public ChannelResponse findById(UUID id) {
         Channel channel = this.channelRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("requested channel not found. ❌"));
+                .orElseThrow(() -> new ApiException(CHANNEL_NOT_FOUND));
 
         List<Message> messages = this.messageRepository.findAllByChannelId(channel.getId());
         List<UUID> participants = this.readStatusRepository.findAllByChannelId(channel.getId()).stream()
@@ -106,13 +105,11 @@ public class BasicChannelService implements ChannelService {
     @Override
     public ChannelResponse updateChannel(UUID id, ChannelUpdateRequest channelUpdateRequest) {
         Channel channel = this.channelRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("requested channel not found. ❌"));
-
-        if (channel.isPrivate()) throw new IllegalArgumentException("private channel cannot be updated. ❌");
-
+                .orElseThrow(() -> new ApiException(CHANNEL_NOT_FOUND));
+        if (channel.isPrivate()) throw new ApiException(CHANNEL_PRIVATE_UPDATE_FORBIDDEN);
         if (channelUpdateRequest.name() != null && !channelUpdateRequest.name().isBlank()) {
             if (!channel.getName().equals(channelUpdateRequest.name()) && this.channelRepository.existByName(channelUpdateRequest.name()))
-                throw new IllegalArgumentException("name cannot be duplicated. ❌");
+                throw new ApiException(CHANNEL_NAME_DUPLICATED);
             channel.updateName(channelUpdateRequest.name());
         }
 
@@ -132,7 +129,7 @@ public class BasicChannelService implements ChannelService {
     @Override
     public void deleteChannel(UUID id) {
         Channel channel = this.channelRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("requested channel not found. ❌"));
+                .orElseThrow(() -> new ApiException(CHANNEL_NOT_FOUND));
 
         this.messageRepository.deleteAllByChannelId(channel.getId());
 

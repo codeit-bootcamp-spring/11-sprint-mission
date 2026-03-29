@@ -1,34 +1,29 @@
 package com.sprint.mission.discodeit.exception;
 
+import com.sprint.mission.discodeit.dto.common.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import java.util.NoSuchElementException;
+import static com.sprint.mission.discodeit.exception.ApiException.ERROR.COMMON_UNEXPECTED_ERROR;
 
 @ResponseBody
 @ControllerAdvice
 public class GlobalExceptionHandler {
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<String> handleIllegalStateException(IllegalArgumentException e) {
-        return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(e.getMessage());
-    }
 
-    @ExceptionHandler(NoSuchElementException.class)
-    public ResponseEntity<String> handleNoSuchElementException(NoSuchElementException e) {
+    @ExceptionHandler(ApiException.class)
+    public ResponseEntity<ApiResponse<Void>> handleDiscodeitException(ApiException e) {
         return ResponseEntity
-                .status(HttpStatus.NOT_FOUND)
-                .body(e.getMessage());
+                .status(e.getError().getHttpStatus())
+                .body(ApiResponse.error(ErrorResponse.from(e.getError())));
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<String> handleException(Exception e) {
+    public ResponseEntity<ApiResponse<Void>> handleException(Exception e) {
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(e.getMessage());
+                .body(ApiResponse.error(ErrorResponse.from(COMMON_UNEXPECTED_ERROR)));
     }
 }

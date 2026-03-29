@@ -3,6 +3,7 @@ package com.sprint.mission.discodeit.service.basic;
 import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentCreateRequest;
 import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentResponse;
 import com.sprint.mission.discodeit.entity.BinaryContent;
+import com.sprint.mission.discodeit.exception.ApiException;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.service.BinaryContentService;
 import lombok.RequiredArgsConstructor;
@@ -11,6 +12,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.UUID;
+
+import static com.sprint.mission.discodeit.exception.ApiException.ERROR.*;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -30,7 +33,7 @@ public class BasicBinaryContentService implements BinaryContentService {
     @Override
     public BinaryContentResponse findById(UUID id) {
         return this.toResponse(this.binaryContentRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("requested binary content not found. ❌")));
+                .orElseThrow(() -> new ApiException(BINARY_CONTENT_NOT_FOUND)));
     }
 
     @Override
@@ -43,7 +46,7 @@ public class BasicBinaryContentService implements BinaryContentService {
     @Override
     public void deleteBinaryContent(UUID id) {
         BinaryContent binaryContent = this.binaryContentRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("requested binary content not found. ❌"));
+                .orElseThrow(() -> new ApiException(BINARY_CONTENT_NOT_FOUND));
 
         this.binaryContentRepository.delete(binaryContent);
 

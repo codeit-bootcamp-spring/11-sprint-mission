@@ -5,6 +5,7 @@ import com.sprint.mission.discodeit.dto.user.UserResponse;
 import com.sprint.mission.discodeit.dto.userstatus.UserStatusResponse;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.entity.UserStatus;
+import com.sprint.mission.discodeit.exception.ApiException;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.repository.UserStatusRepository;
@@ -14,6 +15,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+
+import static com.sprint.mission.discodeit.exception.ApiException.ERROR.*;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -26,18 +29,18 @@ public class BasicAuthService implements AuthService {
     @Override
     public UserResponse login(AuthLoginRequest authLoginRequest) {
         if (authLoginRequest.username() == null || authLoginRequest.username().isBlank())
-            throw new IllegalArgumentException("username is required. ❌");
+            throw new ApiException(AUTH_USERNAME_REQUIRED);
 
         User user = this.userRepository.findByUsername(authLoginRequest.username())
-                .orElseThrow(() -> new IllegalArgumentException("requested user not found. ❌"));
+                .orElseThrow(() -> new ApiException(USER_NOT_FOUND));
 
         if (authLoginRequest.password() == null || authLoginRequest.password().isBlank())
-            throw new IllegalArgumentException("password is required. ❌");
+            throw new ApiException(AUTH_PASSWORD_REQUIRED);
         if (!authLoginRequest.password().equals(user.getPassword()))
-            throw new IllegalArgumentException("password is not matched. ❌");
+            throw new ApiException(AUTH_INVALID_CREDENTIALS);
 
         UserStatus status = this.userStatusRepository.findByUserId(user.getId())
-                .orElseThrow(() -> new IllegalArgumentException("requested user status not found. ❌"));
+                .orElseThrow(() -> new ApiException(USER_STATUS_NOT_FOUND));
 
         status.setUpdatedAt();
         this.userStatusRepository.save(status);
