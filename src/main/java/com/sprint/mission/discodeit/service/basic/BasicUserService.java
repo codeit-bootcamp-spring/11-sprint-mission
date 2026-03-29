@@ -114,33 +114,38 @@ public class BasicUserService implements UserService {
         User user = this.userRepository.findById(id)
                 .orElseThrow(() -> new ApiException(USER_NOT_FOUND));
 
+        boolean updateNickname = false;
         if (userUpdateRequest.nickname() != null && !userUpdateRequest.nickname().isBlank())
-            user.updateNickname(userUpdateRequest.nickname());
+            updateNickname = true;
 
+        boolean updateUsername = false;
         if (userUpdateRequest.username() != null && !userUpdateRequest.username().isBlank()) {
             if (!user.getUsername().equals(userUpdateRequest.username()) && this.userRepository.existByUsername(userUpdateRequest.username()))
                 throw new ApiException(USER_USERNAME_DUPLICATED);
-            user.updateUsername(userUpdateRequest.username());
+            updateUsername = true;
         }
 
+        boolean updateEmail = false;
         if (userUpdateRequest.email() != null && !userUpdateRequest.email().isBlank()) {
             if (!userUpdateRequest.email().matches(EMAIL_REGEX))
                 throw new ApiException(USER_INVALID_EMAIL_FORMAT);
             if (!user.getEmail().equals(userUpdateRequest.email()) && this.userRepository.existByEmail(userUpdateRequest.email()))
                 throw new ApiException(USER_EMAIL_DUPLICATED);
-            user.updateEmail(userUpdateRequest.email());
+            updateEmail = true;
         }
 
+        boolean updatePassword = false;
         if (userUpdateRequest.password() != null && !userUpdateRequest.password().isBlank()) {
             if (userUpdateRequest.password().length() < 8)
                 throw new ApiException(USER_INVALID_PASSWORD_LENGTH);
-            user.updatePassword(userUpdateRequest.password());
+            updatePassword = true;
         }
 
+        boolean updatePhoneNumber = false;
         if (userUpdateRequest.phoneNumber() != null && !userUpdateRequest.phoneNumber().isBlank()) {
             if (!userUpdateRequest.phoneNumber().matches(PHONE_REGEX))
                 throw new ApiException(USER_INVALID_PHONE_NUMBER_FORMAT);
-            user.updatePhoneNumber(userUpdateRequest.phoneNumber());
+            updatePhoneNumber = true;
         }
 
         BinaryContent profile = user.getProfileId() != null
@@ -152,9 +157,16 @@ public class BasicUserService implements UserService {
             BinaryContentCreateRequest req = binaryContentCreateRequest.get();
             profile = new BinaryContent(req.data(), req.fileName(), req.contentType(), req.size());
             this.binaryContentRepository.save(profile);
-            user.updateProfileId(profile.getId());
         }
 
+        user.update(
+                updateNickname ? userUpdateRequest.nickname() : user.getNickname(),
+                updateUsername ? userUpdateRequest.username() : user.getUsername(),
+                updateEmail ? userUpdateRequest.email() : user.getEmail(),
+                updatePassword ? userUpdateRequest.password() : user.getPassword(),
+                updatePhoneNumber ? userUpdateRequest.phoneNumber() : user.getPhoneNumber(),
+                profile != null ? profile.getId() : user.getProfileId()
+        );
         this.userRepository.save(user);
 
         UserStatus status = this.userStatusRepository.findByUserId(user.getId())
