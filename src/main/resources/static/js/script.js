@@ -15,7 +15,7 @@ async function fetchAndRenderUsers() {
     try {
         const response = await fetch(ENDPOINTS.USERS);
         if (!response.ok) throw new Error('Failed to fetch users');
-        const users = await response.json();
+        const users = (await response.json()).data;
         renderUserList(users);
     } catch (error) {
         console.error('Error fetching users:', error);
@@ -27,10 +27,10 @@ async function fetchUserProfile(profileId) {
     try {
         const response = await fetch(`${ENDPOINTS.BINARY_CONTENT}/${profileId}`);
         if (!response.ok) throw new Error('Failed to fetch profile');
-        const profile = await response.json();
+        const profile = (await response.json()).data;
 
         // Convert base64 encoded bytes to data URL
-        return `data:${profile.contentType};base64,${profile.data}`;
+        return `data:${profile.contentType};base64,${profile.bytes}`;
     } catch (error) {
         console.error('Error fetching profile:', error);
         return '/default-avatar.png'; // Fallback to default avatar

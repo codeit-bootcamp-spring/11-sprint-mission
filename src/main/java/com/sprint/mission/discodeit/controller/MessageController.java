@@ -1,6 +1,7 @@
 package com.sprint.mission.discodeit.controller;
 
 import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentCreateRequest;
+import com.sprint.mission.discodeit.dto.common.ApiResponse;
 import com.sprint.mission.discodeit.dto.message.MessageCreateRequest;
 import com.sprint.mission.discodeit.dto.message.MessageResponse;
 import com.sprint.mission.discodeit.dto.message.MessageUpdateRequest;
@@ -28,7 +29,7 @@ public class MessageController {
             method = RequestMethod.POST,
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE
     )
-    public ResponseEntity<MessageResponse> create(
+    public ResponseEntity<ApiResponse> create(
             @RequestPart(value = "messageCreateRequest") MessageCreateRequest messageCreateRequest,
             @RequestPart(value = "attachments", required = false) List<MultipartFile> attachments
     ) {
@@ -38,7 +39,7 @@ public class MessageController {
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(createdMessage);
+                .body(ApiResponse.ok(createdMessage));
     }
 
     @RequestMapping(
@@ -46,7 +47,7 @@ public class MessageController {
             method = RequestMethod.PATCH,
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE
     )
-    public ResponseEntity<MessageResponse> update(
+    public ResponseEntity<ApiResponse> update(
             @PathVariable UUID messageId,
             @RequestPart(value = "messageUpdateRequest", required = false) MessageUpdateRequest messageUpdateRequest,
             @RequestPart(value = "attachments", required = false) List<MultipartFile> attachments
@@ -57,7 +58,7 @@ public class MessageController {
 
         return ResponseEntity
                 .status(HttpStatus.OK)
-                .body(updatedMessage);
+                .body(ApiResponse.ok(updatedMessage));
     }
 
     @RequestMapping(
@@ -77,13 +78,13 @@ public class MessageController {
     @RequestMapping(
             method = RequestMethod.GET
     )
-    public ResponseEntity<List<MessageResponse>> findAllByChannelId(
+    public ResponseEntity<ApiResponse> findAllByChannelId(
             @RequestParam(value = "channelId") UUID channelId
     ) {
         List<MessageResponse> messages = this.messageService.findAllByChannelId(channelId);
 
         return ResponseEntity
                 .status(HttpStatus.OK)
-                .body(messages);
+                .body(ApiResponse.ok(messages));
     }
 }

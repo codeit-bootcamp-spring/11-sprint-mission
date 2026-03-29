@@ -1,6 +1,7 @@
 package com.sprint.mission.discodeit.controller;
 
 import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentResponse;
+import com.sprint.mission.discodeit.dto.common.ApiResponse;
 import com.sprint.mission.discodeit.service.BinaryContentService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,26 +23,26 @@ public class BinaryContentController {
             path = "{binaryContentId}",
             method = RequestMethod.GET
     )
-    public ResponseEntity<BinaryContentResponse> findById(
+    public ResponseEntity<ApiResponse> findById(
             @PathVariable UUID binaryContentId
     ) {
         BinaryContentResponse binaryContent = this.binaryContentService.findById(binaryContentId);
 
         return ResponseEntity
                 .status(HttpStatus.OK)
-                .body(binaryContent);
+                .body(ApiResponse.ok(binaryContent));
     }
 
     @RequestMapping(
             method = RequestMethod.GET
     )
-    public ResponseEntity<List<BinaryContentResponse>> findAllByIdsIn(
+    public ResponseEntity<ApiResponse> findAllByIdsIn(
             @RequestParam("binaryContentIds") List<UUID> binaryContentIds
     ) {
         List<BinaryContentResponse> binaryContents = this.binaryContentService.findAllByIdIn(binaryContentIds);
 
         return ResponseEntity
                 .status(HttpStatus.OK)
-                .body(binaryContents);
+                .body(ApiResponse.ok(binaryContents));
     }
 }

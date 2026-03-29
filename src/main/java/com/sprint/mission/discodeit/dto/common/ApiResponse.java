@@ -7,6 +7,10 @@ public record ApiResponse<T>(
         T data,
         ErrorResponse error
 ) {
+    public static <T> ApiResponse<T> ok(T data) {
+        return new ApiResponse<>(true, data, null);
+    }
+
     public static ApiResponse<Void> error(ErrorResponse error) {
         return new ApiResponse<>(false, null, error);
     }

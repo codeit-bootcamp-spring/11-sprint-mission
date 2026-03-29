@@ -1,6 +1,7 @@
 package com.sprint.mission.discodeit.controller;
 
 import com.sprint.mission.discodeit.dto.auth.AuthLoginRequest;
+import com.sprint.mission.discodeit.dto.common.ApiResponse;
 import com.sprint.mission.discodeit.dto.user.UserResponse;
 import com.sprint.mission.discodeit.service.AuthService;
 import lombok.RequiredArgsConstructor;
@@ -23,13 +24,13 @@ public class AuthController {
             path = "login",
             method = RequestMethod.POST
     )
-    public ResponseEntity<UserResponse> login(
+    public ResponseEntity<ApiResponse> login(
             @RequestBody AuthLoginRequest authLoginRequest
     ) {
-        UserResponse loginUSer = this.authService.login(authLoginRequest);
+        UserResponse loginUser = this.authService.login(authLoginRequest);
 
         return ResponseEntity
                 .status(HttpStatus.OK)
-                .body(loginUSer);
+                .body(ApiResponse.ok(loginUser));
     }
 }

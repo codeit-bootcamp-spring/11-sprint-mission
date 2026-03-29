@@ -4,6 +4,7 @@ import com.sprint.mission.discodeit.dto.channel.ChannelResponse;
 import com.sprint.mission.discodeit.dto.channel.ChannelUpdateRequest;
 import com.sprint.mission.discodeit.dto.channel.PrivateChannelCreateRequest;
 import com.sprint.mission.discodeit.dto.channel.PublicChannelCreateRequest;
+import com.sprint.mission.discodeit.dto.common.ApiResponse;
 import com.sprint.mission.discodeit.service.ChannelService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,35 +26,35 @@ public class ChannelController {
             path = "public",
             method = RequestMethod.POST
     )
-    public ResponseEntity<ChannelResponse> create(
+    public ResponseEntity<ApiResponse> create(
             @RequestBody PublicChannelCreateRequest publicChannelCreateRequest
     ) {
         ChannelResponse createdChannel = this.channelService.createPublicChannel(publicChannelCreateRequest);
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(createdChannel);
+                .body(ApiResponse.ok(createdChannel));
     }
 
     @RequestMapping(
             path = "private",
             method = RequestMethod.POST
     )
-    public ResponseEntity<ChannelResponse> create(
+    public ResponseEntity<ApiResponse> create(
             @RequestBody PrivateChannelCreateRequest privateChannelCreateRequest
     ) {
         ChannelResponse createdChannel = this.channelService.createPrivateChannel(privateChannelCreateRequest);
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(createdChannel);
+                .body(ApiResponse.ok(createdChannel));
     }
 
     @RequestMapping(
             path = "{channelId}",
             method = RequestMethod.PATCH
     )
-    public ResponseEntity<ChannelResponse> update(
+    public ResponseEntity<ApiResponse> update(
             @PathVariable UUID channelId,
             @RequestBody ChannelUpdateRequest channelUpdateRequest
     ) {
@@ -61,7 +62,7 @@ public class ChannelController {
 
         return ResponseEntity
                 .status(HttpStatus.OK)
-                .body(updatedChannel);
+                .body(ApiResponse.ok(updatedChannel));
     }
 
     @RequestMapping(
@@ -81,13 +82,13 @@ public class ChannelController {
     @RequestMapping(
             method = RequestMethod.GET
     )
-    public ResponseEntity<List<ChannelResponse>> findAllByUserId(
+    public ResponseEntity<ApiResponse> findAllByUserId(
             @RequestParam(value = "userId") UUID userId
     ) {
         List<ChannelResponse> channels = this.channelService.findAllByUserId(userId);
 
         return ResponseEntity
                 .status(HttpStatus.OK)
-                .body(channels);
+                .body(ApiResponse.ok(channels));
     }
 }

@@ -1,6 +1,7 @@
 package com.sprint.mission.discodeit.controller;
 
 import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentCreateRequest;
+import com.sprint.mission.discodeit.dto.common.ApiResponse;
 import com.sprint.mission.discodeit.util.MultipartFileUtil;
 import com.sprint.mission.discodeit.dto.user.UserCreateRequest;
 import com.sprint.mission.discodeit.dto.user.UserResponse;
@@ -32,7 +33,7 @@ public class UserController {
             method = RequestMethod.POST,
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE
     )
-    public ResponseEntity<UserResponse> create(
+    public ResponseEntity<ApiResponse> create(
             @RequestPart(value = "userCreateRequest") UserCreateRequest userCreateRequest,
             @RequestPart(value = "profile", required = false) MultipartFile profile
     ) {
@@ -42,7 +43,7 @@ public class UserController {
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(createdUser);
+                .body(ApiResponse.ok(createdUser));
     }
 
     @RequestMapping(
@@ -50,7 +51,7 @@ public class UserController {
             method = RequestMethod.PATCH,
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE
     )
-    public ResponseEntity<UserResponse> update(
+    public ResponseEntity<ApiResponse> update(
             @PathVariable UUID userId,
             @RequestPart(value = "userUpdateRequest", required = false) UserUpdateRequest userUpdateRequest,
             @RequestPart(value = "profile", required = false) MultipartFile profile
@@ -61,7 +62,7 @@ public class UserController {
 
         return ResponseEntity
                 .status(HttpStatus.OK)
-                .body(updatedUser);
+                .body(ApiResponse.ok(updatedUser));
     }
 
     @RequestMapping(
@@ -81,25 +82,25 @@ public class UserController {
     @RequestMapping(
             method = RequestMethod.GET
     )
-    public ResponseEntity<List<UserResponse>> findAll() {
+    public ResponseEntity<ApiResponse> findAll() {
         List<UserResponse> users = this.userService.findAll();
 
         return ResponseEntity
                 .status(HttpStatus.OK)
-                .body(users);
+                .body(ApiResponse.ok(users));
     }
 
     @RequestMapping(
             path = "{userId}/user-status",
             method = RequestMethod.PATCH
     )
-    public ResponseEntity<UserStatusResponse> updateUserStatus(
+    public ResponseEntity<ApiResponse> updateUserStatus(
             @PathVariable UUID userId
     ) {
         UserStatusResponse updatedUserStatus = this.userStatusService.updateUserStatusByUserId(userId);
 
         return ResponseEntity
                 .status(HttpStatus.OK)
-                .body(updatedUserStatus);
+                .body(ApiResponse.ok(updatedUserStatus));
     }
 }

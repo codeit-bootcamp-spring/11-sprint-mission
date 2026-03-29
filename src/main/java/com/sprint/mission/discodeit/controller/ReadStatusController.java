@@ -1,5 +1,6 @@
 package com.sprint.mission.discodeit.controller;
 
+import com.sprint.mission.discodeit.dto.common.ApiResponse;
 import com.sprint.mission.discodeit.dto.readstatus.ReadStatusCreateRequest;
 import com.sprint.mission.discodeit.dto.readstatus.ReadStatusResponse;
 import com.sprint.mission.discodeit.service.ReadStatusService;
@@ -22,40 +23,40 @@ public class ReadStatusController {
     @RequestMapping(
             method = RequestMethod.POST
     )
-    public ResponseEntity<ReadStatusResponse> create(
+    public ResponseEntity<ApiResponse> create(
             @RequestBody ReadStatusCreateRequest readStatusCreateRequest
     ) {
         ReadStatusResponse createdReadStatusResponse = this.readStatusService.createReadStatus(readStatusCreateRequest);
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(createdReadStatusResponse);
+                .body(ApiResponse.ok(createdReadStatusResponse));
     }
 
     @RequestMapping(
             path = "{readStatusId}",
             method = RequestMethod.PATCH
     )
-    public ResponseEntity<ReadStatusResponse> update(
+    public ResponseEntity<ApiResponse> update(
             @PathVariable UUID readStatusId
     ) {
         ReadStatusResponse updatedReadStatusResponse = this.readStatusService.updateReadStatus(readStatusId);
 
         return ResponseEntity
                 .status(HttpStatus.OK)
-                .body(updatedReadStatusResponse);
+                .body(ApiResponse.ok(updatedReadStatusResponse));
     }
 
     @RequestMapping(
             method = RequestMethod.GET
     )
-    public ResponseEntity<List<ReadStatusResponse>> findAllByUserId(
+    public ResponseEntity<ApiResponse> findAllByUserId(
             @RequestParam UUID userId
     ) {
         List<ReadStatusResponse> readStatusResponses = this.readStatusService.findAllByUserId(userId);
 
         return ResponseEntity
                 .status(HttpStatus.OK)
-                .body(readStatusResponses);
+                .body(ApiResponse.ok(readStatusResponses));
     }
 }
