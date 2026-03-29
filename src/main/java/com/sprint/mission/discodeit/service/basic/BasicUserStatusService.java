@@ -10,12 +10,15 @@ import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.repository.UserStatusRepository;
 import com.sprint.mission.discodeit.service.UserStatusService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
 
 @Service
+@Profile("service-basic")
 @RequiredArgsConstructor
 public class BasicUserStatusService implements UserStatusService {
 
@@ -23,6 +26,7 @@ public class BasicUserStatusService implements UserStatusService {
     private final UserRepository userRepository;
 
     @Override
+    @Transactional
     public void create(UserStatusCreateRequest request) {
         UUID userId = request.getUserId();
 
@@ -42,6 +46,7 @@ public class BasicUserStatusService implements UserStatusService {
     }
 
     @Override
+    @Transactional
     public UserStatus read(UUID id) {
         UserStatus userStatus = userStatusRepository.findById(id);
         if (userStatus == null) {
@@ -51,11 +56,13 @@ public class BasicUserStatusService implements UserStatusService {
     }
 
     @Override
+    @Transactional
     public List<UserStatus> readAll() {
         return userStatusRepository.findAll();
     }
 
     @Override
+    @Transactional
     public void update(UUID id, UserStatusUpdateRequest request) {
         UserStatus userStatus = userStatusRepository.findById(id);
 
@@ -68,6 +75,7 @@ public class BasicUserStatusService implements UserStatusService {
     }
 
     @Override
+    @Transactional
     public void updateByUserId(UUID userId) {
         UserStatus userStatus = userStatusRepository.findAll().stream()
                 .filter(status -> status.getUserId().equals(userId))
@@ -79,6 +87,7 @@ public class BasicUserStatusService implements UserStatusService {
     }
 
     @Override
+    @Transactional
     public void delete(UUID id) {
         if (userStatusRepository.findById(id) == null) {
             throw new UserStatusNotFoundException("삭제할 유저 상태 정보를 찾을 수 없습니다. (ID: " + id + ")");

@@ -14,13 +14,16 @@ import com.sprint.mission.discodeit.service.ChannelService;
 import com.sprint.mission.discodeit.service.MessageService;
 import com.sprint.mission.discodeit.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 @Service
+@Profile("service-basic")
 @RequiredArgsConstructor
 public class BasicUserService implements UserService {
 
@@ -32,6 +35,7 @@ public class BasicUserService implements UserService {
     private final BinaryContentRepository binaryContentRepository;
 
     @Override
+    @Transactional
     public UUID create(UserCreateRequest request) {
 
         // userName, email 중복 검사
@@ -71,6 +75,7 @@ public class BasicUserService implements UserService {
     }
 
     @Override
+    @Transactional
     public UserResponse read(UUID userId) {
         User user = userRepository.findById(userId);
 
@@ -93,6 +98,7 @@ public class BasicUserService implements UserService {
     }
 
     @Override
+    @Transactional
     public List<UserResponse> readAll() {
         List<User> users = userRepository.findAll();
         if (users.isEmpty()) {
@@ -120,6 +126,7 @@ public class BasicUserService implements UserService {
     }
 
     @Override
+    @Transactional
     public void update(UUID userId, UserUpdateRequest request) {
 
         // 수정 대상 탐색
@@ -141,6 +148,7 @@ public class BasicUserService implements UserService {
     }
 
     @Override
+    @Transactional
     public void delete(UUID userId) {
         User user = userRepository.findById(userId);
 

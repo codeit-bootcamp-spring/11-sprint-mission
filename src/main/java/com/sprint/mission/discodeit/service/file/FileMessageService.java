@@ -5,6 +5,9 @@ import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.service.ChannelService;
 import com.sprint.mission.discodeit.service.MessageService;
 import com.sprint.mission.discodeit.service.UserService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Service;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -13,6 +16,9 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Stream;
 
+@Service
+@Profile("service-file")
+@RequiredArgsConstructor
 public class FileMessageService implements MessageService {
 
     private final Path directory;

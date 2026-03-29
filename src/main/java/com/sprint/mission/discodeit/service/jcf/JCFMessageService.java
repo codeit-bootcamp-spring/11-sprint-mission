@@ -5,9 +5,15 @@ import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.service.ChannelService;
 import com.sprint.mission.discodeit.service.MessageService;
 import com.sprint.mission.discodeit.service.UserService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Service;
 
 import java.util.*;
 
+@Service
+@Profile("service-jcf")
+@RequiredArgsConstructor
 public class JCFMessageService implements MessageService {
 
     private final Map<UUID, Message> messageData = new HashMap<>();

@@ -12,12 +12,15 @@ import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.ReadStatusService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
 
 @Service
+@Profile("service-basic")
 @RequiredArgsConstructor
 public class BasicReadStatusService implements ReadStatusService {
 
@@ -26,6 +29,7 @@ public class BasicReadStatusService implements ReadStatusService {
     private final ChannelRepository channelRepository;
 
     @Override
+    @Transactional
     public void create(ReadStatusCreateRequest request) {
         UUID userId = request.getUserId();
         UUID channelId = request.getChannelId();
@@ -49,6 +53,7 @@ public class BasicReadStatusService implements ReadStatusService {
     }
 
     @Override
+    @Transactional
     public ReadStatus read(UUID id) {
         ReadStatus readStatus = readStatusRepository.findById(id);
         if (readStatus == null) {
@@ -58,6 +63,7 @@ public class BasicReadStatusService implements ReadStatusService {
     }
 
     @Override
+    @Transactional
     public List<ReadStatus> readAllByUserId(UUID userId) {
         return readStatusRepository.findAll().stream()
                 .filter(rs -> rs.getUserId().equals(userId))
@@ -65,6 +71,7 @@ public class BasicReadStatusService implements ReadStatusService {
     }
 
     @Override
+    @Transactional
     public void update(UUID id, ReadStatusUpdateRequest request) {
         ReadStatus readStatus = readStatusRepository.findById(id);
         if (readStatus == null) {
@@ -77,6 +84,7 @@ public class BasicReadStatusService implements ReadStatusService {
     }
 
     @Override
+    @Transactional
     public void delete(UUID id) {
         if (readStatusRepository.findById(id) == null) {
             throw new ReadStatusNotFoundException("삭제할 ReadStatus를 찾을 수 없습니다. (ID: " + id + ")");

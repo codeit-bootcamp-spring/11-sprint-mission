@@ -2,6 +2,8 @@ package com.sprint.mission.discodeit.repository.file;
 
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Repository;
 
 import java.io.*;
@@ -14,13 +16,16 @@ import java.util.UUID;
 import java.util.stream.Stream;
 
 @Repository
+@Profile("repo-file")
 public class FileUserRepository implements UserRepository {
 
     private final Path directory;
 
     // 생성자
-    public FileUserRepository() {
-        this.directory = Paths.get(System.getProperty("user.dir"), "data", "users");
+    public FileUserRepository(
+            @Value("${discodeit.repository.file-directory}") String baseDirectory
+    ) {
+        this.directory = Paths.get(baseDirectory, "users");
         initDirectory(this.directory);
     }
 

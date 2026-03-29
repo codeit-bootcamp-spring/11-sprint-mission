@@ -1,10 +1,14 @@
 package com.sprint.mission.discodeit.entity;
 
-import com.sprint.mission.discodeit.util.StringUtil;
+import com.sprint.mission.discodeit.exception.channel.ChannelNotFoundException;
+import com.sprint.mission.discodeit.exception.channel.ChannelOperationException;
+import com.sprint.mission.discodeit.exception.user.InvalidUserRequestException;
 import lombok.Getter;
+import org.springframework.util.StringUtils;
 
 import java.io.Serial;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -29,16 +33,21 @@ public class User extends BaseEntity {
         this.email = email;
     }
 
+    //getter
+    public List<UUID> getJoinedChannelId() {
+        return Collections.unmodifiableList(this.joinedChannelId);
+    }
+
     //업데이트 메소드
     public void update(String userName, String email, String password) {
-        if(StringUtil.isValid(userName) && StringUtil.isValid(email) && StringUtil.isValid(password)){
+        if (StringUtils.hasText(userName) && StringUtils.hasText(email) && StringUtils.hasText(password)){
             this.userName = userName;
             this.email = email;
             this.password = password;
 
             updateTime();
         } else {
-            System.out.println("유저 정보를 갱신에 적절하지 않은 값이 있습니다.");
+            throw new InvalidUserRequestException("유저 정보를 갱신하는데 적절하지 않은 값이 있습니다.");
         }
     }
 
@@ -50,12 +59,10 @@ public class User extends BaseEntity {
     //채널 ID받아서 속한 채널 리스트에 올리기, 리스트에서 삭제하기
     public void joinChannel(UUID channelId){
         if(channelId == null) {
-            System.out.println("채널 id가 null입니다.");
-            return;
+            throw new ChannelNotFoundException("채널 ID는 null일 수 없습니다.");
         }
         if(joinedChannelId.contains(channelId)){
-            System.out.println("이미 채널에 속해있습니다.");
-            return;
+            throw new ChannelOperationException("이미 채널에 속해있습니다.");
         }
         this.joinedChannelId.add(channelId);
         updateTime();
@@ -63,12 +70,10 @@ public class User extends BaseEntity {
 
     public void leaveChannel(UUID channelId){
         if(channelId == null){
-            System.out.println("채널 id가 null입니다.");
-            return;
+            throw new ChannelNotFoundException("채널 ID는 null일 수 없습니다.");
         }
         if(!joinedChannelId.contains(channelId)){
-            System.out.println("이 채널에 속해있지 않습니다.");
-            return;
+            throw new ChannelOperationException("이 채널에 속해있지 않습니다.");
         }
         this.joinedChannelId.remove(channelId);
         updateTime();

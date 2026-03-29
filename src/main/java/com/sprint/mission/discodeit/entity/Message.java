@@ -1,10 +1,12 @@
 package com.sprint.mission.discodeit.entity;
 
-import com.sprint.mission.discodeit.util.StringUtil;
+import com.sprint.mission.discodeit.exception.message.InvalidMessageRequestException;
 import lombok.Getter;
+import org.springframework.util.StringUtils;
 
 import java.io.Serial;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -29,13 +31,18 @@ public class Message extends BaseEntity {
         this.senderId = senderId;
     }
 
+    //getter
+    public List<UUID> getAttachmentIds() {
+        return Collections.unmodifiableList(this.attachmentIds);
+    }
+
     //업데이트 메소드
     public void update(String content) { //channelid, senderid 수정할 일은 없으니 content만 수정하도록 변경함
-        if(StringUtil.isValid(content)){ // 유효한 텍스트인지 검사
+        if(StringUtils.hasText(content)){ // 유효한 텍스트인지 검사
             this.content = content;
             updateTime();
         } else {
-            System.out.println("메시지 내용이 유효하지 않습니다.");
+            throw new InvalidMessageRequestException("메시지 내용이 유효하지 않습니다.");
         }
     }
 

@@ -1,5 +1,6 @@
 package com.sprint.mission.discodeit.dto.message;
 
+import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -11,6 +12,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @NoArgsConstructor
 public class MessageCreateRequest {
+    @NotBlank
     private String content;
     private UUID senderId;
     private UUID channelId;

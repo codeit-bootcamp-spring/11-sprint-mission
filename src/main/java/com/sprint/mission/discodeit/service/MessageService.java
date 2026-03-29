@@ -10,7 +10,7 @@ import java.util.UUID;
 public interface MessageService {
     //create, read, readAll, update, delete
 
-    void create(MessageCreateRequest request);
+    UUID create(MessageCreateRequest request);
     Message read(UUID id);
     List<Message> readAllByChannelId(UUID channelId);
     void update(UUID messageId, MessageUpdateRequest request);
