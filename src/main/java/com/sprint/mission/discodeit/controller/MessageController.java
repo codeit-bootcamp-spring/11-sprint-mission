@@ -5,6 +5,7 @@ import com.sprint.mission.discodeit.dto.message.MessageCreateRequest;
 import com.sprint.mission.discodeit.dto.message.MessageResponse;
 import com.sprint.mission.discodeit.dto.message.MessageUpdateRequest;
 import com.sprint.mission.discodeit.service.MessageService;
+import com.sprint.mission.discodeit.util.MultipartFileUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -31,7 +32,7 @@ public class MessageController {
             @RequestPart(value = "messageCreateRequest") MessageCreateRequest messageCreateRequest,
             @RequestPart(value = "attachments", required = false) List<MultipartFile> attachments
     ) {
-        List<BinaryContentCreateRequest> attachmentsRequest = BinaryContentCreateRequest.listFrom(attachments);
+        List<BinaryContentCreateRequest> attachmentsRequest = MultipartFileUtil.toCreateRequests(attachments);
 
         MessageResponse createdMessage = this.messageService.createMessage(messageCreateRequest, attachmentsRequest);
 
@@ -50,7 +51,7 @@ public class MessageController {
             @RequestPart(value = "messageUpdateRequest", required = false) MessageUpdateRequest messageUpdateRequest,
             @RequestPart(value = "attachments", required = false) List<MultipartFile> attachments
     ) {
-        List<BinaryContentCreateRequest> attachmentsRequest = BinaryContentCreateRequest.listFrom(attachments);
+        List<BinaryContentCreateRequest> attachmentsRequest = MultipartFileUtil.toCreateRequests(attachments);
 
         MessageResponse updatedMessage = this.messageService.updateMessage(messageId, messageUpdateRequest, attachmentsRequest);
 

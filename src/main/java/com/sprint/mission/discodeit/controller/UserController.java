@@ -1,6 +1,7 @@
 package com.sprint.mission.discodeit.controller;
 
 import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentCreateRequest;
+import com.sprint.mission.discodeit.util.MultipartFileUtil;
 import com.sprint.mission.discodeit.dto.user.UserCreateRequest;
 import com.sprint.mission.discodeit.dto.user.UserResponse;
 import com.sprint.mission.discodeit.dto.user.UserUpdateRequest;
@@ -35,7 +36,7 @@ public class UserController {
             @RequestPart(value = "userCreateRequest") UserCreateRequest userCreateRequest,
             @RequestPart(value = "profile", required = false) MultipartFile profile
     ) {
-        Optional<BinaryContentCreateRequest> profileRequest = BinaryContentCreateRequest.from(profile);
+        Optional<BinaryContentCreateRequest> profileRequest = MultipartFileUtil.toCreateRequest(profile);
 
         UserResponse createdUser = this.userService.createUser(userCreateRequest, profileRequest);
 
@@ -54,7 +55,7 @@ public class UserController {
             @RequestPart(value = "userUpdateRequest", required = false) UserUpdateRequest userUpdateRequest,
             @RequestPart(value = "profile", required = false) MultipartFile profile
     ) {
-        Optional<BinaryContentCreateRequest> profileRequest = BinaryContentCreateRequest.from(profile);
+        Optional<BinaryContentCreateRequest> profileRequest = MultipartFileUtil.toCreateRequest(profile);
 
         UserResponse updatedUser = this.userService.updateUser(userId, userUpdateRequest, profileRequest);
 
