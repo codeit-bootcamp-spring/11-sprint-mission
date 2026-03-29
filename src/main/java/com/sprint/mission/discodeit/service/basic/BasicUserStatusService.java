@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -27,27 +28,27 @@ public class BasicUserStatusService implements UserStatusService {
         User user = this.userRepository.findById(userStatusCreateRequest.userId())
                 .orElseThrow(() -> new IllegalArgumentException("requested user not found. ❌"));
 
-        if (this.userStatusRepository.existByUserId(user.getId())) throw new IllegalArgumentException("user status has same user id already exists. ❌");
+        if (this.userStatusRepository.existByUserId(user.getId()))
+            throw new IllegalArgumentException("user status has same user id already exists. ❌");
 
-        UserStatus userStatus = new UserStatus(user);
+        UserStatus userStatus = new UserStatus(user.getId());
         this.userStatusRepository.save(userStatus);
 
         log.info("user status has been created successfully. ✅ [ID: {}]", userStatus.getId());
         log.info("-> {user: {}}", user.getId());
-        return userStatus.toResponse();
+        return this.toResponse(userStatus);
     }
 
     @Override
     public UserStatusResponse findById(UUID id) {
-        return this.userStatusRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("requested user status not found. ❌"))
-                .toResponse();
+        return this.toResponse(this.userStatusRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("requested user status not found. ❌")));
     }
 
     @Override
     public List<UserStatusResponse> findAll() {
         return this.userStatusRepository.findAll().stream()
-                .map(UserStatus::toResponse)
+                .map(this::toResponse)
                 .toList();
     }
 
@@ -60,7 +61,7 @@ public class BasicUserStatusService implements UserStatusService {
         this.userStatusRepository.save(userStatus);
 
         log.info("UserStatus has been updated successfully. ✅ [ID: {}]", userStatus.getId());
-        return userStatus.toResponse();
+        return this.toResponse(userStatus);
     }
 
     @Override
@@ -73,7 +74,7 @@ public class BasicUserStatusService implements UserStatusService {
 
         log.info("UserStatus has been updated successfully. ✅ [ID: {}]", userStatus.getId());
         log.info("-> {user: {}}", userId);
-        return userStatus.toResponse();
+        return this.toResponse(userStatus);
     }
 
     @Override
@@ -84,5 +85,12 @@ public class BasicUserStatusService implements UserStatusService {
         this.userStatusRepository.delete(userStatus);
 
         log.info("UserStatus has been deleted successfully. ✅ [ID: {}]", userStatus.getId());
+    }
+
+    private UserStatusResponse toResponse(UserStatus userStatus) {
+        return new UserStatusResponse(
+                userStatus.getUpdatedAt(),
+                userStatus.getUpdatedAt().isAfter(Instant.now().minusSeconds(5 * 60))
+        );
     }
 }

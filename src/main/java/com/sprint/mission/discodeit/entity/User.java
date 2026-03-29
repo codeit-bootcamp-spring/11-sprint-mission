@@ -1,7 +1,5 @@
 package com.sprint.mission.discodeit.entity;
 
-import com.sprint.mission.discodeit.dto.user.UserCreateRequest;
-import com.sprint.mission.discodeit.dto.user.UserResponse;
 import lombok.Getter;
 
 import java.util.UUID;
@@ -15,13 +13,13 @@ public class User extends BaseEntity {
     private String phoneNumber;
     private UUID profileId;
 
-    public User(UserCreateRequest userCreateRequest, BinaryContent profile) {
-        this.nickname = userCreateRequest.nickname();
-        this.username = userCreateRequest.username();
-        this.email = userCreateRequest.email();
-        this.password = userCreateRequest.password();
-        this.phoneNumber = userCreateRequest.phoneNumber();
-        this.profileId = profile != null ? profile.getId() : null;
+    public User(String nickname, String username, String email, String password, String phoneNumber, UUID profileId) {
+        this.nickname = nickname;
+        this.username = username;
+        this.email = email;
+        this.password = password;
+        this.phoneNumber = phoneNumber;
+        this.profileId = profileId;
     }
 
     public void updateNickname(String nickname) {
@@ -49,20 +47,8 @@ public class User extends BaseEntity {
         this.setUpdatedAt();
     }
 
-    public void updateProfile(BinaryContent profile) {
-        this.profileId = profile.getId();
+    public void updateProfileId(UUID profileId) {
+        this.profileId = profileId;
         this.setUpdatedAt();
-    }
-
-    public UserResponse toResponse(BinaryContent profile, UserStatus status) {
-        return new UserResponse(
-                this.getId(),
-                this.nickname,
-                this.username,
-                this.email,
-                this.phoneNumber,
-                profile != null ? profile.getId() : null,
-                status.toResponse()
-        );
     }
 }

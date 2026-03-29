@@ -1,12 +1,6 @@
 package com.sprint.mission.discodeit.entity;
 
-import com.sprint.mission.discodeit.dto.channel.ChannelResponse;
-import com.sprint.mission.discodeit.dto.channel.PublicChannelCreateRequest;
 import lombok.Getter;
-
-import java.util.Comparator;
-import java.util.List;
-import java.util.UUID;
 
 @Getter
 public class Channel extends BaseEntity {
@@ -14,9 +8,9 @@ public class Channel extends BaseEntity {
     private String description;
     private final boolean isPrivate;
 
-    public Channel(PublicChannelCreateRequest publicChannelCreateRequest) {
-        this.name = publicChannelCreateRequest.name();
-        this.description = publicChannelCreateRequest.description();
+    public Channel(String name, String description) {
+        this.name = name;
+        this.description = description;
         this.isPrivate = false;
     }
 
@@ -32,19 +26,5 @@ public class Channel extends BaseEntity {
     public void updateDescription(String description) {
         this.description = description;
         this.setUpdatedAt();
-    }
-
-    public ChannelResponse toResponse(List<Message> messages, List<UUID> participants) {
-        return new ChannelResponse(
-                this.getId(),
-                this.name,
-                this.description,
-                this.isPrivate,
-                messages.stream()
-                        .map(Message::getCreatedAt)
-                        .max(Comparator.naturalOrder())
-                        .orElse(null),
-                this.isPrivate ? participants : null
-        );
     }
 }

@@ -2,7 +2,7 @@ package com.sprint.mission.discodeit.service.basic;
 
 import com.sprint.mission.discodeit.dto.auth.AuthLoginRequest;
 import com.sprint.mission.discodeit.dto.user.UserResponse;
-import com.sprint.mission.discodeit.entity.BinaryContent;
+import com.sprint.mission.discodeit.dto.userstatus.UserStatusResponse;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.entity.UserStatus;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
@@ -12,6 +12,8 @@ import com.sprint.mission.discodeit.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+
+import java.time.Instant;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -34,16 +36,27 @@ public class BasicAuthService implements AuthService {
         if (!authLoginRequest.password().equals(user.getPassword()))
             throw new IllegalArgumentException("password is not matched. ❌");
 
-        BinaryContent profile = user.getProfileId() != null
-                ? this.binaryContentRepository.findById(user.getProfileId())
-                .orElseThrow(() -> new IllegalArgumentException("requested binary content not found. ❌"))
-                : null;
-
         UserStatus status = this.userStatusRepository.findByUserId(user.getId())
                 .orElseThrow(() -> new IllegalArgumentException("requested user status not found. ❌"));
+
         status.setUpdatedAt();
         this.userStatusRepository.save(status);
 
-        return user.toResponse(profile, status);
+        return this.toResponse(user, status);
+    }
+
+    private UserResponse toResponse(User user, UserStatus status) {
+        return new UserResponse(
+                user.getId(),
+                user.getNickname(),
+                user.getUsername(),
+                user.getEmail(),
+                user.getPhoneNumber(),
+                user.getProfileId(),
+                new UserStatusResponse(
+                        status.getUpdatedAt(),
+                        status.getUpdatedAt().isAfter(Instant.now().minusSeconds(5 * 60))
+                )
+        );
     }
 }

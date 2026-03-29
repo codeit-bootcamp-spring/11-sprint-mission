@@ -45,26 +45,33 @@ public class BasicMessageService implements MessageService {
         List<BinaryContent> attachments = new ArrayList<>();
         if (binaryContentCreateRequests != null && !binaryContentCreateRequests.isEmpty()) {
             attachments = binaryContentCreateRequests.stream()
-                    .map(binaryContentCreateRequest -> {
-                        BinaryContent attachment = new BinaryContent(binaryContentCreateRequest);
+                    .map(req -> {
+                        BinaryContent attachment = new BinaryContent(req.data(), req.fileName(), req.contentType(), req.size());
                         this.binaryContentRepository.save(attachment);
                         return attachment;
                     })
                     .toList();
         }
 
-        Message message = new Message(messageCreateRequest, sender, channel, attachments);
+        Message message = new Message(
+                messageCreateRequest.content(),
+                sender.getId(),
+                channel.getId(),
+                attachments.stream()
+                        .map(BinaryContent::getId)
+                        .toList()
+        );
         this.messageRepository.save(message);
 
         log.info("Message has been created successfully. ✅ [ID: {}]", message.getId());
         log.info("-> {channel: {}, sender: {}, content: {}}", channel.isPrivate() ? '-' : channel.getName(), sender.getNickname(), message.getContent());
-        return message.toResponse(attachments);
+        return this.toResponse(message);
     }
 
     @Override
     public List<MessageResponse> findAllByChannelId(UUID channelId) {
         return this.messageRepository.findAllByChannelId(channelId).stream()
-                .map(message -> message.toResponse(this.binaryContentRepository.findAllByIdIn(message.getAttachments())))
+                .map(this::toResponse)
                 .toList();
     }
 
@@ -80,10 +87,10 @@ public class BasicMessageService implements MessageService {
 
         List<BinaryContent> newAttachments = new ArrayList<>();
         if (binaryContentCreateRequests != null && !binaryContentCreateRequests.isEmpty()) {
-            this.binaryContentRepository.deleteAllByIdIn(message.getAttachments());
+            this.binaryContentRepository.deleteAllByIdIn(message.getAttachmentIds());
             newAttachments = binaryContentCreateRequests.stream()
-                    .map(binaryContentCreateRequest -> {
-                        BinaryContent attachment = new BinaryContent(binaryContentCreateRequest);
+                    .map(req -> {
+                        BinaryContent attachment = new BinaryContent(req.data(), req.fileName(), req.contentType(), req.size());
                         this.binaryContentRepository.save(attachment);
                         return attachment;
                     })
@@ -94,7 +101,7 @@ public class BasicMessageService implements MessageService {
         this.messageRepository.save(message);
 
         log.info("Message has been updated successfully. ✅ [ID: {}]", id);
-        return message.toResponse(this.binaryContentRepository.findAllByIdIn(message.getAttachments()));
+        return this.toResponse(message);
     }
 
     @Override
@@ -102,9 +109,21 @@ public class BasicMessageService implements MessageService {
         Message message = this.messageRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("requested message not found. ❌"));
 
-        this.binaryContentRepository.deleteAllByIdIn(message.getAttachments());
+        this.binaryContentRepository.deleteAllByIdIn(message.getAttachmentIds());
         this.messageRepository.delete(message);
 
         log.info("Message has been deleted successfully. ✅ [ID: {}]", id);
+    }
+
+    private MessageResponse toResponse(Message message) {
+        return new MessageResponse(
+                message.getId(),
+                message.getCreatedAt(),
+                message.getUpdatedAt(),
+                message.getContent(),
+                message.getSenderId(),
+                message.getChannelId(),
+                message.getAttachmentIds()
+        );
     }
 }

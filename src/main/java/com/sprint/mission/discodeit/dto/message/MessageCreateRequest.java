@@ -7,3 +7,4 @@ public record MessageCreateRequest(
         UUID senderId,
         UUID channelId
 ) {}
+

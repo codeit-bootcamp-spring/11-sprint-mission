@@ -16,7 +16,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -38,11 +40,11 @@ public class BasicChannelService implements ChannelService {
         if (this.channelRepository.existByName(publicChannelCreateRequest.name()))
             throw new IllegalArgumentException("name cannot be duplicated. ❌");
 
-        Channel channel = new Channel(publicChannelCreateRequest);
+        Channel channel = new Channel(publicChannelCreateRequest.name(), publicChannelCreateRequest.description());
         this.channelRepository.save(channel);
 
         log.info("{} channel has been created successfully. ✅ [ID: {}]", channel.getName(), channel.getId());
-        return channel.toResponse(new ArrayList<>(), new ArrayList<>());
+        return this.toResponse(channel, new ArrayList<>(), new ArrayList<>());
     }
 
     @Override
@@ -67,18 +69,20 @@ public class BasicChannelService implements ChannelService {
         });
 
         log.info("private channel has been created successfully. ✅ [ID: {}]", channel.getId());
-        return channel.toResponse(new ArrayList<>(), participants);
+        return this.toResponse(channel, new ArrayList<>(), participants);
     }
 
     @Override
     public ChannelResponse findById(UUID id) {
         Channel channel = this.channelRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("requested channel not found. ❌"));
+
         List<Message> messages = this.messageRepository.findAllByChannelId(channel.getId());
         List<UUID> participants = this.readStatusRepository.findAllByChannelId(channel.getId()).stream()
                 .map(ReadStatus::getUserId)
                 .toList();
-        return channel.toResponse(messages, participants);
+
+        return this.toResponse(channel, messages, participants);
     }
 
     @Override
@@ -94,7 +98,7 @@ public class BasicChannelService implements ChannelService {
                     List<UUID> participants = this.readStatusRepository.findAllByChannelId(channel.getId()).stream()
                             .map(ReadStatus::getUserId)
                             .toList();
-                    return channel.toResponse(messages, participants);
+                    return this.toResponse(channel, messages, participants);
                 })
                 .toList();
     }
@@ -122,7 +126,7 @@ public class BasicChannelService implements ChannelService {
                 .toList();
 
         log.info("{} channel has been updated successfully. ✅ [ID: {}]", channel.getName(), channel.getId());
-        return channel.toResponse(messages, participants);
+        return this.toResponse(channel, messages, participants);
     }
 
     @Override
@@ -131,9 +135,26 @@ public class BasicChannelService implements ChannelService {
                 .orElseThrow(() -> new IllegalArgumentException("requested channel not found. ❌"));
 
         this.messageRepository.deleteAllByChannelId(channel.getId());
+
         this.readStatusRepository.deleteAllByChannelId(channel.getId());
+
         this.channelRepository.delete(channel);
 
         log.info("{} channel has been deleted successfully. ✅ [ID: {}]", channel.getName(), id);
+    }
+
+    private ChannelResponse toResponse(Channel channel, List<Message> messages, List<UUID> participants) {
+        Instant lastMessageAt = messages.stream()
+                .map(Message::getCreatedAt)
+                .max(Comparator.naturalOrder())
+                .orElse(null);
+        return new ChannelResponse(
+                channel.getId(),
+                channel.getName(),
+                channel.getDescription(),
+                channel.isPrivate(),
+                lastMessageAt,
+                channel.isPrivate() ? participants : null
+        );
     }
 }

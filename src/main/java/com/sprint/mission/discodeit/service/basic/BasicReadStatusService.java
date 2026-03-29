@@ -40,20 +40,19 @@ public class BasicReadStatusService implements ReadStatusService {
 
         log.info("read status has been created successfully. ✅ [ID: {}]", readStatus.getId());
         log.info("-> {user: {}, channel: {}}", user.getId(), channel.getId());
-        return readStatus.toResponse();
+        return this.toResponse(readStatus);
     }
 
     @Override
     public ReadStatusResponse findById(UUID id) {
-        return this.readStatusRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("requested read status not found. ❌"))
-                .toResponse();
+        return this.toResponse(this.readStatusRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("requested read status not found. ❌")));
     }
 
     @Override
     public List<ReadStatusResponse> findAllByUserId(UUID userId) {
         return this.readStatusRepository.findAllByUserId(userId).stream()
-                .map(ReadStatus::toResponse)
+                .map(this::toResponse)
                 .toList();
     }
 
@@ -61,11 +60,12 @@ public class BasicReadStatusService implements ReadStatusService {
     public ReadStatusResponse updateReadStatus(UUID id) {
         ReadStatus readStatus = this.readStatusRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("requested read status not found. ❌"));
+
         readStatus.setUpdatedAt();
         this.readStatusRepository.save(readStatus);
 
         log.info("read status has been updated successfully. ✅ [ID: {}]", readStatus.getId());
-        return readStatus.toResponse();
+        return this.toResponse(readStatus);
     }
 
     @Override
@@ -76,5 +76,14 @@ public class BasicReadStatusService implements ReadStatusService {
         this.readStatusRepository.delete(readStatus);
 
         log.info("read status has been deleted successfully. ✅ [ID: {}]", readStatus.getId());
+    }
+
+    private ReadStatusResponse toResponse(ReadStatus readStatus) {
+        return new ReadStatusResponse(
+                readStatus.getId(),
+                readStatus.getUserId(),
+                readStatus.getChannelId(),
+                readStatus.getUpdatedAt()
+        );
     }
 }

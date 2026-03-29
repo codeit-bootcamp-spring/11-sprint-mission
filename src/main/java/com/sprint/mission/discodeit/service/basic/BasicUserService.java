@@ -4,6 +4,7 @@ import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentCreateRequest
 import com.sprint.mission.discodeit.dto.user.UserCreateRequest;
 import com.sprint.mission.discodeit.dto.user.UserResponse;
 import com.sprint.mission.discodeit.dto.user.UserUpdateRequest;
+import com.sprint.mission.discodeit.dto.userstatus.UserStatusResponse;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.entity.UserStatus;
@@ -13,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -57,44 +59,46 @@ public class BasicUserService implements UserService {
 
         BinaryContent profile = null;
         if (binaryContentCreateRequest.isPresent()) {
-            profile = new BinaryContent(binaryContentCreateRequest.get());
+            BinaryContentCreateRequest req = binaryContentCreateRequest.get();
+            profile = new BinaryContent(req.data(), req.fileName(), req.contentType(), req.size());
             this.binaryContentRepository.save(profile);
         }
 
-        User user = new User(userCreateRequest, profile);
+        User user = new User(
+                userCreateRequest.nickname(),
+                userCreateRequest.username(),
+                userCreateRequest.email(),
+                userCreateRequest.password(),
+                userCreateRequest.phoneNumber(),
+                profile != null ? profile.getId() : null
+        );
         this.userRepository.save(user);
 
-        UserStatus status = new UserStatus(user);
+        UserStatus status = new UserStatus(user.getId());
         this.userStatusRepository.save(status);
 
         log.info("{} has been created successfully. ✅ [ID: {}]", user.getNickname(), user.getId());
-        return user.toResponse(profile, status);
+        return this.toResponse(user, status);
     }
 
     @Override
     public UserResponse findById(UUID id) {
         User user = this.userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("requested user not found. ❌"));
-        BinaryContent profile = user.getProfileId() != null
-                ? this.binaryContentRepository.findById(user.getProfileId())
-                .orElseThrow(() -> new IllegalArgumentException("requested binary content not found. ❌"))
-                : null;
+
         UserStatus status = this.userStatusRepository.findByUserId(user.getId())
                 .orElseThrow(() -> new IllegalArgumentException("requested user status not found. ❌"));
-        return user.toResponse(profile, status);
+
+        return this.toResponse(user, status);
     }
 
     @Override
     public List<UserResponse> findAll() {
         return this.userRepository.findAll().stream()
                 .map(user -> {
-                    BinaryContent profile = user.getProfileId() != null
-                            ? this.binaryContentRepository.findById(user.getProfileId())
-                            .orElseThrow(() -> new IllegalArgumentException("requested binary content not found. ❌"))
-                            : null;
                     UserStatus status = this.userStatusRepository.findByUserId(user.getId())
                             .orElseThrow(() -> new IllegalArgumentException("requested user status not found. ❌"));
-                    return user.toResponse(profile, status);
+                    return this.toResponse(user, status);
                 })
                 .toList();
     }
@@ -106,11 +110,13 @@ public class BasicUserService implements UserService {
 
         if (userUpdateRequest.nickname() != null && !userUpdateRequest.nickname().isBlank())
             user.updateNickname(userUpdateRequest.nickname());
+
         if (userUpdateRequest.username() != null && !userUpdateRequest.username().isBlank()) {
             if (!user.getUsername().equals(userUpdateRequest.username()) && this.userRepository.existByUsername(userUpdateRequest.username()))
                 throw new IllegalArgumentException("username cannot be duplicated. ❌");
             user.updateUsername(userUpdateRequest.username());
         }
+
         if (userUpdateRequest.email() != null && !userUpdateRequest.email().isBlank()) {
             if (!userUpdateRequest.email().matches(EMAIL_REGEX))
                 throw new IllegalArgumentException("email format is invalid. ❌");
@@ -118,11 +124,13 @@ public class BasicUserService implements UserService {
                 throw new IllegalArgumentException("email cannot be duplicated. ❌");
             user.updateEmail(userUpdateRequest.email());
         }
+
         if (userUpdateRequest.password() != null && !userUpdateRequest.password().isBlank()) {
             if (userUpdateRequest.password().length() < 8)
                 throw new IllegalArgumentException("password length should be at least 8 characters. ❌");
             user.updatePassword(userUpdateRequest.password());
         }
+
         if (userUpdateRequest.phoneNumber() != null && !userUpdateRequest.phoneNumber().isBlank()) {
             if (!userUpdateRequest.phoneNumber().matches(PHONE_REGEX))
                 throw new IllegalArgumentException("phone number format is invalid. ❌");
@@ -135,20 +143,22 @@ public class BasicUserService implements UserService {
                 : null;
         if (binaryContentCreateRequest.isPresent()) {
             if (profile != null) this.binaryContentRepository.delete(profile);
-            profile = new BinaryContent(binaryContentCreateRequest.get());
+            BinaryContentCreateRequest req = binaryContentCreateRequest.get();
+            profile = new BinaryContent(req.data(), req.fileName(), req.contentType(), req.size());
             this.binaryContentRepository.save(profile);
-            user.updateProfile(profile);
+            user.updateProfileId(profile.getId());
         }
 
         this.userRepository.save(user);
 
         UserStatus status = this.userStatusRepository.findByUserId(user.getId())
                 .orElseThrow(() -> new IllegalArgumentException("requested user status not found. ❌"));
+
         status.setUpdatedAt();
         this.userStatusRepository.save(status);
 
         log.info("{} has been updated successfully. ✅ [ID: {}]", user.getNickname(), id);
-        return user.toResponse(profile, status);
+        return this.toResponse(user, status);
     }
 
     @Override
@@ -164,6 +174,7 @@ public class BasicUserService implements UserService {
 
         UserStatus status = this.userStatusRepository.findByUserId(user.getId())
                 .orElseThrow(() -> new IllegalArgumentException("requested user status not found. ❌"));
+
         this.userStatusRepository.delete(status);
 
         this.readStatusRepository.deleteAllByUserId(user.getId());
@@ -171,5 +182,20 @@ public class BasicUserService implements UserService {
         this.userRepository.delete(user);
 
         log.info("{} has been deleted successfully. ✅ [ID: {}]", user.getNickname(), id);
+    }
+
+    private UserResponse toResponse(User user, UserStatus status) {
+        return new UserResponse(
+                user.getId(),
+                user.getNickname(),
+                user.getUsername(),
+                user.getEmail(),
+                user.getPhoneNumber(),
+                user.getProfileId(),
+                new UserStatusResponse(
+                        status.getUpdatedAt(),
+                        status.getUpdatedAt().isAfter(Instant.now().minusSeconds(5 * 60))
+                )
+        );
     }
 }

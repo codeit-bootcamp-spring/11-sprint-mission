@@ -19,25 +19,24 @@ public class BasicBinaryContentService implements BinaryContentService {
     private final BinaryContentRepository binaryContentRepository;
 
     @Override
-    public BinaryContentResponse createBinaryContent(BinaryContentCreateRequest binaryContentCreateRequest) {
-        BinaryContent binaryContent = new BinaryContent(binaryContentCreateRequest);
+    public BinaryContentResponse createBinaryContent(BinaryContentCreateRequest req) {
+        BinaryContent binaryContent = new BinaryContent(req.data(), req.fileName(), req.contentType(), req.size());
         this.binaryContentRepository.save(binaryContent);
 
         log.info("binary content has been created successfully. ✅ [ID: {}]", binaryContent.getId());
-        return binaryContent.toResponse();
+        return this.toResponse(binaryContent);
     }
 
     @Override
     public BinaryContentResponse findById(UUID id) {
-        BinaryContent binaryContent = this.binaryContentRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("requested binary content not found. ❌"));
-        return binaryContent.toResponse();
+        return this.toResponse(this.binaryContentRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("requested binary content not found. ❌")));
     }
 
     @Override
     public List<BinaryContentResponse> findAllByIdIn(List<UUID> ids) {
         return this.binaryContentRepository.findAllByIdIn(ids).stream()
-                .map(BinaryContent::toResponse)
+                .map(this::toResponse)
                 .toList();
     }
 
@@ -49,5 +48,14 @@ public class BasicBinaryContentService implements BinaryContentService {
         this.binaryContentRepository.delete(binaryContent);
 
         log.info("binary content has been deleted successfully. ✅ [ID: {}]", binaryContent.getId());
+    }
+
+    private BinaryContentResponse toResponse(BinaryContent binaryContent) {
+        return new BinaryContentResponse(
+                binaryContent.getData(),
+                binaryContent.getFileName(),
+                binaryContent.getContentType(),
+                binaryContent.getSize()
+        );
     }
 }
