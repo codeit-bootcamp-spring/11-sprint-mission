@@ -1,3 +1,29 @@
 spring:
   application:
     name: discodeit
+
+  profiles:
+    active: service-basic, repo-file
+
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    default-property-inclusion: non_null
+
+server:
+  port: 8080
+  servlet:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+
+logging:
+  level:
+    root: INFO
+    com.sprint.mission.discodeit: DEBUG
+
+discodeit:
+  repository:
+    file-directory: data
+

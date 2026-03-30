@@ -19,13 +19,16 @@ import com.sprint.mission.discodeit.service.ChannelService;
 import com.sprint.mission.discodeit.service.MessageService;
 import com.sprint.mission.discodeit.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 @Service
+@Profile("service-basic")
 @RequiredArgsConstructor
 public class BasicChannelService implements ChannelService {
 
@@ -37,6 +40,7 @@ public class BasicChannelService implements ChannelService {
     private final ReadStatusRepository readStatusRepository;
 
     @Override
+    @Transactional
     public UUID createPublicChannel(PublicChannelCreateRequest request) {
         if (request.getAdminId() == null) {
             throw new InvalidChannelRequestException("공개 채널 생성 실패: 관리자(Admin) ID가 누락되었습니다.");
@@ -58,6 +62,7 @@ public class BasicChannelService implements ChannelService {
     }
 
     @Override
+    @Transactional
     public UUID createPrivateChannel(PrivateChannelCreateRequest request) {
         if (request.getAdminId() == null) {
             throw new InvalidChannelRequestException("비공개 채널 생성 실패: 관리자(Admin) ID가 누락되었습니다.");
@@ -122,6 +127,7 @@ public class BasicChannelService implements ChannelService {
     }
 
     @Override
+    @Transactional
     public ChannelResponse read(UUID channelId) {
         Channel channel = channelRepository.findById(channelId);
         if (channel != null) {
@@ -132,6 +138,7 @@ public class BasicChannelService implements ChannelService {
     }
 
     @Override
+    @Transactional
     public List<ChannelResponse> findAllByUserId(UUID userId) {
         List<Channel> channels = channelRepository.findAll();
         if (channels.isEmpty()) {
@@ -149,6 +156,7 @@ public class BasicChannelService implements ChannelService {
     }
 
     @Override
+    @Transactional
     public void update(UUID channelId, ChannelUpdateRequest request) {
         Channel channel = channelRepository.findById(channelId);
 
@@ -165,6 +173,7 @@ public class BasicChannelService implements ChannelService {
     }
 
     @Override
+    @Transactional
     public void delete(UUID channelId) {
         if (channelId == null) throw new InvalidChannelRequestException("삭제할 채널 ID가 누락되었습니다.");
 
@@ -202,6 +211,7 @@ public class BasicChannelService implements ChannelService {
     }
 
     @Override
+    @Transactional
     public void deleteChannelByAdmin(UUID adminId) {
         List<UUID> channelsToDelete = channelRepository.findAll().stream()
                 .filter(channel -> channel.getAdminId().equals(adminId))
@@ -214,6 +224,7 @@ public class BasicChannelService implements ChannelService {
     }
 
     @Override
+    @Transactional
     public void addUserToChannel(UUID userId, UUID channelId) {
         if (userId == null || channelId == null) {
             throw new InvalidChannelRequestException("채널에 유저를 추가하기 위한 정보가 누락되었습니다.");
@@ -235,6 +246,7 @@ public class BasicChannelService implements ChannelService {
     }
 
     @Override
+    @Transactional
     public void removeUserFromChannel(UUID userId, UUID channelId) {
         if (userId == null || channelId == null) {
             throw new InvalidChannelRequestException("채널에서 유저를 제거하기 위한 정보가 누락되었습니다.");

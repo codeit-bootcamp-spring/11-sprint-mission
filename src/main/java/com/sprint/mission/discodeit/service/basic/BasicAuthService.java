@@ -10,9 +10,12 @@ import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.repository.UserStatusRepository;
 import com.sprint.mission.discodeit.service.AuthService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Profile("service-basic")
 @RequiredArgsConstructor
 public class BasicAuthService implements AuthService {
 
@@ -20,6 +23,7 @@ public class BasicAuthService implements AuthService {
     private final UserStatusRepository userStatusRepository;
 
     @Override
+    @Transactional
     public UserResponse login(LoginRequest request) {
         if (request.getUserName() == null || request.getUserName().isBlank() ||
                 request.getPassword() == null || request.getPassword().isBlank()) {

@@ -7,18 +7,22 @@ import com.sprint.mission.discodeit.exception.binaryContent.InvalidBinaryContent
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.service.BinaryContentService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
 
 @Service
+@Profile("service-basic")
 @RequiredArgsConstructor
 public class BasicBinaryContentService implements BinaryContentService {
 
     private final BinaryContentRepository binaryContentRepository;
 
     @Override
+    @Transactional
     public void create(BinaryContentCreateRequest request) {
         byte[] bytes = request.getBytes();
         String fileName = request.getFileName();
@@ -39,6 +43,7 @@ public class BasicBinaryContentService implements BinaryContentService {
     }
 
     @Override
+    @Transactional
     public BinaryContent read(UUID id) {
         if (id == null) {
             throw new InvalidBinaryContentRequestException("조회할 파일의 ID가 입력되지 않았습니다.");
@@ -52,6 +57,7 @@ public class BasicBinaryContentService implements BinaryContentService {
     }
 
     @Override
+    @Transactional
     public List<BinaryContent> readAllByIdIn(List<UUID> ids) {
         if (ids == null || ids.isEmpty()) {
             return List.of();
@@ -63,6 +69,7 @@ public class BasicBinaryContentService implements BinaryContentService {
     }
 
     @Override
+    @Transactional
     public void delete(UUID id) {
         if (id == null) {
             throw new InvalidBinaryContentRequestException("삭제할 파일의 ID가 입력되지 않았습니다.");

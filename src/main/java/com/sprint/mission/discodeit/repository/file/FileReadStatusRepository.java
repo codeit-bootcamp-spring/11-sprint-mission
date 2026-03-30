@@ -2,6 +2,8 @@ package com.sprint.mission.discodeit.repository.file;
 
 import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Repository;
 
 import java.io.*;
@@ -14,12 +16,15 @@ import java.util.UUID;
 import java.util.stream.Stream;
 
 @Repository
+@Profile("repo-file")
 public class FileReadStatusRepository implements ReadStatusRepository {
 
     private final Path directory;
 
-    public FileReadStatusRepository() {
-        this.directory = Paths.get(System.getProperty("user.dir"), "data", "read-statuses");
+    public FileReadStatusRepository(
+            @Value("${discodeit.repository.file-directory}") String baseDirectory
+    ) {
+        this.directory = Paths.get(baseDirectory, "read-statuses");
         initDirectory(this.directory);
     }
 

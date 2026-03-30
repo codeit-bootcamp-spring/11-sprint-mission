@@ -2,6 +2,8 @@ package com.sprint.mission.discodeit.repository.file;
 
 import com.sprint.mission.discodeit.entity.UserStatus;
 import com.sprint.mission.discodeit.repository.UserStatusRepository;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Repository;
 
 import java.io.*;
@@ -14,12 +16,15 @@ import java.util.UUID;
 import java.util.stream.Stream;
 
 @Repository
+@Profile("repo-file")
 public class FileUserStatusRepository implements UserStatusRepository {
 
     private final Path directory;
 
-    public FileUserStatusRepository() {
-        this.directory = Paths.get(System.getProperty("user.dir"), "data", "user-statuses");
+    public FileUserStatusRepository(
+            @Value("${discodeit.repository.file-directory}") String baseDirectory
+    ) {
+        this.directory = Paths.get(baseDirectory, "user-statuses");
         initDirectory(this.directory);
     }
 

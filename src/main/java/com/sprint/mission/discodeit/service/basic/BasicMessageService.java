@@ -16,13 +16,16 @@ import com.sprint.mission.discodeit.service.ChannelService;
 import com.sprint.mission.discodeit.service.MessageService;
 import com.sprint.mission.discodeit.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
+@Profile("service-basic")
 @RequiredArgsConstructor
 public class BasicMessageService implements MessageService {
 
@@ -33,7 +36,8 @@ public class BasicMessageService implements MessageService {
     private final BinaryContentRepository binaryContentRepository;
 
     @Override
-    public void create(MessageCreateRequest request) {
+    @Transactional
+    public UUID create(MessageCreateRequest request) {
         if (userRepository.findById(request.getSenderId()) == null) {
             throw new UserNotFoundException("메시지 생성 실패: 발송자 ID를 찾을 수 없습니다.");
         }
@@ -59,9 +63,12 @@ public class BasicMessageService implements MessageService {
 
         messageRepository.save(message);
         System.out.println("메시지가 성공적으로 생성되었습니다.");
+        
+        return message.getId();
     }
 
     @Override
+    @Transactional
     public Message read(UUID id) {
         Message message = messageRepository.findById(id);
         if (message == null) {
@@ -71,6 +78,7 @@ public class BasicMessageService implements MessageService {
     }
 
     @Override
+    @Transactional
     public List<Message> readAllByChannelId(UUID channelId) {
         return messageRepository.findAll().stream()
                 .filter(message -> message.getChannelId().equals(channelId))
@@ -84,6 +92,7 @@ public class BasicMessageService implements MessageService {
     }
 
     @Override
+    @Transactional
     public void update(UUID messageId, MessageUpdateRequest request) {
         Message message = messageRepository.findById(messageId);
         if (message == null) {
@@ -98,6 +107,7 @@ public class BasicMessageService implements MessageService {
     }
 
     @Override
+    @Transactional
     public void delete(UUID id) {
         Message message = messageRepository.findById(id);
         if (message == null) {
@@ -112,6 +122,7 @@ public class BasicMessageService implements MessageService {
     }
 
     @Override
+    @Transactional
     public void clearMessagesInChannel(UUID channelId) {
         // 채널 내 모든 메시지 삭제
         List<Message> channelMessages = this.readAllByChannelId(channelId);
@@ -119,6 +130,7 @@ public class BasicMessageService implements MessageService {
     }
 
     @Override
+    @Transactional
     public void clearMessagesByUser(UUID userId) {
         // 유저가 쓴 모든 메시지 삭제
         List<Message> userMessages = this.readAllBySenderId(userId);

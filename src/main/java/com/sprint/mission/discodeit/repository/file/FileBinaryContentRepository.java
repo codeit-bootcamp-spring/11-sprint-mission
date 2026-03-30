@@ -2,6 +2,8 @@ package com.sprint.mission.discodeit.repository.file;
 
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Repository;
 
 import java.io.*;
@@ -14,12 +16,15 @@ import java.util.UUID;
 import java.util.stream.Stream;
 
 @Repository
+@Profile("repo-file")
 public class FileBinaryContentRepository implements BinaryContentRepository {
 
     private final Path directory;
 
-    public FileBinaryContentRepository() {
-        this.directory = Paths.get(System.getProperty("user.dir"), "data", "binary-contents");
+    public FileBinaryContentRepository(
+            @Value("${discodeit.repository.file-directory}") String baseDirectory
+    ) {
+        this.directory = Paths.get(baseDirectory, "binary-contents");
         initDirectory(this.directory);
     }
 
