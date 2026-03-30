@@ -1,18 +1,115 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>사용자 목록</title>
-    <link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Discodeit - Users</title>
+  <link rel="stylesheet" href="styles.css"/>
 </head>
 <body>
 <div class="container">
-    <h1>사용자 목록</h1>
-    <div class="user-list" id="userList">
-        <!-- Users will be dynamically inserted here -->
-    </div>
+  <h1>사용자</h1>
+
+  <section class="panel">
+    <h2>유저 생성 (프로필 사진 업로드 가능)</h2>
+    <form id="createUserForm" class="form">
+      <label>
+        <span>userName</span>
+        <input name="userName" required/>
+      </label>
+
+      <label>
+        <span>userEmail</span>
+        <input name="userEmail" type="email" required/>
+      </label>
+
+      <label>
+        <span>userPassword</span>
+        <input name="userPassword" type="password" required/>
+      </label>
+
+      <label>
+        <span>profile (optional)</span>
+        <input name="profile" type="file" accept="image/*"/>
+      </label>
+
+      <button type="submit">Create</button>
+    </form>
+    <pre id="createUserResult" class="result" aria-live="polite"></pre>
+  </section>
+
+  <section class="panel">
+    <h2>유저 수정 (프로필 사진 업로드 가능)</h2>
+    <form id="updateUserForm" class="form">
+      <label>
+        <span>userId (UUID)</span>
+        <input name="id" required/>
+      </label>
+
+      <label>
+        <span>userName</span>
+        <input name="userName" required/>
+      </label>
+
+      <label>
+        <span>userEmail</span>
+        <input name="userEmail" type="email" required/>
+      </label>
+
+      <label>
+        <span>userPassword</span>
+        <input name="userPassword" type="password" required/>
+      </label>
+
+      <label>
+        <span>profile (optional)</span>
+        <input name="profile" type="file" accept="image/*"/>
+      </label>
+
+      <button type="submit">Update</button>
+    </form>
+    <pre id="updateUserResult" class="result" aria-live="polite"></pre>
+  </section>
+
+  <section class="panel">
+    <h2>메시지 생성 (첨부파일 업로드 가능)</h2>
+    <form id="createMessageForm" class="form">
+      <label>
+        <span>content</span>
+        <input name="content" required/>
+      </label>
+
+      <label>
+        <span>authorId (UUID)</span>
+        <input name="authorId" required/>
+      </label>
+
+      <label>
+        <span>channelId (UUID)</span>
+        <input name="channelId" required/>
+      </label>
+
+      <label>
+        <span>receiverId (UUID, optional)</span>
+        <input name="receiverId"/>
+      </label>
+
+      <label>
+        <span>file (optional)</span>
+        <input name="file" type="file"/>
+      </label>
+
+      <button type="submit">Send</button>
+    </form>
+    <pre id="createMessageResult" class="result" aria-live="polite"></pre>
+  </section>
+
+  <section class="panel">
+    <h2>유저 목록</h2>
+    <div class="user-list" id="userList"></div>
+  </section>
 </div>
+
 <script src="script.js"></script>
 </body>
 </html>
