@@ -11,8 +11,8 @@ import java.util.*;
 @Repository
 public class FileReadStatusRepository extends FileRepository<ReadStatus> implements ReadStatusRepository {
 
-    private final Map<UUID, List<UUID>> userIdIndex = new HashMap<>();
-    private final Map<UUID, List<UUID>> channelIdIndex = new HashMap<>();
+    private final Map<UUID, Set<UUID>> userIdIndex = new HashMap<>();
+    private final Map<UUID, Set<UUID>> channelIdIndex = new HashMap<>();
 
     protected FileReadStatusRepository(@Value("${app.data.readstatus-path}")String filePath) {
         super(filePath);
@@ -42,15 +42,15 @@ public class FileReadStatusRepository extends FileRepository<ReadStatus> impleme
     }
 
     private void addToIndex(ReadStatus rs) {
-        userIdIndex.computeIfAbsent(rs.getUserId(), k -> new ArrayList<>()).add(rs.getId());
-        channelIdIndex.computeIfAbsent(rs.getChannelId(), k -> new ArrayList<>()).add(rs.getId());
+        userIdIndex.computeIfAbsent(rs.getUserId(), k -> new HashSet<>()).add(rs.getId());
+        channelIdIndex.computeIfAbsent(rs.getChannelId(), k -> new HashSet<>()).add(rs.getId());
     }
 
-    private void removeFromIndex(Map<UUID, List<UUID>> index, UUID key, UUID value) {
-        List<UUID> list = index.get(key);
-        if (list != null) {
-            list.remove(value);
-            if (list.isEmpty())
+    private void removeFromIndex(Map<UUID, Set<UUID>> index, UUID key, UUID value) {
+        Set<UUID> set = index.get(key);
+        if (set != null) {
+            set.remove(value);
+            if (set.isEmpty())
                 index.remove(key);
         }
     }
@@ -59,10 +59,11 @@ public class FileReadStatusRepository extends FileRepository<ReadStatus> impleme
     public List<ReadStatus> findByUserId(UUID userId) {
         readLock.lock();
         try {
-            List<UUID> list = userIdIndex.getOrDefault(userId, Collections.emptyList());
-            return list.stream()
-                    .map(super::findById)
-                    .flatMap(Optional::stream)
+            Set<UUID> set = userIdIndex.getOrDefault(userId, Collections.emptySet());
+            return set.stream()
+                    .map(dataMap::get)
+                    .filter(Objects::nonNull)
+                    .map(rs -> (ReadStatus) rs.copy())
                     .toList();
         } finally {
             readLock.unlock();
@@ -73,10 +74,11 @@ public class FileReadStatusRepository extends FileRepository<ReadStatus> impleme
     public List<ReadStatus> findByChannelId(UUID channelId) {
         readLock.lock();
         try {
-            List<UUID> list = channelIdIndex.getOrDefault(channelId, Collections.emptyList());
-            return list.stream()
-                    .map(super::findById)
-                    .flatMap(Optional::stream)
+            Set<UUID> set = channelIdIndex.getOrDefault(channelId, Collections.emptySet());
+            return set.stream()
+                    .map(dataMap::get)
+                    .filter(Objects::nonNull)
+                    .map(rs -> (ReadStatus) rs.copy())
                     .toList();
         } finally {
             readLock.unlock();

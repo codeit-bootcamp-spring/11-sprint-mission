@@ -19,29 +19,36 @@
 
         protected FileUserRepository(@Value("${app.data.user-path}") String filePath) {
             super(filePath);
-            postLoad(); // 이거 추후 어떻게 바꿀 수 있을 것 같은데 고민 중 (Lazy Loading?) / 현재 인덱스 생성 관련 문제있음을 인지
+            postLoad();
         }
 
         @Override
         protected void postLoad() {
             for (User user : dataMap.values()) {
-                emailIndex.put(user.getEmail(), user.getId());
-                usernameIndex.put(user.getUsername(), user.getId());
+                addToIndex(user);
             }
         }
 
         @Override
         protected void postSave(User newEntity, User oldEntity) {
-            if (oldEntity != null) { // 기존 인덱스 삭제
+            if (oldEntity != null) {
                 postDelete(oldEntity);
             }
 
-            emailIndex.put(newEntity.getEmail(), newEntity.getId());
-            usernameIndex.put(newEntity.getUsername(), newEntity.getId());
+            addToIndex(newEntity);
         }
 
         @Override
         protected void postDelete(User entity) {
+            removeFromIndex(entity);
+        }
+
+        private void addToIndex(User newEntity) {
+            emailIndex.put(newEntity.getEmail(), newEntity.getId());
+            usernameIndex.put(newEntity.getUsername(), newEntity.getId());
+        }
+
+        private void removeFromIndex(User entity) {
             emailIndex.remove(entity.getEmail());
             usernameIndex.remove(entity.getUsername());
         }
@@ -74,10 +81,3 @@
             }
         }
     }
-
-    /*
-    > 발견한 문제점: update 시 인덱스 갱신의 문제
-    - old -> new
-    - new로 갱신되서 인덱스에 추가 생성되는 것은 확인 (앞 단에서 email 중복을 막고 있어서 중복은 걱정하지 않아도 되는 문제)
-    - 단, old가 현재 인덱스에서 남아있게 됨
-     */

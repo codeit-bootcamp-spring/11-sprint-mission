@@ -15,9 +15,9 @@ import java.util.UUID;
 public class Message extends BaseEntity {
 
     private String content;
-    private UUID channelId;
-    private UUID userId;
-    private List<UUID> attachmentIds;
+    private final UUID channelId;
+    private final UUID userId;
+    private List<UUID> attachmentIds; // Set?
 
     private Message(String content, UUID channelId, UUID userId, List<UUID> attachmentIds) {
         super();
@@ -44,7 +44,7 @@ public class Message extends BaseEntity {
         return new Message(content, channelId, userId, attachmentIds);
     }
 
-    // 이하 로직
+    // 도메인 로직
     public void updateContent(String newContent, UUID requestUserId, List<UUID> attachmentIds) {
         verifySender(requestUserId);
         this.content = newContent;

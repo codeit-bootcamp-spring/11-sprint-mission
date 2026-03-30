@@ -11,8 +11,8 @@ import java.util.UUID;
 @ToString(callSuper = true)
 public class ReadStatus extends BaseEntity {
 
-    private UUID userId;
-    private UUID channelId;
+    private final UUID userId;
+    private final UUID channelId;
     private Instant lastReadAt;
 
     private ReadStatus(UUID userId, UUID channelId, Instant lastReadAt) {

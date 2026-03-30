@@ -11,13 +11,13 @@ import java.util.*;
 @Repository
 public class FileMessageRepository extends FileRepository<Message> implements MessageRepository {
 
+    private final Map<UUID, Set<UUID>> userToMessagesIndex = new HashMap<>();
+    private final Map<UUID, Set<UUID>> channelToMessagesIndex = new HashMap<>();
+
     protected FileMessageRepository(@Value("${app.data.message-path}") String filePath) {
         super(filePath);
         postLoad();
     }
-
-    private final Map<UUID, List<UUID>> userToMessagesIndex = new HashMap<>();
-    private final Map<UUID, List<UUID>> channelToMessagesIndex = new HashMap<>();
 
     @Override
     protected void postLoad() {
@@ -42,28 +42,28 @@ public class FileMessageRepository extends FileRepository<Message> implements Me
     }
 
     private void addToIndex(Message m) {
-        userToMessagesIndex.computeIfAbsent(m.getUserId(), k -> new ArrayList<>()).add(m.getId());
-        channelToMessagesIndex.computeIfAbsent(m.getChannelId(), k -> new ArrayList<>()).add(m.getId());
+        userToMessagesIndex.computeIfAbsent(m.getUserId(), k -> new HashSet<>()).add(m.getId());
+        channelToMessagesIndex.computeIfAbsent(m.getChannelId(), k -> new HashSet<>()).add(m.getId());
     }
 
-    private void removeFromIndex(Map<UUID, List<UUID>> index, UUID key, UUID value) {
-        List<UUID> list = index.get(key);
-        if (list != null) {
-            list.remove(value);
-            if (list.isEmpty())
+    private void removeFromIndex(Map<UUID, Set<UUID>> index, UUID key, UUID value) {
+        Set<UUID> set = index.get(key);
+        if (set != null) {
+            set.remove(value);
+            if (set.isEmpty())
                 index.remove(key);
         }
     }
 
-    // + 시간순
     @Override
     public List<Message> findAllByUserId(UUID userId) {
         readLock.lock();
         try {
-            List<UUID> messageIds = userToMessagesIndex.getOrDefault(userId, Collections.emptyList());
+            Set<UUID> messageIds = userToMessagesIndex.getOrDefault(userId, Collections.emptySet());
             return messageIds.stream()
-                    .map(super::findById)
-                    .flatMap(Optional::stream)
+                    .map(dataMap::get)
+                    .filter(Objects::nonNull)
+                    .map(m -> (Message) m.copy()) // 직접 접근이라 복사해주어야함
                     .sorted(Comparator.comparing(Message::getCreateAt).reversed())
                     .toList();
         } finally {
@@ -75,10 +75,11 @@ public class FileMessageRepository extends FileRepository<Message> implements Me
     public List<Message> findAllByChannelId(UUID channelId) {
         readLock.lock();
         try {
-            List<UUID> messageIds = channelToMessagesIndex.getOrDefault(channelId, Collections.emptyList());
+            Set<UUID> messageIds = channelToMessagesIndex.getOrDefault(channelId, Collections.emptySet());
             return messageIds.stream()
-                    .map(super::findById)
-                    .flatMap(Optional::stream)
+                    .map(dataMap::get)
+                    .filter(Objects::nonNull)
+                    .map(m -> (Message) m.copy())
                     .sorted(Comparator.comparing(Message::getCreateAt).reversed())
                     .toList();
         } finally {

@@ -21,7 +21,7 @@ public class User extends BaseEntity {
         super();
         this.username = username;
         this.email = email;
-        this.password = password; // BCrypt 해시 추후 적용
+        this.password = password;
         this.profileId = profileId;
     }
 
@@ -42,7 +42,7 @@ public class User extends BaseEntity {
         return new User(username, email, password, profileId);
     }
 
-    // 이하 로직
+    // 도메인 로직
     public void authenticate(String rawPassword) {
         if (!password.equals(rawPassword)) {
             throw new BusinessException(ErrorCode.INVALID_CREDENTIALS);
@@ -53,6 +53,26 @@ public class User extends BaseEntity {
         this.username = username;
         this.email = email;
         this.password = password;
+        this.profileId = profileId;
+        touch();
+    }
+
+    public void updateUsername(String username) {
+        this.username = username;
+        touch();
+    }
+
+    public void updateEmail(String email) {
+        this.email = email;
+        touch();
+    }
+
+    public void updatePassword(String password) {
+        this.password = password;
+        touch();
+    }
+
+    public void updateProfileId(UUID profileId) {
         this.profileId = profileId;
         touch();
     }

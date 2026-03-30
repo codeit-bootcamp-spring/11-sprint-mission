@@ -16,7 +16,7 @@ public class Channel extends BaseEntity {
     private ChannelType type;
     private String name;
     private String description;
-    private UUID masterUserId; // 방장
+    private UUID masterUserId;
     private Instant recentMessageTime;
 
     private Channel(ChannelType type, String name, String description, UUID masterUserId, Instant recentMessageTime) {
@@ -46,10 +46,10 @@ public class Channel extends BaseEntity {
         return new Channel(type, name, description, masterUserId, Instant.now());
     }
 
-    // 이하 로직
+    // 도메인 로직
+    // 이거 뭐였지?
     public void updateRecentMessageTime(Instant recentMessageTime) {
         this.recentMessageTime = recentMessageTime;
-//        touch();
     }
 
     public void updateInfo(String name, String description, UUID requestUserId) {

@@ -13,9 +13,4 @@ public class FileBinaryContentRepository extends FileRepository<BinaryContent> i
         super(filePath);
         postLoad();
     }
-
-    @Override
-    protected void postLoad() {
-
-    }
 }

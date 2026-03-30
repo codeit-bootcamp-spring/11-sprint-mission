@@ -14,7 +14,6 @@ import java.util.UUID;
 @Repository
 public class FileUserStatusRepository extends FileRepository<UserStatus> implements UserStatusRepository {
 
-    // userid : userstatusid
     private final Map<UUID, UUID> userIdIndex = new HashMap<>();
 
     protected FileUserStatusRepository(@Value("${app.data.userstatus-path}") String filePath) {
@@ -25,7 +24,7 @@ public class FileUserStatusRepository extends FileRepository<UserStatus> impleme
     @Override
     protected void postLoad() {
         for (UserStatus us : dataMap.values()) {
-            userIdIndex.put(us.getUserId(), us.getId());
+            addToIndex(us);
         }
     }
 
@@ -35,11 +34,19 @@ public class FileUserStatusRepository extends FileRepository<UserStatus> impleme
             postDelete(oldEntity);
         }
 
-        userIdIndex.put(newEntity.getUserId(), newEntity.getId());
+        addToIndex(newEntity);
     }
 
     @Override
     protected void postDelete(UserStatus entity) {
+        removeFromIndex(entity);
+    }
+
+    private void addToIndex(UserStatus newEntity) {
+        userIdIndex.put(newEntity.getUserId(), newEntity.getId());
+    }
+
+    private void removeFromIndex(UserStatus entity) {
         userIdIndex.remove(entity.getUserId());
     }
 
@@ -49,7 +56,10 @@ public class FileUserStatusRepository extends FileRepository<UserStatus> impleme
         try {
             UUID targetUserStatusId = userIdIndex.get(userId);
             if (targetUserStatusId != null) {
-                return super.findById(targetUserStatusId);
+                UserStatus userStatus = dataMap.get(targetUserStatusId);
+                if (userStatus != null) {
+                    return Optional.of ((UserStatus) userStatus.copy());
+                }
             }
             return Optional.empty();
         } finally {

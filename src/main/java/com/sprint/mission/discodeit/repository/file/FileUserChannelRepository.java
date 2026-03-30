@@ -11,14 +11,14 @@ import java.util.*;
 @Repository
 public class FileUserChannelRepository extends FileRepository<UserChannel> implements UserChannelRepository {
 
+    private final Map<UUID, Set<UUID>> userToChannelsIndex = new HashMap<>();
+    private final Map<UUID, Set<UUID>> channelToUsersIndex = new HashMap<>();
+    private final Map<String, UUID> exactMatchIndex = new HashMap<>();
+
     protected FileUserChannelRepository(@Value("${app.data.userchannel-path}") String filePath) {
         super(filePath);
         postLoad();
     }
-
-    private final Map<UUID, List<UUID>> userToChannelsIndex = new HashMap<>();
-    private final Map<UUID, List<UUID>> channelToUsersIndex = new HashMap<>();
-    private final Map<String, UUID> exactMatchIndex = new HashMap<>();
 
     @Override
     protected void postLoad() {
@@ -48,16 +48,16 @@ public class FileUserChannelRepository extends FileRepository<UserChannel> imple
     }
 
     private void addToIndex(UserChannel uc) {
-        userToChannelsIndex.computeIfAbsent(uc.getUserId(), k -> new ArrayList<>()).add(uc.getId());
-        channelToUsersIndex.computeIfAbsent(uc.getChannelId(), k -> new ArrayList<>()).add(uc.getId());
+        userToChannelsIndex.computeIfAbsent(uc.getUserId(), k -> new HashSet<>()).add(uc.getId());
+        channelToUsersIndex.computeIfAbsent(uc.getChannelId(), k -> new HashSet<>()).add(uc.getId());
         exactMatchIndex.put(makeKey(uc.getUserId(), uc.getChannelId()), uc.getId());
     }
 
-    private void removeFromIndex(Map<UUID, List<UUID>> index, UUID key, UUID value) {
-        List<UUID> list = index.get(key);
-        if (list != null) {
-            list.remove(value);
-            if (list.isEmpty())
+    private void removeFromIndex(Map<UUID, Set<UUID>> index, UUID key, UUID value) {
+        Set<UUID> set = index.get(key);
+        if (set != null) {
+            set.remove(value);
+            if (set.isEmpty())
                 index.remove(key);
         }
     }
@@ -77,10 +77,11 @@ public class FileUserChannelRepository extends FileRepository<UserChannel> imple
     public List<UserChannel> findAllByUserId(UUID userId) {
         readLock.lock();
         try {
-            List<UUID> list = userToChannelsIndex.getOrDefault(userId, Collections.emptyList());
-            return list.stream()
-                    .map(super::findById)
-                    .flatMap(Optional::stream)
+            Set<UUID> set = userToChannelsIndex.getOrDefault(userId, Collections.emptySet());
+            return set.stream()
+                    .map(dataMap::get)
+                    .filter(Objects::nonNull)
+                    .map(uc -> (UserChannel) uc.copy())
                     .toList();
         } finally {
             readLock.unlock();
@@ -91,10 +92,11 @@ public class FileUserChannelRepository extends FileRepository<UserChannel> imple
     public List<UserChannel> findAllByChannelId(UUID channelId) {
         readLock.lock();
         try {
-            List<UUID> list = channelToUsersIndex.getOrDefault(channelId, Collections.emptyList());
-            return list.stream()
-                    .map(super::findById)
-                    .flatMap(Optional::stream)
+            Set<UUID> set = channelToUsersIndex.getOrDefault(channelId, Collections.emptySet());
+            return set.stream()
+                    .map(dataMap::get)
+                    .filter(Objects::nonNull)
+                    .map(uc -> (UserChannel) uc.copy())
                     .toList();
         } finally {
             readLock.unlock();

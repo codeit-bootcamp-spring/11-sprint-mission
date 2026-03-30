@@ -10,8 +10,8 @@ import java.util.UUID;
 @ToString(callSuper = true)
 public class UserChannel extends BaseEntity {
 
-    private UUID userId;
-    private UUID channelId;
+    private final UUID userId;
+    private final UUID channelId;
     private UserChannelRole userChannelRole;
 
     private UserChannel(UUID userId, UUID channelId, UserChannelRole userChannelRole) {

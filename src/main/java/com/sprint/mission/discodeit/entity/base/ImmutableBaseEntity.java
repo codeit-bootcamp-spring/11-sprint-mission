@@ -16,7 +16,7 @@ public abstract class ImmutableBaseEntity implements Serializable {
 
     protected ImmutableBaseEntity() {
         this.id = UUID.randomUUID();
-        this.createAt = Instant.now(); // ms 단위
+        this.createAt = Instant.now();
     }
 
     protected ImmutableBaseEntity(ImmutableBaseEntity other) {

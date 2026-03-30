@@ -7,21 +7,22 @@ import java.time.Instant;
 @Getter
 public abstract class BaseEntity extends ImmutableBaseEntity {
 
-    protected Instant updateAt;
+    protected Instant updatedAt;
 
     protected BaseEntity() {
         super();
-        this.updateAt = createAt;
+        this.updatedAt = this.createAt;
     }
 
     protected BaseEntity(BaseEntity other) {
         super(other);
-        this.updateAt = other.updateAt;
+        this.updatedAt = other.updatedAt;
     }
 
     protected void touch() {
-        this.updateAt = Instant.now();
+        this.updatedAt = Instant.now();
     }
 
+    @Override
     public abstract BaseEntity copy();
 }
