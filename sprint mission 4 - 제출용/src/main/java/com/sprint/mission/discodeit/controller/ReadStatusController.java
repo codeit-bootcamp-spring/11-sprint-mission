@@ -17,25 +17,26 @@ import java.util.UUID;
 @RequestMapping("/api/readStatus")
 @RequiredArgsConstructor
 public class ReadStatusController {
-    private final ReadStatusService readStatusService;
 
-    // create
-    @RequestMapping(method = RequestMethod.POST)
-    public ResponseEntity<ReadStatus> create(@Valid @RequestBody ReadStatusCreateRequest request){
-        return ResponseEntity.status(HttpStatus.CREATED).body(readStatusService.create(request));
-    }
+  private final ReadStatusService readStatusService;
 
-    // readAllByUserId
-    @RequestMapping (method = RequestMethod.GET)
-    public ResponseEntity<List<ReadStatus>> readAllByUserId(@RequestParam UUID userId){
-        return ResponseEntity.ok(readStatusService.readAllByUserId(userId));
-    }
+  // create
+  @PostMapping
+  public ResponseEntity<ReadStatus> create(@Valid @RequestBody ReadStatusCreateRequest request) {
+    return ResponseEntity.status(HttpStatus.CREATED).body(readStatusService.create(request));
+  }
 
-    // update
-    @RequestMapping(method = RequestMethod.PUT)
-    public ResponseEntity<Void> update(@Valid @RequestBody ReadStatusUpdateRequest request){
-        readStatusService.update(request);
-        return ResponseEntity.ok().build();
-    }
+  // readAllByUserId
+  @GetMapping
+  public ResponseEntity<List<ReadStatus>> readAllByUserId(@RequestParam UUID userId) {
+    return ResponseEntity.ok(readStatusService.readAllByUserId(userId));
+  }
+
+  // update
+  @PutMapping
+  public ResponseEntity<Void> update(@Valid @RequestBody ReadStatusUpdateRequest request) {
+    readStatusService.update(request);
+    return ResponseEntity.ok().build();
+  }
 
 }

@@ -15,17 +15,18 @@ import java.util.UUID;
 @RequestMapping("/api/binaryContent")
 @RequiredArgsConstructor
 public class BinaryContentController {
-    private final BinaryContentService binaryContentService;
 
-    // read
-    @RequestMapping(value = "/{id}", method = RequestMethod.GET)
-    public ResponseEntity<BinaryContent> read(@PathVariable UUID id){
-        return ResponseEntity.ok(binaryContentService.read(id));
-    }
+  private final BinaryContentService binaryContentService;
 
-    // readAllByIdIn
-    @RequestMapping(method = RequestMethod.GET)
-    public ResponseEntity<List<BinaryContent>> readAllByIdIn(@RequestParam List<UUID> ids){
-        return ResponseEntity.ok(binaryContentService.readAllByIdIn(ids));
-    }
+  // read
+  @GetMapping("/{id}")
+  public ResponseEntity<BinaryContent> read(@PathVariable UUID id) {
+    return ResponseEntity.ok(binaryContentService.read(id));
+  }
+
+  // readAllByIdIn
+  @GetMapping
+  public ResponseEntity<List<BinaryContent>> readAllByIdIn(@RequestParam List<UUID> ids) {
+    return ResponseEntity.ok(binaryContentService.readAllByIdIn(ids));
+  }
 }

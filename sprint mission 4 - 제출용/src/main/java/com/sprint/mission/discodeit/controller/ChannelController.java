@@ -18,52 +18,57 @@ import java.util.UUID;
 @RequestMapping("/api/channel")
 @RequiredArgsConstructor
 public class ChannelController {
-    private final ChannelService channelService;
 
-    // public create
-    @RequestMapping(value = "/public", method = RequestMethod.POST)
-    public ResponseEntity <ChannelResponse> createPublicChannel(@Valid @RequestBody PublicChannelCreateRequest request){
-        return ResponseEntity.status(HttpStatus.CREATED).body(channelService.createPublicChannel(request));
-    }
+  private final ChannelService channelService;
 
-    // private create
-    @RequestMapping(value = "/private", method = RequestMethod.POST)
-    public ResponseEntity<ChannelResponse> createPrivateChannel(@Valid @RequestBody PrivateChannelCreateRequest request){
-        return ResponseEntity.status(HttpStatus.CREATED).body(channelService.createPrivateChannel(request));
-    }
+  // public create
+  @PostMapping("/public")
+  public ResponseEntity<ChannelResponse> createPublicChannel(
+      @Valid @RequestBody PublicChannelCreateRequest request) {
+    return ResponseEntity.status(HttpStatus.CREATED)
+        .body(channelService.createPublicChannel(request));
+  }
 
-    // read
-    @RequestMapping(value = "/{id}", method = RequestMethod.GET)
-    public ResponseEntity<ChannelResponse> read(@PathVariable UUID id){
-        return ResponseEntity.ok(channelService.read(id));
-    }
+  // private create
+  @PostMapping("/private")
+  public ResponseEntity<ChannelResponse> createPrivateChannel(
+      @Valid @RequestBody PrivateChannelCreateRequest request) {
+    return ResponseEntity.status(HttpStatus.CREATED)
+        .body(channelService.createPrivateChannel(request));
+  }
 
-    // readAllByUserId
-    @RequestMapping(method = RequestMethod.GET)
-    public ResponseEntity<List<ChannelResponse>> readAllByUserId(@RequestParam UUID userId){
-        return ResponseEntity.ok(channelService.readAllByUserId(userId));
-    }
+  // read
+  @GetMapping("/{id}")
+  public ResponseEntity<ChannelResponse> read(@PathVariable UUID id) {
+    return ResponseEntity.ok(channelService.read(id));
+  }
 
-    // delete
-    @RequestMapping(value = "/{id}", method = RequestMethod.DELETE)
-    public ResponseEntity<Void> delete(@PathVariable UUID id){
-        channelService.delete(id);
-        return ResponseEntity.noContent().build();
-    }
+  // readAllByUserId
+  @GetMapping
+  public ResponseEntity<List<ChannelResponse>> readAllByUserId(@RequestParam UUID userId) {
+    return ResponseEntity.ok(channelService.readAllByUserId(userId));
+  }
 
-    // update
-    @RequestMapping(value = "/{id}", method = RequestMethod.PUT)
-    public ResponseEntity<Void> update(@PathVariable UUID id,
-                                       @Valid @RequestBody ChannelUpdateRequest request){
-        channelService.update(request);
-        return ResponseEntity.ok().build();
-    }
+  // delete
+  @DeleteMapping("/{id}")
+  public ResponseEntity<Void> delete(@PathVariable UUID id) {
+    channelService.delete(id);
+    return ResponseEntity.noContent().build();
+  }
 
-    // restore
-    @RequestMapping(value = "/{id}/restore", method = RequestMethod.POST)
-    public ResponseEntity<Void> restore(@PathVariable UUID id){
-        channelService.restore(id);
-        return ResponseEntity.ok().build();
-    }
+  // update
+  @PutMapping("/{id}")
+  public ResponseEntity<Void> update(@PathVariable UUID id,
+      @Valid @RequestBody ChannelUpdateRequest request) {
+    channelService.update(request);
+    return ResponseEntity.ok().build();
+  }
+
+  // restore
+  @PostMapping("/{id}/restore")
+  public ResponseEntity<Void> restore(@PathVariable UUID id) {
+    channelService.restore(id);
+    return ResponseEntity.ok().build();
+  }
 
 }

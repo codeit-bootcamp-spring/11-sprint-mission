@@ -17,62 +17,68 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/user")
+@RequestMapping("/api/users")
 @RequiredArgsConstructor
 public class UserController {
-    private final UserService userService;
-    private final UserStatusService userStatusService;
 
-    // create
-    @RequestMapping(method = RequestMethod.POST)
-    public ResponseEntity<UserResponse> create(@Valid @RequestBody UserCreateRequest request){
-        return ResponseEntity.status(HttpStatus.CREATED).body(userService.create(request));
-    }
+  private final UserService userService;
+  private final UserStatusService userStatusService;
 
-    // read
-    @RequestMapping(value = "/{id}",method = RequestMethod.GET)
-    public ResponseEntity<UserResponse> read(@PathVariable UUID id){
-        return ResponseEntity.ok(userService.read(id));
-    }
+  // create
+  @PostMapping
+  public ResponseEntity<UserResponse> create(@Valid @RequestBody UserCreateRequest request) {
+    return ResponseEntity.status(HttpStatus.CREATED)
+        .body(userService.create(request)); // 201 Created
+  }
 
-    // readAll
-    @RequestMapping(method = RequestMethod.GET)
-    public ResponseEntity<List<UserResponse>> readAll(){
-        return ResponseEntity.ok(userService.readAll());
-    }
+  // read
+  @GetMapping("/{id}")
+  public ResponseEntity<UserResponse> read(@PathVariable UUID id) {
+    return ResponseEntity.ok(userService.read(id)); // 200 OK
+  }
 
-    // update
-    @RequestMapping(value = "/{id}",method = RequestMethod.PUT)
-    public ResponseEntity<Void> update(@PathVariable UUID id,
-                                       @Valid @RequestBody UserUpdateRequest request){
-        userService.update(request);
-        return ResponseEntity.ok().build();
-    }
+  // readAll
+  @GetMapping
+  public ResponseEntity<List<UserResponse>> readAll() {
+    return ResponseEntity.ok(userService.readAll());  // 200 OK
+  }
 
-    // delete
-    @RequestMapping(value = "/{id}",method = RequestMethod.DELETE)
-    public ResponseEntity<Void> delete(@PathVariable UUID id){
-        userService.delete(id);
-        return ResponseEntity.noContent().build();
-    }
+  // update
+  @PutMapping("/{id}")
+  public ResponseEntity<UserResponse> update(@PathVariable UUID id,
+      @Valid @RequestBody UserUpdateRequest request) {
+    userService.update(request);
+    UserResponse updatedUser = userService.read(id);
+    return ResponseEntity.ok(updatedUser);  // 200 OK
+  }
 
-    // restore
-    @RequestMapping(value = "/{id}/restore", method = RequestMethod.POST)
-    public ResponseEntity<Void> restore(@PathVariable UUID id){
-        userService.restore(id);
-        return ResponseEntity.ok().build();
-    }
+  // delete
+  @DeleteMapping("/{id}")
+  public ResponseEntity<Void> delete(@PathVariable UUID id) {
+    userService.delete(id);
+    return ResponseEntity.noContent().build();  // 204 No Content
+  }
 
-    // UserUpdate
-    @RequestMapping(value = "/{id}/status", method = RequestMethod.PUT)
-    public ResponseEntity<Void> updateStatus(@PathVariable UUID id, @Valid @RequestBody UserStatusUpdateRequest request){
-        userStatusService.update(request);
-        return ResponseEntity.ok().build();
-    }
+  // restore
+  @PostMapping("/{id}/restore")
+  public ResponseEntity<Void> restore(@PathVariable UUID id) {
+    userService.restore(id);
+    return ResponseEntity.ok().build();
+  }
 
-    // readAllDto
-    @RequestMapping(value = "/readAllDto", method = RequestMethod.GET)
-    public ResponseEntity<List<UserDto>> readAllDto(){
-        return ResponseEntity.ok(userService.readAllDto());
-    }
+  // UserStatusUpdate
+  @PutMapping("/{id}/status")
+  public ResponseEntity<UserResponse> updateStatus(@PathVariable UUID id,
+      @Valid @RequestBody UserStatusUpdateRequest request) {
+    userStatusService.update(request);
+    UserResponse updatedUserStatus = userService.read(id);
+
+    return ResponseEntity.ok(updatedUserStatus);  // 200 OK
+  }
+
+  // readAllDto
+  @GetMapping("/readAllDto")
+  public ResponseEntity<List<UserDto>> readAllDto() {
+    return ResponseEntity.ok(userService.readAllDto()); // 200 OK
+  }
 }

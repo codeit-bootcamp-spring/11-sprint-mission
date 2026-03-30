@@ -17,37 +17,39 @@ import java.util.UUID;
 @RequestMapping("/api/message")
 @RequiredArgsConstructor
 public class MessageController {
-    private final MessageService messageService;
 
-    // create
-    @RequestMapping(method = RequestMethod.POST)
-    public ResponseEntity<Message> create(@Valid @RequestBody MessageCreateRequest request){
-        return ResponseEntity.status(HttpStatus.CREATED).body(messageService.create(request));
-    }
+  private final MessageService messageService;
 
-    // read
-    @RequestMapping(value = "/{id}", method = RequestMethod.GET)
-    public ResponseEntity<Message> read(@PathVariable UUID id){
-        return ResponseEntity.ok(messageService.read(id));
-    }
+  // create
+  @PostMapping
+  public ResponseEntity<Message> create(@Valid @RequestBody MessageCreateRequest request) {
+    return ResponseEntity.status(HttpStatus.CREATED).body(messageService.create(request));
+  }
 
-    // readAllByChannelId
-    @RequestMapping(method = RequestMethod.GET)
-    public ResponseEntity<List<Message>> readAllByChannelId(@RequestParam UUID channelId){
-        return ResponseEntity.ok(messageService.readAllByChannelId(channelId));
-    }
+  // read
+  @GetMapping("/{id}")
+  public ResponseEntity<Message> read(@PathVariable UUID id) {
+    return ResponseEntity.ok(messageService.read(id));
+  }
 
-    // update
-    @RequestMapping(value = "/{id}", method = RequestMethod.PUT)
-    public ResponseEntity<Void> update(@PathVariable UUID id, @Valid @RequestBody MessageUpdateRequest request){
-        messageService.update(request);
-        return ResponseEntity.ok().build();
-    }
+  // readAllByChannelId
+  @GetMapping
+  public ResponseEntity<List<Message>> readAllByChannelId(@RequestParam UUID channelId) {
+    return ResponseEntity.ok(messageService.readAllByChannelId(channelId));
+  }
 
-    // delete
-    @RequestMapping(value = "/{id}", method = RequestMethod.DELETE)
-    public ResponseEntity<Void> delete(@PathVariable UUID id){
-        messageService.delete(id);
-        return ResponseEntity.noContent().build();
-    }
+  // update
+  @PutMapping("/{id}")
+  public ResponseEntity<Void> update(@PathVariable UUID id,
+      @Valid @RequestBody MessageUpdateRequest request) {
+    messageService.update(request);
+    return ResponseEntity.ok().build();
+  }
+
+  // delete
+  @DeleteMapping("/{id}")
+  public ResponseEntity<Void> delete(@PathVariable UUID id) {
+    messageService.delete(id);
+    return ResponseEntity.noContent().build();
+  }
 }
