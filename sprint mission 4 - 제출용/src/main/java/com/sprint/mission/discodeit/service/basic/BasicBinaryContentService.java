@@ -3,6 +3,7 @@ package com.sprint.mission.discodeit.service.basic;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.dto.binaryContent.BinaryContentCreateRequest;
 import com.sprint.mission.discodeit.exception.DiscodeitException;
+import com.sprint.mission.discodeit.exception.DiscodeitNotFoundException;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.service.BinaryContentService;
 import lombok.RequiredArgsConstructor;
@@ -14,38 +15,41 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class BasicBinaryContentService implements BinaryContentService {
-    private final BinaryContentRepository binaryContentRepository;
 
-    @Override
-    public BinaryContent create(BinaryContentCreateRequest request){
-        BinaryContent binaryContent;
-        if(request.getUserId() !=null){
-            binaryContent = BinaryContent.forProfile(request.getUserId(), request.getFileName(), request.getContent(), request.getContentType());
-        }else {
-            binaryContent = BinaryContent.forMessage(request.getMessageId(), request.getFileName(), request.getContent(), request.getContentType());
-        }
-        binaryContent.validateService();
-        return binaryContentRepository.create(binaryContent);
-    }
+  private final BinaryContentRepository binaryContentRepository;
 
-    @Override
-    public BinaryContent read(UUID id){
-        BinaryContent binaryContent = binaryContentRepository.readById(id);
-        if(binaryContent ==null) {
-            throw DiscodeitException.binaryContentNotFound(id);
-        }
-        return binaryContent;
+  @Override
+  public BinaryContent create(BinaryContentCreateRequest request) {
+    BinaryContent binaryContent;
+    if (request.getUserId() != null) {
+      binaryContent = BinaryContent.forProfile(request.getUserId(), request.getFileName(),
+          request.getContent(), request.getContentType());
+    } else {
+      binaryContent = BinaryContent.forMessage(request.getMessageId(), request.getFileName(),
+          request.getContent(), request.getContentType());
     }
+    binaryContent.validateService();
+    return binaryContentRepository.create(binaryContent);
+  }
 
-    @Override
-    public List<BinaryContent> readAllByIdIn(List<UUID> ids){
-        return ids.stream()
-                .map(id -> binaryContentRepository.readById(id))
-                .toList();
+  @Override
+  public BinaryContent read(UUID id) {
+    BinaryContent binaryContent = binaryContentRepository.readById(id);
+    if (binaryContent == null) {
+      throw DiscodeitNotFoundException.binaryContent(id);
     }
+    return binaryContent;
+  }
 
-    @Override
-    public void delete(UUID id){
-        binaryContentRepository.delete(id);
-    }
+  @Override
+  public List<BinaryContent> readAllByIdIn(List<UUID> ids) {
+    return ids.stream()
+        .map(id -> binaryContentRepository.readById(id))
+        .toList();
+  }
+
+  @Override
+  public void delete(UUID id) {
+    binaryContentRepository.delete(id);
+  }
 }
