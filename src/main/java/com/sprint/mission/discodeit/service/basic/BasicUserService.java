@@ -114,43 +114,43 @@ public class BasicUserService implements UserService {
         User user = this.userRepository.findById(id)
                 .orElseThrow(() -> new ApiException(USER_NOT_FOUND));
 
-        boolean updateNickname = false;
-        if (userUpdateRequest.nickname() != null && !userUpdateRequest.nickname().isBlank())
-            updateNickname = true;
+        String nickname = Optional.ofNullable(userUpdateRequest.nickname())
+                .filter(s -> !s.isBlank())
+                .orElse(user.getNickname());
 
-        boolean updateUsername = false;
+        String username = user.getUsername();
         if (userUpdateRequest.username() != null && !userUpdateRequest.username().isBlank()) {
             if (!user.getUsername().equals(userUpdateRequest.username()) && this.userRepository.existByUsername(userUpdateRequest.username()))
                 throw new ApiException(USER_USERNAME_DUPLICATED);
-            updateUsername = true;
+            username = userUpdateRequest.username();
         }
 
-        boolean updateEmail = false;
+        String email = user.getEmail();
         if (userUpdateRequest.email() != null && !userUpdateRequest.email().isBlank()) {
             if (!userUpdateRequest.email().matches(EMAIL_REGEX))
                 throw new ApiException(USER_INVALID_EMAIL_FORMAT);
             if (!user.getEmail().equals(userUpdateRequest.email()) && this.userRepository.existByEmail(userUpdateRequest.email()))
                 throw new ApiException(USER_EMAIL_DUPLICATED);
-            updateEmail = true;
+            email = userUpdateRequest.email();
         }
 
-        boolean updatePassword = false;
+        String password = user.getPassword();
         if (userUpdateRequest.password() != null && !userUpdateRequest.password().isBlank()) {
             if (userUpdateRequest.password().length() < 8)
                 throw new ApiException(USER_INVALID_PASSWORD_LENGTH);
-            updatePassword = true;
+            password = userUpdateRequest.password();
         }
 
-        boolean updatePhoneNumber = false;
+        String phoneNumber = user.getPhoneNumber();
         if (userUpdateRequest.phoneNumber() != null && !userUpdateRequest.phoneNumber().isBlank()) {
             if (!userUpdateRequest.phoneNumber().matches(PHONE_REGEX))
                 throw new ApiException(USER_INVALID_PHONE_NUMBER_FORMAT);
-            updatePhoneNumber = true;
+            phoneNumber = userUpdateRequest.phoneNumber();
         }
 
         BinaryContent profile = user.getProfileId() != null
                 ? this.binaryContentRepository.findById(user.getProfileId())
-                .orElseThrow(() -> new ApiException(BINARY_CONTENT_NOT_FOUND))
+                  .orElseThrow(() -> new ApiException(BINARY_CONTENT_NOT_FOUND))
                 : null;
         if (binaryContentCreateRequest.isPresent()) {
             if (profile != null) this.binaryContentRepository.delete(profile);
@@ -159,13 +159,8 @@ public class BasicUserService implements UserService {
             this.binaryContentRepository.save(profile);
         }
 
-        user.update(
-                updateNickname ? userUpdateRequest.nickname() : user.getNickname(),
-                updateUsername ? userUpdateRequest.username() : user.getUsername(),
-                updateEmail ? userUpdateRequest.email() : user.getEmail(),
-                updatePassword ? userUpdateRequest.password() : user.getPassword(),
-                updatePhoneNumber ? userUpdateRequest.phoneNumber() : user.getPhoneNumber(),
-                profile != null ? profile.getId() : user.getProfileId()
+        user.update(nickname, username, email, password, phoneNumber,
+                profile != null ? profile.getId() : null
         );
         this.userRepository.save(user);
 
