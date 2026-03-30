@@ -38,7 +38,7 @@ public class BasicChannelService implements ChannelService {
     public ChannelDto createPublicChannel(PublicChannelCreateRequest dto) {
         Channel channel = new Channel(ChannelType.PUBLIC, dto.name(), dto.description());
         channelRepo.save(channel);
-        return new ChannelDto(channel.getId(), ChannelType.PUBLIC, channel.getName(), channel.getDescription(),
+        return new ChannelDto(channel.getId(), channel.getCreatedAt(), channel.getUpdatedAt(), ChannelType.PUBLIC, channel.getName(), channel.getDescription(),
                 null, new ArrayList<>());
     }
 
@@ -53,7 +53,7 @@ public class BasicChannelService implements ChannelService {
             readStatusRepo.save(new ReadStatus(userId, channel.getId(), Instant.now()));
         }
 
-        return new ChannelDto(channel.getId(), ChannelType.PRIVATE, null, null,
+        return new ChannelDto(channel.getId(), channel.getCreatedAt(), channel.getUpdatedAt(), ChannelType.PRIVATE, null, null,
                 null, dto.participantIds());
     }
 
@@ -65,11 +65,11 @@ public class BasicChannelService implements ChannelService {
                 .orElse(null);
 
         if(channel.getChannelType()==ChannelType.PUBLIC) {
-            return new ChannelDto(id, ChannelType.PUBLIC, channel.getName(), channel.getDescription(),
+            return new ChannelDto(id, channel.getCreatedAt(), channel.getUpdatedAt(), ChannelType.PUBLIC, channel.getName(), channel.getDescription(),
                     latestMessageCreatedAt, new ArrayList<>());
         } else { // PRIVATE
             List<UUID> userIds = readStatusRepo.findUserIdsByChannelId(id);
-            return new ChannelDto(id, ChannelType.PRIVATE, null, null,
+            return new ChannelDto(id, channel.getCreatedAt(), channel.getUpdatedAt(), ChannelType.PRIVATE, null, null,
                     latestMessageCreatedAt, userIds);
         }
     }
@@ -84,13 +84,13 @@ public class BasicChannelService implements ChannelService {
                             .orElse(null);
 
             if(channel.getChannelType() == ChannelType.PUBLIC) {
-                response.add(new ChannelDto(channel.getId(), ChannelType.PUBLIC, channel.getName(),
+                response.add(new ChannelDto(channel.getId(), channel.getCreatedAt(), channel.getUpdatedAt(), ChannelType.PUBLIC, channel.getName(),
                         channel.getDescription(), latestMessageCreatedAt, new ArrayList<>()));
             } else { // PRIVATE
                 List<UUID> userIds = readStatusRepo.findUserIdsByChannelId(channel.getId());
                 if(!userIds.contains(id)) continue;
 
-                response.add(new ChannelDto(channel.getId(), ChannelType.PRIVATE, null,
+                response.add(new ChannelDto(channel.getId(), channel.getCreatedAt(), channel.getUpdatedAt(), ChannelType.PRIVATE, null,
                         null, latestMessageCreatedAt, userIds));
             }
         }
