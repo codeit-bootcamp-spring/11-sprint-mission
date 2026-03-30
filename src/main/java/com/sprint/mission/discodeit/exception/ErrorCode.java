@@ -20,6 +20,7 @@ public enum ErrorCode {
 
     // UserStatus
     USER_STATUS_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 유저의 상태 정보를 찾을 수 없습니다."),
+    USER_STATUS_ALREADY_EXIST(HttpStatus.BAD_REQUEST, "해당 유저의 상태 정보가 이미 존재합니다."), // 🌟 추가됨
 
     // Channel
     CHANNEL_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 채널을 찾을 수 없습니다."),
@@ -27,6 +28,14 @@ public enum ErrorCode {
     ALREADY_JOIN_CHANNEL(HttpStatus.BAD_REQUEST, "이미 가입된 채널입니다."),
     MASTER_NOT_LEAVE(HttpStatus.BAD_REQUEST, "방장은 채널을 탈퇴할 수 없습니다. 채널을 삭제하거나, 방장을 위임해주세요."),
     PRIVATE_NOT_UPDATE(HttpStatus.BAD_REQUEST, "Private 채널은 수정할 수 없습니다."),
+
+    // Message
+    MESSAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 메세지를 찾을 수 없습니다."),
+    NOT_JOINED_CHANNEL(HttpStatus.FORBIDDEN, "가입된 채널에만 메세지를 보낼 수 있습니다."),
+
+    // ReadStatus
+    READ_STATUS_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 읽기 상태 정보를 찾을 수 없습니다."),
+    READ_STATUS_ALREADY_EXIST(HttpStatus.BAD_REQUEST, "해당 유저는 이미 이 채널의 읽기 상태를 가지고 있습니다."),
 
     // BinaryContent
     CONTENT_NOT_EXIST(HttpStatus.NOT_FOUND, "해당 파일은 존재하지 않습니다.");

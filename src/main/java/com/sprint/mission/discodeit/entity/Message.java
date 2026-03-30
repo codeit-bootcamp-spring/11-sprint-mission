@@ -1,6 +1,8 @@
 package com.sprint.mission.discodeit.entity;
 
 import com.sprint.mission.discodeit.entity.base.BaseEntity;
+import com.sprint.mission.discodeit.exception.BusinessException;
+import com.sprint.mission.discodeit.exception.ErrorCode;
 import lombok.Getter;
 import lombok.ToString;
 
@@ -52,7 +54,7 @@ public class Message extends BaseEntity {
 
     public void verifySender(UUID requestUserId) {
         if (!this.userId.equals(requestUserId)) {
-            throw new RuntimeException("메세지 작성자만 권한이 있습니다.");
+            throw new BusinessException(ErrorCode.UNAUTHORIZED_ACCESS);
         }
     }
 }

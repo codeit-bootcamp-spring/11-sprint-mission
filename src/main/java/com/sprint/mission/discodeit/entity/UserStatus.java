@@ -36,7 +36,7 @@ public class UserStatus extends BaseEntity {
     }
 
     public static UserStatus create(UUID userId) {
-        return new UserStatus(userId, Instant.now(), UserStatusType.OFFLINE);
+        return new UserStatus(userId, Instant.now(), UserStatusType.ONLINE);
     }
 
     // 이하 로직
@@ -53,10 +53,10 @@ public class UserStatus extends BaseEntity {
     }
 
     public String calculateCurrentStatus() {
-        // 디스코드를 보면 유저가 강제로 OFFLINE으로 설정할 수 있음
-        if (this.userStatusType == UserStatusType.OFFLINE) {
-            return UserStatusType.OFFLINE.name();
-        }
+//         디스코드를 보면 유저가 강제로 OFFLINE으로 설정할 수 있음
+//        if (this.userStatusType == UserStatusType.OFFLINE) {
+//            return UserStatusType.OFFLINE.name();
+//        }
 
         // 5분 동안 아무 통신이 없었다면
         Instant fiveMinutesAgo = Instant.now().minus(5, ChronoUnit.MINUTES);

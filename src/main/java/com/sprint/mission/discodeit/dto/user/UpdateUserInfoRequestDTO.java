@@ -8,8 +8,8 @@ import jakarta.validation.constraints.Size;
 import java.util.UUID;
 
 public record UpdateUserInfoRequestDTO(
-        @NotNull(message = "사용자 ID는 필수입니다.")
-        UUID id,
+//        @NotNull(message = "사용자 ID는 필수입니다.")
+//        UUID id,
 
         @NotBlank(message = "사용자 이름은 비어있을 수 없습니다.")
         @Size(min = 2, max = 20, message = "사용자 이름은 2자 이상 20자 이하로 입력해주세요.")

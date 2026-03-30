@@ -24,6 +24,28 @@ public class BasicUserService implements UserService {
     private final UserChannelRepository userChannelRepository;
     private final ReadStatusRepository readStatusRepository;
 
+    @Override
+    public List<UserDto> findAllUserDtos() {
+        return userRepository.findAll().stream()
+                .map(user -> {
+                    // UserStatus 조회 로직
+                    boolean isOnline = userStatusRepository.findByUserId(user.getId())
+                            .map(status -> "ONLINE".equals(status.calculateCurrentStatus()))
+                            .orElse(false);
+
+                    return new UserDto(
+                            user.getId(),
+                            user.getCreateAt(),
+                            user.getUpdateAt(),
+                            user.getUsername(),
+                            user.getEmail(),
+                            user.getProfileId(),
+                            isOnline
+                    );
+                })
+                .toList();
+    }
+
     // create
     // 선택적으로 프로필 사진을 같이 첨부할 수 있음
     // - 처음에는 여기서 만드는 걸로 구현을 했는데, 로그인 시 굳이 여기서 만들 필요가 없다고 판단
@@ -84,11 +106,12 @@ public class BasicUserService implements UserService {
     // - 현재는 프로필만 수정하도록 되어있음
     @Override
     public UpdateUserInfoResponseDTO updateUserInfo(
+            UUID id,
             UpdateUserInfoRequestDTO dto
     ) {
         // 해당 유저가 있는지 확인
         // - 근데 본인인지 확인을 해야하는데? 이건 로그인에서 하는게 맞을 것 같다 - 나중에 추후 도입 (원래는 requestUserId로 처리하려고 했으나 패스)
-        User user = findUserById(dto.id());
+        User user = findUserById(id);
 
         // username / email // profileID는 null로 받거나 binaryContent에서 해당 아이디를 받아서 오도록 처리할 것이기 때문에 추가 검증은 X
         // - 만약 한다면 profileId가 정말 데이터베이스에 저장되었는지 확인해야하는 로직이 추가적으로 필요할 것으로 생각됨
