@@ -17,8 +17,6 @@ public record MessageCreateRequest(
         UUID channelId,
 
         @NotNull(message = "메시지를 보내는 유저는 필수로 기재해야 합니다.")
-        UUID authorId,
-
-        List<UUID> attachmentIds
+        UUID authorId
 ) {
 }

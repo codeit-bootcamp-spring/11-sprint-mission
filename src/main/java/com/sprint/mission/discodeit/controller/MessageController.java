@@ -12,13 +12,16 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.UUID;
@@ -36,9 +39,14 @@ public class MessageController {
             @ApiResponse(responseCode = "201", description = "Message가 성공적으로 생성됨"),
             @ApiResponse(responseCode = "404", description = "Channel 또는 User를 찾을 수 없음")
     })
-    @RequestMapping(method = RequestMethod.POST)
-    public ResponseEntity<MessageDto> create(@Valid @RequestBody MessageCreateRequest dto) {
-        MessageDto result = messageService.create(dto);
+    @RequestMapping(method = RequestMethod.POST, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<MessageDto> create(
+            @Parameter(description = "Message 생성 정보")
+            @RequestPart("messageCreateRequest") @Valid @RequestBody MessageCreateRequest dto,
+            @Parameter(description = "Message 첨부 파일들")
+            @RequestPart(value = "attachments", required = false) List<MultipartFile> attachments
+    ) {
+        MessageDto result = messageService.create(dto, attachments);
         return ResponseEntity.status(HttpStatus.CREATED).body(result);
     }
 

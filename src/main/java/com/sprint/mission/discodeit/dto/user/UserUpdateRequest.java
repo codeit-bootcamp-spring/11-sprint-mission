@@ -17,9 +17,7 @@ public record UserUpdateRequest(
 
         @NotBlank(message = "비밀번호는 필수로 기재해야 합니다.")
         @Size(min = 4, max = 20, message = "비밀번호는 4자 이상 20자 이하여야 합니다.")
-        String newPassword,
-
-        UUID newProfileId
+        String newPassword
 ) {
 
 }

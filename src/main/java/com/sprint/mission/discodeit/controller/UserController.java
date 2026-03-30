@@ -14,12 +14,15 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.UUID;
@@ -38,9 +41,14 @@ public class UserController {
             @ApiResponse(responseCode = "201", description = "User가 성공적으로 생성됨"),
             @ApiResponse(responseCode = "400", description = "같은 email 또는 username를 사용하는 User가 이미 존재함")
     })
-    @RequestMapping(method = RequestMethod.POST)
-    public ResponseEntity<UserDto> create(@Valid @RequestBody UserCreateRequest dto) {
-        UserDto result = userService.create(dto);
+    @RequestMapping(method = RequestMethod.POST, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<UserDto> create(
+            @Parameter(description = "User 생성 정보")
+            @RequestPart("userCreateRequest") @Valid @RequestBody UserCreateRequest dto,
+            @Parameter(description = "User 프로필 이미지")
+            @RequestPart(value = "profile", required = false) MultipartFile profile
+    ) {
+        UserDto result = userService.create(dto, profile);
         return ResponseEntity.status(HttpStatus.CREATED).body(result);
     }
 
@@ -50,13 +58,16 @@ public class UserController {
             @ApiResponse(responseCode = "400", description = "같은 email 또는 username를 사용하는 User가 이미 존재함"),
             @ApiResponse(responseCode = "404", description = "User를 찾을 수 없음")
     })
-    @RequestMapping(value = "/{userId}", method = RequestMethod.PATCH)
+    @RequestMapping(value = "/{userId}", method = RequestMethod.PATCH, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Void> update(
             @Parameter(description = "수정할 User ID")
             @PathVariable UUID userId,
-            @Valid @RequestBody UserUpdateRequest dto
+            @Parameter(description = "수정할 User 정보")
+            @RequestPart("userUpdateRequest") @Valid @RequestBody UserUpdateRequest dto,
+            @Parameter(description = "수정할 User 프로필 이미지")
+            @RequestPart(value = "profile", required = false) MultipartFile profile
     ) {
-        userService.update(userId, dto);
+        userService.update(userId, dto, profile);
         return ResponseEntity.ok().build();
     }
 
