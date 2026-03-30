@@ -44,7 +44,7 @@ public class UserController {
     @RequestMapping(method = RequestMethod.POST, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<UserDto> create(
             @Parameter(description = "User 생성 정보")
-            @RequestPart("userCreateRequest") @Valid @RequestBody UserCreateRequest dto,
+            @RequestPart("userCreateRequest") @Valid UserCreateRequest dto,
             @Parameter(description = "User 프로필 이미지")
             @RequestPart(value = "profile", required = false) MultipartFile profile
     ) {
@@ -63,7 +63,7 @@ public class UserController {
             @Parameter(description = "수정할 User ID")
             @PathVariable UUID userId,
             @Parameter(description = "수정할 User 정보")
-            @RequestPart("userUpdateRequest") @Valid @RequestBody UserUpdateRequest dto,
+            @RequestPart("userUpdateRequest") @Valid UserUpdateRequest dto,
             @Parameter(description = "수정할 User 프로필 이미지")
             @RequestPart(value = "profile", required = false) MultipartFile profile
     ) {
