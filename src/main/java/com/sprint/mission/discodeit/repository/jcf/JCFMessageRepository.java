@@ -39,6 +39,14 @@ public class JCFMessageRepository implements MessageRepository {
     }
 
     @Override
+    public List<Message> findAllByChannelIdIn(List<UUID> channelIds) {
+        Set<UUID> idSet = new HashSet<>(channelIds);
+        return this.data.values().stream()
+                .filter(message -> idSet.contains(message.getChannelId()))
+                .toList();
+    }
+
+    @Override
     public void delete(Message message) {
         this.data.remove(message.getId());
     }

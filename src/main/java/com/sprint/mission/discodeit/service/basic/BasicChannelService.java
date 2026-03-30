@@ -90,15 +90,27 @@ public class BasicChannelService implements ChannelService {
                 .map(ReadStatus::getChannelId)
                 .collect(Collectors.toSet());
 
-        return this.channelRepository.findAll().stream()
+        List<Channel> channels = this.channelRepository.findAll().stream()
                 .filter(channel -> !channel.isPrivate() || joinedPrivateChannelIds.contains(channel.getId()))
-                .map(channel -> {
-                    List<Message> messages = this.messageRepository.findAllByChannelId(channel.getId());
-                    List<UUID> participants = this.readStatusRepository.findAllByChannelId(channel.getId()).stream()
-                            .map(ReadStatus::getUserId)
-                            .toList();
-                    return this.toResponse(channel, messages, participants);
-                })
+                .toList();
+
+        List<UUID> channelIds = channels.stream().map(Channel::getId).toList();
+
+        Map<UUID, List<Message>> messagesByChannel = this.messageRepository.findAllByChannelIdIn(channelIds).stream()
+                .collect(Collectors.groupingBy(Message::getChannelId));
+
+        Map<UUID, List<UUID>> participantsByChannel = this.readStatusRepository.findAllByChannelIdIn(channelIds).stream()
+                .collect(Collectors.groupingBy(
+                        ReadStatus::getChannelId,
+                        Collectors.mapping(ReadStatus::getUserId, Collectors.toList())
+                ));
+
+        return channels.stream()
+                .map(channel -> this.toResponse(
+                        channel,
+                        messagesByChannel.getOrDefault(channel.getId(), new ArrayList<>()),
+                        participantsByChannel.getOrDefault(channel.getId(), new ArrayList<>())
+                ))
                 .toList();
     }
 

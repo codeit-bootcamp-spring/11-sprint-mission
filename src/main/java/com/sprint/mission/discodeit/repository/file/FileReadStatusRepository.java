@@ -6,8 +6,10 @@ import com.sprint.mission.discodeit.util.FileIOUtil;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Repository;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 @ConditionalOnProperty(name = "discodeit.repository.type", havingValue = "file")
@@ -45,6 +47,14 @@ public class FileReadStatusRepository implements ReadStatusRepository {
     public List<ReadStatus> findAllByChannelId(UUID channelId) {
         return this.fileIOUtil.findAll().stream()
                 .filter(readStatus -> readStatus.getChannelId().equals(channelId))
+                .toList();
+    }
+
+    @Override
+    public List<ReadStatus> findAllByChannelIdIn(List<UUID> channelIds) {
+        Set<UUID> idSet = new HashSet<>(channelIds);
+        return this.fileIOUtil.findAll().stream()
+                .filter(readStatus -> idSet.contains(readStatus.getChannelId()))
                 .toList();
     }
 

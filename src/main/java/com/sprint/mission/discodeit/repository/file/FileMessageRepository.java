@@ -6,8 +6,10 @@ import com.sprint.mission.discodeit.util.FileIOUtil;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Repository;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 @ConditionalOnProperty(name = "discodeit.repository.type", havingValue = "file")
@@ -38,6 +40,14 @@ public class FileMessageRepository implements MessageRepository {
     public List<Message> findAllByChannelId(UUID channelId) {
         return this.fileIOUtil.findAll().stream()
                 .filter(message -> message.getChannelId().equals(channelId))
+                .toList();
+    }
+
+    @Override
+    public List<Message> findAllByChannelIdIn(List<UUID> channelIds) {
+        Set<UUID> idSet = new HashSet<>(channelIds);
+        return this.fileIOUtil.findAll().stream()
+                .filter(message -> idSet.contains(message.getChannelId()))
                 .toList();
     }
 

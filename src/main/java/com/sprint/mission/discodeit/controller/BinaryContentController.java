@@ -36,7 +36,7 @@ public class BinaryContentController {
     @RequestMapping(
             method = RequestMethod.GET
     )
-    public ResponseEntity<ApiResponse> findAllByIdsIn(
+    public ResponseEntity<ApiResponse> findAllByIdIn(
             @RequestParam("binaryContentIds") List<UUID> binaryContentIds
     ) {
         List<BinaryContentResponse> binaryContents = this.binaryContentService.findAllByIdIn(binaryContentIds);
