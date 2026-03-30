@@ -7,9 +7,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface ChannelRepository {
-    public void init();
-    public void save(Channel channel);
-    public Optional<Channel> findById(UUID id);
-    public List<Channel> findAll();
-    public void delete(Channel channel);
+    void save(Channel channel);
+    Optional<Channel> findById(UUID id);
+    List<Channel> findAll();
+    void delete(Channel channel);
 }

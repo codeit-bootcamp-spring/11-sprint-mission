@@ -18,7 +18,6 @@ import com.sprint.mission.discodeit.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -41,7 +40,8 @@ public class BasicUserService implements UserService {
         UserStatus userStatus = new UserStatus(user.getId());
         userStatusRepo.save(userStatus);
 
-        return new UserResponseDto(user.getId(), user.getName(), user.getEmail(), userStatus.passed(), userStatus.getId());
+        return new UserResponseDto(user.getId(), user.getCreatedAt(), user.getUpdatedAt(),
+                user.getName(), user.getEmail(), user.getProfileId(), userStatus.passed());
     }
 
     @Override
@@ -51,26 +51,35 @@ public class BasicUserService implements UserService {
         UserStatus userStatus = userStatusRepo.findByUserId(id)
                 .orElseThrow(() -> new UserStatusOfUserNotFoundException(id));
 
-        return new UserResponseDto(user.getId(), user.getName(), user.getEmail(), userStatus.passed(), userStatus.getId());
+        return new UserResponseDto(user.getId(), user.getCreatedAt(), user.getUpdatedAt(),
+                user.getName(), user.getEmail(), user.getProfileId(), userStatus.passed());
     }
 
     @Override
     public List<UserResponseDto> findAll() {
-        List<User> userList = new ArrayList<>(userRepo.findAll());
-        List<UserResponseDto> userStatusList = new ArrayList<>();
+        return userRepo.findAll().stream()
+                .map(user -> {
+                            UserStatus userStatus = userStatusRepo.findByUserId(user.getId())
+                                    .orElseThrow(() -> new UserStatusOfUserNotFoundException(user.getId()));
 
-        for(User user : userList) {
-            UserStatus userStatus = userStatusRepo.findByUserId(user.getId())
-                    .orElseThrow(() -> new UserStatusOfUserNotFoundException(user.getId()));
-            userStatusList.add(new UserResponseDto(user.getId(), user.getName(), user.getEmail(), userStatus.passed(), userStatus.getId()));
-        }
-        return userStatusList;
+                            return new UserResponseDto(
+                                    user.getId(),
+                                    user.getCreatedAt(),
+                                    user.getUpdatedAt(),
+                                    user.getName(),
+                                    user.getEmail(),
+                                    user.getProfileId(),
+                                    userStatus.passed()
+                            );
+                        }
+                )
+                .toList();
     }
 
     @Override
-    public void update(UserUpdateRequestDto dto) {
-        User user = userRepo.findById(dto.userId())
-                .orElseThrow(() -> new UserNotFoundException(dto.userId()));
+    public void update(UUID id, UserUpdateRequestDto dto) {
+        User user = userRepo.findById(id)
+                .orElseThrow(() -> new UserNotFoundException(id));
 
         if(!user.getName().equals(dto.name()) && userRepo.existsByName(dto.name())) throw new DuplicateNameException(dto.name());
         if(!user.getEmail().equals(dto.email()) && userRepo.existsByEmail(dto.email())) throw new DuplicateEmailException(dto.email());

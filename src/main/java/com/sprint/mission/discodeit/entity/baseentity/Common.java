@@ -1,4 +1,4 @@
-package com.sprint.mission.discodeit.entity;
+package com.sprint.mission.discodeit.entity.baseentity;
 
 import lombok.Getter;
 
@@ -11,16 +11,10 @@ public class Common implements Serializable {
     private static final long serialVersionUID = 1L;
     private UUID id;
     private Instant createdAt;
-    private Instant updatedAt;
 
     public Common() {
         this.id = UUID.randomUUID();
         this.createdAt = Instant.now();
-        this.updatedAt = Instant.now();
-    }
-
-    public void update() {
-        this.updatedAt = Instant.now();
     }
 
 }

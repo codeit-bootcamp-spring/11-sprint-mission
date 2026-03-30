@@ -9,6 +9,7 @@ import com.sprint.mission.discodeit.service.BinaryContentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
 
@@ -20,14 +21,9 @@ public class BasicBinaryContentService implements BinaryContentService {
 
     @Override
     public BinaryContentResponseDto create(BinaryContentCreateRequestDto dto) {
-        BinaryContent binaryContent = new BinaryContent(dto.fileName(), dto.data());
+        BinaryContent binaryContent = new BinaryContent(dto.fileName(), dto.contentType(), dto.data());
         binaryContentRepo.save(binaryContent);
         return toDto(binaryContent);
-    }
-
-    private BinaryContentResponseDto toDto(BinaryContent binaryContent) {
-        return new BinaryContentResponseDto(
-                binaryContent.getId(), binaryContent.getFileName(), binaryContent.getData());
     }
 
     @Override
@@ -52,5 +48,15 @@ public class BasicBinaryContentService implements BinaryContentService {
         BinaryContent binaryContent = binaryContentRepo.findById(id)
                 .orElseThrow(() -> new BinaryContentNotFoundException(id));
         binaryContentRepo.delete(binaryContent);
+    }
+
+    private BinaryContentResponseDto toDto(BinaryContent binaryContent) {
+        String base64 = Base64.getEncoder().encodeToString(binaryContent.getData());
+
+        return new BinaryContentResponseDto(
+                binaryContent.getId(),
+                binaryContent.getFileName(),
+                binaryContent.getContentType(),
+                base64);
     }
 }

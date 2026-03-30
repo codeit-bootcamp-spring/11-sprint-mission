@@ -1,12 +1,12 @@
 package com.sprint.mission.discodeit.entity;
 
+import com.sprint.mission.discodeit.entity.baseentity.UpdatableEntity;
 import lombok.Getter;
-import lombok.Setter;
 
 import java.util.UUID;
 
 @Getter
-public class ReadStatus extends Common{
+public class ReadStatus extends UpdatableEntity {
     private UUID userId;
     private UUID channelId;
 

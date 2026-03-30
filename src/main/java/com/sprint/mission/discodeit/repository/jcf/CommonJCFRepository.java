@@ -1,8 +1,12 @@
 package com.sprint.mission.discodeit.repository.jcf;
 
-import com.sprint.mission.discodeit.entity.Common;
+import com.sprint.mission.discodeit.entity.baseentity.Common;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class CommonJCFRepository<T extends Common> {
@@ -13,7 +17,7 @@ public class CommonJCFRepository<T extends Common> {
         init();
     }
 
-    public void init() {
+    private void init() {
         repo = new ConcurrentHashMap<>();
     }
 
