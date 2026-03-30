@@ -9,5 +9,6 @@ import java.util.UUID;
 @Getter
 @AllArgsConstructor
 public class PrivateChannelCreateRequest {
-    private List<UUID> userIds;
+
+  private List<UUID> userIds;
 }

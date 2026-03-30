@@ -10,9 +10,9 @@ import java.util.UUID;
 @AllArgsConstructor
 public class ReadStatusCreateRequest {
 
-    @NotNull
-    private UUID userId;
+  @NotNull
+  private UUID userId;
 
-    @NotNull
-    private UUID channelId;
+  @NotNull
+  private UUID channelId;
 }

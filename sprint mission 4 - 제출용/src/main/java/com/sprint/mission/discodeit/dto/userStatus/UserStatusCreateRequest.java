@@ -10,6 +10,6 @@ import java.util.UUID;
 @AllArgsConstructor
 public class UserStatusCreateRequest {
 
-    @NotNull
-    private UUID userId;
+  @NotNull
+  private UUID userId;
 }

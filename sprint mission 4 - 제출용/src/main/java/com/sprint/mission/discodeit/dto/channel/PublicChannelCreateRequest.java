@@ -8,8 +8,8 @@ import lombok.Getter;
 @AllArgsConstructor
 public class PublicChannelCreateRequest {
 
-    @NotBlank
-    private String channelName;
+  @NotBlank
+  private String channelName;
 
-    private String channelDescription;
+  private String channelDescription;
 }

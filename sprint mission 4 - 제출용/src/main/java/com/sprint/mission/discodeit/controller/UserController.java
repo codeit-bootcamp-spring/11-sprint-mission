@@ -20,6 +20,7 @@ import java.util.UUID;
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
 public class UserController {
+  //TODO create시 프로필이미지포함하기
 
   private final UserService userService;
   private final UserStatusService userStatusService;
@@ -67,7 +68,7 @@ public class UserController {
   }
 
   // UserStatusUpdate
-  @PutMapping("/{id}/status")
+  @PutMapping("/{id}/userStatus")
   public ResponseEntity<UserResponse> updateStatus(@PathVariable UUID id,
       @Valid @RequestBody UserStatusUpdateRequest request) {
     userStatusService.update(request);

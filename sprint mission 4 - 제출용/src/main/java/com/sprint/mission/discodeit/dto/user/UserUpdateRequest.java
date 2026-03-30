@@ -12,20 +12,20 @@ import java.util.UUID;
 @AllArgsConstructor
 public class UserUpdateRequest {
 
-    @NotNull
-    private UUID id;
+  @NotNull
+  private UUID id;
 
-    @NotBlank
-    private String userName;
+  @NotBlank
+  private String userName;
 
-    @NotBlank
-    @Email
-    private String userEmail;
+  @NotBlank
+  @Email
+  private String userEmail;
 
-    @NotBlank
-    private String userPassword;
+  @NotBlank
+  private String userPassword;
 
-    private String fileName;
-    private byte[] fileContent;
-    private String contentType;
+  private String fileName;
+  private byte[] fileContent;
+  private String contentType;
 }

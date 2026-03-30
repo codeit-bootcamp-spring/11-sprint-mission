@@ -11,9 +11,9 @@ import java.util.UUID;
 @AllArgsConstructor
 public class MessageUpdateRequest {
 
-    @NotNull
-    private UUID messageId;
+  @NotNull
+  private UUID messageId;
 
-    @NotBlank
-    private String messageContent;
+  @NotBlank
+  private String messageContent;
 }

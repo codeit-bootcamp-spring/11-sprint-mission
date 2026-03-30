@@ -14,58 +14,60 @@ import java.util.concurrent.ConcurrentHashMap;
 @Repository
 @ConditionalOnProperty(name = "discodeit.repository.type", havingValue = "jcf", matchIfMissing = true)
 public class JCFReadStatusRepository implements ReadStatusRepository {
-    private final Map<UUID, ReadStatus> data = new ConcurrentHashMap<>();
 
-    @Override
-    public ReadStatus create(ReadStatus readStatus){
-        data.put(readStatus.getId(), readStatus);
-        return readStatus;
-    }
+  private final Map<UUID, ReadStatus> data = new ConcurrentHashMap<>();
 
-    @Override
-    public ReadStatus read(UUID id){
-        return data.get(id);
-    }
+  @Override
+  public ReadStatus create(ReadStatus readStatus) {
+    data.put(readStatus.getId(), readStatus);
+    return readStatus;
+  }
 
-    @Override
-    public ReadStatus readByUserIdAndChannelId(UUID userId, UUID channelId){
-        return data.values().stream()
-                .filter(readStatus -> readStatus.getUserId().equals(userId) && readStatus.getChannelId().equals(channelId))
-                .findFirst()
-                .orElse(null);
-    }
+  @Override
+  public ReadStatus read(UUID id) {
+    return data.get(id);
+  }
 
-    @Override
-    public List<ReadStatus> readAllByChannelId(UUID channelId){
-        return data.values().stream()
-                .filter(readStatus -> readStatus.getChannelId().equals(channelId))
-                .toList();
-    }
+  @Override
+  public ReadStatus readByUserIdAndChannelId(UUID userId, UUID channelId) {
+    return data.values().stream()
+        .filter(readStatus -> readStatus.getUserId().equals(userId) && readStatus.getChannelId()
+            .equals(channelId))
+        .findFirst()
+        .orElse(null);
+  }
 
-    @Override
-    public List<ReadStatus> readAllByUserId(UUID userId) {
-        return data.values().stream()
-                .filter(readStatus -> readStatus.getUserId().equals(userId))
-                .toList();
-    }
+  @Override
+  public List<ReadStatus> readAllByChannelId(UUID channelId) {
+    return data.values().stream()
+        .filter(readStatus -> readStatus.getChannelId().equals(channelId))
+        .toList();
+  }
 
-    @Override
-    public ReadStatus update(UUID userId, UUID channelId, Instant lastMessageReadAt){
-        ReadStatus readStatus = readByUserIdAndChannelId(userId, channelId);
-        if(readStatus==null){
-            throw new IllegalArgumentException("존재하지 않는 ReadStatus입니다.");
-        }
-        readStatus.updateLastMessageReadAt(lastMessageReadAt);
-        return readStatus;
-    }
+  @Override
+  public List<ReadStatus> readAllByUserId(UUID userId) {
+    return data.values().stream()
+        .filter(readStatus -> readStatus.getUserId().equals(userId))
+        .toList();
+  }
 
-    @Override
-    public void deleteByChannelId(UUID channelId){
-        data.values().removeIf(readStatus -> readStatus.getChannelId().equals(channelId));
+  @Override
+  public ReadStatus update(UUID userId, UUID channelId, Instant lastMessageReadAt) {
+    ReadStatus readStatus = readByUserIdAndChannelId(userId, channelId);
+    if (readStatus == null) {
+      throw new IllegalArgumentException("존재하지 않는 ReadStatus입니다.");
     }
+    readStatus.updateLastMessageReadAt(lastMessageReadAt);
+    return readStatus;
+  }
 
-    @Override
-    public void deleteByUserId(UUID userId){
-        data.values().removeIf(readStatus -> readStatus.getUserId().equals(userId));
-    }
+  @Override
+  public void deleteByChannelId(UUID channelId) {
+    data.values().removeIf(readStatus -> readStatus.getChannelId().equals(channelId));
+  }
+
+  @Override
+  public void deleteByUserId(UUID userId) {
+    data.values().removeIf(readStatus -> readStatus.getUserId().equals(userId));
+  }
 }

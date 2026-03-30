@@ -11,12 +11,12 @@ import java.util.UUID;
 @AllArgsConstructor
 public class ReadStatusUpdateRequest {
 
-    @NotNull
-    private UUID userId;
+  @NotNull
+  private UUID userId;
 
-    @NotNull
-    private UUID channelId;
+  @NotNull
+  private UUID channelId;
 
-    @NotNull
-    private Instant lastMessageReadAt;
+  @NotNull
+  private Instant lastMessageReadAt;
 }

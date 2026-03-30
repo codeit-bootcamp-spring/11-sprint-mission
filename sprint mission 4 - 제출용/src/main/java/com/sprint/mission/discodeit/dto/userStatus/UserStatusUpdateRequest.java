@@ -12,9 +12,9 @@ import java.util.UUID;
 @AllArgsConstructor
 public class UserStatusUpdateRequest {
 
-    @NotNull
-    private UUID userId;
+  @NotNull
+  private UUID userId;
 
-    @NotNull
-    private Instant lastOnlineAt;
+  @NotNull
+  private Instant lastOnlineAt;
 }

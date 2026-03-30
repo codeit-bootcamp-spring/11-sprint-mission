@@ -10,17 +10,17 @@ import java.util.UUID;
 @AllArgsConstructor
 public class MessageCreateRequest {
 
-    @NotBlank
-    private String content;
+  @NotBlank
+  private String content;
 
-    @NotBlank
-    private UUID authorId;
+  @NotBlank
+  private UUID authorId;
 
-    @NotBlank
-    private UUID channelId;
+  @NotBlank
+  private UUID channelId;
 
-    private UUID receiverId;
-    private String fileName;
-    private byte[] fileContent;
-    private String contentType;
+  private UUID receiverId;
+  private String fileName;
+  private byte[] fileContent;
+  private String contentType;
 }

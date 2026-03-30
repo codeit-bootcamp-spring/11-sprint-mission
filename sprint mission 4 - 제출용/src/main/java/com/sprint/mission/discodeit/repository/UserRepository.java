@@ -6,22 +6,26 @@ import java.util.List;
 import java.util.UUID;
 
 public interface UserRepository {
-    User create(User user);
 
-    User read(UUID id);
+  User create(User user);
 
-    List<User> readAll();
+  User read(UUID id);
 
-    void delete(UUID id);
+  List<User> readAll();
 
-    User update(User user);
+  void delete(UUID id);
 
-    void restore(UUID id);
+  User update(User user);
 
-    boolean existsByUserName(String userName);
-    boolean existsByEmail(String userEmail);
-    User findByUserName(String userName);
+  void restore(UUID id);
 
-    boolean existsByUserNameExcluding(String userName, UUID excludeId);
-    boolean existsByEmailExcluding(String userEmail, UUID excludeId);
+  boolean existsByUserName(String userName);
+
+  boolean existsByEmail(String userEmail);
+
+  User findByUserName(String userName);
+
+  boolean existsByUserNameExcluding(String userName, UUID excludeId);
+
+  boolean existsByEmailExcluding(String userEmail, UUID excludeId);
 }

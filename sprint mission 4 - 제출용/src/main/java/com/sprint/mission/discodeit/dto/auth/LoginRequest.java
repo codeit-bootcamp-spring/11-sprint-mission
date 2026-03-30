@@ -8,9 +8,9 @@ import lombok.Getter;
 @AllArgsConstructor
 public class LoginRequest {
 
-    @NotBlank
-    private String userName;
+  @NotBlank
+  private String userName;
 
-    @NotBlank
-    private String userPassword;
+  @NotBlank
+  private String userPassword;
 }

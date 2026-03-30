@@ -8,14 +8,15 @@ import java.util.List;
 import java.util.UUID;
 
 public interface UserStatusService {
-    UserStatus create(UserStatusCreateRequest request);
 
-    UserStatus read(UUID id);
+  UserStatus create(UserStatusCreateRequest request);
 
-    List<UserStatus> readAll();
+  UserStatus read(UUID id);
 
-    // 유저 접속상태 변경
-    void update(UserStatusUpdateRequest request);
+  List<UserStatus> readAll();
 
-    void delete(UUID id);
+  // 유저 접속상태 변경
+  void update(UserStatusUpdateRequest request);
+
+  void delete(UUID id);
 }

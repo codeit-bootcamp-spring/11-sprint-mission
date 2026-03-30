@@ -8,13 +8,14 @@ import java.util.List;
 import java.util.UUID;
 
 public interface MessageService {
-    Message create(MessageCreateRequest request);
 
-    Message read(UUID id);
+  Message create(MessageCreateRequest request);
 
-    List<Message> readAllByChannelId(UUID channelId);
+  Message read(UUID id);
 
-    void update(MessageUpdateRequest request);
+  List<Message> readAllByChannelId(UUID channelId);
 
-    void delete(UUID id);
+  void update(MessageUpdateRequest request);
+
+  void delete(UUID id);
 }

@@ -18,6 +18,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class MessageController {
 
+  //TODO 메세지 생성시 첨부파일 포함
   private final MessageService messageService;
 
   // create

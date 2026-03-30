@@ -6,19 +6,20 @@ import java.util.List;
 import java.util.UUID;
 
 public interface ChannelRepository {
-    Channel create(Channel channel);
 
-    Channel read(UUID id);
+  Channel create(Channel channel);
 
-    List<Channel> readAll();
+  Channel read(UUID id);
 
-    Channel update(Channel channel);
+  List<Channel> readAll();
 
-    void delete(UUID id);
+  Channel update(Channel channel);
 
-    void restore(UUID id);
+  void delete(UUID id);
 
-    boolean existsByChannelName(String channelName);
+  void restore(UUID id);
 
-    boolean existsByChannelNameExcluding(String channelName, UUID excludeId);
+  boolean existsByChannelName(String channelName);
+
+  boolean existsByChannelNameExcluding(String channelName, UUID excludeId);
 }

@@ -11,11 +11,11 @@ import java.util.UUID;
 @AllArgsConstructor
 public class ChannelUpdateRequest {
 
-    @NotNull
-    private UUID channelId;
+  @NotNull
+  private UUID channelId;
 
-    @NotBlank
-    private String channelName;
+  @NotBlank
+  private String channelName;
 
-    private String channelDescription;
+  private String channelDescription;
 }
