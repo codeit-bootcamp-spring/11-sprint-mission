@@ -6,6 +6,7 @@ import com.sprint.mission.discodeit.dto.channel.ChannelUpdateRequest;
 import com.sprint.mission.discodeit.dto.channel.PrivateChannelCreateRequest;
 import com.sprint.mission.discodeit.dto.channel.PublicChannelCreateRequest;
 import com.sprint.mission.discodeit.entity.ChannelType;
+import com.sprint.mission.discodeit.exception.DiscodeitIdMismatchException;
 import com.sprint.mission.discodeit.exception.DiscodeitInvalidInputException;
 import com.sprint.mission.discodeit.service.ChannelService;
 import jakarta.validation.Valid;
@@ -73,7 +74,7 @@ public class ChannelController {
   public ResponseEntity<Void> update(@PathVariable UUID id,
       @Valid @RequestBody ChannelUpdateRequest request) {
     if (!id.equals(request.getChannelId())) {
-      throw new IllegalArgumentException("Path id와 body channelId가 다릅니다.");
+      throw DiscodeitIdMismatchException.channel(id, request.getChannelId());
     }
 
     channelService.update(new ChannelUpdateRequest(
@@ -81,8 +82,6 @@ public class ChannelController {
         request.getChannelName(),
         request.getChannelDescription()
     ));
-
-    channelService.update(request);
-    return ResponseEntity.ok().build();
+    return ResponseEntity.noContent().build();
   }
 }

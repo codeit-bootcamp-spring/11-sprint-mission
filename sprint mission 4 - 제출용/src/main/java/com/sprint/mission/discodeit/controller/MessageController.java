@@ -3,6 +3,7 @@ package com.sprint.mission.discodeit.controller;
 import com.sprint.mission.discodeit.dto.message.MessageCreateRequest;
 import com.sprint.mission.discodeit.dto.message.MessageUpdateRequest;
 import com.sprint.mission.discodeit.entity.Message;
+import com.sprint.mission.discodeit.exception.DiscodeitIdMismatchException;
 import com.sprint.mission.discodeit.exception.DiscodeitInvalidInputException;
 import com.sprint.mission.discodeit.service.MessageService;
 import jakarta.validation.Valid;
@@ -70,7 +71,10 @@ public class MessageController {
   @PutMapping(value = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<Void> update(@PathVariable UUID id,
       @Valid @RequestBody MessageUpdateRequest request) {
-    messageService.update(request);
+    if (!id.equals(request.getMessageId())) {
+      throw DiscodeitIdMismatchException.message(id, request.getMessageId());
+    }
+    messageService.update(new MessageUpdateRequest(id, request.getMessageContent()));
     return ResponseEntity.ok().build();
   }
 
@@ -82,7 +86,7 @@ public class MessageController {
 
   // readAllByChannelId
   @GetMapping
-  public ResponseEntity<List<Message>> readAllByChannelId(@RequestParam UUID channelId) {
+  public ResponseEntity<List<Message>> readAllByChannelId(@PathVariable UUID channelId) {
     return ResponseEntity.ok(messageService.readAllByChannelId(channelId));
   }
 
