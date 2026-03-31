@@ -72,6 +72,16 @@ public class ChannelController {
   @PutMapping("/{id}")
   public ResponseEntity<Void> update(@PathVariable UUID id,
       @Valid @RequestBody ChannelUpdateRequest request) {
+    if (!id.equals(request.getChannelId())) {
+      throw new IllegalArgumentException("Path id와 body channelId가 다릅니다.");
+    }
+
+    channelService.update(new ChannelUpdateRequest(
+        id,
+        request.getChannelName(),
+        request.getChannelDescription()
+    ));
+
     channelService.update(request);
     return ResponseEntity.ok().build();
   }
