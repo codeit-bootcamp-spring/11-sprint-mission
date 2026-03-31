@@ -88,22 +88,24 @@ public class BasicUserService implements UserService {
         User user = userRepo.findById(id)
                 .orElseThrow(() -> new UserNotFoundException(id));
 
-        if(!user.getUsername().equals(dto.newUsername()) && userRepo.findByName(dto.newUsername()).isPresent()) throw new DuplicateNameException(dto.newUsername());
-        if(!user.getEmail().equals(dto.newEmail()) && userRepo.findByEmail(dto.newEmail()).isPresent()) throw new DuplicateEmailException(dto.newEmail());
+        if(!user.getUsername().equals(dto.newUsername()) && userRepo.findByName(dto.newUsername()).isPresent())
+            throw new DuplicateNameException(dto.newUsername());
+        if(!user.getEmail().equals(dto.newEmail()) && userRepo.findByEmail(dto.newEmail()).isPresent())
+            throw new DuplicateEmailException(dto.newEmail());
 
-        UUID oldprofileId = user.getProfileId();
-        UUID newprofileId = saveProfile(profile);
+        UUID oldProfileId = user.getProfileId();
+        UUID newProfileId = saveProfile(profile);
 
         user.setUsername(dto.newUsername());
         user.setEmail(dto.newEmail());
         user.setPassword(dto.newPassword());
-        if(newprofileId != null) user.setProfileId(newprofileId);
+        if(newProfileId != null) user.setProfileId(newProfileId);
 
         user.update();
         userRepo.save(user);
 
-        if(newprofileId != null && oldprofileId != null) {
-            binaryContentRepo.deleteById(oldprofileId);
+        if(newProfileId != null && oldProfileId != null) {
+            binaryContentRepo.deleteById(oldProfileId);
         }
     }
 

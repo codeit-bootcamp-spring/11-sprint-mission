@@ -25,8 +25,11 @@ import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -78,18 +81,31 @@ public class BasicChannelService implements ChannelService {
 
     public List<ChannelDto> findAllByUserId(UUID id) {
         List<Channel> channelList = channelRepo.findAll();
+        List<Message> messageList = messageRepo.findAll();
+        List<ReadStatus> readStatusList = readStatusRepo.findAll();
         List<ChannelDto> response = new ArrayList<>();
+
+        Map<UUID, List<Message>> messagesByChannel = messageList.stream()
+                .collect(Collectors.groupingBy(Message::getChannelId));
+        Map<UUID, List<ReadStatus>> readStatusesByChannel = readStatusList.stream()
+                .collect(Collectors.groupingBy(ReadStatus::getChannelId));
 
         for(Channel channel : channelList) {
 
-            Instant latestMessageCreatedAt = messageRepo.findLatestCreatedAtByChannelId(channel.getId())
-                            .orElse(null);
+            List<Message> channelMessages = messagesByChannel.getOrDefault(channel.getId(),List.of());
+
+            Instant latestMessageCreatedAt = channelMessages.stream()
+                    .map(Message::getCreatedAt)
+                    .max(Comparator.naturalOrder())
+                    .orElse(null);
 
             if(channel.getChannelType() == ChannelType.PUBLIC) {
                 response.add(new ChannelDto(channel.getId(), channel.getCreatedAt(), channel.getUpdatedAt(), ChannelType.PUBLIC, channel.getName(),
                         channel.getDescription(), latestMessageCreatedAt, new ArrayList<>()));
             } else { // PRIVATE
-                List<UUID> userIds = readStatusRepo.findUserIdsByChannelId(channel.getId());
+                List<UUID> userIds = readStatusesByChannel.getOrDefault(channel.getId(), List.of()).stream()
+                        .map(ReadStatus::getUserId)
+                        .toList();
                 if(!userIds.contains(id)) continue;
 
                 response.add(new ChannelDto(channel.getId(), channel.getCreatedAt(), channel.getUpdatedAt(), ChannelType.PRIVATE, null,
@@ -113,9 +129,8 @@ public class BasicChannelService implements ChannelService {
     }
 
     public void delete(UUID id) {
-        if(!channelRepo.deleteById(id)) {
-            throw new ChannelNotFoundException(id);
-        }
+        channelRepo.findById(id)
+                .orElseThrow(() -> new ChannelNotFoundException(id));
 
         List<Message> messageList = messageRepo.findAll().stream()
                 .filter(p -> (p.getChannelId().equals(id)))
@@ -138,6 +153,10 @@ public class BasicChannelService implements ChannelService {
             if(!readStatusRepo.deleteById(readStatus.getId())) {
                 throw new ReadStatusNotFoundException(readStatus.getId());
             }
+        }
+
+        if(!channelRepo.deleteById(id)) {
+            throw new ChannelNotFoundException(id);
         }
     }
 }
