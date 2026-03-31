@@ -63,12 +63,4 @@ public class ChannelController {
     channelService.update(request);
     return ResponseEntity.ok().build();
   }
-
-  // restore
-  @PostMapping("/{id}/restore")
-  public ResponseEntity<Void> restore(@PathVariable UUID id) {
-    channelService.restore(id);
-    return ResponseEntity.ok().build();
-  }
-
 }

@@ -29,6 +29,4 @@ public class BinaryContentController {
   public ResponseEntity<List<BinaryContent>> readAllByIdIn(@RequestParam List<UUID> ids) {
     return ResponseEntity.ok(binaryContentService.readAllByIdIn(ids));
   }
-  
-  //TODO 첨부파일 단건, 다건 조회
 }

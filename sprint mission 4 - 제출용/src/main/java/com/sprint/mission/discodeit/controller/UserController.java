@@ -24,7 +24,6 @@ import org.springframework.web.multipart.MultipartFile;
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
 public class UserController {
-  //TODO create시 프로필이미지포함하기
 
   private final UserService userService;
   private final UserStatusService userStatusService;
@@ -105,18 +104,6 @@ public class UserController {
     return ResponseEntity.ok(userService.read(id));
   }
 
-  // read
-  @GetMapping("/{id}")
-  public ResponseEntity<UserResponse> read(@PathVariable UUID id) {
-    return ResponseEntity.ok(userService.read(id)); // 200 OK
-  }
-
-  // readAll
-  @GetMapping
-  public ResponseEntity<List<UserResponse>> readAll() {
-    return ResponseEntity.ok(userService.readAll());  // 200 OK
-  }
-
   // update
   @PutMapping(value = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<UserResponse> update(@PathVariable UUID id,
@@ -133,11 +120,16 @@ public class UserController {
     return ResponseEntity.noContent().build();  // 204 No Content
   }
 
-  // restore
-  @PostMapping("/{id}/restore")
-  public ResponseEntity<Void> restore(@PathVariable UUID id) {
-    userService.restore(id);
-    return ResponseEntity.ok().build();
+  // read
+  @GetMapping("/{id}")
+  public ResponseEntity<UserResponse> read(@PathVariable UUID id) {
+    return ResponseEntity.ok(userService.read(id)); // 200 OK
+  }
+
+  // readAllDto
+  @GetMapping
+  public ResponseEntity<List<UserDto>> readAllDto() {
+    return ResponseEntity.ok(userService.readAllDto()); // 200 OK
   }
 
   // UserStatusUpdate
@@ -148,11 +140,5 @@ public class UserController {
     UserResponse updatedUserStatus = userService.read(id);
 
     return ResponseEntity.ok(updatedUserStatus);  // 200 OK
-  }
-
-  // readAllDto
-  @GetMapping("/readAllDto")
-  public ResponseEntity<List<UserDto>> readAllDto() {
-    return ResponseEntity.ok(userService.readAllDto()); // 200 OK
   }
 }

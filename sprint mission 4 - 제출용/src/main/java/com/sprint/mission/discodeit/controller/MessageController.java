@@ -22,7 +22,6 @@ import org.springframework.web.multipart.MultipartFile;
 @RequiredArgsConstructor
 public class MessageController {
 
-  //TODO 메세지 생성시 첨부파일 포함
   private final MessageService messageService;
 
   // create
@@ -67,6 +66,14 @@ public class MessageController {
     return ResponseEntity.status(HttpStatus.CREATED).body(messageService.create(request));
   }
 
+  // update
+  @PutMapping(value = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<Void> update(@PathVariable UUID id,
+      @Valid @RequestBody MessageUpdateRequest request) {
+    messageService.update(request);
+    return ResponseEntity.ok().build();
+  }
+
   // read
   @GetMapping("/{id}")
   public ResponseEntity<Message> read(@PathVariable UUID id) {
@@ -77,14 +84,6 @@ public class MessageController {
   @GetMapping
   public ResponseEntity<List<Message>> readAllByChannelId(@RequestParam UUID channelId) {
     return ResponseEntity.ok(messageService.readAllByChannelId(channelId));
-  }
-
-  // update
-  @PutMapping(value = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
-  public ResponseEntity<Void> update(@PathVariable UUID id,
-      @Valid @RequestBody MessageUpdateRequest request) {
-    messageService.update(request);
-    return ResponseEntity.ok().build();
   }
 
   // delete
