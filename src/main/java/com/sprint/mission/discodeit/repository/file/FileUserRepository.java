@@ -2,6 +2,9 @@ package com.sprint.mission.discodeit.repository.file;
 
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.repository.UserRepository;
+import com.sprint.mission.discodeit.util.FileLockProvider;
+import java.nio.file.Path;
+import java.util.concurrent.locks.ReentrantLock;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Repository;
@@ -12,78 +15,97 @@ import java.util.*;
 @Repository
 @ConditionalOnProperty(name = "discodeit.repository.type", havingValue = "file")
 public class FileUserRepository implements UserRepository {
-    private final String USER_FILE = "users.ser";
-    private final File file;
-    private Map<UUID, User> userMap;
 
-    public FileUserRepository(@Value("${discodeit.repository.file-directory}") String fileDirectory) {
-        File dir = new File(fileDirectory);
+  private final String USER_FILE = "users.ser";
+  private final File file;
+  private Map<UUID, User> userMap;
 
-        if(!dir.exists()) {
-            dir.mkdirs();
-        }
-        this.file = new File(dir, USER_FILE);
-        this.userMap = loadUsers();
+  private final FileLockProvider fileLockProvider;
+
+  public FileUserRepository(
+      @Value("${discodeit.repository.file-directory}") String fileDirectory,
+      FileLockProvider fileLockProvider
+  ) {
+    this.fileLockProvider = fileLockProvider;
+    File dir = new File(fileDirectory);
+
+    if (!dir.exists()) {
+      dir.mkdirs();
+    }
+    this.file = new File(dir, USER_FILE);
+    this.userMap = loadUsers();
+  }
+
+  private Map<UUID, User> loadUsers() {
+    if (!file.exists()) {
+      return new HashMap<>();
     }
 
-    private Map<UUID, User> loadUsers() {
+    Path path = file.toPath();
+    ReentrantLock lock = fileLockProvider.getLock(path);
 
-        if(!file.exists()) {
-            return new HashMap<>();
-        }
-        try(ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))) {
-            return (Map<UUID, User>) ois.readObject();
-        } catch (IOException | ClassNotFoundException e) {
-            throw new RuntimeException("유저 로드실패", e);
-        }
+    lock.lock();
+    try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))) {
+      return (Map<UUID, User>) ois.readObject();
+    } catch (IOException | ClassNotFoundException e) {
+      throw new RuntimeException("유저 로드실패", e);
+    } finally {
+      lock.unlock();
     }
+  }
 
-    private void saveUsers() {
-        try(ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(file))) {
-            oos.writeObject(userMap);
-        } catch (IOException e) {
-            throw new RuntimeException("유저 저장실패", e);
-        }
-    }
+  private void saveUsers() {
+    Path path = file.toPath();
+    ReentrantLock lock = fileLockProvider.getLock(path);
 
-    @Override
-    public User save(User user) {
-        userMap.put(user.getId() , user);
-        saveUsers();
-        return user;
+    lock.lock();
+    try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(file))) {
+      oos.writeObject(userMap);
+    } catch (IOException e) {
+      throw new RuntimeException("유저 저장실패", e);
+    } finally {
+      lock.unlock();
     }
+  }
 
-    @Override
-    public Optional<User> findByEmail(String email) {
-        return userMap.values().stream()
-                .filter(user -> user.getEmail().equals(email))
-                .findFirst();
-    }
+  @Override
+  public User save(User user) {
+    userMap.put(user.getId(), user);
+    saveUsers();
+    return user;
+  }
 
-    @Override
-    public Optional<User> findByUserName(String userName) {
-        return userMap.values().stream()
-                .filter(user -> user.getUsername().equals(userName))
-                .findFirst();
-    }
+  @Override
+  public Optional<User> findByEmail(String email) {
+    return userMap.values().stream()
+        .filter(user -> user.getEmail().equals(email))
+        .findFirst();
+  }
 
-    @Override
-    public Optional<User> findById(UUID id) {
-        return Optional.ofNullable(userMap.get(id));
-    }
+  @Override
+  public Optional<User> findByUserName(String userName) {
+    return userMap.values().stream()
+        .filter(user -> user.getUsername().equals(userName))
+        .findFirst();
+  }
 
-    @Override
-    public List<User> findAll() {
-        return new ArrayList<>(userMap.values());
-    }
+  @Override
+  public Optional<User> findById(UUID id) {
+    return Optional.ofNullable(userMap.get(id));
+  }
 
-    @Override
-    public void delete(UUID id) {
-        if(userMap.remove(id) != null) {
-            saveUsers();
-        } else {
-            throw new IllegalArgumentException("존재하지 않는 콘텐츠입니다.");
-        }
+  @Override
+  public List<User> findAll() {
+    return new ArrayList<>(userMap.values());
+  }
+
+  @Override
+  public void delete(UUID id) {
+    if (userMap.remove(id) != null) {
+      saveUsers();
+    } else {
+      throw new IllegalArgumentException("존재하지 않는 콘텐츠입니다.");
     }
+  }
 
 }

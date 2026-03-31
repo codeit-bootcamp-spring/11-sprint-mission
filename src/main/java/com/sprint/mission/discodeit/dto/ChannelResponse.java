@@ -7,12 +7,12 @@ import java.util.List;
 import java.util.UUID;
 
 public record ChannelResponse(
-        UUID id,
-        String name,
-        ChannelType type,
-        String description,
-        UUID ownerId,
-        Instant lastMessageAt,
-        List<UUID> memberIds
+    UUID id,
+    String name,
+    ChannelType type,
+    String description,
+    Instant lastMessageAt,
+    List<UUID> participantIds
 ) {
+
 }

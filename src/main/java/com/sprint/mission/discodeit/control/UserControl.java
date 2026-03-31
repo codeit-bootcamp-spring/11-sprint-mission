@@ -2,6 +2,7 @@ package com.sprint.mission.discodeit.control;
 
 
 import com.sprint.mission.discodeit.dto.*;
+import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.entity.UserStatus;
 import com.sprint.mission.discodeit.service.UserService;
 import com.sprint.mission.discodeit.service.UserStatusService;
@@ -12,48 +13,52 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
 public class UserControl {
 
-    private final UserService userService;
-    private final UserStatusService userStatusService;
+  private final UserService userService;
+  private final UserStatusService userStatusService;
 
-    @RequestMapping(method = RequestMethod.POST)
-    public ResponseEntity<UserDto> createUser(@RequestBody UserCreateRequest request) {
-        UserDto createdUser = userService.createUser(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdUser);
-    }
+  @PostMapping(consumes = "multipart/form-data")
+  @ResponseStatus(HttpStatus.CREATED)
+  public ResponseEntity<User> createUser(
+      @RequestPart("userCreateRequest") UserCreateRequest request,
+      @RequestPart(value = "profile", required = false) MultipartFile profile) {
+    User createdUser = userService.createUser(request);
+    return ResponseEntity.status(HttpStatus.CREATED).body(createdUser);
+  }
 
-    @RequestMapping(value = "/findAll", method = RequestMethod.GET)
-    public ResponseEntity<List<UserDto>> getAllUsers() {
-        List<UserDto> users = userService.allReadUser();
-        return ResponseEntity.ok(users);
-    }
+  @GetMapping
+  public ResponseEntity<List<UserDto>> getAllUsers() {
+    List<UserDto> users = userService.allReadUser();
+    return ResponseEntity.ok(users);
+  }
 
-    @RequestMapping(value = "/{id}/status", method = RequestMethod.GET)
-    public ResponseEntity<UserStatus> getUserStatus(@PathVariable UUID id) {
-        UserStatus status = userStatusService.findUserStatus(id);
-        return ResponseEntity.ok(status);
-    }
+  @DeleteMapping("/{id}")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  public ResponseEntity<Void> deleteUser(@PathVariable UUID id) {
+    userService.deleteUser(id);
+    return ResponseEntity.noContent().build();
+  }
 
-    @RequestMapping(value = "/{id}", method = RequestMethod.DELETE)
-    public ResponseEntity<Void> deleteUser(@PathVariable UUID id, @RequestParam String password) {
-        userService.deleteUser(id, password);
-        return ResponseEntity.noContent().build();
-    }
+  @PatchMapping(value = "/{id}", consumes = "multipart/form-data")
+  public ResponseEntity<Void> updateUser(@PathVariable UUID id,
+      @RequestPart("userUpdateRequest") UserUpdateRequest request,
+      @RequestPart(value = "profile", required = false) MultipartFile profile) {
+    userService.updateUser(id, request);
+    return ResponseEntity.ok().build();
+  }
 
-    @RequestMapping(value = "/{id}", method = RequestMethod.PATCH)
-    public ResponseEntity<Void> updateUser(@PathVariable UUID id, @RequestBody UserUpdateRequest request) {
-        userService.updateUser(id, request);
-        return ResponseEntity.ok().build();
-    }
-
-    @RequestMapping(value = "/{id}/status", method = RequestMethod.PATCH)
-    public ResponseEntity<UserStatus> updateOnlineStatus(@PathVariable UUID id) {
-        UserStatus updatedStatus = userStatusService.updateUserIdStatus(id);
-        return ResponseEntity.ok(updatedStatus);
-    }
+  @PatchMapping("/{userId}/userStatus")
+  public ResponseEntity<UserStatus> updateOnlineStatus(
+      @PathVariable UUID userId,
+      @RequestBody UserStatusUpdateDto request
+  ) {
+    UserStatus updatedStatus = userStatusService.updateUserIdStatus(userId, request);
+    return ResponseEntity.ok(updatedStatus);
+  }
 }

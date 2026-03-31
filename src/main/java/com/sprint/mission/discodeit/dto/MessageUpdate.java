@@ -3,6 +3,7 @@ package com.sprint.mission.discodeit.dto;
 import java.util.UUID;
 
 public record MessageUpdate(
-        String message
+    String newContent
 ) {
+
 }

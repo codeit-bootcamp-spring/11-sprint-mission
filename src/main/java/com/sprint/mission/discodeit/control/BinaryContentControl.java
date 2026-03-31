@@ -13,31 +13,32 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/binaryContent")
+@RequestMapping("/api/binaryContents")
 @RequiredArgsConstructor
 public class BinaryContentControl {
-    private final BinaryContentService binaryContentService;
 
-    @RequestMapping(method = RequestMethod.POST)
-    public ResponseEntity<BinaryContentResponse> createBinaryContent(
-            @RequestBody BinaryContentCreateDto request
-            ) {
-        BinaryContent createdContent = binaryContentService.createBinaryContent(request);
-        BinaryContentResponse response = BinaryContentResponse.from(createdContent);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
-    }
+  private final BinaryContentService binaryContentService;
 
-    @RequestMapping(value = "/find", method = RequestMethod.GET)
-    public ResponseEntity<BinaryContent> findBinaryContent(@RequestParam("binaryContentId") UUID binaryContentId) {
-        BinaryContent content = binaryContentService.find(binaryContentId);
-        return ResponseEntity.ok(content);
-    }
+//  @PostMapping
+//  public ResponseEntity<BinaryContentResponse> createBinaryContent(
+//      @RequestBody BinaryContentCreateDto request
+//  ) {
+//    BinaryContent createdContent = binaryContentService.createBinaryContent(request);
+//    BinaryContentResponse response = BinaryContentResponse.from(createdContent);
+//    return ResponseEntity.ok().body(response);
+//  }
 
-    @RequestMapping(value = "/findAll", method = RequestMethod.GET)
-    public ResponseEntity<List<BinaryContent>> findMultipleBinaryContents(
-            @RequestParam("ids") List<UUID> ids
-    ) {
-        List<BinaryContent> contents = binaryContentService.findAllByIdIn(ids);
-        return ResponseEntity.ok(contents);
-    }
+  @GetMapping("/{binaryContentId}")
+  public ResponseEntity<BinaryContent> findBinaryContent(@PathVariable UUID binaryContentId) {
+    BinaryContent content = binaryContentService.find(binaryContentId);
+    return ResponseEntity.ok(content);
+  }
+
+  @GetMapping
+  public ResponseEntity<List<BinaryContent>> findMultipleBinaryContents(
+      @RequestParam("binaryContentIds") List<UUID> binaryContentIds
+  ) {
+    List<BinaryContent> contents = binaryContentService.findAllByIdIn(binaryContentIds);
+    return ResponseEntity.ok(contents);
+  }
 }

@@ -12,43 +12,45 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/messages")
 @RequiredArgsConstructor
 public class MessageControl {
-    private final MessageService messageService;
 
-    @RequestMapping(method = RequestMethod.POST)
-    public ResponseEntity<MessageResponseDto> createMessage(@RequestBody CreateMessageRequest request) {
-        MessageResponseDto createdMessage = messageService.createMessage(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdMessage);
-    }
+  private final MessageService messageService;
 
-    @RequestMapping(value = "/{id}", method = RequestMethod.GET)
-    public ResponseEntity<MessageResponseDto> readMessage(@PathVariable UUID id) {
-        Message message = messageService.readMessage(id);
-        return ResponseEntity.ok(MessageResponseDto.from(message));
-    }
+  @PostMapping(consumes = "multipart/form-data")
+  @ResponseStatus(HttpStatus.CREATED)
+  public ResponseEntity<MessageResponseDto> createMessage(
+      @RequestPart("messageCreateRequest") CreateMessageRequest request,
+      @RequestPart(value = "attachments", required = false) List<MultipartFile> attachments) {
+    MessageResponseDto createdMessage = messageService.createMessage(request);
+    return ResponseEntity.status(HttpStatus.CREATED).body(createdMessage);
+  }
 
-    @RequestMapping(method = RequestMethod.GET, params = "channelId")
-    public ResponseEntity<List<MessageResponseDto>> readMessageByChannelId(@RequestParam UUID channelId) {
-        List<MessageResponseDto> messages = messageService.readMessagesByChannel(channelId)
-                .stream()
-                .map(MessageResponseDto::from)
-                .toList();
-        return ResponseEntity.ok(messages);
-    }
+  @GetMapping(params = "channelId")
+  public ResponseEntity<List<MessageResponseDto>> readMessageByChannelId(
+      @RequestParam UUID channelId) {
+    List<MessageResponseDto> messages = messageService.readMessagesByChannel(channelId)
+        .stream()
+        .map(MessageResponseDto::from)
+        .toList();
+    return ResponseEntity.ok(messages);
+  }
 
-    @RequestMapping(value = "/{id}", method = RequestMethod.DELETE)
-    public ResponseEntity<Void> deleteMessage(@PathVariable UUID id) {
-        messageService.deleteMessage(id);
-        return ResponseEntity.noContent().build();
-    }
+  @DeleteMapping("/{messageId}")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  public ResponseEntity<Void> deleteMessage(@PathVariable UUID messageId) {
+    messageService.deleteMessage(messageId);
+    return ResponseEntity.noContent().build();
+  }
 
-    @RequestMapping(value = "/{id}", method = RequestMethod.PATCH)
-    public ResponseEntity<Void> updateMessage(@PathVariable UUID id, @RequestBody MessageUpdate request) {
-        messageService.updateMessage(id, request);
-        return ResponseEntity.ok().build();
-    }
+  @PatchMapping("/{messageId}")
+  public ResponseEntity<Void> updateMessage(@PathVariable UUID messageId,
+      @RequestBody MessageUpdate request) {
+    messageService.updateMessage(messageId, request);
+    return ResponseEntity.ok().build();
+  }
 }

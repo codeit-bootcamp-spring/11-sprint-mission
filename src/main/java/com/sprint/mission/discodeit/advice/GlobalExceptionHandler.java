@@ -13,18 +13,19 @@ import java.util.InputMismatchException;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(BusinessLogicException.class)
-    public ResponseEntity<ErrorResponse> handleBusinessLogicException(BusinessLogicException e) {
-        ExceptionCode exceptionCode = e.getExceptionCode();
+  @ExceptionHandler(BusinessLogicException.class)
+  public ResponseEntity<ErrorResponse> handleBusinessLogicException(BusinessLogicException e) {
+    ExceptionCode exceptionCode = e.getExceptionCode();
 
-        ErrorResponse response = ErrorResponse.of(exceptionCode);
+    ErrorResponse response = ErrorResponse.of(exceptionCode);
 
-        return new ResponseEntity<>(response, HttpStatus.valueOf(exceptionCode.getStatus()));
-    }
+    return new ResponseEntity<>(response, HttpStatus.valueOf(exceptionCode.getStatus()));
+  }
 
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleAllExceptions(Exception e) {
-        ErrorResponse response = ErrorResponse.of(ExceptionCode.INTERNAL_SERVER_ERROR);
-        return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
-    }
+  @ExceptionHandler(Exception.class)
+  public ResponseEntity<ErrorResponse> handleAllExceptions(Exception e) {
+    e.printStackTrace();
+    ErrorResponse response = ErrorResponse.of(ExceptionCode.INTERNAL_SERVER_ERROR);
+    return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+  }
 }
