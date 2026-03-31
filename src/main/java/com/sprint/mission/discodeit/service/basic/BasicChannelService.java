@@ -12,7 +12,9 @@ import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.exception.binarycontent.BinaryContentNotFoundException;
 import com.sprint.mission.discodeit.exception.channel.ChannelNotFoundException;
 import com.sprint.mission.discodeit.exception.channel.PrivateChannelUpdateNotAllowedException;
+import com.sprint.mission.discodeit.exception.message.MessageNotFoundException;
 import com.sprint.mission.discodeit.exception.readstatus.ReadStatusAlreadyExistsException;
+import com.sprint.mission.discodeit.exception.readstatus.ReadStatusNotFoundException;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
@@ -111,27 +113,31 @@ public class BasicChannelService implements ChannelService {
     }
 
     public void delete(UUID id) {
-        Channel channel = channelRepo.findById(id)
-                .orElseThrow(() -> new ChannelNotFoundException(id));
+        if(!channelRepo.deleteById(id)) {
+            throw new ChannelNotFoundException(id);
+        }
 
         List<Message> messageList = messageRepo.findAll().stream()
                 .filter(p -> (p.getChannelId().equals(id)))
                 .toList();
         for(Message message : messageList) {
             for(UUID binaryContentId : message.getAttachmentIds()) {
-                BinaryContent binaryContent = binaryContentRepo.findById(binaryContentId)
-                        .orElseThrow(() -> new BinaryContentNotFoundException(binaryContentId));
-                binaryContentRepo.delete(binaryContent);
+                if(!binaryContentRepo.deleteById(binaryContentId)) {
+                    throw new BinaryContentNotFoundException(binaryContentId);
+                }
             }
-            messageRepo.delete(message);
+            if(!messageRepo.deleteById(message.getId())) {
+                throw new MessageNotFoundException(message.getId());
+            }
         }
 
         List<ReadStatus> readStatusList = readStatusRepo.findAll().stream()
                 .filter(p -> (p.getChannelId().equals(id)))
                 .toList();
         for(ReadStatus readStatus : readStatusList) {
-            readStatusRepo.delete(readStatus);
+            if(!readStatusRepo.deleteById(readStatus.getId())) {
+                throw new ReadStatusNotFoundException(readStatus.getId());
+            }
         }
-        channelRepo.delete(channel);
     }
 }

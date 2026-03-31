@@ -20,10 +20,12 @@ import java.util.concurrent.ConcurrentHashMap;
 public class JCFUserRepository extends CommonJCFRepository<User> implements UserRepository {
 
     private final Map<String, UUID> usernameToId;
+    private final Map<String, UUID> emailToId;
 
     public JCFUserRepository() {
         super();
         usernameToId = new ConcurrentHashMap<>();
+        emailToId = new ConcurrentHashMap<>();
     }
 
     @Override
@@ -35,37 +37,39 @@ public class JCFUserRepository extends CommonJCFRepository<User> implements User
             if(!oldUser.getUsername().equals(obj.getUsername())) {
                 usernameToId.remove(oldUser.getUsername());
             }
+            if(!oldUser.getEmail().equals(obj.getEmail())) {
+                emailToId.remove(oldUser.getEmail());
+            }
         }
 
         super.save(obj);
         usernameToId.put(obj.getUsername(), obj.getId());
+        emailToId.put(obj.getEmail(), obj.getId());
     }
 
     @Override
-    public void delete(User obj) {
-        super.delete(obj);
-        usernameToId.remove(obj.getUsername());
-    }
+    public boolean deleteById(UUID id) {
+        Optional<User> userOpt = findById(id);
 
-    @Override
-    public boolean existsByName(String name) {
-        return usernameToId.containsKey(name);
-    }
-
-    @Override
-    public boolean existsByEmail(String email) {
-        List<User> userList = findAll();
-        for(User user : userList) {
-            if(user.getEmail().equals(email)) {
-                return true;
-            }
+        if(userOpt.isEmpty()) {
+            return false;
         }
-        return false;
+
+        User user = userOpt.get();
+        usernameToId.remove(user.getUsername());
+        emailToId.remove(user.getEmail());
+
+        return super.deleteById(id);
     }
 
     @Override
     public Optional<User> findByName(String username) {
         return findById(usernameToId.get(username));
+    }
+
+    @Override
+    public Optional<User> findByEmail(String email) {
+        return findById(emailToId.get(email));
     }
 
 }

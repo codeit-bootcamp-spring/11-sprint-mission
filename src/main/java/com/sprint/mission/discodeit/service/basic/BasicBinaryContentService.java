@@ -45,9 +45,9 @@ public class BasicBinaryContentService implements BinaryContentService {
 
     @Override
     public void delete(UUID id) {
-        BinaryContent binaryContent = binaryContentRepo.findById(id)
-                .orElseThrow(() -> new BinaryContentNotFoundException(id));
-        binaryContentRepo.delete(binaryContent);
+        if(!binaryContentRepo.deleteById(id)) {
+            throw new BinaryContentNotFoundException(id);
+        }
     }
 
     private BinaryContentDto toDto(BinaryContent binaryContent) {

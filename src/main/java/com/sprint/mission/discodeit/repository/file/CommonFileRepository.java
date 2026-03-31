@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -101,10 +102,10 @@ public abstract class CommonFileRepository<T extends Common> {
         }
     }
 
-    public void delete(T obj) {
-        Path path = filePath(obj.getId());
+    public boolean deleteById(UUID id) {
+        Path path = filePath(id);
         try {
-            Files.deleteIfExists(path);
+            return Files.deleteIfExists(path);
         } catch (IOException e) {
             throw new FileDeleteException(path, e);
         }

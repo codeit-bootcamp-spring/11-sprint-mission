@@ -33,8 +33,8 @@ public class CommonJCFRepository<T extends Common> {
         return new ArrayList<>(repo.values());
     }
 
-    public void delete(T obj) {
-        repo.remove(obj.getId());
+    public boolean deleteById(UUID id) {
+        return repo.remove(id) != null;
     }
 
 }

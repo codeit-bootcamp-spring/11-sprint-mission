@@ -31,11 +31,4 @@ public class JCFUserStatusRepository extends CommonJCFRepository<UserStatus> imp
         }
         return Optional.empty();
     }
-
-    @Override
-    public void deleteByUserId(UUID id) {
-        UserStatus userStatus = findByUserId(id)
-                .orElseThrow(() -> new UserStatusOfUserNotFoundException(id));
-        delete(userStatus);
-    }
 }

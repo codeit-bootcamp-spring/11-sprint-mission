@@ -33,11 +33,4 @@ public class FileUserStatusRepository extends CommonFileRepository<UserStatus> i
         }
         return Optional.empty();
     }
-
-    @Override
-    public void deleteByUserId(UUID id) {
-        UserStatus userStatus = findByUserId(id)
-                .orElseThrow(() -> new UserStatusOfUserNotFoundException(id));
-        delete(userStatus);
-    }
 }

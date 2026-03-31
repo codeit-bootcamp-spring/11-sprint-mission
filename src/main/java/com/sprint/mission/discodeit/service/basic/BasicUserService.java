@@ -11,6 +11,7 @@ import com.sprint.mission.discodeit.exception.binarycontent.BinaryContentSaveExc
 import com.sprint.mission.discodeit.exception.user.DuplicateEmailException;
 import com.sprint.mission.discodeit.exception.user.DuplicateNameException;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
+import com.sprint.mission.discodeit.exception.userstatus.UserStatusNotFoundException;
 import com.sprint.mission.discodeit.exception.userstatus.UserStatusOfUserNotFoundException;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
@@ -35,8 +36,8 @@ public class BasicUserService implements UserService {
 
     @Override
     public UserDto create(UserCreateRequest dto, MultipartFile profile) {
-        if(userRepo.existsByName(dto.username())) throw new DuplicateNameException(dto.username());
-        if(userRepo.existsByEmail(dto.email())) throw new DuplicateEmailException(dto.email());
+        if(userRepo.findByName(dto.username()).isPresent()) throw new DuplicateNameException(dto.username());
+        if(userRepo.findByEmail(dto.email()).isPresent()) throw new DuplicateEmailException(dto.email());
 
         UUID profileId = saveProfile(profile);
 
@@ -87,18 +88,23 @@ public class BasicUserService implements UserService {
         User user = userRepo.findById(id)
                 .orElseThrow(() -> new UserNotFoundException(id));
 
-        if(!user.getUsername().equals(dto.newUsername()) && userRepo.existsByName(dto.newUsername())) throw new DuplicateNameException(dto.newUsername());
-        if(!user.getEmail().equals(dto.newEmail()) && userRepo.existsByEmail(dto.newEmail())) throw new DuplicateEmailException(dto.newEmail());
+        if(!user.getUsername().equals(dto.newUsername()) && userRepo.findByName(dto.newUsername()).isPresent()) throw new DuplicateNameException(dto.newUsername());
+        if(!user.getEmail().equals(dto.newEmail()) && userRepo.findByEmail(dto.newEmail()).isPresent()) throw new DuplicateEmailException(dto.newEmail());
 
-        UUID profileId = saveProfile(profile);
+        UUID oldprofileId = user.getProfileId();
+        UUID newprofileId = saveProfile(profile);
 
         user.setUsername(dto.newUsername());
         user.setEmail(dto.newEmail());
         user.setPassword(dto.newPassword());
-        if(profileId != null) user.setProfileId(profileId);
-        user.update();
+        if(newprofileId != null) user.setProfileId(newprofileId);
 
+        user.update();
         userRepo.save(user);
+
+        if(newprofileId != null && oldprofileId != null) {
+            binaryContentRepo.deleteById(oldprofileId);
+        }
     }
 
     @Override
@@ -106,15 +112,19 @@ public class BasicUserService implements UserService {
         User user = userRepo.findById(id)
                 .orElseThrow(() -> new UserNotFoundException(id));
 
-        userStatusRepo.deleteByUserId(id);
+        UserStatus userStatus = userStatusRepo.findByUserId(id)
+                .orElseThrow(() -> new UserStatusOfUserNotFoundException(id));
+        userStatusRepo.deleteById(userStatus.getId());
 
-        if(user.getProfileId() != null) {
-            BinaryContent binaryContent = binaryContentRepo.findById(user.getProfileId())
-                    .orElseThrow(() -> new BinaryContentNotFoundException(user.getProfileId()));
-            binaryContentRepo.delete(binaryContent);
+        UUID profileId = user.getProfileId();
+        if(profileId != null) {
+            if(!binaryContentRepo.deleteById(profileId)) {
+                throw new BinaryContentNotFoundException(profileId);
+            }
         }
-
-        userRepo.delete(user);
+        if(!userRepo.deleteById(id)) {
+            throw new UserNotFoundException(id);
+        }
     }
 
     private UUID saveProfile(MultipartFile file) {

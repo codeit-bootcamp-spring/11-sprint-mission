@@ -10,5 +10,5 @@ public interface BinaryContentRepository {
     void save(BinaryContent binaryContent);
     Optional<BinaryContent> findById(UUID id);
     List<BinaryContent> findAll();
-    void delete(BinaryContent binaryContent);
+    boolean deleteById(UUID id);
 }

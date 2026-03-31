@@ -82,12 +82,13 @@ public class BasicMessageService implements MessageService {
                 .orElseThrow(() -> new MessageNotFoundException(id));
 
         for(UUID binaryContentId : message.getAttachmentIds()) {
-            BinaryContent binaryContent = binaryContentRepo.findById(binaryContentId)
-                    .orElseThrow(() -> new BinaryContentNotFoundException(binaryContentId));
-            binaryContentRepo.delete(binaryContent);
+            if(!binaryContentRepo.deleteById(binaryContentId)) {
+                throw new BinaryContentNotFoundException(binaryContentId);
+            }
         }
-
-        messageRepo.delete(message);
+        if(!messageRepo.deleteById(message.getId())) {
+            throw new MessageNotFoundException(message.getId());
+        }
     }
 
     private MessageDto toDto(Message message) {

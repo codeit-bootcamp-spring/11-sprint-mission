@@ -75,10 +75,9 @@ public class BasicReadStatusService implements ReadStatusService {
 
     @Override
     public void delete(UUID id) {
-        ReadStatus readStatus = readStatusRepo.findById(id)
-                .orElseThrow(() -> new ReadStatusNotFoundException(id));
-
-        readStatusRepo.delete(readStatus);
+        if(!readStatusRepo.deleteById(id)) {
+            throw new ReadStatusNotFoundException(id);
+        }
     }
 
     private ReadStatusDto toDto(ReadStatus readStatus) {
