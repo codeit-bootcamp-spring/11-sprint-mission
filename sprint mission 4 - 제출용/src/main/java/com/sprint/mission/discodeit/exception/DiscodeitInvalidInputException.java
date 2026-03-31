@@ -7,6 +7,6 @@ public class DiscodeitInvalidInputException extends DiscodeitException {
   }
 
   public static DiscodeitInvalidInputException blankField(String fieldName) {
-    return new DiscodeitInvalidInputException(fieldName + "은(는) null이거나 blank입니다.");
+    return new DiscodeitInvalidInputException(fieldName + "이(가) null이거나 blank입니다.");
   }
 }

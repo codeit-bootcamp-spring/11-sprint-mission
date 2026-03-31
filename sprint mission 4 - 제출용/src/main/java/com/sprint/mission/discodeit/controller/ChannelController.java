@@ -1,9 +1,12 @@
 package com.sprint.mission.discodeit.controller;
 
+import com.sprint.mission.discodeit.dto.channel.ChannelCreateRequest;
 import com.sprint.mission.discodeit.dto.channel.ChannelResponse;
 import com.sprint.mission.discodeit.dto.channel.ChannelUpdateRequest;
 import com.sprint.mission.discodeit.dto.channel.PrivateChannelCreateRequest;
 import com.sprint.mission.discodeit.dto.channel.PublicChannelCreateRequest;
+import com.sprint.mission.discodeit.entity.ChannelType;
+import com.sprint.mission.discodeit.exception.DiscodeitInvalidInputException;
 import com.sprint.mission.discodeit.service.ChannelService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -21,20 +24,29 @@ public class ChannelController {
 
   private final ChannelService channelService;
 
-  // public create
-  @PostMapping("/public")
-  public ResponseEntity<ChannelResponse> createPublicChannel(
-      @Valid @RequestBody PublicChannelCreateRequest request) {
-    return ResponseEntity.status(HttpStatus.CREATED)
-        .body(channelService.createPublicChannel(request));
-  }
+  // public, private 한번에 create
+  @PostMapping
+  public ResponseEntity<ChannelResponse> create(@Valid @RequestBody ChannelCreateRequest request) {
+    if (request.channelType() == ChannelType.PUBLIC) {
+      if (request.channelName() == null || request.channelName().isBlank()) {
+        throw new DiscodeitInvalidInputException("PUBLIC");
+      }
+      ChannelResponse response = channelService.createPublicChannel(
+          new PublicChannelCreateRequest(request.channelName(), request.channelDescription())
+      );
+      return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
 
-  // private create
-  @PostMapping("/private")
-  public ResponseEntity<ChannelResponse> createPrivateChannel(
-      @Valid @RequestBody PrivateChannelCreateRequest request) {
-    return ResponseEntity.status(HttpStatus.CREATED)
-        .body(channelService.createPrivateChannel(request));
+    if (request.channelType() == ChannelType.PRIVATE) {
+      if (request.channelType() == null || request.channelName().isBlank()) {
+        throw new DiscodeitInvalidInputException("PRIVATE");
+      }
+      ChannelResponse response = channelService.createPrivateChannel(
+          new PrivateChannelCreateRequest(request.userIds())
+      );
+      return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+    throw new IllegalArgumentException("지원하지 않는 채널 타입 입니다.");
   }
 
   // read
