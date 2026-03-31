@@ -9,7 +9,7 @@ import java.util.UUID;
 
 public interface ReadStatusService {
 
-  void createReadStatus(ReadStatusCreateDto statusCreateDto);
+  ReadStatus createReadStatus(ReadStatusCreateDto statusCreateDto);
 
   ReadStatus findById(UUID id);
 

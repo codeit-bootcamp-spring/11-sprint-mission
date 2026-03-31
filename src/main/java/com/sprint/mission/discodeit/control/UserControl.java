@@ -6,8 +6,11 @@ import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.entity.UserStatus;
 import com.sprint.mission.discodeit.service.UserService;
 import com.sprint.mission.discodeit.service.UserStatusService;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,6 +29,7 @@ public class UserControl {
   @PostMapping(consumes = "multipart/form-data")
   @ResponseStatus(HttpStatus.CREATED)
   public ResponseEntity<User> createUser(
+      @Parameter(content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE))
       @RequestPart("userCreateRequest") UserCreateRequest request,
       @RequestPart(value = "profile", required = false) MultipartFile profile) {
     User createdUser = userService.createUser(request);
@@ -47,6 +51,7 @@ public class UserControl {
 
   @PatchMapping(value = "/{id}", consumes = "multipart/form-data")
   public ResponseEntity<Void> updateUser(@PathVariable UUID id,
+      @Parameter(content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE))
       @RequestPart("userUpdateRequest") UserUpdateRequest request,
       @RequestPart(value = "profile", required = false) MultipartFile profile) {
     userService.updateUser(id, request);

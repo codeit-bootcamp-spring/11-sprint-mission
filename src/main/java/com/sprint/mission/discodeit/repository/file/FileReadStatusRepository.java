@@ -78,22 +78,22 @@ public class FileReadStatusRepository implements ReadStatusRepository {
   @Override
   public List<ReadStatus> findAllByChannelId(UUID id) {
     return readStatusMap.values().stream()
-        .filter(status -> status.getChannelId().equals(id))
+        .filter(status -> id.equals(status.getChannelId()))
         .toList();
   }
 
   @Override
   public List<ReadStatus> findAllByUserId(UUID id) {
     return readStatusMap.values().stream()
-        .filter(status -> status.getUserId().equals(id))
+        .filter(status -> id.equals(status.getUserId()))
         .toList();
   }
 
   @Override
   public Optional<ReadStatus> findByUserIdAndChannelId(UUID authorId, UUID channelId) {
     return readStatusMap.values().stream()
-        .filter(status -> status.getUserId().equals(authorId) && status.getChannelId()
-            .equals(channelId))
+        .filter(status -> authorId.equals(status.getUserId()) && channelId.equals(
+            status.getChannelId()))
         .findFirst();
   }
 

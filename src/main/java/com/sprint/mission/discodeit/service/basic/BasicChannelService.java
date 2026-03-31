@@ -45,6 +45,9 @@ public class BasicChannelService implements ChannelService {
   @Override
   public Channel createPrivateChannel(PrivateChannelRequest request) {
     Channel channel = Channel.builder()
+        .id(UUID.randomUUID())
+        .createdAt(Instant.now())
+        .updatedAt(Instant.now())
         .type(ChannelType.PRIVATE)
         .build();
 

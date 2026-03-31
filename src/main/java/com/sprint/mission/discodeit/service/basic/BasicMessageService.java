@@ -4,6 +4,7 @@ import com.sprint.mission.discodeit.dto.ChannelMessageList;
 import com.sprint.mission.discodeit.dto.CreateMessageRequest;
 import com.sprint.mission.discodeit.dto.MessageResponseDto;
 import com.sprint.mission.discodeit.dto.MessageUpdate;
+import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.exception.BusinessLogicException;
 import com.sprint.mission.discodeit.exception.ExceptionCode;
@@ -12,6 +13,7 @@ import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.MessageService;
+import java.io.IOException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -21,6 +23,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
@@ -32,7 +35,8 @@ public class BasicMessageService implements MessageService {
   private final BinaryContentRepository binaryContentRepository;
 
   @Override
-  public MessageResponseDto createMessage(CreateMessageRequest request) {
+  public MessageResponseDto createMessage(CreateMessageRequest request,
+      List<MultipartFile> attachments) {
     if (request.content() == null || request.content().isBlank()) {
       throw new BusinessLogicException(ExceptionCode.MESSAGE_CONTENT_EMPTY);
     }
@@ -45,10 +49,23 @@ public class BasicMessageService implements MessageService {
         .createdAt(Instant.now())
         .build();
 
-    Message savedMessage = messageRepository.save(message);
+    if (attachments != null && !attachments.isEmpty()) {
+      for (MultipartFile file : attachments) {
+        try {
+          BinaryContent content = new BinaryContent(
+              file.getBytes(),
+              file.getOriginalFilename(),
+              file.getContentType()
+          );
+          binaryContentRepository.save(content);
+          message.getAttachmentIds().add(content.getId());
+        } catch (IOException e) {
+          throw new BusinessLogicException(ExceptionCode.INTERNAL_SERVER_ERROR);
+        }
+      }
+    }
 
-    System.out.println(
-        "메시지 전송 완료 : [채널 ID : " + request.channelId() + ", 작성자 ID : " + request.authorId() + "]");
+    Message savedMessage = messageRepository.save(message);
 
     return MessageResponseDto.from(savedMessage);
   }

@@ -25,7 +25,7 @@ public class BasicReadStatusService implements ReadStatusService {
   private final ChannelRepository channelRepository;
 
   @Override
-  public void createReadStatus(ReadStatusCreateDto statusCreateDto) {
+  public ReadStatus createReadStatus(ReadStatusCreateDto statusCreateDto) {
     userRepository.findById(statusCreateDto.userId())
         .orElseThrow(() -> new BusinessLogicException(ExceptionCode.MEMBER_NOT_FOUND));
     channelRepository.findById(statusCreateDto.channelId())
@@ -48,6 +48,8 @@ public class BasicReadStatusService implements ReadStatusService {
 
     System.out.println("✅ 읽음 상태 기록 완료 : [유저 : " + statusCreateDto.userId() + ", 채널 : "
         + statusCreateDto.channelId());
+
+    return readStatus;
   }
 
   public ReadStatus findById(UUID id) {

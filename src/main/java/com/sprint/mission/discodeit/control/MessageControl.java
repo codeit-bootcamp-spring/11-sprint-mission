@@ -5,8 +5,11 @@ import com.sprint.mission.discodeit.dto.MessageResponseDto;
 import com.sprint.mission.discodeit.dto.MessageUpdate;
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.service.MessageService;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,9 +27,10 @@ public class MessageControl {
   @PostMapping(consumes = "multipart/form-data")
   @ResponseStatus(HttpStatus.CREATED)
   public ResponseEntity<MessageResponseDto> createMessage(
+      @Parameter(content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE))
       @RequestPart("messageCreateRequest") CreateMessageRequest request,
       @RequestPart(value = "attachments", required = false) List<MultipartFile> attachments) {
-    MessageResponseDto createdMessage = messageService.createMessage(request);
+    MessageResponseDto createdMessage = messageService.createMessage(request, attachments);
     return ResponseEntity.status(HttpStatus.CREATED).body(createdMessage);
   }
 

@@ -21,9 +21,9 @@ public class ReadStatusControl {
 
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
-  public ResponseEntity<Void> createReadStatus(@RequestBody ReadStatusCreateDto request) {
-    readStatusService.createReadStatus(request);
-    return ResponseEntity.status(HttpStatus.CREATED).build();
+  public ResponseEntity<ReadStatus> createReadStatus(@RequestBody ReadStatusCreateDto request) {
+    ReadStatus createdStatus = readStatusService.createReadStatus(request);
+    return ResponseEntity.status(HttpStatus.CREATED).body(createdStatus);
   }
 
   @GetMapping(params = "userId")

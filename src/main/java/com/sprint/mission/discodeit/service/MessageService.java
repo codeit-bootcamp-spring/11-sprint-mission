@@ -8,12 +8,19 @@ import com.sprint.mission.discodeit.entity.Message;
 
 import java.util.List;
 import java.util.UUID;
+import org.springframework.web.multipart.MultipartFile;
 
 public interface MessageService {
-    MessageResponseDto createMessage(CreateMessageRequest request);
-    Message readMessage(UUID id);
-    public List<Message> readMessagesByChannel(UUID channelId);
-    List<MessageResponseDto> findAllByChannelId(ChannelMessageList request);
-    void deleteMessage(UUID id);
-    void updateMessage(UUID id, MessageUpdate request);
+
+  MessageResponseDto createMessage(CreateMessageRequest request, List<MultipartFile> attachments);
+
+  Message readMessage(UUID id);
+
+  public List<Message> readMessagesByChannel(UUID channelId);
+
+  List<MessageResponseDto> findAllByChannelId(ChannelMessageList request);
+
+  void deleteMessage(UUID id);
+
+  void updateMessage(UUID id, MessageUpdate request);
 }
