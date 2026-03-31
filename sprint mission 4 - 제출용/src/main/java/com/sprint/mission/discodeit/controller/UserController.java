@@ -5,6 +5,7 @@ import com.sprint.mission.discodeit.dto.user.UserDto;
 import com.sprint.mission.discodeit.dto.user.UserResponse;
 import com.sprint.mission.discodeit.dto.user.UserUpdateRequest;
 import com.sprint.mission.discodeit.dto.userStatus.UserStatusUpdateRequest;
+import com.sprint.mission.discodeit.exception.DiscodeitIdMismatchException;
 import com.sprint.mission.discodeit.exception.DiscodeitInvalidInputException;
 import com.sprint.mission.discodeit.service.UserService;
 import com.sprint.mission.discodeit.service.UserStatusService;
@@ -108,9 +109,22 @@ public class UserController {
   @PutMapping(value = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<UserResponse> update(@PathVariable UUID id,
       @Valid @RequestBody UserUpdateRequest request) {
-    userService.update(request);
-    UserResponse updatedUser = userService.read(id);
-    return ResponseEntity.ok(updatedUser);  // 200 OK
+
+    if (!id.equals(request.getId())) {
+      throw DiscodeitIdMismatchException.generic("id", id, request.getId());
+    }
+
+    userService.update(new UserUpdateRequest(
+        id,
+        request.getUserName(),
+        request.getUserEmail(),
+        request.getUserPassword(),
+        request.getFileName(),
+        request.getFileContent(),
+        request.getContentType()
+    ));
+
+    return ResponseEntity.ok(userService.read(id));
   }
 
   // delete
@@ -136,9 +150,13 @@ public class UserController {
   @PutMapping("/{id}/userStatus")
   public ResponseEntity<UserResponse> updateStatus(@PathVariable UUID id,
       @Valid @RequestBody UserStatusUpdateRequest request) {
-    userStatusService.update(request);
+    if (!id.equals(request.getUserId())) {
+      throw DiscodeitIdMismatchException.generic("userId", id, request.getUserId());
+    }
+
+    userStatusService.update(new UserStatusUpdateRequest(id, request.getLastOnlineAt()));
     UserResponse updatedUserStatus = userService.read(id);
 
-    return ResponseEntity.ok(updatedUserStatus);  // 200 OK
+    return ResponseEntity.ok(userService.read(id));  // 200 OK
   }
 }

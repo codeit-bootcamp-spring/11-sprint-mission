@@ -86,7 +86,7 @@ public class MessageController {
 
   // readAllByChannelId
   @GetMapping
-  public ResponseEntity<List<Message>> readAllByChannelId(@PathVariable UUID channelId) {
+  public ResponseEntity<List<Message>> readAllByChannelId(@RequestParam UUID channelId) {
     return ResponseEntity.ok(messageService.readAllByChannelId(channelId));
   }
 

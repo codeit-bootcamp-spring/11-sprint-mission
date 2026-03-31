@@ -39,7 +39,7 @@ public class ChannelController {
     }
 
     if (request.channelType() == ChannelType.PRIVATE) {
-      if (request.channelType() == null || request.channelName().isBlank()) {
+      if (request.userIds() == null || request.userIds().isEmpty()) {
         throw new DiscodeitInvalidInputException("PRIVATE");
       }
       ChannelResponse response = channelService.createPrivateChannel(
