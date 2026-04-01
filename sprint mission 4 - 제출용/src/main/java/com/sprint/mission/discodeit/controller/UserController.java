@@ -29,6 +29,12 @@ public class UserController {
   private final UserService userService;
   private final UserStatusService userStatusService;
 
+  // readAllDto
+  @GetMapping
+  public ResponseEntity<List<UserDto>> readAllDto() {
+    return ResponseEntity.ok(userService.readAllDto()); // 200 OK
+  }
+
   // create (JSON)
   @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<UserResponse> create(@Valid @RequestBody UserCreateRequest request) {
@@ -140,11 +146,6 @@ public class UserController {
     return ResponseEntity.ok(userService.read(id)); // 200 OK
   }
 
-  // readAllDto
-  @GetMapping
-  public ResponseEntity<List<UserDto>> readAllDto() {
-    return ResponseEntity.ok(userService.readAllDto()); // 200 OK
-  }
 
   // UserStatusUpdate
   @PutMapping("/{id}/userStatus")

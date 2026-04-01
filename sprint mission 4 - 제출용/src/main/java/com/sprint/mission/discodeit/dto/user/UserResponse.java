@@ -1,17 +1,20 @@
 package com.sprint.mission.discodeit.dto.user;
 
+import java.time.Instant;
+import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
-import java.util.UUID;
-
 @Getter
 @AllArgsConstructor
-// User 조회 시 반환 데이터
 public class UserResponse {
 
   private UUID id;
-  private String userName;
-  private String userEmail;
-  private boolean isOnline;
+  private Instant createdAt;
+  private Instant updatedAt;
+  private String username;
+  private String email;
+  private String password;
+  private UUID profileId;
+  private Boolean online;
 }

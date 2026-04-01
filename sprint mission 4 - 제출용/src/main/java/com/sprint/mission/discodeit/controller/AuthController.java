@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class AuthController {
 
+  // 스펙상 구현 login - 로그인 - 응답(200)
   private final AuthService authService;
 
   @PostMapping("/login")

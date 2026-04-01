@@ -6,11 +6,12 @@ import java.util.List;
 import java.util.UUID;
 
 public record ChannelCreateRequest(
-    @NotNull ChannelType channelType,
-    String channelName,
-    String channelDescription,
-    List<UUID> userIds
+    @NotNull(message = "channelType은 필수입니다.")
+    ChannelType channelType,
+
+    String name,
+    String description,
+    List<UUID> participantIds
 ) {
 
 }
-
