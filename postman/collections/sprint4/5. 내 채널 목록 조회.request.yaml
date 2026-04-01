@@ -1,0 +1,10 @@
+$kind: http-request
+name: 5. 내 채널 목록 조회
+url: http://localhost:8080/api/channels?userId=45b0abbb-0bdc-42bc-9abb-93fa8f8a615b
+method: GET
+queryParams:
+  userId: 45b0abbb-0bdc-42bc-9abb-93fa8f8a615b
+body:
+  type: json
+  content: ""
+order: 4136230669086112

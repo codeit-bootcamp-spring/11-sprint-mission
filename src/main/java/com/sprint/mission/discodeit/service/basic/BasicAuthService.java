@@ -20,8 +20,8 @@ public class BasicAuthService implements AuthService {
         if (!user.getPassword().equals(request.password())) {
             throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
         }
-        return new UserDto(user.getId(), user.getName(), user.getEmail(),
-                user.getProfileId(), user.getCreatedAt(), user.getUpdatedAt(),
+        return new UserDto(user.getId(), user.getCreatedAt(), user.getUpdatedAt(),
+                user.getName(), user.getEmail(), user.getProfileId(),
                 true);
     }
 }

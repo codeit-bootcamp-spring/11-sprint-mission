@@ -68,11 +68,20 @@ public class FileUserRepository implements UserRepository {
     }
 
     @Override
-    public boolean existsByName(String name) { return false; }
+    public boolean existsByName(String name) {
+        return loadUsers().stream().anyMatch(user ->
+                user.getName().equals(name));
+    }
 
     @Override
-    public boolean existsByEmail(String email) { return false; }
+    public boolean existsByEmail(String email) {
+        return loadUsers().stream().anyMatch(user ->
+                user.getEmail().equals(email));
+    }
 
     @Override
-    public Optional<User> findByName(String name) { return Optional.empty(); }
+    public Optional<User> findByName(String name) {
+        return loadUsers().stream().filter(user ->
+                user.getName().equals(name)).findFirst();
+    }
 }

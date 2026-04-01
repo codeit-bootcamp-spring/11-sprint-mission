@@ -37,7 +37,7 @@ public class BasicUserStatusService implements UserStatusService {
     public UserStatusDto findById(UUID id) {
         UserStatus userStatus = userStatusRepository.findByUserId(id).orElseThrow(
                 () -> new IllegalArgumentException("상태 정보를 찾을 수 없습니다."));
-        return null;
+        return toDto(userStatus);
     }
 
     @Override
@@ -48,7 +48,7 @@ public class BasicUserStatusService implements UserStatusService {
 
     @Override
     public void update(UUID id, UserStatusUpdateRequest request) {
-        UserStatus userStatus = userStatusRepository.findByUserId(id).orElseThrow(
+        UserStatus userStatus = userStatusRepository.findById(id).orElseThrow(
                 () -> new IllegalArgumentException("상태 정보를 찾을 수 없습니다."));
         userStatus.update();
         userStatusRepository.save(userStatus);

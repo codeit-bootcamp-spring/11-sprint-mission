@@ -38,7 +38,9 @@ public class BasicMessageService implements MessageService {
         if (request.attachments() != null && !request.attachments().isEmpty()) {
             List<UUID> attachmentIds = new ArrayList<>();
             for (byte[] data : request.attachments()) {
-                BinaryContent content = new BinaryContent(data);
+                BinaryContent content = new BinaryContent(
+                        data, "attachment_file.bin",
+                        (long) data.length, "application/octet-stream");
                 binaryContentRepository.save(content);
                 attachmentIds.add(content.getId());
             }
@@ -69,6 +71,8 @@ public class BasicMessageService implements MessageService {
         if (message == null) {
             throw new IllegalArgumentException("메시지를 찾을 수 없습니다.");
         }
+        message.update(request.content());
+        messageRepository.save(message);
     }
 
     @Override

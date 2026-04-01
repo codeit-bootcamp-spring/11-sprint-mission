@@ -1,0 +1,8 @@
+$kind: http-request
+name: 6.  채널 삭제
+url: http://localhost:8080/api/channels/80c07464-417b-49ff-b904-7f0fa139717d
+method: DELETE
+body:
+  type: json
+  content: ""
+order: 4334985348019527
