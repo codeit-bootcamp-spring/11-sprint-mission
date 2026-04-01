@@ -3,9 +3,10 @@ package com.sprint.mission.discodeit.service.basic;
 import com.sprint.mission.discodeit.dto.UserStatusCreateDto;
 import com.sprint.mission.discodeit.dto.UserStatusUpdateDto;
 import com.sprint.mission.discodeit.entity.UserStatus;
+import com.sprint.mission.discodeit.exception.BusinessLogicException;
+import com.sprint.mission.discodeit.exception.ExceptionCode;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.repository.UserStatusRepository;
-import com.sprint.mission.discodeit.service.UserService;
 import com.sprint.mission.discodeit.service.UserStatusService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -18,12 +19,11 @@ import java.util.UUID;
 public class BasicUserStatusService implements UserStatusService {
     private final UserRepository userRepository;
     private final UserStatusRepository userStatusRepository;
-    private final UserService userService;
 
     @Override
     public UserStatus createUserStatus(UserStatusCreateDto statusCreateDto) {
         userRepository.findById(statusCreateDto.userId())
-                .orElseThrow(() -> new IllegalArgumentException("유저가 존재하지 않습니다."));
+                .orElseThrow(() -> new BusinessLogicException(ExceptionCode.USER_NOT_FOUND));
 
         return userStatusRepository.findByUserId(statusCreateDto.userId())
                 .map(existStatus -> {
@@ -43,7 +43,7 @@ public class BasicUserStatusService implements UserStatusService {
     @Override
     public UserStatus findUserStatus(UUID id) {
         return userStatusRepository.findByUserId(id)
-                .orElseThrow(() -> new IllegalArgumentException("해당 ID의 상태 기록이 존재하지 않습니다."));
+                .orElseThrow(() -> new BusinessLogicException(ExceptionCode.USER_STATUS_NOT_FOUND));
     }
 
     @Override
@@ -58,7 +58,7 @@ public class BasicUserStatusService implements UserStatusService {
     @Override
     public void deleteUserStatus(UUID id) {
         UserStatus status = userStatusRepository.findByUserId(id)
-                .orElseThrow(() -> new IllegalArgumentException("삭제할 유저 상태가 존재하지 않습니다."));
+                .orElseThrow(() -> new BusinessLogicException(ExceptionCode.USER_STATUS_NOT_FOUND));
 
         userStatusRepository.deleteByUserId(id);
 
@@ -73,17 +73,17 @@ public class BasicUserStatusService implements UserStatusService {
                     userStatusRepository.save(status);
                     return status;
                 })
-                .orElseThrow(() -> new IllegalArgumentException("해당 ID의 상태 기록이 존재하지 않습니다."));
+                .orElseThrow(() -> new BusinessLogicException(ExceptionCode.USER_STATUS_NOT_FOUND));
     }
 
     @Override
-    public UserStatus updateUserIdStatus(UserStatusUpdateDto request) {
-        return userStatusRepository.findByUserId(request.userId())
+    public UserStatus updateUserIdStatus(UUID userId) {
+        return userStatusRepository.findByUserId(userId)
                 .map(status -> {
                     status.update();
                     userStatusRepository.save(status);
                     return status;
                 })
-                .orElseThrow(() -> new IllegalArgumentException("해당 유저의 상태 정보가 존재하지 않습니다."));
+                .orElseThrow(() -> new BusinessLogicException(ExceptionCode.USER_STATUS_NOT_FOUND));
     }
 }

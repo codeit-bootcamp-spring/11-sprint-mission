@@ -4,6 +4,7 @@ import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.entity.UserStatus;
 
 import java.time.Instant;
+import java.util.Optional;
 import java.util.UUID;
 
 public record UserDto(
@@ -11,9 +12,9 @@ public record UserDto(
         UUID profileId,
         String name,
         String email,
-        String password,
         boolean isOnline,
-        Instant lastActiveAt
+        Instant createdAt,
+        Instant updatedAt
 ) {
     public static UserDto from(User user, UserStatus status) {
         return new UserDto(
@@ -21,9 +22,9 @@ public record UserDto(
                 user.getProfileId(),
                 user.getUsername(),
                 user.getEmail(),
-                user.getPassword(),
-                (status != null) && status.isOnline(),
-                status.getUpdatedAt()
+                Optional.ofNullable(status).map(UserStatus::isOnline).orElse(false),
+                Optional.ofNullable(status).map(UserStatus::getCreatedAt).orElse(null),
+                Optional.ofNullable(status).map(UserStatus::getUpdatedAt).orElse(null)
         );
     }
 }

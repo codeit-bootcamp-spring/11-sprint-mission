@@ -3,13 +3,9 @@ package com.sprint.mission.discodeit.entity;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 
 import java.io.Serializable;
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -18,11 +14,15 @@ import java.util.UUID;
 @Builder
 @AllArgsConstructor
 public class Message implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     private final UUID id;
     private final UUID channelId;
     private final UUID authorId;
-    private final List<UUID> attachmentIds = new ArrayList<>();
-    private static final long serialVersionUID = 1L;
+
+    @Builder.Default
+    private List<UUID> attachmentIds = new ArrayList<>();
+
     private final Instant createdAt;
     private Instant updatedAt;
     private String message;
@@ -34,6 +34,13 @@ public class Message implements Serializable {
         this.createdAt = Instant.now();
         this.updatedAt = Instant.now();
         this.message = message;
+    }
+
+    public void addAttachment(UUID binaryContentId) {
+        if(binaryContentId != null) {
+            this.attachmentIds.add(binaryContentId);
+            this.updatedAt = Instant.now();
+        }
     }
 
     // 필드를 수정하는 update 함수

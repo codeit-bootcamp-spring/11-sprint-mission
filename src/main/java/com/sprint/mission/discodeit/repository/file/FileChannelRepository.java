@@ -41,8 +41,6 @@ public class FileChannelRepository implements ChannelRepository {
     }
 
     private void saveChannel() {
-        File file = new File(CHANNEL_FILE);
-
         try(ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(file))) {
             oos.writeObject(channelMap);
         } catch (IOException e) {

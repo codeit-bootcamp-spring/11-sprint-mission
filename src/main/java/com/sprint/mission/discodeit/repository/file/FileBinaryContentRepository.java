@@ -7,6 +7,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Repository;
 
 import java.io.*;
+import java.nio.file.Files;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -14,55 +15,76 @@ import java.util.stream.Collectors;
 @ConditionalOnProperty(name = "discodeit.repository.type", havingValue = "file")
 public class FileBinaryContentRepository implements BinaryContentRepository {
     private final String CONTENT_FILE = "binaryContents.ser";
-    private final File file;
+    private final File dir;
+    private final File metadataFile;
     private final Map<UUID, BinaryContent> binaryContentMap;
 
     public FileBinaryContentRepository(@Value("${discodeit.repository.file-directory}") String fileDirectory) {
-        File dir = new File(fileDirectory);
+        this.dir = new File(fileDirectory);
 
-        if(!dir.exists()) {
-            dir.mkdirs();
+        if(!this.dir.exists()) {
+            boolean isCreated = this.dir.mkdirs();
+
+            if(!isCreated) {
+                throw new IllegalArgumentException("⚠️ 파일 저장 디렉토리를 생성할 수 없습니다.");
+            }
         }
 
-        this.file = new File(dir, CONTENT_FILE);
+        this.metadataFile = new File(this.dir, CONTENT_FILE);
 
-        System.err.println("📍 [실제 파일 저장 경로] : " + this.file.getAbsolutePath());
-
-        this.binaryContentMap = loadContents();
+        this.binaryContentMap = loadMetadata();
     }
 
-    private Map<UUID, BinaryContent> loadContents() {
+    private Map<UUID, BinaryContent> loadMetadata() {
 
-        if(!file.exists()) {
+        if(!metadataFile.exists()) {
             return new HashMap<>();
         }
-        try(ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))) {
+        try(ObjectInputStream ois = new ObjectInputStream(new FileInputStream(metadataFile))) {
             return (Map<UUID, BinaryContent>) ois.readObject();
-        } catch (IOException | ClassNotFoundException e) {
-            throw new RuntimeException("콘텐츠 로드실패", e);
+        } catch (Exception e) {
+            throw new RuntimeException("데이터 로드 실패", e);
         }
     }
 
-    private void saveContents() {
-        try(ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(file))) {
+    private void saveMetadata() {
+        try(ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(metadataFile))) {
             oos.writeObject(binaryContentMap);
         } catch (IOException e) {
-            throw new RuntimeException("콘텐츠 저장 실패", e);
+            throw new RuntimeException("메타데이터 저장 실패", e);
         }
     }
 
     @Override
     public BinaryContent save(BinaryContent content) {
+        if(content.getData() != null) {
+            File actualFile = new File(dir, content.getId().toString() + ".bin");
+            try (FileOutputStream fos = new FileOutputStream(actualFile)) {
+                fos.write(content.getData());
+            } catch (IOException e) {
+                throw new RuntimeException("실제 파일 저장 실패", e);
+            }
+        }
         binaryContentMap.put(content.getId(), content);
-        saveContents();
+        saveMetadata();
         return content;
     }
 
     @Override
     public Optional<BinaryContent> findById(UUID id) {
-        return binaryContentMap.values().stream()
-                .filter(content -> content.getId().equals(id))
-                .findFirst();
+        BinaryContent content = binaryContentMap.get(id);
+        if(content != null) {
+            File actualFile = new File(dir, id.toString() + ".bin");
+            if(actualFile.exists()) {
+                try {
+                    content.setData(Files.readAllBytes(actualFile.toPath()));
+                } catch (IOException e) {
+                    throw new RuntimeException("파일 읽기 실패", e);
+                }
+            }
+            return Optional.of(content);
+        }
+        return Optional.empty();
     }
 
     @Override
@@ -75,19 +97,39 @@ public class FileBinaryContentRepository implements BinaryContentRepository {
     @Override
     public void delete(UUID id) {
         if(binaryContentMap.remove(id) != null) {
-            saveContents();
+            saveMetadata();
+
+            File actualFile = new File(dir, id.toString() + ".bin");
+            if(actualFile.exists()) {
+                boolean isDeleted = actualFile.delete();
+
+                if(!isDeleted) {
+                    System.err.println("⚠️ 경고 : 실제 파일 삭제에 실패했습니다. (경로 : " + actualFile.getAbsolutePath() + ")");
+                }
+            }
         } else {
             throw new IllegalArgumentException("존재하지 않는 콘텐츠입니다.");
         }
     }
 
     @Override
-    public void deleteAllByMessageId(UUID id) {
-        boolean removed = binaryContentMap.values()
-                .removeIf(content -> content.getMessageId().equals(id));
-
-        if(removed) {
-            saveContents();
+    public void deleteAllByAttachmentIds(List<UUID> attachmentIds) {
+        if(attachmentIds == null || attachmentIds.isEmpty()) {
+            return;
         }
+
+        for(UUID id : attachmentIds) {
+            BinaryContent content = binaryContentMap.remove(id);
+
+            if(content != null) {
+                File actualFile = new File(dir, id.toString() + ".bin");
+                if(actualFile.exists()) {
+                    if(!actualFile.delete()) {
+                        System.out.println("⚠️ 실제 파일 삭제 실패 (경로 : " + actualFile.getAbsolutePath() + ")");
+                    }
+                }
+            }
+        }
+        saveMetadata();
     }
 }

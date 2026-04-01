@@ -61,7 +61,7 @@ public class FileUserRepository implements UserRepository {
     }
 
     @Override
-    public Optional<User> findByName(String userName) {
+    public Optional<User> findByUserName(String userName) {
         return userMap.values().stream()
                 .filter(user -> user.getUsername().equals(userName))
                 .findFirst();
