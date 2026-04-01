@@ -1,10 +1,8 @@
 package com.sprint.mission.discodeit.service.basic;
 
-import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.dto.message.MessageCreateRequest;
 import com.sprint.mission.discodeit.dto.message.MessageUpdateRequest;
-import com.sprint.mission.discodeit.exception.DiscodeitException;
 import com.sprint.mission.discodeit.exception.DiscodeitNotFoundException;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
@@ -29,26 +27,21 @@ public class BasicMessageService implements MessageService {
   @Override
   public Message create(MessageCreateRequest request) {
     if (userRepository.read(request.getAuthorId()) == null) {
-      throw DiscodeitNotFoundException.message(request.getAuthorId());
+      throw DiscodeitNotFoundException.user(request.getAuthorId());
     }
 
-    if (request.getReceiverId() != null && userRepository.read(request.getReceiverId()) == null) {
-      throw DiscodeitNotFoundException.user(request.getReceiverId());
-    }
-
-    if (request.getChannelId() != null && channelRepository.read(request.getChannelId()) == null) {
+    if (channelRepository.read(request.getChannelId()) == null) {
       throw DiscodeitNotFoundException.channel(request.getChannelId());
     }
 
-    Message message = new Message(request.getContent(), request.getChannelId(),
-        request.getAuthorId(), request.getReceiverId());
-    messageRepository.create(message);
+    Message message = new Message(
+        request.getContent(),
+        request.getChannelId(),
+        request.getAuthorId(),
+        null
+    );
 
-    if (request.getFileName() != null) {
-      BinaryContent binaryContent = BinaryContent.forMessage(message.getId(), request.getFileName(),
-          request.getFileContent(), request.getContentType());
-      binaryContentRepository.create(binaryContent);
-    }
+    messageRepository.create(message);
     return message;
   }
 
@@ -72,7 +65,7 @@ public class BasicMessageService implements MessageService {
     if (message == null) {
       throw DiscodeitNotFoundException.message(request.getMessageId());
     }
-    message.updateContent(request.getMessageContent());
+    message.updateContent(request.getNewContent());
     messageRepository.create(message);
   }
 

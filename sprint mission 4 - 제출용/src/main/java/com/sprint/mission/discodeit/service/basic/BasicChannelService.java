@@ -34,17 +34,23 @@ public class BasicChannelService implements ChannelService {
 
   @Override
   public ChannelResponse createPublicChannel(PublicChannelCreateRequest request) {
-    if (channelRepository.existsByChannelName(request.getChannelName())) {
-      throw DiscodeitDuplicateException.channel(request.getChannelName());
+    if (channelRepository.existsByChannelName(request.getName())) {
+      throw DiscodeitDuplicateException.channel(request.getName());
     }
 
-    Channel channel = new Channel(request.getChannelName(), request.getChannelDescription(),
-        PUBLIC);
+    Channel channel = new Channel(request.getName(), request.getDescription(), ChannelType.PUBLIC);
     channelRepository.create(channel);
-    return new ChannelResponse(channel.getId(), channel.getChannelName(),
-        channel.getChannelDescription(), null, null);
 
-
+    return new ChannelResponse(
+        channel.getId(),
+        channel.getCreatedAt(),
+        channel.getUpdatedAt(),
+        channel.getChannelType(),
+        channel.getChannelName(),
+        channel.getChannelDescription(),
+        null,
+        null
+    );
   }
 
   @Override
@@ -52,12 +58,21 @@ public class BasicChannelService implements ChannelService {
     Channel channel = new Channel(null, null, ChannelType.PRIVATE);
     channelRepository.create(channel);
 
-    request.getUserIds().forEach(userIds -> {
-      ReadStatus readStatus = new ReadStatus(userIds, channel.getId(), Instant.now());
+    request.getParticipantIds().forEach(participantId -> {
+      ReadStatus readStatus = new ReadStatus(participantId, channel.getId(), Instant.now());
       readStatusRepository.create(readStatus);
     });
 
-    return new ChannelResponse(channel.getId(), null, null, null, request.getUserIds());
+    return new ChannelResponse(
+        channel.getId(),
+        channel.getCreatedAt(),
+        channel.getUpdatedAt(),
+        channel.getChannelType(),
+        channel.getChannelName(),
+        channel.getChannelDescription(),
+        request.getParticipantIds(),
+        null
+    );
   }
 
   @Override
@@ -68,39 +83,57 @@ public class BasicChannelService implements ChannelService {
     }
 
     Instant lastMessageAt = messageRepository.readAllByChannelId(id).stream()
-        .map(m -> m.getCreatedAt())
+        .map(message -> message.getCreatedAt())
         .max(Comparator.naturalOrder())
         .orElse(null);
 
-    List<UUID> userIds = null;
+    List<UUID> participantIds = null;
     if (channel.getChannelType() == ChannelType.PRIVATE) {
-      userIds = readStatusRepository.readAllByChannelId(id).stream()
-          .map(rs -> rs.getUserId())
+      participantIds = readStatusRepository.readAllByChannelId(id).stream()
+          .map(ReadStatus::getUserId)
           .toList();
     }
-    return new ChannelResponse(channel.getId(), channel.getChannelName(),
-        channel.getChannelDescription(), lastMessageAt, userIds);
+    return new ChannelResponse(
+        channel.getId(),
+        channel.getCreatedAt(),
+        channel.getUpdatedAt(),
+        channel.getChannelType(),
+        channel.getChannelName(),
+        channel.getChannelDescription(),
+        participantIds,
+        lastMessageAt
+    );
   }
 
   @Override
   public List<ChannelResponse> readAllByUserId(UUID userId) {
     return channelRepository.readAll().stream()
-        .filter(channel -> channel.getChannelType() == ChannelType.PUBLIC ||
-            readStatusRepository.readAllByChannelId(channel.getId()).stream()
-                .anyMatch(r -> r.getUserId().equals(userId)))
+        .filter(channel -> channel.getChannelType() == ChannelType.PUBLIC
+            || readStatusRepository.readAllByChannelId(channel.getId()).stream()
+            .anyMatch(readStatus -> readStatus.getUserId().equals(userId)))
         .map(channel -> {
           Instant lastMessageAt = messageRepository.readAllByChannelId(channel.getId()).stream()
-              .map(m -> m.getCreatedAt())
+              .map(message -> message.getCreatedAt())
               .max(Comparator.naturalOrder())
               .orElse(null);
-          List<UUID> userIds = null;
+
+          List<UUID> participantIds = null;
           if (channel.getChannelType() == ChannelType.PRIVATE) {
-            userIds = readStatusRepository.readAllByChannelId(channel.getId()).stream()
-                .map(r -> r.getUserId())
+            participantIds = readStatusRepository.readAllByChannelId(channel.getId()).stream()
+                .map(ReadStatus::getUserId)
                 .toList();
           }
-          return new ChannelResponse(channel.getId(), channel.getChannelName(),
-              channel.getChannelDescription(), lastMessageAt, userIds);
+
+          return new ChannelResponse(
+              channel.getId(),
+              channel.getCreatedAt(),
+              channel.getUpdatedAt(),
+              channel.getChannelType(),
+              channel.getChannelName(),
+              channel.getChannelDescription(),
+              participantIds,
+              lastMessageAt
+          );
         })
         .toList();
   }
@@ -108,18 +141,30 @@ public class BasicChannelService implements ChannelService {
   @Override
   public void update(ChannelUpdateRequest request) {
     Channel channel = channelRepository.read(request.getChannelId());
-      if (channel == null) {
-          throw DiscodeitNotFoundException.channel(request.getChannelId());
-      }
+    if (channel == null) {
+      throw DiscodeitNotFoundException.channel(request.getChannelId());
+    }
+
     if (channel.getChannelType() == ChannelType.PRIVATE) {
-      throw new IllegalArgumentException("PRIVATE 채널은 수정이 불가합니다.");
+      throw new IllegalArgumentException("private채널은 업데이트가 안됩니다.");
     }
-    if (channelRepository.existsByChannelNameExcluding(request.getChannelName(),
-        request.getChannelId())) {
-      throw DiscodeitDuplicateException.channel(request.getChannelName());
+
+    String newName = request.getNewName();
+    String newDescription = request.getNewDescription();
+
+    if (newName == null || newName.isBlank()) {
+      newName = channel.getChannelName();
     }
-    channel.updateChannel(request.getChannelName(), request.getChannelDescription());
-    channelRepository.create(channel);
+    if (newDescription == null) {
+      newDescription = channel.getChannelDescription();
+    }
+
+    if (channelRepository.existsByChannelNameExcluding(newName, request.getChannelId())) {
+      throw DiscodeitDuplicateException.channel(newName);
+    }
+
+    channel.updateChannel(newName, newDescription);
+    channelRepository.update(channel);
   }
 
   @Override
@@ -128,6 +173,7 @@ public class BasicChannelService implements ChannelService {
     if (channel == null) {
       throw DiscodeitNotFoundException.channel(id);
     }
+
     messageRepository.deleteAllByChannelId(id);
     readStatusRepository.deleteByChannelId(id);
     channelRepository.delete(id);

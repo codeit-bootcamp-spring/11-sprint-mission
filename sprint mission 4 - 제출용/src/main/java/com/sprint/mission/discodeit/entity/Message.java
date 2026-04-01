@@ -1,6 +1,5 @@
 package com.sprint.mission.discodeit.entity;
 
-import com.sprint.mission.discodeit.exception.DiscodeitException;
 import lombok.Getter;
 
 import java.io.Serializable;
@@ -9,22 +8,22 @@ import java.util.UUID;
 @Getter
 public class Message extends BaseEntity implements Serializable {
 
-  private String messageContent;
+  private String content;
   private UUID authorId;
   private UUID channelId;
   private UUID messageReceiver;
   private static final long serialVersionUID = 1L;
 
-  public Message(String messageContent, UUID channelId, UUID authorId, UUID messageReceiver) {
+  public Message(String content, UUID channelId, UUID authorId, UUID messageReceiver) {
     super();
-    this.messageContent = messageContent;
+    this.content = content;
     this.channelId = channelId;
     this.authorId = authorId;
     this.messageReceiver = messageReceiver;
   }
 
-  public void updateContent(String messageContent) {
-    this.messageContent = messageContent;
+  public void updateContent(String content) {
+    this.content = content;
     updateTimestamp();
   }
 
@@ -35,7 +34,7 @@ public class Message extends BaseEntity implements Serializable {
         "] [channelId=" + channelId +
         "] [sender='" + authorId + '\'' +
         "], [receiver='" + messageReceiver + '\'' +
-        "], [content='" + messageContent + "\']" +
+        "], [content='" + content + "\']" +
         " [createdAt='" + createdAt + "']" +
         " [updatedAt='" + updatedAt + "']";
 

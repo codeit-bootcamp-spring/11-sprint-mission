@@ -3,11 +3,8 @@ package com.sprint.mission.discodeit.controller;
 import com.sprint.mission.discodeit.dto.message.MessageCreateRequest;
 import com.sprint.mission.discodeit.dto.message.MessageUpdateRequest;
 import com.sprint.mission.discodeit.entity.Message;
-import com.sprint.mission.discodeit.exception.DiscodeitIdMismatchException;
-import com.sprint.mission.discodeit.exception.DiscodeitInvalidInputException;
 import com.sprint.mission.discodeit.service.MessageService;
 import jakarta.validation.Valid;
-import java.io.IOException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -28,72 +25,46 @@ public class MessageController {
   // create
   @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<Message> create(@Valid @RequestBody MessageCreateRequest request) {
-    return ResponseEntity.status(HttpStatus.CREATED).body(messageService.create(request));
+    return ResponseEntity.status(HttpStatus.CREATED)
+        .body(messageService.create(request));  // 201 Created
   }
 
   // create (multipart/form-data) - 첨부파일 업로드 지원 (Postman form-data)
   @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<Message> createMultipart(
-      @RequestParam String content,
-      @RequestParam UUID authorId,
-      @RequestParam UUID channelId,
-      @RequestParam(required = false) UUID receiverId,
-      @RequestParam(value = "file", required = false) MultipartFile file
+      @Valid @RequestPart("messageCreateRequest") MessageCreateRequest request,
+      @RequestPart(value = "attachments", required = false) List<MultipartFile> attachments
   ) {
-    String fileName = null;
-    byte[] fileContent = null;
-    String contentType = null;
-
-    if (file != null && !file.isEmpty()) {
-      try {
-        fileName = file.getOriginalFilename();
-        fileContent = file.getBytes();
-        contentType = file.getContentType();
-      } catch (IOException e) {
-        throw new DiscodeitInvalidInputException("첨부파일을 읽을 수 없습니다.");
-      }
-    }
-
-    MessageCreateRequest request = new MessageCreateRequest(
-        content,
-        authorId,
-        channelId,
-        receiverId,
-        fileName,
-        fileContent,
-        contentType
-    );
-
-    return ResponseEntity.status(HttpStatus.CREATED).body(messageService.create(request));
+    return ResponseEntity.status(HttpStatus.CREATED)
+        .body(messageService.create(request));  // 201 Created
   }
 
   // update
-  @PutMapping(value = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
-  public ResponseEntity<Void> update(@PathVariable UUID id,
-      @Valid @RequestBody MessageUpdateRequest request) {
-    if (!id.equals(request.getMessageId())) {
-      throw DiscodeitIdMismatchException.message(id, request.getMessageId());
-    }
-    messageService.update(new MessageUpdateRequest(id, request.getMessageContent()));
-    return ResponseEntity.ok().build();
+  @PutMapping(value = "/{messageId}", consumes = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<Message> update(
+      @PathVariable UUID messageId,
+      @Valid @RequestBody MessageUpdateRequest request
+  ) {
+    messageService.update(new MessageUpdateRequest(messageId, request.getNewContent()));
+    return ResponseEntity.ok(messageService.read(messageId)); // 200 OK
   }
 
   // read
-  @GetMapping("/{id}")
-  public ResponseEntity<Message> read(@PathVariable UUID id) {
-    return ResponseEntity.ok(messageService.read(id));
+  @GetMapping("/{messageId}")
+  public ResponseEntity<Message> read(@PathVariable UUID messageId) {
+    return ResponseEntity.ok(messageService.read(messageId)); // 200 OK
   }
 
   // readAllByChannelId
   @GetMapping
   public ResponseEntity<List<Message>> readAllByChannelId(@RequestParam UUID channelId) {
-    return ResponseEntity.ok(messageService.readAllByChannelId(channelId));
+    return ResponseEntity.ok(messageService.readAllByChannelId(channelId)); // 200 OK
   }
 
   // delete
-  @DeleteMapping("/{id}")
-  public ResponseEntity<Void> delete(@PathVariable UUID id) {
-    messageService.delete(id);
-    return ResponseEntity.noContent().build();
+  @DeleteMapping("/{messageId}")
+  public ResponseEntity<Void> delete(@PathVariable UUID messageId) {
+    messageService.delete(messageId);
+    return ResponseEntity.noContent().build();  // 204 No Content
   }
 }

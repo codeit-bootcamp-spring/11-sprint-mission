@@ -23,20 +23,23 @@ public class ReadStatusController {
   // create
   @PostMapping
   public ResponseEntity<ReadStatus> create(@Valid @RequestBody ReadStatusCreateRequest request) {
-    return ResponseEntity.status(HttpStatus.CREATED).body(readStatusService.create(request));
+    return ResponseEntity.status(HttpStatus.CREATED)
+        .body(readStatusService.create(request)); // 201 Created
   }
 
   // readAllByUserId
   @GetMapping
   public ResponseEntity<List<ReadStatus>> readAllByUserId(@RequestParam UUID userId) {
-    return ResponseEntity.ok(readStatusService.readAllByUserId(userId));
+    return ResponseEntity.ok(readStatusService.readAllByUserId(userId));  // 200 OK
   }
 
   // update
-  @PutMapping
-  public ResponseEntity<Void> update(@Valid @RequestBody ReadStatusUpdateRequest request) {
-    readStatusService.update(request);
-    return ResponseEntity.ok().build();
+  @PatchMapping("/{readStatusId}")
+  public ResponseEntity<ReadStatus> update(
+      @PathVariable UUID readStatusId,
+      @Valid @RequestBody ReadStatusUpdateRequest request) {
+    readStatusService.update(new ReadStatusUpdateRequest(readStatusId, request.getNewLastReadAt())
+    );
+    return ResponseEntity.ok(readStatusService.read(readStatusId)); // 200 OK
   }
-
 }

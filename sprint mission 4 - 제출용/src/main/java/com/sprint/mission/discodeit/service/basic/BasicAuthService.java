@@ -1,6 +1,7 @@
 package com.sprint.mission.discodeit.service.basic;
 
 import com.sprint.mission.discodeit.dto.auth.LoginRequest;
+import com.sprint.mission.discodeit.dto.auth.LoginResponse;
 import com.sprint.mission.discodeit.dto.user.UserResponse;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.exception.DiscodeitException;
@@ -19,11 +20,11 @@ public class BasicAuthService implements AuthService {
   private final UserRepository userRepository;
 
   @Override
-  public UserResponse login(LoginRequest request) {
-    User user = userRepository.findByUserName(request.getUserName());
-    if (user == null || !user.getUserPassword().equals(request.getUserPassword())) {
+  public LoginResponse login(LoginRequest request) {
+    User user = userRepository.findByUserName(request.getUsername());
+    if (user == null || !user.getUserPassword().equals(request.getPassword())) {
       throw new DiscodeitInvalidPasswordException();
     }
-    return new UserResponse(user.getId(), user.getUserName(), user.getUserEmail(), true);
+    return new LoginResponse(user.getId(), user.getUserName(), user.getUserEmail(), true);
   }
 }

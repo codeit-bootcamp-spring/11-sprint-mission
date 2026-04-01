@@ -56,8 +56,8 @@ public class BasicUserStatusService implements UserStatusService {
     if (userStatus == null) {
       throw DiscodeitNotFoundException.userStatus(request.getUserId());
     }
-    userStatus.updateLastOnlineAt(request.getLastOnlineAt());
-    userStatusRepository.update(request.getUserId(), request.getLastOnlineAt());
+    userStatus.updateLastOnlineAt(request.getNewLastActiveAt());
+    userStatusRepository.update(request.getUserId(), request.getNewLastActiveAt());
   }
 
   @Override

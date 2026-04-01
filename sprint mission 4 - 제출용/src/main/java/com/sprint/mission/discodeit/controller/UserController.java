@@ -6,11 +6,9 @@ import com.sprint.mission.discodeit.dto.user.UserResponse;
 import com.sprint.mission.discodeit.dto.user.UserUpdateRequest;
 import com.sprint.mission.discodeit.dto.userStatus.UserStatusUpdateRequest;
 import com.sprint.mission.discodeit.exception.DiscodeitIdMismatchException;
-import com.sprint.mission.discodeit.exception.DiscodeitInvalidInputException;
 import com.sprint.mission.discodeit.service.UserService;
 import com.sprint.mission.discodeit.service.UserStatusService;
 import jakarta.validation.Valid;
-import java.io.IOException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -45,119 +43,69 @@ public class UserController {
   // create (multipart/form-data)
   @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<UserResponse> createMultipart(
-      @RequestParam String userName,
-      @RequestParam String userEmail,
-      @RequestParam String userPassword,
+      @Valid @RequestPart("userCreateRequest") UserCreateRequest request,
       @RequestPart(value = "profile", required = false) MultipartFile profile) {
-    String fileName = null;
-    byte[] fileContent = null;
-    String contentType = null;
-
-    if (profile != null && !profile.isEmpty()) {
-      try {
-        fileName = profile.getOriginalFilename();
-        fileContent = profile.getBytes();
-        contentType = profile.getContentType();
-      } catch (IOException e) {
-        throw new DiscodeitInvalidInputException("profile 파일을 읽을 수 없습니다.");
-      }
-    }
-
-    UserCreateRequest request = new UserCreateRequest(
-        userName,
-        userEmail,
-        userPassword,
-        fileName,
-        fileContent,
-        contentType
-    );
-    return ResponseEntity.status(HttpStatus.CREATED).body(userService.create(request));
+    return ResponseEntity.status(HttpStatus.CREATED)
+        .body(userService.create(request)); // 201 Created
   }
 
   // update (multipart) - 프로필 사진 변경 가능
-  @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  // PATCH /api/users/{userId} + multipart
+  @PatchMapping(value = "/{userId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<UserResponse> updateMultipart(
-      @PathVariable UUID id,
-      @RequestParam String userName,
-      @RequestParam String userEmail,
-      @RequestParam String userPassword,
+      @PathVariable UUID userId,
+      @RequestPart("userUpdateRequest") UserUpdateRequest request,
       @RequestPart(value = "profile", required = false) MultipartFile profile
   ) {
-    String fileName = null;
-    byte[] fileContent = null;
-    String contentType = null;
-
-    if (profile != null && !profile.isEmpty()) {
-      try {
-        fileName = profile.getOriginalFilename();
-        fileContent = profile.getBytes();
-        contentType = profile.getContentType();
-      } catch (IOException e) {
-        throw new DiscodeitInvalidInputException("profile 파일을 읽을 수 없습니다.");
-      }
-    }
-
-    UserUpdateRequest request = new UserUpdateRequest(
-        id,
-        userName,
-        userEmail,
-        userPassword,
-        fileName,
-        fileContent,
-        contentType
-    );
-
-    userService.update(request);
-    return ResponseEntity.ok(userService.read(id));
-  }
-
-  // update
-  @PutMapping(value = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
-  public ResponseEntity<UserResponse> update(@PathVariable UUID id,
-      @Valid @RequestBody UserUpdateRequest request) {
-
-    if (!id.equals(request.getId())) {
-      throw DiscodeitIdMismatchException.generic("id", id, request.getId());
+    if (request.getId() != null && !userId.equals(request.getId())) {
+      throw DiscodeitIdMismatchException.generic("id", userId, request.getId());
     }
 
     userService.update(new UserUpdateRequest(
-        id,
-        request.getUserName(),
-        request.getUserEmail(),
-        request.getUserPassword(),
-        request.getFileName(),
-        request.getFileContent(),
-        request.getContentType()
+        userId,
+        request.getNewUsername(),
+        request.getNewEmail(),
+        request.getNewPassword()
     ));
-
-    return ResponseEntity.ok(userService.read(id));
+    return ResponseEntity.ok(userService.read(userId)); // 200 OK
   }
 
-  // delete
-  @DeleteMapping("/{id}")
-  public ResponseEntity<Void> delete(@PathVariable UUID id) {
-    userService.delete(id);
+  // update
+  @PatchMapping(value = "/{userId}", consumes = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<UserResponse> update(
+      @PathVariable UUID userId,
+      @RequestBody UserUpdateRequest request
+  ) {
+    if (request.getId() != null && !userId.equals(request.getId())) {
+      throw DiscodeitIdMismatchException.generic("id", userId, request.getId());
+    }
+
+    userService.update(new UserUpdateRequest(
+        userId,
+        request.getNewUsername(),
+        request.getNewEmail(),
+        request.getNewPassword()
+    ));
+    return ResponseEntity.ok(userService.read(userId)); // 200 OK
+  }
+
+  @DeleteMapping("/{userId}")
+  public ResponseEntity<Void> delete(@PathVariable UUID userId) {
+    userService.delete(userId);
     return ResponseEntity.noContent().build();  // 204 No Content
   }
 
-  // read
-  @GetMapping("/{id}")
-  public ResponseEntity<UserResponse> read(@PathVariable UUID id) {
-    return ResponseEntity.ok(userService.read(id)); // 200 OK
+  @GetMapping("/{userId}")
+  public ResponseEntity<UserResponse> read(@PathVariable UUID userId) {
+    return ResponseEntity.ok(userService.read(userId)); // 200 OK
   }
 
-
-  // UserStatusUpdate
-  @PutMapping("/{id}/userStatus")
-  public ResponseEntity<UserResponse> updateStatus(@PathVariable UUID id,
-      @Valid @RequestBody UserStatusUpdateRequest request) {
-    if (!id.equals(request.getUserId())) {
-      throw DiscodeitIdMismatchException.generic("userId", id, request.getUserId());
-    }
-
-    userStatusService.update(new UserStatusUpdateRequest(id, request.getLastOnlineAt()));
-    UserResponse updatedUserStatus = userService.read(id);
-
-    return ResponseEntity.ok(userService.read(id));  // 200 OK
+  @PatchMapping("/{userId}/userStatus")
+  public ResponseEntity<UserResponse> updateStatus(
+      @PathVariable UUID userId,
+      @RequestBody UserStatusUpdateRequest request
+  ) {
+    userStatusService.update(new UserStatusUpdateRequest(userId, request.getNewLastActiveAt()));
+    return ResponseEntity.ok(userService.read(userId)); // 200 OK
   }
 }

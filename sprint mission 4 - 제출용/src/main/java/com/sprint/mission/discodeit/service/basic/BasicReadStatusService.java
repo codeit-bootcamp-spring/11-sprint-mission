@@ -40,14 +40,19 @@ public class BasicReadStatusService implements ReadStatusService {
       throw DiscodeitDuplicateException.readStatus(request.getUserId(), request.getChannelId());
     }
 
+    Instant lastReadAt = request.getLastReadAt() != null ? request.getLastReadAt() : Instant.now();
     ReadStatus readStatus = new ReadStatus(request.getUserId(), request.getChannelId(),
         Instant.now());
     return readStatusRepository.create(readStatus);
   }
 
   @Override
-  public ReadStatus read(UUID id) {   // ReadStatus는 자체 UUID 없음.
-    throw new UnsupportedOperationException("ReadStatus는 id로 조회할 수 없습니다.");
+  public ReadStatus read(UUID id) {
+    ReadStatus readStatus = readStatusRepository.read(id);
+    if (readStatus == null) {
+      throw new DiscodeitNotFoundException("존재하지 않는 ReadStatus입니다. id=" + id);
+    }
+    return readStatus;
   }
 
   @Override
@@ -57,14 +62,18 @@ public class BasicReadStatusService implements ReadStatusService {
 
   @Override
   public void update(ReadStatusUpdateRequest request) {
-    ReadStatus readStatus = readStatusRepository.readByUserIdAndChannelId(request.getUserId(),
-        request.getChannelId());
+    ReadStatus readStatus = readStatusRepository.read(request.getReadStatusId());
     if (readStatus == null) {
-      throw DiscodeitNotFoundException.readStatus(request.getUserId(), request.getChannelId());
+      throw new DiscodeitNotFoundException(
+          "존재하지 않는 ReadStatus입니다. id=" + request.getReadStatusId());
     }
-    readStatus.updateLastMessageReadAt(request.getLastMessageReadAt());
-    readStatusRepository.update(request.getUserId(), request.getChannelId(),
-        request.getLastMessageReadAt());
+
+    readStatus.updateLastMessageReadAt(request.getNewLastReadAt());
+    readStatusRepository.update(
+        readStatus.getUserId(),
+        readStatus.getChannelId(),
+        request.getNewLastReadAt()
+    );
   }
 
   @Override

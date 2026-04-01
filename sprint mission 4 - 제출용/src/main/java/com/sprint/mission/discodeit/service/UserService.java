@@ -20,7 +20,5 @@ public interface UserService {
 
   void delete(UUID id);
 
-  void restore(UUID id);
-
   List<UserDto> readAllDto();
 }
