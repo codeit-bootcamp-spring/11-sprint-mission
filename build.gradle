@@ -7,10 +7,12 @@ plugins {
 group = 'com.sprint.mission'
 version = '0.0.1-SNAPSHOT'
 description = 'Demo project for Spring Boot'
+sourceCompatibility = '17'
+targetCompatibility = '17'
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(17)
+        // languageVersion = JavaLanguageVersion.of(17)
     }
 }
 
