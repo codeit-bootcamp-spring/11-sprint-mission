@@ -27,6 +27,9 @@ Repository Pattern (Separation of Concerns)
 - Repository Pattern
 - 관심사 분리 (Separation of Concerns)
 - 의존성 주입 (Dependency Injection)
+- REST API 설계 및 테스트 (Postman)
+- 정적 리소스 서빙 (HTML/CSS/JS)
+- API와 프로트엔드 연동
 
 ---
 
@@ -39,6 +42,9 @@ Repository Pattern (Separation of Concerns)
 | Java Collections Framework | In-memory Data Storage |
 | File I/O | Data Persistence |
 | Serialization | Object Persistence |
+| Spring Boot | Web Application Framework |
+| Postman | API Testing Tool |
+| HTML/CSS/JavaScript | Static Web Page |
 
 ---
 
@@ -49,6 +55,8 @@ Repository Pattern (Separation of Concerns)
 ```
 Application
      │
+Controller Layer
+     │
 Service Layer
      │
 Repository Layer
@@ -56,6 +64,7 @@ Repository Layer
 Storage (JCF / File)
 
 + DTO Layer (Request / Response)
++ Static Resource (HTML / JS)
 ```
 
 ### Layer Responsibilities
@@ -639,6 +648,65 @@ DiscodeitApplication
 
 ---
 
+# Web API & Static Resource
+
+Spring MVC 기반으로 REST API를 구현하고,
+정적 리소스를 통해 사용자 목록 화면을 서빙했습니다.
+
+---
+
+## 1. REST API
+
+### User API
+- POST /api/users
+- GET /api/users/{id}
+- GET /api/users/findAll
+- PUT /api/users/{id}
+- DELETE /api/users/{id}
+
+### BinaryContent API
+- GET /api/binary-contents/find?binaryContentId={id}
+
+--- 
+
+## 2. API Testing (Postman)
+
+Postman을 활용하여 모든 컨트롤러를 테스트했습니다.
+- 사용자 생성, 조회, 수정, 삭제 테스트
+- 예외 상황 테스트
+- 요청/응답 구조 검증
+
+---
+
+## 3. Static Resource Serving
+
+정적 HTML/CSS/JavaScript를 통해
+사용자 목록 확면을 구현했습니다.
+
+src/main/resources/static
+├ user-list.html
+├ styles.css
+├ script.js
+└ images/defaut-avatar.png
+
+---
+
+## 4. API Integration
+
+JavaScript에서 API를 호출하여 
+사용자 데이터를 화면에 렌더링했습니다.
+
+GET /api/user(s)/findAll → 사용자 목록 조회
+GET /api/binary-contents/find → 프로필 이미지 조회
+
+---
+
+## 5. Fallback 처리
+- profileId가 없는 경우 default-avatar 이미지 사용
+- 데이터가 없는 경우 빈 리스트 처리
+
+---
+
 # Key Learnings
 
 이 프로젝트를 통해 다음 개념을 이해했습니다.
@@ -704,10 +772,28 @@ Spring 기반 구조로 전환
 
 ---
 
+### 8. REST API 설계 및 테스트
+
+- Controller 기반 API 설계
+- HTTP Method 활용 (GET, POST, PUT, DELETE)
+- Postman을 활용한 API 테스트 경험
+
+---
+
+### 9. 정적 리소스와 API 연동
+
+- HTML/JS에서 REST API 호출
+- 서버 데이터 기반 UI 렌더링
+- 프론트와 백엔드 연결 구조 이해
+
+---
+
 # Future Improvements
 
 - Database 기반 저장소 (JPA)
-- Spring Boot 기반 REST API
+- REST API 고도화 (Validation, Exception Handling)
+- 파일 업로드 기능 (Multipart)
+- 실제 프론트엔드 프레임워크 연동 (React 등)
 - 실제 채팅 서버 구현
 
 ---

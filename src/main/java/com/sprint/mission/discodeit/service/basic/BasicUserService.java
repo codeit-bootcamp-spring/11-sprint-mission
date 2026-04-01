@@ -1,9 +1,6 @@
 package com.sprint.mission.discodeit.service.basic;
 
-import com.sprint.mission.discodeit.dto.BinaryContentCreateRequest;
-import com.sprint.mission.discodeit.dto.UserCreateRequest;
-import com.sprint.mission.discodeit.dto.UserDto;
-import com.sprint.mission.discodeit.dto.UserUpdateRequest;
+import com.sprint.mission.discodeit.dto.*;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.entity.UserStatus;
@@ -112,6 +109,27 @@ public class BasicUserService implements UserService {
         UserStatus userStatus = userStatusRepository.findByUserId(updatedUser.getId());
 
         return toDto(updatedUser, userStatus);
+    }
+
+    @Override
+    public UserDto updateStatus(UUID userId, UserStatusUpdateRequest request) {
+        User user = userRepository.findById(userId);
+
+        if (user == null) {
+            throw new IllegalArgumentException("존재하지 않는 유저입니다.");
+        }
+
+        UserStatus userStatus = userStatusRepository.findByUserId(userId);
+
+        if (userStatus == null) {
+            userStatus = new UserStatus(userId, request.lastSeenAt());
+        } else {
+            userStatus.updateLastSeenAt(request.lastSeenAt());
+        }
+
+        UserStatus savedUserStatus = userStatusRepository.save(userStatus);
+
+        return toDto(user, savedUserStatus);
     }
 
     @Override

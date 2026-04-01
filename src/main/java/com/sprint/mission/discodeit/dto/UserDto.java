@@ -11,7 +11,7 @@ public record UserDto (
         String email,
         String statusMessage,
         UUID profileId,
-        boolean online,
+        Boolean online,
         Instant createdAt,
         Instant updatedAt
 ){
