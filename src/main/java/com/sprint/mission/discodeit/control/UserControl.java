@@ -54,7 +54,7 @@ public class UserControl {
       @Parameter(content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE))
       @RequestPart("userUpdateRequest") UserUpdateRequest request,
       @RequestPart(value = "profile", required = false) MultipartFile profile) {
-    userService.updateUser(id, request);
+    userService.updateUser(id, request, profile);
     return ResponseEntity.ok().build();
   }
 

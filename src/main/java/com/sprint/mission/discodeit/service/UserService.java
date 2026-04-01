@@ -7,6 +7,7 @@ import com.sprint.mission.discodeit.dto.UserUpdateRequest;
 import com.sprint.mission.discodeit.entity.User;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.web.multipart.MultipartFile;
 
 public interface UserService {
 
@@ -18,5 +19,5 @@ public interface UserService {
 
   void deleteUser(UUID id);
 
-  void updateUser(UUID id, UserUpdateRequest request);
+  void updateUser(UUID id, UserUpdateRequest request, MultipartFile profile);
 }

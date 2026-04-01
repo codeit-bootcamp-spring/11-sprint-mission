@@ -3,6 +3,7 @@ package com.sprint.mission.discodeit.service.basic;
 import com.sprint.mission.discodeit.dto.UserCreateRequest;
 import com.sprint.mission.discodeit.dto.UserDto;
 import com.sprint.mission.discodeit.dto.UserUpdateRequest;
+import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.entity.UserStatus;
 import com.sprint.mission.discodeit.exception.BusinessLogicException;
@@ -11,6 +12,7 @@ import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.repository.UserStatusRepository;
 import com.sprint.mission.discodeit.service.UserService;
+import java.io.IOException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -18,6 +20,7 @@ import java.util.InputMismatchException;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
@@ -85,7 +88,7 @@ public class BasicUserService implements UserService {
   }
 
   @Override
-  public void updateUser(UUID id, UserUpdateRequest request) {
+  public void updateUser(UUID id, UserUpdateRequest request, MultipartFile profile) {
     User user = userRepository.findById(id)
         .orElseThrow(() -> new BusinessLogicException(ExceptionCode.MEMBER_NOT_FOUND));
     String name = user.getUsername();
@@ -108,6 +111,23 @@ public class BasicUserService implements UserService {
     }
 
     String password = (request.newPassword() != null) ? request.newPassword() : user.getPassword();
+
+    if (profile != null && !profile.isEmpty()) {
+      if (user.getProfileId() != null) {
+        binaryContentRepository.delete(user.getProfileId());
+      }
+      try {
+        BinaryContent newProfile = new BinaryContent(
+            profile.getBytes(),
+            profile.getOriginalFilename(),
+            profile.getContentType()
+        );
+        binaryContentRepository.save(newProfile);
+        user.setProfileId(newProfile.getId());
+      } catch (IOException e) {
+        throw new BusinessLogicException(ExceptionCode.INTERNAL_SERVER_ERROR);
+      }
+    }
 
     user.update(name, email, password);
     userRepository.save(user);

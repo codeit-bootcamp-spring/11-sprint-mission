@@ -33,4 +33,11 @@ public class BinaryContent implements Serializable {
     this.contentType = contentType;
     this.size = data != null ? data.length : 0;
   }
+
+  public String getBytes() {
+    if (data == null) {
+      return null;
+    }
+    return java.util.Base64.getEncoder().encodeToString(data);
+  }
 }

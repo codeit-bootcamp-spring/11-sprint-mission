@@ -19,15 +19,6 @@ public class BinaryContentControl {
 
   private final BinaryContentService binaryContentService;
 
-//  @PostMapping
-//  public ResponseEntity<BinaryContentResponse> createBinaryContent(
-//      @RequestBody BinaryContentCreateDto request
-//  ) {
-//    BinaryContent createdContent = binaryContentService.createBinaryContent(request);
-//    BinaryContentResponse response = BinaryContentResponse.from(createdContent);
-//    return ResponseEntity.ok().body(response);
-//  }
-
   @GetMapping("/{binaryContentId}")
   public ResponseEntity<BinaryContent> findBinaryContent(@PathVariable UUID binaryContentId) {
     BinaryContent content = binaryContentService.find(binaryContentId);
