@@ -37,7 +37,7 @@ public class FileChannelRepository implements ChannelRepository {
     @Override
     public boolean existByName(String name) {
         return this.fileIOUtil.findAll().stream()
-                .anyMatch(channel -> channel.getName().equals(name));
+                .anyMatch(channel -> name.equals(channel.getName()));
     }
 
     @Override

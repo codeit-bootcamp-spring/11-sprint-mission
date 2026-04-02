@@ -13,6 +13,6 @@ public interface ChannelService {
     ChannelResponse createPrivateChannel(PrivateChannelCreateRequest privateChannelCreateRequest);
     ChannelResponse findById(UUID id);
     List<ChannelResponse> findAllByUserId(UUID userId);
-    ChannelResponse updateChannel(ChannelUpdateRequest channelUpdateRequest);
+    ChannelResponse updateChannel(UUID id, ChannelUpdateRequest channelUpdateRequest);
     void deleteChannel(UUID id);
 }

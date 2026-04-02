@@ -34,7 +34,15 @@ public class JCFMessageRepository implements MessageRepository {
     @Override
     public List<Message> findAllByChannelId(UUID channelId) {
         return this.data.values().stream()
-                .filter(message -> message.getChannel().getId().equals(channelId))
+                .filter(message -> message.getChannelId().equals(channelId))
+                .toList();
+    }
+
+    @Override
+    public List<Message> findAllByChannelIdIn(List<UUID> channelIds) {
+        Set<UUID> idSet = new HashSet<>(channelIds);
+        return this.data.values().stream()
+                .filter(message -> idSet.contains(message.getChannelId()))
                 .toList();
     }
 
@@ -45,6 +53,6 @@ public class JCFMessageRepository implements MessageRepository {
 
     @Override
     public void deleteAllByChannelId(UUID channelId) {
-        this.data.values().removeIf(message -> message.getChannel().getId().equals(channelId));
+        this.data.values().removeIf(message -> message.getChannelId().equals(channelId));
     }
 }

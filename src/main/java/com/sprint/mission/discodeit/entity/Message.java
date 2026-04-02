@@ -1,7 +1,5 @@
 package com.sprint.mission.discodeit.entity;
 
-import com.sprint.mission.discodeit.dto.message.MessageCreateRequest;
-import com.sprint.mission.discodeit.dto.message.MessageResponse;
 import lombok.Getter;
 
 import java.util.ArrayList;
@@ -11,15 +9,15 @@ import java.util.UUID;
 @Getter
 public class Message extends BaseEntity {
     private String content;
-    private User sender;
-    private Channel channel;
-    private List<UUID> attachments;
+    private final UUID senderId;
+    private final UUID channelId;
+    private List<UUID> attachmentIds;
 
-    public Message(MessageCreateRequest messageCreateRequest, User sender, Channel channel, List<BinaryContent> attachments) {
-        this.content = messageCreateRequest.content();
-        this.sender = sender;
-        this.channel = channel;
-        this.attachments = new ArrayList<>(attachments.stream().map(BinaryContent::getId).toList());
+    public Message(String content, UUID senderId, UUID channelId, List<UUID> attachmentIds) {
+        this.content = content;
+        this.senderId = senderId;
+        this.channelId = channelId;
+        this.attachmentIds = new ArrayList<>(attachmentIds);
     }
 
     public void updateContent(String content) {
@@ -28,18 +26,11 @@ public class Message extends BaseEntity {
     }
 
     public void replaceAttachments(List<BinaryContent> attachments) {
-        this.attachments = new ArrayList<>(attachments.stream().map(BinaryContent::getId).toList());
-        this.setUpdatedAt();
-    }
-
-    public MessageResponse toResponse(List<BinaryContent> attachments) {
-        return new MessageResponse(
-                this.content,
-                this.sender.getId(),
-                this.channel.getId(),
+        this.attachmentIds = new ArrayList<>(
                 attachments.stream()
-                        .map(BinaryContent::toResponse)
+                        .map(BinaryContent::getId)
                         .toList()
         );
+        this.setUpdatedAt();
     }
 }

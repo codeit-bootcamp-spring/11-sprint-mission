@@ -34,7 +34,7 @@ public class JCFChannelRepository implements ChannelRepository {
     @Override
     public boolean existByName(String name) {
         return this.data.values().stream()
-                .anyMatch(channel -> channel.getName().equals(name));
+                .anyMatch(channel -> name.equals(channel.getName()));
     }
 
     @Override

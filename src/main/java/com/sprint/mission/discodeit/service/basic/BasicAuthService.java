@@ -2,9 +2,10 @@ package com.sprint.mission.discodeit.service.basic;
 
 import com.sprint.mission.discodeit.dto.auth.AuthLoginRequest;
 import com.sprint.mission.discodeit.dto.user.UserResponse;
-import com.sprint.mission.discodeit.entity.BinaryContent;
+import com.sprint.mission.discodeit.dto.userstatus.UserStatusResponse;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.entity.UserStatus;
+import com.sprint.mission.discodeit.exception.ApiException;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.repository.UserStatusRepository;
@@ -12,6 +13,10 @@ import com.sprint.mission.discodeit.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+
+import java.time.Instant;
+
+import static com.sprint.mission.discodeit.exception.ApiException.ERROR.*;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -24,26 +29,37 @@ public class BasicAuthService implements AuthService {
     @Override
     public UserResponse login(AuthLoginRequest authLoginRequest) {
         if (authLoginRequest.username() == null || authLoginRequest.username().isBlank())
-            throw new IllegalArgumentException("username is required. ❌");
+            throw new ApiException(AUTH_USERNAME_REQUIRED);
 
         User user = this.userRepository.findByUsername(authLoginRequest.username())
-                .orElseThrow(() -> new IllegalArgumentException("requested user not found. ❌"));
+                .orElseThrow(() -> new ApiException(USER_NOT_FOUND));
 
         if (authLoginRequest.password() == null || authLoginRequest.password().isBlank())
-            throw new IllegalArgumentException("password is required. ❌");
+            throw new ApiException(AUTH_PASSWORD_REQUIRED);
         if (!authLoginRequest.password().equals(user.getPassword()))
-            throw new IllegalArgumentException("password is not matched. ❌");
-
-        BinaryContent profile = user.getProfileId() != null
-                ? this.binaryContentRepository.findById(user.getProfileId())
-                .orElseThrow(() -> new IllegalArgumentException("requested binary content not found. ❌"))
-                : null;
+            throw new ApiException(AUTH_INVALID_CREDENTIALS);
 
         UserStatus status = this.userStatusRepository.findByUserId(user.getId())
-                .orElseThrow(() -> new IllegalArgumentException("requested user status not found. ❌"));
+                .orElseThrow(() -> new ApiException(USER_STATUS_NOT_FOUND));
+
         status.setUpdatedAt();
         this.userStatusRepository.save(status);
 
-        return user.toResponse(profile, status);
+        return this.toResponse(user, status);
+    }
+
+    private UserResponse toResponse(User user, UserStatus status) {
+        return new UserResponse(
+                user.getId(),
+                user.getNickname(),
+                user.getUsername(),
+                user.getEmail(),
+                user.getPhoneNumber(),
+                user.getProfileId(),
+                new UserStatusResponse(
+                        status.getUpdatedAt(),
+                        status.getUpdatedAt().isAfter(Instant.now().minusSeconds(5 * 60))
+                )
+        );
     }
 }
