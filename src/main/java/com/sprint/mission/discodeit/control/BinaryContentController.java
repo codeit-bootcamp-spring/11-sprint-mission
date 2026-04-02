@@ -29,17 +29,19 @@ public class BinaryContentController {
   }
 
   @RequestMapping(value = "/find", method = RequestMethod.GET)
-  public ResponseEntity<BinaryContent> findBinaryContent(
+  public ResponseEntity<BinaryContentResponse> findBinaryContent(
       @RequestParam("binaryContentId") UUID binaryContentId) {
     BinaryContent content = binaryContentService.find(binaryContentId);
-    return ResponseEntity.ok(content);
+    return ResponseEntity.ok(BinaryContentResponse.from(content));
   }
 
   @RequestMapping(value = "/findAll", method = RequestMethod.GET)
-  public ResponseEntity<List<BinaryContent>> findMultipleBinaryContents(
-      @RequestParam("ids") List<UUID> ids
+  public ResponseEntity<List<BinaryContentResponse>> findMultipleBinaryContents(
+      @RequestParam("binaryContentIds") List<UUID> binaryContentIds
   ) {
-    List<BinaryContent> contents = binaryContentService.findAllByIdIn(ids);
-    return ResponseEntity.ok(contents);
+    List<BinaryContent> contents = binaryContentService.findAllByIdIn(binaryContentIds);
+    return ResponseEntity.ok(contents.stream()
+        .map(BinaryContentResponse::from)
+        .toList());
   }
 }
