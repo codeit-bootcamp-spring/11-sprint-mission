@@ -7,3 +7,6 @@ discodeit:
   repository:
     type: file   # jcf | file
     file-dir: .discodeit
+  upload-dir: .upload
+
+

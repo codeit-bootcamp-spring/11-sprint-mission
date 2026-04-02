@@ -1,60 +1,61 @@
 package com.sprint.mission.discodeit.entity;
 
-import com.sprint.mission.discodeit.binary.BinaryFile;
+
 import lombok.Getter;
 
-import java.time.Instant;
+import java.util.Arrays;
 import java.util.UUID;
 
 @Getter
 public class BinaryContent extends Entity{
 
+
     UUID userID;
     UUID MessageId;
-    Type type;
-    BinaryFile binaryFile;
-    //String url;
+    String fileName;
+    String contentType;
+    byte[] bytes;
 
 
 
-    public enum Type{
-        PROFILEIMG,
-        IMAGE,
-        VIDEO,
-        AUDIO,
-        FILE
-    }
 
-    public BinaryContent(UUID userID, UUID messageId, Type type, BinaryFile binaryFile) {
+
+
+
+    public BinaryContent(UUID userID, UUID messageId, String fileName, String contentType,byte[] bytes) {
+        this.fileName = fileName;
         this.userID = userID;
-        this.type = type;
         MessageId = messageId;
-        this.binaryFile = binaryFile;
+        this.contentType = contentType;
+        this.bytes = bytes;
 
     }
 
-    public BinaryContent(UUID userID,BinaryFile binaryFile) {
+    public BinaryContent(UUID userID, String fileName,String contentType,byte[] bytes) {
         this.userID = userID;
-        this.type = Type.PROFILEIMG;
         MessageId = null;
-        this.binaryFile = binaryFile;
+        this.fileName = fileName;
+        this.contentType = contentType;
+        this.bytes = bytes;
+
     }
 
 
 
     public void updateUpdatedAt(){
 
-
-
     }
+
 
     @Override
     public String toString() {
         return "BinaryContent{" +
                 "userID=" + userID +
                 ", MessageId=" + MessageId +
-                ", type=" + type +
-
+                ", fileName='" + fileName + '\'' +
+                ", contentType='" + contentType + '\'' +
+                ", bytes=" + Arrays.toString(bytes) +
                 '}';
     }
 }
+

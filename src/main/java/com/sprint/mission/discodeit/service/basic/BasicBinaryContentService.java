@@ -29,16 +29,20 @@ public class BasicBinaryContentService implements BinaryContentService {
 
     @Override
     public BinaryContentInfoDto create(CreateBinaryContentDto createBinaryContentDto) {
+        BinaryContent content;
+        try {
+            content = new BinaryContent(
 
-        BinaryContent content = new BinaryContent(
+                    createBinaryContentDto.userId(),
+                    createBinaryContentDto.messageId(),
+                    createBinaryContentDto.binaryFile().getOriginalFilename(),
+                    createBinaryContentDto.binaryFile().getContentType(),
+                    createBinaryContentDto.binaryFile().getBytes()
 
-                createBinaryContentDto.userId(),
-                createBinaryContentDto.messageId(),
-                createBinaryContentDto.type(),
-                createBinaryContentDto.binaryFile()
-
-        );
-
+            );
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
 
 
 
@@ -51,12 +55,6 @@ public class BasicBinaryContentService implements BinaryContentService {
             throw new NonExistException("존재하지 않는 메시지 입니다.");
         }
 
-
-        //프로필이면 프로필 등록 메서드로 넘기기
-        if(createBinaryContentDto.type() == BinaryContent.Type.PROFILEIMG){
-            return createProfileImg(new CreateProfileImgDto(createBinaryContentDto.userId(), createBinaryContentDto.binaryFile()));
-        }
-
         binaryContentRepository.saveBinaryContent(content);
         return contentToInfoDto(content);
 
@@ -66,12 +64,19 @@ public class BasicBinaryContentService implements BinaryContentService {
 
     @Override
     public BinaryContentInfoDto createProfileImg(CreateProfileImgDto createProfileImgDto) {
-        BinaryContent content = new BinaryContent(
-                createProfileImgDto.userId(),
-                null,
-                BinaryContent.Type.PROFILEIMG,
-                createProfileImgDto.binaryFile()
-        );
+        BinaryContent content;
+        try {
+            content = new BinaryContent(
+                    createProfileImgDto.userId(),
+                    createProfileImgDto.file().getOriginalFilename(),
+                    createProfileImgDto.file().getContentType(),
+                    createProfileImgDto.file().getBytes()
+            );
+        }
+        catch (Exception e){
+            throw new RuntimeException(e);
+        }
+
 
         //존재 유저 체크
         if(!userRepository.isExistUser(createProfileImgDto.userId())){
@@ -120,8 +125,10 @@ public class BasicBinaryContentService implements BinaryContentService {
 
                 content.getId(),
                 content.getUserID(),
-                content.getBinaryFile(),
-                content.getType()
+                content.getFileName(),
+                content.getContentType(),
+                content.getBytes()
+
         );
 
 

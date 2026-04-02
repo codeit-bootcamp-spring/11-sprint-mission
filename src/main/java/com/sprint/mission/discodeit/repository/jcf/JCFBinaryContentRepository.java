@@ -36,7 +36,6 @@ public class JCFBinaryContentRepository implements BinaryContentRepository {
     public Optional<BinaryContent> getProfileContentByUserId(UUID userId) {
         return data.values().stream()
                 .filter(binaryContent -> binaryContent.getUserID().equals(userId))
-                .filter(binaryContent -> binaryContent.getType() == BinaryContent.Type.PROFILEIMG )
                 .filter(binaryContent -> binaryContent.getMessageId() == null)
                 .findFirst();
     }

@@ -34,10 +34,4 @@ public class ReadStatusController {
       return ResponseEntity.status(200).body(readStatusService.find(readStatusDto));
 
     }
-
-
-
-
-
-
 }

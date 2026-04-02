@@ -1,8 +1,6 @@
 package com.sprint.mission.discodeit.service.basic;
 
 import com.sprint.mission.discodeit.dto.channeldto.*;
-import com.sprint.mission.discodeit.dto.messagedto.CreateMessageDto;
-import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.entity.ReadStatus;
@@ -14,12 +12,9 @@ import com.sprint.mission.discodeit.repository.MessageRepository;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.ChannelService;
-import com.sprint.mission.discodeit.service.MessageService;
-import com.sprint.mission.discodeit.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -150,9 +145,6 @@ public class BasicChannelService implements ChannelService {
     public PublicChannelInfoDto updateChannel(UpdateChannelDto updateChannelDto) {
 
 
-
-
-
         //ownerId 가 기존 멤버중 한명인지 체크
         if(!readStatusRepository.isExist(updateChannelDto.ownerId(),updateChannelDto.channelId()))
             throw new NonExistException("해당 유저는 기존 멤버가 아닙니다.");
@@ -163,8 +155,8 @@ public class BasicChannelService implements ChannelService {
         //public check                                                              
         if(channel.getChannelType() == Channel.ChannelType.PRIVATE)
             throw new WrongChannelTypeException("Private 타입 채널은 변경할 수 없습니다.");
-        channel.updateChannelName(updateChannelDto.ChannelName());
-        channel.updateChannelDescription(updateChannelDto.ChannelDescription());
+        channel.updateChannelName(updateChannelDto.channelName());
+        channel.updateChannelDescription(updateChannelDto.channelDescription());
         channel.updateOwner(updateChannelDto.ownerId());
 
         channelRepository.saveChannel(channel);
@@ -203,6 +195,7 @@ public class BasicChannelService implements ChannelService {
         readStatusRepository.getAllByChannelId(deleteChannelDto.channelId())
                 .forEach(readStatus -> readStatusRepository.delete(readStatus.getUserId(),deleteChannelDto.channelId()));
 
+        channelRepository.deleteChannel(deleteChannelDto.channelId());
 
 
 

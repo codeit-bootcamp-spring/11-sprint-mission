@@ -1,6 +1,5 @@
 package com.sprint.mission.discodeit.service.basic;
 
-import com.sprint.mission.discodeit.binary.BinaryFile;
 import com.sprint.mission.discodeit.dto.userdto.*;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.User;
@@ -42,10 +41,26 @@ public class BasicUserService implements UserService {
         );
         //프로필 생성
         BinaryContent content = null;
-        if(createUserDTO.binaryFile() != null) {
-            content = binaryContentRepository.saveBinaryContent(new BinaryContent(user.getId(), createUserDTO.binaryFile()));
+        if(createUserDTO.binaryFile() != null && !createUserDTO.binaryFile().isEmpty()) {
 
+
+
+            try {
+                content = new BinaryContent(
+                        user.getId(),
+                        createUserDTO.binaryFile().getOriginalFilename(),
+                        createUserDTO.binaryFile().getContentType(),
+                        createUserDTO.binaryFile().getBytes()
+
+                );
+            }
+            catch (Exception e){
+                throw new RuntimeException(e);
+            }
+
+            content = binaryContentRepository.saveBinaryContent(content);
             user.updateProfileImage(content.getId(), createUserDTO.password());
+
         }
 
         // 닉네임 체크
@@ -148,6 +163,7 @@ public class BasicUserService implements UserService {
 
         //삭제
         userRepository.deleteUser(deleteUserDto.userId());
+
         userStatusRepository.deleteUserStatus(deleteUserDto.userId());
 
         return true;
@@ -182,13 +198,15 @@ public class BasicUserService implements UserService {
 
 
         BinaryContent content = binaryContentRepository.getProfileContentByUserId(user.getId()).orElse(null);
-        BinaryFile binaryFile = content != null ? content.getBinaryFile() : null;
+        UUID profileId = content != null ? content.getId() : null;
+
+
         return new UserInfoDto(
 
                 user.getId(),
                 user.getNickname(),
                 user.getEmail(),
-                binaryFile,
+                profileId,
                 userStatusRepository.getUserStatus(user.getId()).orElseThrow()
 
         );

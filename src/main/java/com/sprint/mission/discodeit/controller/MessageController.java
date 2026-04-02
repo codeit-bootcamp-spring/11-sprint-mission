@@ -9,11 +9,10 @@ import com.sprint.mission.discodeit.service.MessageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import java.net.URI;
 import java.util.List;
 import java.util.UUID;
 
@@ -22,27 +21,33 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class MessageController {
 
-    MessageService messageService;
+    private final MessageService messageService;
 
 
     @RequestMapping(method = RequestMethod.POST)
-    public ResponseEntity<MessageInfoDto> sendMessage(@RequestBody CreateMessageDto createMessageDto){
+    public ResponseEntity<MessageInfoDto> sendMessage(@ModelAttribute CreateMessageDto createMessageDto){
 
         MessageInfoDto messageInfoDto = messageService.create(createMessageDto);
 
+        URI uri = ServletUriComponentsBuilder.fromCurrentRequest()
+                .path("{id}")
+                .buildAndExpand(messageInfoDto.messageId())
+                .toUri();
+        return ResponseEntity.created(uri).body(messageInfoDto);
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(messageInfoDto);
+
+
 
     }
 
     @RequestMapping(value = "/{channelId}",method = RequestMethod.GET)
-    public ResponseEntity<List<MessageInfoDto>> getMessage(UUID channelId){
+    public ResponseEntity<List<MessageInfoDto>> getMessage(@PathVariable("channelId") UUID channelId){
 
         return ResponseEntity.status(HttpStatus.OK).body(messageService.findAllById(channelId));
     }
 
     @RequestMapping(method = RequestMethod.PUT)
-    public ResponseEntity<MessageInfoDto> updateMessage(@RequestBody UpdateMessageDto updateMessageDto){
+    public ResponseEntity<MessageInfoDto> updateMessage(@ModelAttribute UpdateMessageDto updateMessageDto){
         messageService.updateMessage(updateMessageDto);
         return ResponseEntity.status(HttpStatus.OK).body(messageService.find(updateMessageDto.messageId()));
 
