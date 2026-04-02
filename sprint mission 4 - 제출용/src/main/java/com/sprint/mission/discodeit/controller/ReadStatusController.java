@@ -20,26 +20,26 @@ public class ReadStatusController {
 
   private final ReadStatusService readStatusService;
 
-  // create
+  // POST /api/readStatuses - 201 Created
   @PostMapping
   public ResponseEntity<ReadStatus> create(@Valid @RequestBody ReadStatusCreateRequest request) {
     return ResponseEntity.status(HttpStatus.CREATED)
-        .body(readStatusService.create(request)); // 201 Created
+        .body(readStatusService.create(request));
   }
 
-  // readAllByUserId
+  // GET /api/readStatuses?userId=123 - 200 OK
   @GetMapping
   public ResponseEntity<List<ReadStatus>> readAllByUserId(@RequestParam UUID userId) {
-    return ResponseEntity.ok(readStatusService.readAllByUserId(userId));  // 200 OK
+    return ResponseEntity.ok(readStatusService.readAllByUserId(userId));
   }
 
-  // update
+  // POST /api/readStatuses/{readStatusId} - 200 OK
   @PatchMapping("/{readStatusId}")
   public ResponseEntity<ReadStatus> update(
       @PathVariable UUID readStatusId,
       @Valid @RequestBody ReadStatusUpdateRequest request) {
     readStatusService.update(new ReadStatusUpdateRequest(readStatusId, request.getNewLastReadAt())
     );
-    return ResponseEntity.ok(readStatusService.read(readStatusId)); // 200 OK
+    return ResponseEntity.ok(readStatusService.read(readStatusId));
   }
 }

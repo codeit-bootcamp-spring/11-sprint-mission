@@ -16,11 +16,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class AuthController {
 
-  // 스펙상 구현 login - 로그인 - 응답(200)
   private final AuthService authService;
 
+  // POST /api/auth/login - 200 OK
   @PostMapping("/login")
   public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
-    return ResponseEntity.ok(authService.login(request)); // 200 OK
+    return ResponseEntity.ok(authService.login(request));
   }
 }

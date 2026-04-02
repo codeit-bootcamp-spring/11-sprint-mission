@@ -27,36 +27,40 @@ public class UserController {
   private final UserService userService;
   private final UserStatusService userStatusService;
 
-  // readAllDto
+  // GET /api/users
   @GetMapping
   public ResponseEntity<List<UserDto>> readAllDto() {
-    return ResponseEntity.ok(userService.readAllDto()); // 200 OK
+    return ResponseEntity.ok(userService.readAllDto());
   }
 
-  // create (JSON)
+  // POST /api/users
+  // Json만 입력받기
   @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<UserResponse> create(@Valid @RequestBody UserCreateRequest request) {
     return ResponseEntity.status(HttpStatus.CREATED)
-        .body(userService.create(request)); // 201 Created
+        .body(userService.create(request));
   }
 
-  // create (multipart/form-data)
+  // POST /api/users
+  // multipart/form-data만 입력받기
+  // Postman에서는 Json파일 넘겨야 작동.
   @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<UserResponse> createMultipart(
       @Valid @RequestPart("userCreateRequest") UserCreateRequest request,
       @RequestPart(value = "profile", required = false) MultipartFile profile) {
     return ResponseEntity.status(HttpStatus.CREATED)
-        .body(userService.create(request)); // 201 Created
+        .body(userService.create(request));
   }
 
-  // update (multipart) - 프로필 사진 변경 가능
-  // PATCH /api/users/{userId} + multipart
+  // PATCH /api/users/{userId} - 200 OK
+  // multipart/form-data만 입력받기
   @PatchMapping(value = "/{userId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<UserResponse> updateMultipart(
       @PathVariable UUID userId,
       @RequestPart("userUpdateRequest") UserUpdateRequest request,
       @RequestPart(value = "profile", required = false) MultipartFile profile
   ) {
+    // userId(URL) == updateDto.getId여야함.
     if (request.getId() != null && !userId.equals(request.getId())) {
       throw DiscodeitIdMismatchException.generic("id", userId, request.getId());
     }
@@ -67,10 +71,11 @@ public class UserController {
         request.getNewEmail(),
         request.getNewPassword()
     ));
-    return ResponseEntity.ok(userService.read(userId)); // 200 OK
+    return ResponseEntity.ok(userService.read(userId));
   }
 
-  // update
+  // PATCH /api/users/{userId} - 200 OK
+  // Json만 입력받기
   @PatchMapping(value = "/{userId}", consumes = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<UserResponse> update(
       @PathVariable UUID userId,
@@ -86,26 +91,29 @@ public class UserController {
         request.getNewEmail(),
         request.getNewPassword()
     ));
-    return ResponseEntity.ok(userService.read(userId)); // 200 OK
+    return ResponseEntity.ok(userService.read(userId));
   }
 
+  // DELETE /api/users/{userId} - 204 No Content
   @DeleteMapping("/{userId}")
   public ResponseEntity<Void> delete(@PathVariable UUID userId) {
     userService.delete(userId);
-    return ResponseEntity.noContent().build();  // 204 No Content
+    return ResponseEntity.noContent().build();
   }
 
+  // GET /api/users/{userId} - 200 OK
   @GetMapping("/{userId}")
   public ResponseEntity<UserResponse> read(@PathVariable UUID userId) {
-    return ResponseEntity.ok(userService.read(userId)); // 200 OK
+    return ResponseEntity.ok(userService.read(userId));
   }
 
+  // PATCH /api/users/{userId}/userStatus - 200 OK
   @PatchMapping("/{userId}/userStatus")
   public ResponseEntity<UserResponse> updateStatus(
       @PathVariable UUID userId,
       @RequestBody UserStatusUpdateRequest request
   ) {
     userStatusService.update(new UserStatusUpdateRequest(userId, request.getNewLastActiveAt()));
-    return ResponseEntity.ok(userService.read(userId)); // 200 OK
+    return ResponseEntity.ok(userService.read(userId));
   }
 }

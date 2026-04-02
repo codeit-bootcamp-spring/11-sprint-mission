@@ -16,13 +16,13 @@ public class BinaryContentController {
 
   private final BinaryContentService binaryContentService;
 
-  // read
+  // GET /api/binaryContents/{id} - 200 OK
   @GetMapping("/{id}")
   public ResponseEntity<BinaryContent> read(@PathVariable UUID id) {
     return ResponseEntity.ok(binaryContentService.read(id));
   }
 
-  // readAllByIdIn
+  // GET /api/binaryContents?ids=1,2,3 - 200 OK
   @GetMapping
   public ResponseEntity<List<BinaryContent>> readAllByIdIn(@RequestParam List<UUID> ids) {
     return ResponseEntity.ok(binaryContentService.readAllByIdIn(ids));

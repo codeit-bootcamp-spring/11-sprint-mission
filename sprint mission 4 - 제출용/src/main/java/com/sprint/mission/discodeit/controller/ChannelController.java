@@ -22,7 +22,7 @@ public class ChannelController {
 
   private final ChannelService channelService;
 
-  // create public
+  // POST /api/channels/public - 201 Created
   @PostMapping("/public")
   public ResponseEntity<ChannelResponse> createPublic(
       @Valid @RequestBody PublicChannelCreateRequest request
@@ -31,7 +31,7 @@ public class ChannelController {
         .body(channelService.createPublicChannel(request));
   }
 
-  // create private
+  // POST /api/channels/private - 201 Created
   @PostMapping("/private")
   public ResponseEntity<ChannelResponse> createPrivate(
       @Valid @RequestBody PrivateChannelCreateRequest request
@@ -40,19 +40,19 @@ public class ChannelController {
         .body(channelService.createPrivateChannel(request));
   }
 
-  // read
+  // GET /api/channels/{channelId} - 200 OK
   @GetMapping("/{channelId}")
   public ResponseEntity<ChannelResponse> read(@PathVariable UUID channelId) {
     return ResponseEntity.ok(channelService.read(channelId));
   }
 
-  // readAllByUserId
+  // GET /api/channels?userId=123 - 200 OK
   @GetMapping
   public ResponseEntity<List<ChannelResponse>> readAllByUserId(@RequestParam UUID userId) {
     return ResponseEntity.ok(channelService.readAllByUserId(userId));
   }
 
-  // update
+  // PATCH /api/channels/{channelId} - 200 OK
   @PatchMapping("/{channelId}")
   public ResponseEntity<ChannelResponse> update(
       @PathVariable UUID channelId,
@@ -66,7 +66,7 @@ public class ChannelController {
     return ResponseEntity.ok(channelService.read(channelId));
   }
 
-  // delete
+  // DELETE /api/channels/{channelId} - 204 No Content
   @DeleteMapping("/{channelId}")
   public ResponseEntity<Void> delete(@PathVariable UUID channelId) {
     channelService.delete(channelId);
