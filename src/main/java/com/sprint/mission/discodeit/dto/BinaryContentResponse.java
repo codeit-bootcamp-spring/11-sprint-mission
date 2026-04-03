@@ -2,6 +2,7 @@ package com.sprint.mission.discodeit.dto;
 
 import com.sprint.mission.discodeit.entity.BinaryContent;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -11,6 +12,7 @@ public record BinaryContentResponse(
     String contentType,
     long size,
     Instant createdAt,
+    @Schema(type = "string", format = "byte")
     String bytes
 ) {
 

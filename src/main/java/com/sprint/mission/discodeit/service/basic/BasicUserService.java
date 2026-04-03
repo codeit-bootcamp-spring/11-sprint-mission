@@ -102,7 +102,7 @@ public class BasicUserService implements UserService {
     }
     String email = user.getEmail();
     if (request.newEmail() != null) {
-      userRepository.findByEmail(email)
+      userRepository.findByEmail(request.newEmail())
           .filter(u -> !u.getId().equals(id))
           .ifPresent(u -> {
             throw new BusinessLogicException(ExceptionCode.EMAIL_EXISTS);

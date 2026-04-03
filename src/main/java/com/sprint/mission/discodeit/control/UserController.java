@@ -2,16 +2,21 @@ package com.sprint.mission.discodeit.control;
 
 
 import com.sprint.mission.discodeit.dto.*;
+import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.entity.UserStatus;
 import com.sprint.mission.discodeit.service.UserService;
 import com.sprint.mission.discodeit.service.UserStatusService;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/users")
@@ -21,40 +26,44 @@ public class UserController {
   private final UserService userService;
   private final UserStatusService userStatusService;
 
-  @RequestMapping(method = RequestMethod.POST)
-  public ResponseEntity<UserDto> createUser(@RequestBody UserCreateRequest request) {
-    UserDto createdUser = userService.createUser(request);
+  @PostMapping(consumes = "multipart/form-data")
+  @ResponseStatus(HttpStatus.CREATED)
+  public ResponseEntity<User> createUser(
+      @Parameter(content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE))
+      @RequestPart("userCreateRequest") UserCreateRequest request,
+      @RequestPart(value = "profile", required = false) MultipartFile profile) {
+    User createdUser = userService.createUser(request);
     return ResponseEntity.status(HttpStatus.CREATED).body(createdUser);
   }
 
-  @RequestMapping(value = "/findAll", method = RequestMethod.GET)
+  @GetMapping
   public ResponseEntity<List<UserDto>> getAllUsers() {
     List<UserDto> users = userService.allReadUser();
     return ResponseEntity.ok(users);
   }
 
-  @RequestMapping(value = "/{id}/status", method = RequestMethod.GET)
-  public ResponseEntity<UserStatus> getUserStatus(@PathVariable UUID id) {
-    UserStatus status = userStatusService.findUserStatus(id);
-    return ResponseEntity.ok(status);
-  }
-
-  @RequestMapping(value = "/{id}", method = RequestMethod.DELETE)
-  public ResponseEntity<Void> deleteUser(@PathVariable UUID id, @RequestParam String password) {
-    userService.deleteUser(id, password);
+  @DeleteMapping("/{id}")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  public ResponseEntity<Void> deleteUser(@PathVariable UUID id) {
+    userService.deleteUser(id);
     return ResponseEntity.noContent().build();
   }
 
-  @RequestMapping(value = "/{id}", method = RequestMethod.PATCH)
+  @PatchMapping(value = "/{id}", consumes = "multipart/form-data")
   public ResponseEntity<Void> updateUser(@PathVariable UUID id,
-      @RequestBody UserUpdateRequest request) {
-    userService.updateUser(id, request);
+      @Parameter(content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE))
+      @RequestPart("userUpdateRequest") UserUpdateRequest request,
+      @RequestPart(value = "profile", required = false) MultipartFile profile) {
+    userService.updateUser(id, request, profile);
     return ResponseEntity.ok().build();
   }
 
-  @RequestMapping(value = "/{id}/status", method = RequestMethod.PATCH)
-  public ResponseEntity<UserStatus> updateOnlineStatus(@PathVariable UUID id) {
-    UserStatus updatedStatus = userStatusService.updateUserIdStatus(id);
+  @PatchMapping("/{userId}/userStatus")
+  public ResponseEntity<UserStatus> updateOnlineStatus(
+      @PathVariable UUID userId,
+      @RequestBody UserStatusUpdateDto request
+  ) {
+    UserStatus updatedStatus = userStatusService.updateUserIdStatus(userId, request);
     return ResponseEntity.ok(updatedStatus);
   }
 }
