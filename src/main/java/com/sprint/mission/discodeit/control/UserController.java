@@ -32,7 +32,7 @@ public class UserController {
       @Parameter(content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE))
       @RequestPart("userCreateRequest") UserCreateRequest request,
       @RequestPart(value = "profile", required = false) MultipartFile profile) {
-    User createdUser = userService.createUser(request);
+    User createdUser = userService.createUser(request, profile);
     return ResponseEntity.status(HttpStatus.CREATED).body(createdUser);
   }
 

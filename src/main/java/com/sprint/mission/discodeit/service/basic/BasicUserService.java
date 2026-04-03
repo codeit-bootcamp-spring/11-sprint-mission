@@ -31,7 +31,7 @@ public class BasicUserService implements UserService {
   private final BinaryContentRepository binaryContentRepository;
 
   @Override
-  public User createUser(UserCreateRequest request) {
+  public User createUser(UserCreateRequest request, MultipartFile profile) {
     String name = request.username().trim();
     String email = request.email().trim();
     String password = request.password().trim();
@@ -41,7 +41,20 @@ public class BasicUserService implements UserService {
     if (userRepository.findByEmail(email).isPresent()) {
       throw new BusinessLogicException(ExceptionCode.EMAIL_EXISTS);
     }
-    User newUser = new User(name, email, password, null);
+
+    UUID profileId = null;
+    if (profile != null && !profile.isEmpty()) {
+      try {
+        BinaryContent binaryContent = new BinaryContent(profile.getBytes(),
+            profile.getOriginalFilename(), profile.getContentType());
+        binaryContentRepository.save(binaryContent);
+        profileId = binaryContent.getId();
+      } catch (IOException e) {
+        throw new BusinessLogicException(ExceptionCode.INTERNAL_SERVER_ERROR);
+      }
+    }
+
+    User newUser = new User(name, email, password, profileId);
     UserStatus newStatus = new UserStatus(newUser.getId());
     try {
       userRepository.save(newUser);

@@ -11,7 +11,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 public interface UserService {
 
-  User createUser(UserCreateRequest request);
+  User createUser(UserCreateRequest request, MultipartFile profile);
 
   UserDto readUser(UUID id);
 
