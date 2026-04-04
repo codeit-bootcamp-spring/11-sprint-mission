@@ -1,8 +1,8 @@
 package com.sprint.mission.discodeit.service.basic;
 
-import com.sprint.mission.discodeit.dto.UserCreateDto;
+import com.sprint.mission.discodeit.dto.UserCreateRequest;
 import com.sprint.mission.discodeit.dto.UserReadDto;
-import com.sprint.mission.discodeit.dto.UserUpdateDto;
+import com.sprint.mission.discodeit.dto.UserUpdateRequest;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.entity.UserStatus;
@@ -26,16 +26,16 @@ public class BasicUserService implements UserService {
 
     // Create
     @Override
-    public User create(UserCreateDto dto) {
-        // 이메일 중복체크
+    public User create(UserCreateRequest dto) {
+        // 이름 중복체크
         userRepository.findAll().stream()
-                .filter(user -> user.getName().equals(dto.name()))
+                .filter(user -> user.getUsername().equals(dto.username()))
                 .findFirst()
                 .ifPresent(user -> {
                     throw new IllegalArgumentException("이미 존재하는 이름입니다.");
                 });
 
-        // 이름 중복체크 // 조건 -> 탐색 -> 이미 있으면 예외를 날림
+        // 이메일 중복체크 // 조건 -> 탐색 -> 이미 있으면 예외를 날림
         userRepository.findAll().stream()
                 .filter(user -> user.getEmail().equals(dto.email()))
                 .findFirst()
@@ -45,7 +45,10 @@ public class BasicUserService implements UserService {
 
 
         // 유저 생성(이름, 이메일 비밀번호)
-        User user = User.create(dto.name(), dto.email(), dto.password());
+        User user = User.create(dto.username(), dto.email(), dto.password());
+
+        // user -> binaryContent(profileImg) -> userStatus 순으로 레포지토리에 저장
+        userRepository.insert(user);
 
         // 프로필 이미지 등록(선택)
         if (dto.bytes() != null) {
@@ -58,8 +61,6 @@ public class BasicUserService implements UserService {
         // UserStatusService를 사용하면 같은 레이어(여기서는 Service)간에 순환 참조가 생기므로 UserStatusService.create 사용 X
         UserStatus userStatus = new UserStatus(user.getId(), Instant.now());
         userStatusRepository.insert(userStatus);
-
-        userRepository.insert(user);
         return user;
     }
 
@@ -74,14 +75,17 @@ public class BasicUserService implements UserService {
                 user.getId(),
                 user.getCreatedAt(),
                 user.getUpdatedAt(),
-                user.getName(),
+                user.getUsername(),
                 user.getEmail(),
                 user.getProfileId(),
-                userStatus.isStatus()
+                // 현재 js에서 boolean으로 true면 'online : 온라인' / false면 'offline : 오프라인'을 반환
+                // ONLINE(Enum)일 경우 true를 그렇지 않으면 false를 반환
+                userStatusRepository.findByUserId(user.getId()).status() == User.Status.ONLINE
         );
 
     }
 
+    // 모든 사용자를 조회
     @Override
     public List<UserReadDto> findAll() {
         return userRepository.findAll().stream()
@@ -89,10 +93,12 @@ public class BasicUserService implements UserService {
                         user.getId(),
                         user.getCreatedAt(),
                         user.getUpdatedAt(),
-                        user.getName(),
+                        user.getUsername(),
                         user.getEmail(),
                         user.getProfileId(),
-                        userStatusRepository.findByUserId(user.getId()).isStatus()
+                        // 현재 js에서 boolean으로 true면 'online : 온라인' / false면 'offline : 오프라인'을 반환
+                        // ONLINE(Enum)일 경우 true를 그렇지 않으면 false를 반환
+                        userStatusRepository.findByUserId(user.getId()).status() == User.Status.ONLINE
 
                 )).toList();
     }
@@ -101,7 +107,7 @@ public class BasicUserService implements UserService {
     // Update
     // 같은 키, 다른 Value를 put 하면 키는 그대로, Value만 갱신된다.
     @Override
-    public User update(UUID id, UserUpdateDto dto) {
+    public User update(UUID id, UserUpdateRequest dto) {
         User user = userRepository.findById(id);
 
         // 프로필 이미지 update

@@ -1,6 +1,6 @@
 package com.sprint.mission.discodeit.dto;
 
-public record UserUpdateDto(
+public record UserUpdateRequest(
         String newName,
         String newEmail,
         String newPassword,

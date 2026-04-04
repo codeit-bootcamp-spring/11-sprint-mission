@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Team Hub</title>
+    <link href="https://fonts.googleapis.com" rel="preconnect"/>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap"
+          rel="stylesheet"/>
+    <link href="styles_ai.css" rel="stylesheet"/>
+</head>
+<body>
+
+<header>
+    <div class="logo">Team<span>Hub</span></div>
+    <div class="tag">dashboard</div>
+</header>
+
+<main>
+    <section>
+        <div class="section-header">
+            <span class="section-title">Users</span>
+            <span class="count-badge" id="user-count">—</span>
+        </div>
+        <div class="card-list" id="user-list">
+            <div class="skeleton"></div>
+            <div class="skeleton"></div>
+            <div class="skeleton"></div>
+        </div>
+    </section>
+</main>
+
+<!-- 호버 채널 패널 -->
+<div class="channel-panel hidden" id="channel-panel">
+    <div class="channel-panel-header">
+        <span class="channel-panel-name" id="panel-username"></span>
+        <span class="channel-panel-title">의 채널</span>
+    </div>
+    <div class="channel-panel-list" id="panel-channel-list"></div>
+</div>
+
+<script src="script_ai.js"></script>
+</body>
+</html>

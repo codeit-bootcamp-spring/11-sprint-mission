@@ -1,9 +1,9 @@
 package com.sprint.mission.discodeit.service.basic;
 
-import com.sprint.mission.discodeit.dto.ChannelCreatePrivateDto;
-import com.sprint.mission.discodeit.dto.ChannelCreatePublicDto;
+import com.sprint.mission.discodeit.dto.ChannelCreatePrivateRequest;
+import com.sprint.mission.discodeit.dto.ChannelCreatePublicRequest;
 import com.sprint.mission.discodeit.dto.ChannelReadDto;
-import com.sprint.mission.discodeit.dto.ChannelUpdateDto;
+import com.sprint.mission.discodeit.dto.ChannelUpdateRequest;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.entity.ReadStatus;
@@ -37,16 +37,16 @@ public class BasicChannelService implements ChannelService {
 //        return channel;
 //    }
     @Override
-    public Channel createPublic(ChannelCreatePublicDto dto) {
-        Channel channel = Channel.create(Channel.Type.PUBLIC, dto.name(), dto.description());
+    public Channel createPublic(ChannelCreatePublicRequest dto) {
+        Channel channel = Channel.createPublic(dto.name(), dto.description());
         channelRepository.insert(channel);
 
         return channel;
     }
 
     @Override
-    public Channel createPrivate(ChannelCreatePrivateDto dto) {
-        Channel channel = Channel.create(Channel.Type.PRIVATE, null, null);
+    public Channel createPrivate(ChannelCreatePrivateRequest dto) {
+        Channel channel = Channel.createPrivate();
         channelRepository.insert(channel);
 
         // private 채널 참여자들의 ReadStatus 생성
@@ -135,7 +135,7 @@ public class BasicChannelService implements ChannelService {
 
     // Update
     @Override
-    public Channel update(UUID id, ChannelUpdateDto dto) {
+    public Channel update(UUID id, ChannelUpdateRequest dto) {
         Channel channel = channelRepository.findById(id);
 
         // PRIVATE 채널은 수정 불가

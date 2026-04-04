@@ -4,9 +4,7 @@ import lombok.Getter;
 
 import java.io.Serializable;
 import java.time.Instant;
-import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Getter
 public class Channel implements Serializable {
@@ -26,10 +24,6 @@ public class Channel implements Serializable {
     // 코드 탬플릿에 맞게 필드 추가
     private Type type;
     private String description;
-
-    public enum Type {
-        PUBLIC, PRIVATE;
-    }
 
     // 생성자
     public Channel(String group, String name, String description) {
@@ -52,25 +46,38 @@ public class Channel implements Serializable {
         this.description = description;
     }
 
-    // 정적 팩토리 메서드
-    public static Channel create(Type channelType, String name, String description) {
-        return new Channel(channelType, name, description);
+    //    // 정적 팩토리 메서드(Private 채널 생성)
+//    public static Channel create(Type channelType, String name, String description) {
+//        return new Channel(channelType, name, description);
+//    }
+    // 정적 팩토리 메서드(Private 채널 생성)
+    public static Channel createPrivate() {
+        return new Channel(Type.PRIVATE, null, null);
+    }
+
+    // 정적 팩토리 메서드(Public 채널 생성)
+    public static Channel createPublic(String name, String description) {
+        return new Channel(Type.PUBLIC, name, description);
+    }
+
+    // update(set)
+    private void update() {
+        this.updatedAt = Instant.now();
+        ;
     }
 
     // getter(Lombok의 @Getter로 대체)
 
-    // update(set)
-    private void update() {
-        this.updatedAt = Instant.now();;
-    }
     public void updateGroup(String group) {
         this.group = group;
         update();
     }
+
     public void updateName(String name) {
         this.name = name;
         update();
     }
+
     public void updateDescription(String description) {
         this.description = description;
         update();
@@ -81,5 +88,9 @@ public class Channel implements Serializable {
         return "채널 UUID : " + id
                 + "\n 생성 시간 : " + createdAt + ", 수정한 시간 : " + updatedAt
                 + "\n 채널 이름 : " + name + ", 채널이 속해있는 그룹 : " + group;
+    }
+
+    public enum Type {
+        PUBLIC, PRIVATE;
     }
 }

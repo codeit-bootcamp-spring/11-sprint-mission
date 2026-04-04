@@ -1,7 +1,7 @@
 package com.sprint.mission.discodeit.service.basic;
 
-import com.sprint.mission.discodeit.dto.UserStatusCreateDto;
-import com.sprint.mission.discodeit.dto.UserStatusUpdateDto;
+import com.sprint.mission.discodeit.dto.UserStatusCreateRequest;
+import com.sprint.mission.discodeit.dto.UserStatusUpdateRequest;
 import com.sprint.mission.discodeit.entity.UserStatus;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.repository.UserStatusRepository;
@@ -20,12 +20,12 @@ public class BasicUserStatusService implements UserStatusService {
     private final UserRepository userRepository;
 
     @Override
-    public UserStatus create(UserStatusCreateDto dto) {
+    public UserStatus create(UserStatusCreateRequest dto) {
         // 관련된 User가 존재하지 않으면 예외를 발생
         userRepository.findById(dto.userId());
 
         // 같은 User와 관련된 객체가 이미 존재하면 예외를 발생
-        if (userRepository.findById(dto.userId()) == null) {
+        if (userStatusRepository.findByUserId(dto.userId()) == null) {
             throw new IllegalArgumentException("이미 존재하는 UserStatus입니다. userId: " + dto.userId());
         }
 
@@ -46,7 +46,7 @@ public class BasicUserStatusService implements UserStatusService {
     }
 
     @Override
-    public UserStatus update(UUID id, UserStatusUpdateDto dto) {
+    public UserStatus update(UUID id, UserStatusUpdateRequest dto) {
         UserStatus userStatus = userStatusRepository.findById(id);
         userStatus.updateLastOnline();
         userStatusRepository.update(userStatus);
