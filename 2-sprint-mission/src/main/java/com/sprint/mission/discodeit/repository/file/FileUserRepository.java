@@ -1,6 +1,8 @@
 package com.sprint.mission.discodeit.repository.file;
 
 import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.exception.BusinessException;
+import com.sprint.mission.discodeit.exception.ErrorCode;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -28,7 +30,7 @@ public class FileUserRepository implements UserRepository {
             try {
                 Files.createDirectories(DIRECTORY);
             } catch (IOException e) {
-                throw new RuntimeException("Failed to create directory: " + DIRECTORY, e);
+                throw new BusinessException(ErrorCode.FILE_DIRECTORY_CREATION_FAILED);
             }
         }
     }
@@ -42,7 +44,7 @@ public class FileUserRepository implements UserRepository {
         try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(path.toFile()))) {
             oos.writeObject(user);
         } catch (IOException e) {
-            throw new RuntimeException("Failed to save file: " + path, e);
+            throw new BusinessException(ErrorCode.FILE_SAVE_FAILED);
         }
     }
 
@@ -50,7 +52,7 @@ public class FileUserRepository implements UserRepository {
         try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(path.toFile()))) {
             return (User) ois.readObject();
         } catch (IOException | ClassNotFoundException e) {
-            throw new RuntimeException("Failed to read file: " + path, e);
+            throw new BusinessException(ErrorCode.FILE_READ_FAILED);
         }
     }
 
@@ -77,7 +79,7 @@ public class FileUserRepository implements UserRepository {
                     .map(this::loadFromFile)
                     .collect(Collectors.toList());
         } catch (IOException e) {
-            throw new RuntimeException("Failed to read directory: " + DIRECTORY, e);
+            throw new BusinessException(ErrorCode.FILE_DIRECTORY_READ_FAILED);
         }
     }
 
@@ -90,9 +92,9 @@ public class FileUserRepository implements UserRepository {
     public void deleteById(UUID id) {
         Path path = resolvePath(id);
         try {
-            Files.deleteIfExists(path); // 존재할 때에만 삭제
+            Files.deleteIfExists(path);
         } catch (IOException e) {
-            throw new RuntimeException("Failed to delete file: " + path, e);
+            throw new BusinessException(ErrorCode.FILE_DELETE_FAILED);
         }
     }
 
@@ -107,14 +109,14 @@ public class FileUserRepository implements UserRepository {
     public boolean existsByName(String name) {
         // 모든 파일을 읽어서 이름이 일치하는 게 하나라도 있는지 확인
         return findAll().stream()
-                .anyMatch(user -> user.getUserName().equals(name));
+                .anyMatch(user -> user.getUsername().equals(name));
     }
 
     @Override
     public Optional<User> findByName(String userName) {
         // 모든 파일을 읽어서 이름이 일치하는 첫 번째 유저 반환
         return findAll().stream()
-                .filter(user -> user.getUserName().equals(userName))
+                .filter(user -> user.getUsername().equals(userName))
                 .findFirst();
     }
 }

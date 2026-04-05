@@ -2,6 +2,8 @@ package com.sprint.mission.discodeit.service.basic;
 
 import com.sprint.mission.discodeit.dto.BinaryContentDto;
 import com.sprint.mission.discodeit.entity.BinaryContent;
+import com.sprint.mission.discodeit.exception.BusinessException;
+import com.sprint.mission.discodeit.exception.ErrorCode;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.service.BinaryContentService;
 import lombok.RequiredArgsConstructor;
@@ -25,24 +27,20 @@ public class BasicBinaryContentService implements BinaryContentService {
     }
 
     @Override
-    public BinaryContentDto.Response findById(UUID id) {
+    public BinaryContent findById(UUID id) {
         return binaryContentRepository.findById(id)
-                .map(BinaryContentDto.Response::of)
-                .orElseThrow(() -> new NoSuchElementException("BinaryContent not found with id: " + id));
+                .orElseThrow(() -> new BusinessException(ErrorCode.BINARY_CONTENT_NOT_FOUND));
     }
 
     @Override
-    public List<BinaryContentDto.Response> findAllByIdIn(List<UUID> ids) {
-        List<BinaryContent> contents = binaryContentRepository.findAllByIdIn(ids);
-        return contents.stream()
-                .map(BinaryContentDto.Response::of)
-                .toList();
+    public List<BinaryContent> findAllByIdIn(List<UUID> ids) {
+        return binaryContentRepository.findAllByIdIn(ids);
     }
 
     @Override
     public void delete(UUID id) {
         if (!binaryContentRepository.existsById(id)) {
-            throw new NoSuchElementException("BinaryContent not found with id: " + id);
+            throw new BusinessException(ErrorCode.BINARY_CONTENT_NOT_FOUND);
         }
         binaryContentRepository.deleteById(id);
     }

@@ -1,6 +1,8 @@
 package com.sprint.mission.discodeit.repository.file;
 
 import com.sprint.mission.discodeit.entity.UserStatus;
+import com.sprint.mission.discodeit.exception.BusinessException;
+import com.sprint.mission.discodeit.exception.ErrorCode;
 import com.sprint.mission.discodeit.repository.UserStatusRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -29,7 +31,7 @@ public class FileUserStatusRepository implements UserStatusRepository {
             try {
                 Files.createDirectories(DIRECTORY);
             } catch (IOException e) {
-                throw new RuntimeException("Failed to create directory: " + DIRECTORY, e);
+                throw new BusinessException(ErrorCode.FILE_DIRECTORY_CREATION_FAILED);
             }
         }
     }
@@ -43,7 +45,7 @@ public class FileUserStatusRepository implements UserStatusRepository {
         try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(path.toFile()))) {
             oos.writeObject(userStatus);
         } catch (IOException e) {
-            throw new RuntimeException("Failed to save file: " + path, e);
+            throw new BusinessException(ErrorCode.FILE_SAVE_FAILED);
         }
     }
 
@@ -51,7 +53,7 @@ public class FileUserStatusRepository implements UserStatusRepository {
         try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(path.toFile()))) {
             return (UserStatus) ois.readObject();
         } catch (IOException | ClassNotFoundException e) {
-            throw new RuntimeException("Failed to read file: " + path, e);
+            throw new BusinessException(ErrorCode.FILE_READ_FAILED);
         }
     }
 
@@ -78,7 +80,7 @@ public class FileUserStatusRepository implements UserStatusRepository {
                     .map(this::loadFromFile)
                     .collect(Collectors.toList());
         } catch (IOException e) {
-            throw new RuntimeException("Failed to read directory: " + DIRECTORY, e);
+            throw new BusinessException(ErrorCode.FILE_DIRECTORY_READ_FAILED);
         }
     }
 
@@ -93,7 +95,7 @@ public class FileUserStatusRepository implements UserStatusRepository {
         try {
             Files.deleteIfExists(path);
         } catch (IOException e) {
-            throw new RuntimeException("Failed to delete file: " + path, e);
+            throw new BusinessException(ErrorCode.FILE_DELETE_FAILED);
         }
     }
 

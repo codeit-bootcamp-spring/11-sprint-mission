@@ -52,8 +52,8 @@ public class FileUserService implements UserService {
     }
 
     @Override
-    public User create(String userName, String nickname, String description, String email, String password, UUID profileImageId) {
-        User user = new User(userName, nickname, description, email, password, profileImageId);
+    public User create(String username, String nickname, String description, String email, String password, UUID profileImageId) {
+        User user = new User(username, nickname, description, email, password, profileImageId);
         saveToFile(user);
         return user;
     }
@@ -80,9 +80,9 @@ public class FileUserService implements UserService {
     }
 
     @Override
-    public User update(UUID id, String userName, String nickname, String description, String email, String password, UUID profileImageId) {
+    public User update(UUID id, String username, String nickname, String description, String email, String password, UUID profileImageId) {
         User user = findById(id);
-        user.update(userName, nickname, description, email, password);
+        user.update(username, nickname, description, email, password);
         user.updateProfileImage(profileImageId);
         saveToFile(user);
         return user;

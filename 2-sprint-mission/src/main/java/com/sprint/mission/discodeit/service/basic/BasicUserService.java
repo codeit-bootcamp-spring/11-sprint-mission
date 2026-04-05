@@ -1,8 +1,12 @@
 package com.sprint.mission.discodeit.service.basic;
 
+import com.sprint.mission.discodeit.dto.BinaryContentDto;
 import com.sprint.mission.discodeit.dto.UserDto;
+import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.entity.UserStatus;
+import com.sprint.mission.discodeit.exception.BusinessException;
+import com.sprint.mission.discodeit.exception.ErrorCode;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.repository.UserStatusRepository;
@@ -11,7 +15,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.UUID;
 
 @Service
@@ -23,19 +26,25 @@ public class BasicUserService implements UserService {
 
 
     @Override
-    public UserDto.Response create(UserDto.CreateRequest request) {
+    public UserDto.Response create(UserDto.CreateRequest request, BinaryContentDto.CreateRequest profileImageRequest) {
         // username 중복 확인
-        if (userRepository.existsByName(request.userName())) {
-            throw new IllegalArgumentException("User with name " + request.userName() + " already exists");
+        if (userRepository.existsByName(request.username())) {
+            throw new BusinessException(ErrorCode.DUPLICATE_NAME);
         }
 
         // email 중복 확인
         if (userRepository.existsByEmail(request.email())) {
-            throw new IllegalArgumentException("User with email " + request.email() + " already exists");
+            throw new BusinessException(ErrorCode.DUPLICATE_EMAIL);
         }
 
-        // toEntity()로 유저 등록
-        User user = request.toEntity();
+        UUID profileImageId = null;
+        if (profileImageRequest != null) {
+            BinaryContent binaryContent = profileImageRequest.toEntity();
+            BinaryContent savedContent = binaryContentRepository.save(binaryContent);
+            profileImageId = savedContent.getId();
+        }
+
+        User user = request.toEntity(profileImageId);
         userRepository.save(user);
 
         // UserStatus 함께 생성
@@ -48,10 +57,10 @@ public class BasicUserService implements UserService {
     @Override
     public UserDto.Response findById(UUID id) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("User with id " + id + " not found"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         UserStatus userStatus = userStatusRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("UserStatus with id " + id + " not found"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_STATUS_NOT_FOUND));
 
         return UserDto.Response.of(user, userStatus);
     }
@@ -62,17 +71,32 @@ public class BasicUserService implements UserService {
 
         return users.stream()
                 .map(user -> {
-                    UserStatus status = userStatusRepository.findById(user.getId())
-                            .orElseGet(() -> new UserStatus(user.getId()));
+                    UserStatus status = userStatusRepository.findByUserId(user.getId())
+                            .orElseGet(() -> UserStatus.builder()
+                                    .userId(user.getId())
+                                    .lastActiveAt(user.getCreatedAt())
+                                    .build());
+
                     return UserDto.Response.of(user, status);
                 })
                 .toList();
     }
 
     @Override
-    public UserDto.Response update(UUID id, UserDto.UpdateRequest request) {
+    public UserDto.Response update(UUID id, UserDto.UpdateRequest request, BinaryContentDto.CreateRequest profileImageRequest) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("User with id " + id + " not found"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        // 프로필 이미지 변경 로직
+        if (profileImageRequest != null) {
+            // 기존 프로필 이미지 삭제
+            if (user.getProfileImageId() != null) {
+                binaryContentRepository.deleteById(user.getProfileImageId());
+            }
+
+            BinaryContent newImage = profileImageRequest.toEntity();
+            user.updateProfileImage(binaryContentRepository.save(newImage).getId());
+        }
 
         user.update(
                 request.username(),
@@ -81,7 +105,6 @@ public class BasicUserService implements UserService {
                 request.email(),
                 request.password()
         );
-        user.updateProfileImage(request.profileImageId());
 
         userRepository.save(user);
 
@@ -95,7 +118,7 @@ public class BasicUserService implements UserService {
     @Override
     public void delete(UUID id) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("User with id " + id + " not found"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
 
         userStatusRepository.deleteById(id);

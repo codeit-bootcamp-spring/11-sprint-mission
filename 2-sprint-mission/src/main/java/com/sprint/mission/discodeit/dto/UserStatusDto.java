@@ -1,6 +1,7 @@
 package com.sprint.mission.discodeit.dto;
 
 import com.sprint.mission.discodeit.entity.UserStatus;
+import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 
 import java.time.Instant;
@@ -9,7 +10,8 @@ import java.util.UUID;
 public class UserStatusDto {
 
     public record CreateRequest(
-        UUID userId
+            @NotNull(message = "유저 ID는 필수 항목입니다.")
+            UUID userId
     ) {
         public UserStatus toEntity() {
             return UserStatus.builder()
@@ -20,7 +22,7 @@ public class UserStatusDto {
     }
 
     public record UpdateRequest(
-        Instant LastActiveAt
+        Instant lastActiveAt
     ) {}
 
     @Builder

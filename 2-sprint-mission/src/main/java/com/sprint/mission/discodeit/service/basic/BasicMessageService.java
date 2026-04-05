@@ -1,7 +1,11 @@
 package com.sprint.mission.discodeit.service.basic;
 
+import com.sprint.mission.discodeit.dto.BinaryContentDto;
 import com.sprint.mission.discodeit.dto.MessageDto;
+import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.Message;
+import com.sprint.mission.discodeit.exception.BusinessException;
+import com.sprint.mission.discodeit.exception.ErrorCode;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
@@ -11,7 +15,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.UUID;
 
 @Service
@@ -24,25 +27,34 @@ public class BasicMessageService implements MessageService {
 
 
     @Override
-    public MessageDto.Response create(MessageDto.CreateRequest request) {
+    public MessageDto.Response create(MessageDto.CreateRequest request,
+                                      List<BinaryContentDto.CreateRequest> fileRequests) {
         if (!channelRepository.existsById(request.channelId())) {
-            throw new NoSuchElementException("Channel not found with id " + request.channelId());
+            throw new BusinessException(ErrorCode.CHANNEL_NOT_FOUND);
         }
         if (!userRepository.existsById(request.authorId())) {
-            throw new NoSuchElementException("Author not found with id " + request.authorId());
+            throw new BusinessException(ErrorCode.USER_NOT_FOUND);
         }
 
-        Message message = request.toEntity();
-        messageRepository.save(message);
+        List<UUID> attachmentIds = fileRequests.stream()
+                .map(fileRequest -> {
+                    BinaryContent binaryContent = fileRequest.toEntity();
 
-        return MessageDto.Response.of(message);
+                    BinaryContent createdBinaryContent = binaryContentRepository.save(binaryContent);
+                    return createdBinaryContent.getId();
+                })
+                .toList();
+
+        Message message = request.toEntity(attachmentIds);
+
+        return MessageDto.Response.of(messageRepository.save(message));
     }
 
 
     @Override
     public List<MessageDto.Response> findAllByChannelId(UUID channelId) {
         if (!channelRepository.existsById(channelId)) {
-            throw new NoSuchElementException("Channel not found with id " + channelId);
+            throw new BusinessException(ErrorCode.CHANNEL_NOT_FOUND);
         }
 
         return messageRepository.findAll().stream()
@@ -54,7 +66,7 @@ public class BasicMessageService implements MessageService {
     @Override
     public MessageDto.Response update(UUID id, MessageDto.UpdateRequest request) {
         Message message = messageRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("Message with id " + id + " not found"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.MESSAGE_NOT_FOUND));
 
         message.update(request.content());
         messageRepository.save(message);
@@ -65,7 +77,7 @@ public class BasicMessageService implements MessageService {
     @Override
     public void delete(UUID id) {
         Message message = messageRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("Message with id " + id + " not found"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.MESSAGE_NOT_FOUND));
 
         message.getAttachmentIds().forEach(binaryContentRepository::deleteById);
 

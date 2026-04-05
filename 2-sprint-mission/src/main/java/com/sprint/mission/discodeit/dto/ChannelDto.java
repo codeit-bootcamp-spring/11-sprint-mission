@@ -2,6 +2,8 @@ package com.sprint.mission.discodeit.dto;
 
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.ChannelType;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.Builder;
 
 import java.time.Instant;
@@ -12,34 +14,38 @@ public class ChannelDto {
 
     // PUBLIC 채널 생성
     public record CreatePublicRequest(
-        String name,
-        String description
+            @NotBlank(message = "채널 이름은 필수 항목입니다.")
+            @Size(max = 50, message = "채널 이름은 50자를 초과할 수 없습니다.")
+            String name,
+
+            @Size(max = 255, message = "채널 설명은 255자를 초과할 수 없습니다.")
+            String description
     ) {
         // DTO -> Entity
+        // 엔티티의 정적 팩토리 메서드 호출
         public Channel toEntity() {
-            return Channel.builder()
-                    .name(this.name)
-                    .description(this.description)
-                    .type(ChannelType.PUBLIC)
-                    .build();
+            return Channel.createPublic(this.name, this.description);
         }
 
     }
 
     // PRIVATE 채널 생성
     public record CreatePrivateRequest(
-        List<UUID> memberIds // 참여 유저 ID 목록 (name, description은 생략)
+        List<UUID> memberIds
     ) {
         // DTO -> Entity
+        // 엔티티의 정적 팩토리 메서드 호출
         public Channel toEntity() {
-            return Channel.builder()
-                    .type(ChannelType.PRIVATE)
-                    .build();
+            return Channel.createPrivate(this.memberIds);
         }
     }
 
     public record UpdateRequest(
+            @NotBlank(message = "채널 이름은 필수 항목입니다.")
+            @Size(max = 50, message = "채널 이름은 50자를 초과할 수 없습니다.")
             String name,
+
+            @Size(max = 255, message = "채널 설명은 255자를 초과할 수 없습니다.")
             String description
     ) {}
 
@@ -52,7 +58,7 @@ public class ChannelDto {
             Instant lastMessageAt,
             List<UUID> userIds
     ) {
-        // 엔티티와 외부 데이터를 조합하여 Response를 만드는 정적 팩토리 메서드
+        // Entity -> DTO
         public static Response of(Channel channel, Instant lastMessageAt, List<UUID> userIds) {
             return Response.builder()
                     .id(channel.getId())

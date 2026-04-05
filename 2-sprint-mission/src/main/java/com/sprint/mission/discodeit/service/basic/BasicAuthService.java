@@ -4,13 +4,14 @@ import com.sprint.mission.discodeit.dto.AuthDto;
 import com.sprint.mission.discodeit.dto.UserDto;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.entity.UserStatus;
+import com.sprint.mission.discodeit.exception.BusinessException;
+import com.sprint.mission.discodeit.exception.ErrorCode;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.repository.UserStatusRepository;
 import com.sprint.mission.discodeit.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.NoSuchElementException;
 
 @Service
 @RequiredArgsConstructor
@@ -22,16 +23,13 @@ public class BasicAuthService implements AuthService {
     @Override
     public UserDto.Response login(AuthDto.LoginRequest request) {
         User user = userRepository.findByName(request.username())
-                .orElseThrow(() -> new NoSuchElementException("Invalid username or password"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_CREDENTIALS));
 
-        // 비밀번호 암호화 미구현
-        if (!user.getPassword().equals(request.password())) {
-            throw new NoSuchElementException("Invalid username or password");
-        }
+        // 비밀번호 검증
+        user.validatePassword(request.password());
 
-                UserStatus userStatus = userStatusRepository.findByUserId(user.getId())
-                .orElseThrow(() -> new NoSuchElementException("User status information not found"));
-
+        UserStatus userStatus = userStatusRepository.findByUserId(user.getId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_STATUS_NOT_FOUND));
 
         return UserDto.Response.of(user, userStatus);
     }

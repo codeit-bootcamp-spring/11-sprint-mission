@@ -1,6 +1,8 @@
 package com.sprint.mission.discodeit.repository.file;
 
 import com.sprint.mission.discodeit.entity.Channel;
+import com.sprint.mission.discodeit.exception.BusinessException;
+import com.sprint.mission.discodeit.exception.ErrorCode;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -28,7 +30,7 @@ public class FileChannelRepository implements ChannelRepository {
             try {
                 Files.createDirectories(DIRECTORY);
             } catch (IOException e) {
-                throw new RuntimeException("Failed to create directory: " + DIRECTORY, e);
+                throw new BusinessException(ErrorCode.FILE_DIRECTORY_CREATION_FAILED);
             }
         }
     }
@@ -42,7 +44,7 @@ public class FileChannelRepository implements ChannelRepository {
         try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(path.toFile()))) {
             oos.writeObject(channel);
         } catch (IOException e) {
-            throw new RuntimeException("Failed to save file: " + path, e);
+            throw new BusinessException(ErrorCode.FILE_SAVE_FAILED);
         }
     }
 
@@ -50,7 +52,7 @@ public class FileChannelRepository implements ChannelRepository {
         try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(path.toFile()))) {
             return (Channel) ois.readObject();
         } catch (IOException | ClassNotFoundException e) {
-            throw new RuntimeException("Failed to read file: " + path, e);
+            throw new BusinessException(ErrorCode.FILE_READ_FAILED);
         }
     }
 
@@ -77,7 +79,7 @@ public class FileChannelRepository implements ChannelRepository {
                     .map(this::loadFromFile)
                     .collect(Collectors.toList());
         } catch (IOException e) {
-            throw new RuntimeException("Failed to read directory: " + DIRECTORY, e);
+            throw new BusinessException(ErrorCode.FILE_DIRECTORY_READ_FAILED);
         }
     }
 
@@ -90,9 +92,9 @@ public class FileChannelRepository implements ChannelRepository {
     public void deleteById(UUID id) {
         Path path = resolvePath(id);
         try {
-            Files.deleteIfExists(path); // 존재할 때에만 삭제
+            Files.deleteIfExists(path);
         } catch (IOException e) {
-            throw new RuntimeException("Failed to delete file: " + path, e);
+            throw new BusinessException(ErrorCode.FILE_DELETE_FAILED);
         }
     }
 }

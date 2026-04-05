@@ -1,6 +1,9 @@
 package com.sprint.mission.discodeit.dto;
 
 import com.sprint.mission.discodeit.entity.BinaryContent;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 
 import java.time.Instant;
@@ -8,10 +11,18 @@ import java.util.UUID;
 
 public class BinaryContentDto {
 
+    @Builder
     public record CreateRequest(
+            @NotBlank(message = "파일명은 필수 항목입니다.")
             String fileName,
+
+            @NotNull(message = "파일 크기 정보가 누락되었습니다.")
             Long size,
+
+            @NotBlank(message = "콘텐츠 타입은 필수 항목입니다.")
             String contentType,
+
+            @NotEmpty(message = "파일 데이터가 비어있습니다.")
             byte[] bytes
     ) {
         // DTO -> Entity
@@ -20,7 +31,7 @@ public class BinaryContentDto {
                     .id(UUID.randomUUID())
                     .createdAt(Instant.now())
                     .fileName(this.fileName)
-                    .size(this.size)
+                    .size((long) this.bytes.length)
                     .contentType(this.contentType)
                     .bytes(this.bytes)
                     .build();

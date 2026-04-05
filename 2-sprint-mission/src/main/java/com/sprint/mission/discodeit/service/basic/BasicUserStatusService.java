@@ -2,6 +2,8 @@ package com.sprint.mission.discodeit.service.basic;
 
 import com.sprint.mission.discodeit.dto.UserStatusDto;
 import com.sprint.mission.discodeit.entity.UserStatus;
+import com.sprint.mission.discodeit.exception.BusinessException;
+import com.sprint.mission.discodeit.exception.ErrorCode;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.repository.UserStatusRepository;
 import com.sprint.mission.discodeit.service.UserStatusService;
@@ -9,7 +11,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.UUID;
 
 @Service
@@ -22,14 +23,14 @@ public class BasicUserStatusService implements UserStatusService {
     @Override
     public UserStatusDto.Response create(UserStatusDto.CreateRequest request) {
         if (!userRepository.existsById(request.userId())) {
-            throw new NoSuchElementException("User not found with id: " + request.userId());
+            throw new BusinessException(ErrorCode.USER_NOT_FOUND);
         }
 
         // 중복 생성 방지
         boolean isDuplicate = userStatusRepository.findAll().stream()
                 .anyMatch(us -> us.getUserId().equals(request.userId()));
         if (isDuplicate) {
-            throw new IllegalStateException("UserStatus already exists for user: " + request.userId());
+            throw new BusinessException(ErrorCode.USER_STATUS_ALREADY_EXISTS);
         }
 
         UserStatus userStatus = request.toEntity();
@@ -40,7 +41,7 @@ public class BasicUserStatusService implements UserStatusService {
     public UserStatusDto.Response findById(UUID id) {
         return userStatusRepository.findById(id)
                 .map(UserStatusDto.Response::of)
-                .orElseThrow(() -> new NoSuchElementException("UserStatus not found with id: " + id));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_STATUS_NOT_FOUND));
     }
 
     @Override
@@ -53,7 +54,7 @@ public class BasicUserStatusService implements UserStatusService {
     @Override
     public UserStatusDto.Response update(UUID id, UserStatusDto.UpdateRequest request) {
         UserStatus userStatus = userStatusRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("UserStatus not found with id: " + id));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_STATUS_NOT_FOUND));
 
         userStatus.updateActiveTime();
 
@@ -61,11 +62,11 @@ public class BasicUserStatusService implements UserStatusService {
     }
 
     @Override
-    public UserStatusDto.Response updateByUserId(UUID userId, UserStatusDto.UpdateRequest request) {
+    public UserStatusDto.Response updateByUserId(UUID userId) {
         UserStatus userStatus = userStatusRepository.findAll().stream()
                 .filter(us -> us.getUserId().equals(userId))
                 .findFirst()
-                .orElseThrow(() -> new NoSuchElementException("UserStatus not found for user: " + userId));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_STATUS_NOT_FOUND));
 
         userStatus.updateActiveTime();
 
@@ -75,7 +76,7 @@ public class BasicUserStatusService implements UserStatusService {
     @Override
     public void delete(UUID id) {
         if (!userStatusRepository.existsById(id)) {
-            throw new NoSuchElementException("UserStatus not found with id: " + id);
+            throw new BusinessException(ErrorCode.USER_STATUS_NOT_FOUND);
         }
         userStatusRepository.deleteById(id);
     }

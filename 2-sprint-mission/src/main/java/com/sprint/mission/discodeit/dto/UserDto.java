@@ -2,6 +2,10 @@ package com.sprint.mission.discodeit.dto;
 
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.entity.UserStatus;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.Builder;
 
 import java.time.Instant;
@@ -11,58 +15,82 @@ public class UserDto {
 
     @Builder
     public record CreateRequest(
-            String userName,
-            String password,
-            String email,
+            @NotBlank(message = "이름은 필수 항목입니다.")
+            @Size(min = 2, max = 10, message = "이름은 2~10자 사이여야 합니다.")
+            String username,
+
+            @NotBlank(message = "닉네임은 필수 항목입니다.")
+            @Size(max = 20, message = "닉네임은 20자를 초과할 수 없습니다.")
             String nickname,
+
+            @Size(max = 100, message = "소개글은 100자를 초과할 수 없습니다.")
             String description,
-            UUID profileImageId // 선택적으로 프로필 이미지 등록
+
+            @NotBlank(message = "이메일은 필수 항목입니다.")
+            @Email(message = "올바른 이메일 형식이 아닙니다.")
+            String email,
+
+            @NotBlank(message = "비밀번호는 필수 항목입니다.")
+            @Pattern(regexp = "^(?=.*[A-Za-z])(?=.*\\d)(?=.*[@$!%*#?&])[A-Za-z\\d@$!%*#?&]{8,}$",
+                    message = "비밀번호는 8자 이상으로 영문, 숫자, 특수문자를 포함해야 합니다.")
+            String password
     ) {
         // DTO -> Entity
-        public User toEntity() {
+        public User toEntity(UUID profileImageId) {
             return User.builder()
-                    .userName(this.userName)
-                    .password(this.password)
-                    .email(this.email)
+                    .username(this.username)
                     .nickname(this.nickname)
                     .description(this.description)
-                    .profileImageId(this.profileImageId)
+                    .email(this.email)
+                    .password(this.password)
+                    .profileImageId(profileImageId)
                     .build();
         }
     }
 
     public record UpdateRequest(
+            @NotBlank(message = "이름은 필수 항목입니다.")
+            @Size(min = 2, max = 10, message = "이름은 2~10자 사이여야 합니다.")
             String username,
+
+            @NotBlank(message = "닉네임은 필수 항목입니다.")
+            @Size(max = 20, message = "닉네임은 20자를 초과할 수 없습니다.")
             String nickname,
+
+            @Size(max = 100, message = "소개글은 100자를 초과할 수 없습니다.")
             String description,
+
+            @NotBlank(message = "이메일은 필수 항목입니다.")
+            @Email(message = "올바른 이메일 형식이 아닙니다.")
             String email,
-            String password,
-            UUID profileImageId
+
+            @NotBlank(message = "비밀번호는 필수 항목입니다.")
+            @Pattern(regexp = "^(?=.*[A-Za-z])(?=.*\\d)(?=.*[@$!%*#?&])[A-Za-z\\d@$!%*#?&]{8,}$",
+                    message = "비밀번호는 8자 이상으로 영문, 숫자, 특수문자를 포함해야 합니다.")
+            String password
     ) {}
 
     @Builder
     public record Response(
             UUID id,
+            Instant createdAt,
+            Instant updatedAt,
             String username,
-            String nickname,    // 추가
             String email,
-            String description, // 추가
-            UUID profileImageId, // 추가
-            boolean isOnline,   // 핵심!
-            Instant lastActivityAt // 추가
+            UUID profileId,
+            Boolean online
     ) {
 
         // Entity -> DTO
         public static Response of(User user, UserStatus status) {
             return Response.builder()
                     .id(user.getId())
-                    .username(user.getUserName())
-                    .nickname(user.getNickname())
+                    .createdAt(user.getCreatedAt())
+                    .updatedAt(user.getUpdatedAt())
+                    .username(user.getUsername())
                     .email(user.getEmail())
-                    .description(user.getDescription())
-                    .profileImageId(user.getProfileImageId())
-                    .isOnline(status.isOnline())
-                    .lastActivityAt(status.getLastActiveAt())
+                    .profileId(user.getProfileImageId())
+                    .online(status.isOnline())
                     .build();
         }
     }
