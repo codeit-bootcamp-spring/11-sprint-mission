@@ -15,7 +15,11 @@ public class WebConfig implements WebMvcConfigurer {
   @Override
   public void addCorsMappings(CorsRegistry registry) {
     registry.addMapping("/api/**")
-        .allowedOrigins("http://localhost:3001")
+        .allowedOrigins(
+            "http://localhost:3001",
+            "https://sprint5.pintor.dev",
+            "https://11-sprint-mission-production-5ce4.up.railway.app"
+        )
         .allowedMethods("GET", "POST", "PATCH", "DELETE", "OPTIONS")
         .allowedHeaders("*")
         .allowCredentials(true)
