@@ -4,23 +4,27 @@ import lombok.Getter;
 
 import java.time.Instant;
 import java.util.UUID;
+import java.io.Serializable;
 
 @Getter
-public class BinaryContent {
-    private UUID id;
-    private Instant createdAt;
-    private byte[] data;
-    private String fileName;
-    private Long size;
-    private String contentType;
+public class BinaryContent implements Serializable {
 
-    public BinaryContent(byte[] data, String fileName,
-                         Long size, String contentType) {
-        this.id = UUID.randomUUID();
-        this.createdAt = Instant.now();
-        this.data = data;
-        this.fileName = fileName;
-        this.size = size;
-        this.contentType = contentType;
-    }
+  private static final long serialVersionUID = 1L;
+
+  private UUID id;
+  private Instant createdAt;
+  private byte[] bytes;
+  private String fileName;
+  private Long size;
+  private String contentType;
+
+  public BinaryContent(byte[] bytes, String fileName,
+      Long size, String contentType) {
+    this.id = UUID.randomUUID();
+    this.createdAt = Instant.now();
+    this.bytes = bytes;
+    this.fileName = fileName;
+    this.size = size;
+    this.contentType = contentType;
+  }
 }

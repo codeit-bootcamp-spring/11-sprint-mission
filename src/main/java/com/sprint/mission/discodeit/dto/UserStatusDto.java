@@ -4,5 +4,6 @@ import java.time.Instant;
 import java.util.UUID;
 
 public record UserStatusDto(UUID id, UUID userid, Instant createdAt,
-                            Instant updatedAt, boolean isOnline) {
+                            Instant updatedAt, Instant lastActiveAt, boolean isOnline) {
+
 }

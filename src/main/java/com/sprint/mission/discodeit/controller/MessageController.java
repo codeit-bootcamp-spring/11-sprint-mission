@@ -4,38 +4,39 @@ import com.sprint.mission.discodeit.dto.MessageCreateRequest;
 import com.sprint.mission.discodeit.dto.MessageDto;
 import com.sprint.mission.discodeit.dto.MessageUpdateRequest;
 import com.sprint.mission.discodeit.service.MessageService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/messages")
+@RequiredArgsConstructor
 public class MessageController {
-    private final MessageService messageService;
 
-    public MessageController(MessageService messageService) {
-        this.messageService = messageService;
-    }
+  private final MessageService messageService;
 
-    @RequestMapping(method = RequestMethod.POST)
-    public MessageDto sendMessage(@RequestBody MessageCreateRequest request) {
-        return messageService.create(request);
-    }
+  @PostMapping
+  public MessageDto sendMessage(@RequestPart("messageCreateRequest") MessageCreateRequest request,
+      @RequestPart(value = "attachments", required = false) List<MultipartFile> attachments) {
+    return messageService.create(request, attachments);
+  }
 
-    @RequestMapping(value = "/{messageId}", method = RequestMethod.PUT)
-    public void updateMessage(@PathVariable UUID messageId,
-                              @RequestBody MessageUpdateRequest request) {
-        messageService.update(messageId, request);
-    }
+  @PatchMapping("/{messageId}")
+  public void updateMessage(@PathVariable UUID messageId,
+      @RequestBody MessageUpdateRequest request) {
+    messageService.update(messageId, request);
+  }
 
-    @RequestMapping(value = "/{messageId}", method = RequestMethod.DELETE)
-    public void deleteMessage(@PathVariable UUID messageId) {
-        messageService.delete(messageId);
-    }
+  @DeleteMapping("/{messageId}")
+  public void deleteMessage(@PathVariable UUID messageId) {
+    messageService.delete(messageId);
+  }
 
-    @RequestMapping(method = RequestMethod.GET)
-    public List<MessageDto> getMessageByChannelId(@RequestParam UUID channelId) {
-        return messageService.findAllByChannelId(channelId);
-    }
+  @GetMapping
+  public List<MessageDto> getMessageByChannelId(@RequestParam("channelId") UUID channelId) {
+    return messageService.findAllByChannelId(channelId);
+  }
 }

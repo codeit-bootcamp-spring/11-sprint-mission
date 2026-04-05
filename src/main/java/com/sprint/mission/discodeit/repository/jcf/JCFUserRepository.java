@@ -10,43 +10,44 @@ import java.util.*;
 @Repository
 @ConditionalOnProperty(prefix = "discodeit.repository", name = "type", havingValue = "jcf", matchIfMissing = true)
 public class JCFUserRepository implements UserRepository {
-    private final Map<UUID, User> data = new HashMap<>();
 
-    @Override
-    public void save(User user) {
-        data.put(user.getId(), user);
-    }
+  private final Map<UUID, User> data = new HashMap<>();
 
-    @Override
-    public Optional<User> findById(UUID id) {
-        return Optional.ofNullable(data.get(id));
-    }
+  @Override
+  public void save(User user) {
+    data.put(user.getId(), user);
+  }
 
-    @Override
-    public List<User> findAll() {
-        return data.values().stream().toList();
-    }
+  @Override
+  public Optional<User> findById(UUID id) {
+    return Optional.ofNullable(data.get(id));
+  }
 
-    @Override
-    public void delete(UUID id) {
-        data.remove(id);
-    }
+  @Override
+  public List<User> findAll() {
+    return data.values().stream().toList();
+  }
 
-    @Override
-    public boolean existsByName(String name) {
-        return data.values().stream().anyMatch(user ->
-                user.getName().equals(name));
-    }
+  @Override
+  public void delete(UUID id) {
+    data.remove(id);
+  }
 
-    @Override
-    public boolean existsByEmail(String email) {
-        return data.values().stream().anyMatch(user ->
-                user.getEmail().equals(email));
-    }
+  @Override
+  public boolean existsByUsername(String name) {
+    return data.values().stream().anyMatch(user ->
+        user.getUsername().equals(name));
+  }
 
-    @Override
-    public Optional<User> findByName(String name) {
-        return data.values().stream().filter(user ->
-                user.getName().equals(name)).findFirst();
-    }
+  @Override
+  public boolean existsByEmail(String email) {
+    return data.values().stream().anyMatch(user ->
+        user.getEmail().equals(email));
+  }
+
+  @Override
+  public Optional<User> findByUsername(String username) {
+    return data.values().stream().filter(user ->
+        user.getUsername().equals(username)).findFirst();
+  }
 }
