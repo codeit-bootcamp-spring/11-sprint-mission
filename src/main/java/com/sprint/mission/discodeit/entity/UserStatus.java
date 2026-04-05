@@ -6,41 +6,35 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Getter
-public class UserStatus extends Entity{
+public class UserStatus extends Entity {
 
-    private final UUID userId;
-    private Status status;
+  private final UUID userId;
+  private Instant lastActiveAt;
 
-    public UserStatus(UUID userId) {
-        this.userId = userId;
-        status = isOnline();
-    }
-
-    public enum Status{
-        ONLINE,
-        OFFLINE
-    }
+  public UserStatus(UUID userId) {
+    this.userId = userId;
+    lastActiveAt = Instant.now();
+  }
 
 
-    public Status isOnline(){
+  public void updateLastActiveAt(Instant lastActiveAt) {
+    this.lastActiveAt = lastActiveAt;
+    super.updateUpdatedAt();
+  }
 
-        Instant now = Instant.now();
+  public boolean isOnline() {
 
-        if(super.getUpdatedAt().isAfter(now.minusSeconds(300))){
+    Instant now = Instant.now();
 
-            return Status.ONLINE;
-        }
-        else{
-            return Status.OFFLINE;
-        }
+    if (getLastActiveAt().isAfter(now.minusSeconds(300))) {
 
-
-
-
+      return true;
+    } else {
+      return false;
     }
 
 
-
+  }
 
 
 }

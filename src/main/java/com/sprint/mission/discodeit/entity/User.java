@@ -6,79 +6,63 @@ import lombok.Getter;
 import java.util.UUID;
 
 @Getter
-public class User extends Entity{
+public class User extends Entity {
 
-    private String nickname; //닉네임
-    private String email;
-    @Getter(AccessLevel.NONE)
-    private String password; //비밀번호
-    private UUID profileId;
-
+  private String nickname; //닉네임
+  private String email;
+  private String password; //비밀번호
+  private UUID profileId;
 
 
-    public User(String nickname, String email, String password, UUID profileImage) {
-        this.password = password;
-        this.nickname = nickname;
-        this.email = email;
-        this.profileId = profileImage;
+  public User(String nickname, String email, String password, UUID profileId) {
+    this.password = password;
+    this.nickname = nickname;
+    this.email = email;
+    this.profileId = profileId;
 
-    }
-
-
+  }
 
 
-    public boolean updatePassword(String oldPassword, String newPassword) {
+  public boolean updatePassword(String newPassword) {
+
+    this.password = newPassword;
+    super.updateUpdatedAt();
+    return true;
+
+  }
 
 
-        if(!checkSamePassword(oldPassword))
-            return false;
+  public boolean updateNickname(String nickname) {
 
-        this.password = newPassword;
-        super.updateUpdatedAt();
-        return true;
+    this.nickname = nickname;
+    super.updateUpdatedAt();
+    return true;
+  }
 
-    }
+  public boolean updateEmail(String email) {
 
+    this.email = email;
+    super.updateUpdatedAt();
+    return true;
+  }
 
-    public boolean updateNickname(String nickname, String password) {
+  public boolean updateProfileImage(UUID profileImage) {
 
-        if(!checkSamePassword(password))
-            return false;
+    this.profileId = profileImage;
+    super.updateUpdatedAt();
+    return true;
+  }
 
-        this.nickname = nickname;
-        super.updateUpdatedAt();
-        return true;
-    }
-    public boolean updateEmail(String email, String password) {
-
-        if(!checkSamePassword(password))
-            return false;
-
-        this.email = email;
-        super.updateUpdatedAt();
-        return true;
-    }
-
-    public boolean updateProfileImage(UUID profileImage, String password){
-        if(!checkSamePassword(password))
-            return false;
-
-        this.profileId = profileImage;
-        super.updateUpdatedAt();
-        return true;
-    }
-
-    public boolean checkSamePassword(String password) {
-        return this.password.equals(password);
-    }
+  public boolean checkSamePassword(String password) {
+    return this.password.equals(password);
+  }
 
 
-
-    @Override
-    public String toString() {
-        return "User{" +
-                "nickname='" + nickname + '\'' +
-                ", email='" + email + '\'' +
-                 '}';
-    }
+  @Override
+  public String toString() {
+    return "User{" +
+        "username='" + nickname + '\'' +
+        ", email='" + email + '\'' +
+        '}';
+  }
 }

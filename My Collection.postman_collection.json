@@ -1,10 +1,11 @@
 {
   "info": {
-    "_postman_id": "0d5e29a5-c6d5-4fb3-b4dc-59a07a851bba",
+    "_postman_id": "c2ae6a00-48a5-4518-af91-b2b2a00790bb",
     "name": "My Collection",
     "description": "### Welcome to Postman! This is your first collection. \n\nCollections are your starting point for building and testing APIs. You can use this one to:\n\n• Group related requests\n• Test your API in real-world scenarios\n• Document and share your requests\n\nUpdate the name and overview whenever you’re ready to make it yours.\n\n[Learn more about Postman Collections.](https://learning.postman.com/docs/collections/collections-overview/)",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "_exporter_id": "53323992"
+    "_exporter_id": "53323992",
+    "_collection_link": "https://go.postman.co/collection/53323992-c2ae6a00-48a5-4518-af91-b2b2a00790bb?source=collection_link"
   },
   "item": [
     {
@@ -15,14 +16,6 @@
           "item": [
             {
               "name": "post",
-              "request": {
-                "method": "GET",
-                "header": []
-              },
-              "response": []
-            },
-            {
-              "name": "read",
               "request": {
                 "method": "GET",
                 "header": []
@@ -83,14 +76,6 @@
               "response": []
             },
             {
-              "name": "read",
-              "request": {
-                "method": "GET",
-                "header": []
-              },
-              "response": []
-            },
-            {
               "name": "readAllById",
               "request": {
                 "method": "GET",
@@ -128,7 +113,7 @@
               "response": []
             },
             {
-              "name": "readAll",
+              "name": "readList",
               "request": {
                 "method": "GET",
                 "header": []
@@ -163,6 +148,14 @@
             },
             {
               "name": "update",
+              "request": {
+                "method": "GET",
+                "header": []
+              },
+              "response": []
+            },
+            {
+              "name": "create",
               "request": {
                 "method": "GET",
                 "header": []

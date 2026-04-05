@@ -12,61 +12,72 @@ import java.util.*;
 @ConditionalOnProperty(name = "discodeit.repository.type", havingValue = "jcf")
 public class JCFReadStatusRepository implements ReadStatusRepository {
 
-    private final Map<Pair, ReadStatus> data;
+  private final Map<Pair, ReadStatus> data;
 
-    public JCFReadStatusRepository(){
-        data = new HashMap<>();
-    }
-
-
-    @Override
-    public boolean save(ReadStatus readStatus) {
-        Pair pair = new Pair(readStatus.getUserId(),readStatus.getChannelId());
-        data.put(pair,readStatus);
-        return true;
-    }
-
-    @Override
-    public Optional<ReadStatus> get(UUID userId, UUID channelId) {
-        Pair pair = new Pair(userId,channelId);
-        return Optional.ofNullable(data.get(pair));
-    }
-
-    @Override
-    public List<ReadStatus> getAll() {
-        return data.values().stream().toList();
-    }
-
-    @Override
-    public List<ReadStatus> getAllByUserId(UUID userId) {
-        return data.values().stream()
-                .filter(readStatus -> readStatus.getUserId().equals(userId))
-                .toList();
-    }
-
-    public List<ReadStatus> getAllByChannelId(UUID channelId) {
-
-        return data.values().stream()
-                .filter(readStatus -> readStatus.getChannelId().equals(channelId))
-                .toList();
+  public JCFReadStatusRepository() {
+    data = new HashMap<>();
+  }
 
 
-    }
+  @Override
+  public boolean save(ReadStatus readStatus) {
+    Pair pair = new Pair(readStatus.getUserId(), readStatus.getChannelId());
+    data.put(pair, readStatus);
+    return true;
+  }
 
-    @Override
-    public boolean delete(UUID userId, UUID channelId) {
-        Pair pair = new Pair(userId,channelId);
-        return data.remove(pair) != null;
-    }
+  @Override
+  public Optional<ReadStatus> get(UUID userId, UUID channelId) {
+    Pair pair = new Pair(userId, channelId);
+    return Optional.ofNullable(data.get(pair));
+  }
 
-    @Override
-    public boolean isExist(UUID userId, UUID channelId) {
-        return data.containsKey(new Pair(userId,channelId));
-    }
+  @Override
+  public Optional<ReadStatus> get(UUID readStatusId) {
+    return data.values().stream()
+        .filter(readStatus -> readStatus.getId().equals(readStatusId))
+        .findFirst();
 
 
+  }
 
-    record Pair(UUID userId, UUID channelId){}
+
+  @Override
+  public List<ReadStatus> getAll() {
+    return data.values().stream().toList();
+  }
+
+  @Override
+  public List<ReadStatus> getAllByUserId(UUID userId) {
+    return data.values().stream()
+        .filter(readStatus -> readStatus.getUserId().equals(userId))
+        .toList();
+  }
+
+  public List<ReadStatus> getAllByChannelId(UUID channelId) {
+
+    return data.values().stream()
+        .filter(readStatus -> readStatus.getChannelId().equals(channelId))
+        .toList();
+
+
+  }
+
+  @Override
+  public boolean delete(UUID userId, UUID channelId) {
+    Pair pair = new Pair(userId, channelId);
+    return data.remove(pair) != null;
+  }
+
+  @Override
+  public boolean isExist(UUID userId, UUID channelId) {
+    return data.containsKey(new Pair(userId, channelId));
+  }
+
+
+  record Pair(UUID userId, UUID channelId) {
+
+  }
 
 
 }

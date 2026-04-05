@@ -15,63 +15,57 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 public class GlobalExceptionHandler {
 
 
-    @ExceptionHandler(AlreadyExistException.class)
+  @ExceptionHandler(AlreadyExistException.class)
 
-    public ResponseEntity<ExceptionDto> alreadyExistHandler(AlreadyExistException e, HttpServletRequest request){
-        ExceptionDto exceptionDto = ExceptionDto.of(
-                HttpStatus.CONFLICT,
-                e.getMessage(),
-                request.getRequestURI()
-        );
-        return ResponseEntity.status(409).body(exceptionDto);
-    }
-    @ExceptionHandler(NonExistException.class)
+  public ResponseEntity<ExceptionDto> alreadyExistHandler(AlreadyExistException e,
+      HttpServletRequest request) {
+    ExceptionDto exceptionDto = ExceptionDto.of(
+        HttpStatus.BAD_REQUEST,
+        e.getMessage(),
+        request.getRequestURI()
+    );
+    return ResponseEntity.status(400).body(exceptionDto);
+  }
 
-    public ResponseEntity<ExceptionDto> NonExistHandler(NonExistException e, HttpServletRequest request){
+  @ExceptionHandler(NonExistException.class)
 
+  public ResponseEntity<ExceptionDto> NonExistHandler(NonExistException e,
+      HttpServletRequest request) {
 
-        ExceptionDto exceptionDto = ExceptionDto.of(
-                HttpStatus.NOT_FOUND,
-                e.getMessage(),
-                request.getRequestURI()
-        );
-        return ResponseEntity.status(exceptionDto.code()).body(exceptionDto);
-    }
-
-
-
-
+    ExceptionDto exceptionDto = ExceptionDto.of(
+        HttpStatus.NOT_FOUND,
+        e.getMessage(),
+        request.getRequestURI()
+    );
+    return ResponseEntity.status(exceptionDto.code()).body(exceptionDto);
+  }
 
 
+  @ExceptionHandler()
+  public ResponseEntity<ExceptionDto> handleException(IllegalArgumentException e,
+      HttpServletRequest request) {
+
+    ExceptionDto exceptionDto = ExceptionDto.of(
+        HttpStatus.BAD_REQUEST,
+        e.getMessage(),
+        request.getRequestURI()
+    );
+
+    return ResponseEntity.status(400).body(exceptionDto);
+  }
 
 
+  @ExceptionHandler(Exception.class)
+  public ResponseEntity<ExceptionDto> handleException(Exception e, HttpServletRequest request) {
 
-    @ExceptionHandler()
-    public ResponseEntity<ExceptionDto>handleException(IllegalArgumentException e, HttpServletRequest request) {
+    ExceptionDto exceptionDto = ExceptionDto.of(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        e.getMessage(),
+        request.getRequestURI()
+    );
 
-        ExceptionDto exceptionDto = ExceptionDto.of(
-                HttpStatus.BAD_REQUEST,
-                e.getMessage(),
-                request.getRequestURI()
-        );
-
-        return ResponseEntity.status(400).body(exceptionDto);
-    }
-
-
-
-
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ExceptionDto> handleException(Exception e,HttpServletRequest request) {
-
-        ExceptionDto exceptionDto = ExceptionDto.of(
-                HttpStatus.INTERNAL_SERVER_ERROR,
-                e.getMessage(),
-                request.getRequestURI()
-        );
-
-        return ResponseEntity.status(500).body(exceptionDto);
-    }
+    return ResponseEntity.status(500).body(exceptionDto);
+  }
 
 
 }

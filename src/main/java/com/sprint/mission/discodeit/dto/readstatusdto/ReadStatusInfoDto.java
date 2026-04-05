@@ -5,9 +5,13 @@ import java.util.UUID;
 
 public record ReadStatusInfoDto(
 
-        UUID userId,
-        UUID channelId,
-        Instant updatedAt
+    UUID id,
+    Instant createdAt,
+    Instant updatedAt,
+    UUID userId,
+    UUID channelId,
+    Instant lastReadAt
 
 ) {
+
 }

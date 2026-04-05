@@ -7,13 +7,9 @@ import java.util.UUID;
 
 
 public record UpdateUserDto(
-        UUID userId,
-        String newNickname,
-        String newEmail,
-        String oldPassword,
-        String newPassword,
-        MultipartFile newProfileImg
+    String newUsername,
+    String newPassword,
+    String newEmail
+) {
 
-
-        ) {
 }

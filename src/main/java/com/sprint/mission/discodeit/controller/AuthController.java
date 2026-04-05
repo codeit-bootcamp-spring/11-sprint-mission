@@ -3,7 +3,7 @@ package com.sprint.mission.discodeit.controller;
 
 import com.sprint.mission.discodeit.dto.authDto.AuthDto;
 import com.sprint.mission.discodeit.dto.error.ExceptionDto;
-import com.sprint.mission.discodeit.dto.userdto.UserInfoDto;
+import com.sprint.mission.discodeit.dto.userdto.CreatedUserDto;
 import com.sprint.mission.discodeit.exception.service.DiffPasswordException;
 import com.sprint.mission.discodeit.service.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -20,25 +20,27 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class AuthController {
 
-    private final AuthService authService;
+  private final AuthService authService;
 
-    @RequestMapping(method = RequestMethod.POST)
-    public ResponseEntity<UserInfoDto> login (@RequestBody AuthDto authDto){
-        return ResponseEntity.status(200).body(authService.login(authDto));
-    }
+  @PostMapping(value = "login")
+  public ResponseEntity<CreatedUserDto> login(@RequestBody AuthDto authDto) {
 
-    @ExceptionHandler(DiffPasswordException.class)
-    public ResponseEntity<ExceptionDto> diffPasswordHandler(DiffPasswordException e, HttpServletRequest request){
+    authService.login(authDto);
+    return ResponseEntity.status(200).body(authService.login(authDto));
+  }
 
+  @ExceptionHandler(DiffPasswordException.class)
+  public ResponseEntity<ExceptionDto> diffPasswordHandler(DiffPasswordException e,
+      HttpServletRequest request) {
 
-        ExceptionDto exceptionDto = ExceptionDto.of(
-                HttpStatus.UNAUTHORIZED,
-                "존재하지 않는 이름 또는 비밀번호 입니다",
-                request.getRequestURI()
-        );
+    ExceptionDto exceptionDto = ExceptionDto.of(
+        HttpStatus.BAD_REQUEST,
+        "존재하지 않는 이름 또는 비밀번호 입니다",
+        request.getRequestURI()
+    );
 
-        return ResponseEntity.status(401).body(exceptionDto);
+    return ResponseEntity.status(400).body(exceptionDto);
 
-    }
+  }
 
 }

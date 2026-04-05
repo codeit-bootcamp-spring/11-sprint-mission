@@ -8,20 +8,21 @@ import java.util.UUID;
 
 public interface UserRepository {
 
-    boolean saveUser(User user);
-    Optional<User> getUser(UUID userId);
-    List<User> getAllUser();
-    Optional<User> getUserByNickname(String nickname);
-    boolean deleteUser(UUID userId);
-    boolean isExistUserByNickname(String nickname);
-    boolean isExistUserByEmail(String Email);
-    boolean isExistUser(UUID userId);
+  boolean saveUser(User user);
 
+  Optional<User> getUser(UUID userId);
 
+  List<User> getAllUser();
 
+  Optional<User> getUserByNickname(String nickname);
 
+  boolean deleteUser(UUID userId);
 
+  boolean isExistUserByNickname(String nickname);
 
+  boolean isExistUserByEmail(String email);
+
+  boolean isExistUser(UUID userId);
 
 
 }

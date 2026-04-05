@@ -16,85 +16,79 @@ import java.util.*;
 @ConditionalOnProperty(name = "discodeit.repository.type", havingValue = "file")
 public class FILEChannelRepository implements ChannelRepository {
 
-    private final FileSaveLoad<Channel> saveLoad;
-    private final Path directory;
+  private final FileSaveLoad<Channel> saveLoad;
+  private final Path directory;
 
-    public FILEChannelRepository(@Value("${discodeit.repository.file-dir}") String path) {
 
-        saveLoad = new FileSaveLoad<>();
-        directory = Path.of(path + "/Channels/");
+  public FILEChannelRepository(@Value("${discodeit.repository.file-dir}") String path,
+      FileSaveLoadFactory factory) {
+
+    saveLoad = factory.createSaveLoad();
+    directory = Path.of(path + "/Channels/");
+  }
+
+  @Override
+  public boolean saveChannel(Channel channel) {
+    if (channel == null) {
+      return false;
     }
 
-    @Override
-    public boolean saveChannel(Channel channel) {
-        if(channel == null)
-            return false;
+    save(idToPath(channel.getId()), channel);
+    return true;
+  }
 
-        save(idToPath(channel.getId()),channel);
-        return true;
+  @Override
+  public Optional<Channel> getChannel(UUID channelId) {
+    Map<UUID, Channel> channels = load(directory);
+    return Optional.ofNullable(channels.get(channelId));
+
+  }
+
+  @Override
+  public List<Channel> getAllChannel() {
+
+    Map<UUID, Channel> channels = load(directory);
+    return channels.values().stream().toList();
+  }
+
+  @Override
+  public boolean deleteChannel(UUID channelId) {
+
+    if (!isExistChannel(channelId)) {
+      return false;
+    }
+    try {
+      Files.deleteIfExists(idToPath(channelId));
+      return true;
+    } catch (IOException e) {
+      return false;
     }
 
-    @Override
-    public Optional<Channel> getChannel(UUID channelId) {
-        Map<UUID,Channel> channels = load(directory);
-        return Optional.ofNullable(channels.get(channelId));
+  }
 
-    }
-
-    @Override
-    public List<Channel> getAllChannel() {
-
-        Map<UUID,Channel> channels = load(directory);
-        return channels.values().stream().toList();
-    }
-
-    @Override
-    public boolean deleteChannel(UUID channelId) {
-
-        if(!isExistChannel(channelId)){
-            return false;
-        }
-        try {
-            Files.deleteIfExists(idToPath(channelId));
-            return true;
-        }
-        catch(IOException e){
-            return false;
-        }
-
-    }
-
-    @Override
-    public boolean isExistChannel(UUID channelId) {
-        Map<UUID,Channel> channels = load(directory);
-        return channels.containsKey(channelId);
+  @Override
+  public boolean isExistChannel(UUID channelId) {
+    Map<UUID, Channel> channels = load(directory);
+    return channels.containsKey(channelId);
 
 
-    }
+  }
 
-    private Map<UUID,Channel> load(Path directory) {
-        return saveLoad.load(directory);
-    }
+  private Map<UUID, Channel> load(Path directory) {
+    return saveLoad.load(directory);
+  }
 
-    private void save(Path filePath, Channel channel) {
+  private void save(Path filePath, Channel channel) {
 
-        saveLoad.save(filePath, channel);
+    saveLoad.save(filePath, channel);
 
-    }
-    private Path idToPath(UUID channelId){
+  }
 
-        return directory.resolve(channelId + ".dat");
+  private Path idToPath(UUID channelId) {
 
-    }
+    return directory.resolve(channelId + ".dat");
 
-
-
-
-
-
-
-
-
+  }
 
 
 }

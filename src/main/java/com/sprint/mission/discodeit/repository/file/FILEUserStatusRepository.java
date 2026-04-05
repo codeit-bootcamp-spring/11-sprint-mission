@@ -4,6 +4,9 @@ import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.entity.UserStatus;
 import com.sprint.mission.discodeit.repository.UserStatusRepository;
 
+import java.util.concurrent.locks.ReentrantLock;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Repository;
@@ -19,124 +22,82 @@ import java.util.stream.Stream;
 
 @Repository
 @ConditionalOnProperty(name = "discodeit.repository.type", havingValue = "file")
+
 public class FILEUserStatusRepository implements UserStatusRepository {
 
-    //UserStatus는 저장시 UserId를 키로 하므로 saveLoad를 안쓰고 새로 만듬
-    private final Path directory;
+  //UserStatus는 저장시 UserId를 키로 하므로 saveLoad를 안쓰고 새로 만듬
+  private final Path directory;
+  private final FileSaveLoad<UserStatus> saveLoad;
 
 
-    public FILEUserStatusRepository(@Value("${discodeit.repository.file-dir}") String path) {
-        this.directory = Path.of(  path + "/UserStatuses/");
+  public FILEUserStatusRepository(@Value("${discodeit.repository.file-dir}") String path,
+      FileSaveLoadFactory factory) {
+    this.directory = Path.of(path + "/UserStatuses/");
+    this.saveLoad = factory.createSaveLoad();
+
+  }
+
+  @Override
+  public boolean saveUserStatus(UserStatus userStatus) {
+
+    if (userStatus == null) {
+      return false;
     }
 
-    @Override
-    public boolean saveUserStatus(UserStatus userStatus) {
+    save(idToPath(userStatus.getUserId()), userStatus);
+    return true;
+  }
 
-        if(userStatus == null)
-            return false;
+  @Override
+  public Optional<UserStatus> getUserStatus(UUID userId) {
+    Map<UUID, UserStatus> userStatuses = load(directory);
+    return Optional.ofNullable(userStatuses.get(userId));
 
-        save(idToPath(userStatus.getUserId()),userStatus);
-        return true;
+  }
+
+  @Override
+  public List<UserStatus> getAllUserStatus() {
+    Map<UUID, UserStatus> userStatuses = load(directory);
+    return userStatuses.values().stream().toList();
+  }
+
+  @Override
+  public boolean deleteUserStatus(UUID userId) {
+    if (!isExistUserStatus(userId)) {
+      return false;
     }
 
-    @Override
-    public Optional<UserStatus> getUserStatus(UUID userId) {
-        Map<UUID,UserStatus> userStatuses = load(directory);
-        return Optional.ofNullable(userStatuses.get(userId));
-
+    try {
+      Files.deleteIfExists(idToPath(userId));
+    } catch (IOException e) {
+      return false;
     }
+    return true;
+  }
 
-    @Override
-    public List<UserStatus> getAllUserStatus() {
-        Map<UUID,UserStatus> userStatuses = load(directory);
-        return userStatuses.values().stream().toList();
-    }
+  @Override
+  public boolean isExistUserStatus(UUID userId) {
+    Map<UUID, UserStatus> userStatuses = load(directory);
+    return userStatuses.containsKey(userId);
+  }
 
-    @Override
-    public boolean deleteUserStatus(UUID userId) {
-        if(!isExistUserStatus(userId)){
-            return false;
-        }
+  private Map<UUID, UserStatus> load(Path directory) {
 
-        try {
-            Files.deleteIfExists(idToPath(userId));
-        }
-        catch(IOException e){
-            return false;
-        }
-        return true;
-    }
+    return saveLoad.load(directory);
 
-    @Override
-    public boolean isExistUserStatus(UUID userId) {
-        Map<UUID,UserStatus> userStatuses = load(directory);
-        return userStatuses.containsKey(userId);
-    }
+  }
 
-    private Map<UUID,UserStatus> load(Path directory){
+  private void save(Path filePath, UserStatus userStatus) {
 
-        if (Files.exists(directory)) {
+    saveLoad.save(filePath, userStatus);
+  }
 
 
-            try (Stream<Path> stream =  Files.list(directory))
+  private Path idToPath(UUID userStatusId) {
 
-            {
-                Map<UUID, UserStatus> map;
+    return directory.resolve(userStatusId + ".dat");
 
-
-                map = stream.map(path -> {
-                            try (
-                                    FileInputStream fis = new FileInputStream(path.toFile());
-                                    ObjectInputStream ois = new ObjectInputStream(fis)
-                            ) {
-                                Object data = ois.readObject();
-                                return  (UserStatus)data;
-                            } catch (IOException | ClassNotFoundException e) {
-                                throw new RuntimeException(e);
-                            }
-                        })
-                        .collect(Collectors.toMap(
-                                UserStatus::getUserId,
-                                Function.identity()
-
-                        ));
-                return map;
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        } else {
-            return new HashMap<>();
-        }
-    }
-
-    private void save(Path filePath, UserStatus userStatus){
-
-        try{
-            Files.createDirectories(filePath.getParent());
-        }
-        catch(IOException e){
-            throw new RuntimeException(e);
-        }
-
-        try(
-                FileOutputStream fos = new FileOutputStream(filePath.toFile());
-                ObjectOutputStream oos = new ObjectOutputStream(fos)
-        ) {
-            oos.writeObject(userStatus);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-
-
-    }
-
-
-    private Path idToPath(UUID userStatusId){
-
-        return directory.resolve(userStatusId+ ".dat");
-
-    }
+  }
 
 
 }
