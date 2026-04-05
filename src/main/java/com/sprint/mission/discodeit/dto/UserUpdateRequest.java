@@ -1,11 +1,12 @@
 package com.sprint.mission.discodeit.dto;
 
 public record UserUpdateRequest(
-        String newName,
-        String newEmail,
-        String newPassword,
-        byte[] bytes,
-        String fileName,
-        String fileType
+    String newUsername,
+    String newEmail,
+    String newPassword,
+    byte[] bytes,
+    String fileName,
+    String fileType
 ) {
+
 }
