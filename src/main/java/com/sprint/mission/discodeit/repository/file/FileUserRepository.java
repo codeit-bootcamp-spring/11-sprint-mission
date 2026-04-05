@@ -22,36 +22,24 @@ public class FileUserRepository extends CommonFileRepository<User> implements Us
     }
 
     @Override
-    public boolean existsByName(String name) {
-        List<User> userList = findAll();
-        for(User user : userList) {
-            if(user.getName().equals(name)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    @Override
-    public boolean existsByEmail(String email) {
-        List<User> userList = findAll();
-        for(User user : userList) {
-            if(user.getEmail().equals(email)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    @Override
     public Optional<User> findByName(String name) {
         List<User> userList = findAll();
         for(User user : userList) {
-            if(user.getName().equals(name)) {
+            if(user.getUsername().equals(name)) {
                 return Optional.of(user);
             }
         }
         return Optional.empty();
     }
 
+    @Override
+    public Optional<User> findByEmail(String email) {
+        List<User> userList = findAll();
+        for(User user : userList) {
+            if(user.getEmail().equals(email)) {
+                return Optional.of(user);
+            }
+        }
+        return Optional.empty();
+    }
 }

@@ -3,9 +3,9 @@ package com.sprint.mission.discodeit.dto.userstatus;
 import java.time.Instant;
 import java.util.UUID;
 
-public record UserStatusResponseDto(
+public record UserStatusDto(
         UUID id,
         UUID userId,
-        Instant updatedAt
+        Instant lastActiveAt
 ) {
 }

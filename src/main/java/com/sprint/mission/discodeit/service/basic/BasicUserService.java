@@ -1,15 +1,17 @@
 package com.sprint.mission.discodeit.service.basic;
 
-import com.sprint.mission.discodeit.dto.user.UserCreateRequestDto;
-import com.sprint.mission.discodeit.dto.user.UserResponseDto;
-import com.sprint.mission.discodeit.dto.user.UserUpdateRequestDto;
+import com.sprint.mission.discodeit.dto.user.UserCreateRequest;
+import com.sprint.mission.discodeit.dto.user.UserDto;
+import com.sprint.mission.discodeit.dto.user.UserUpdateRequest;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.entity.UserStatus;
 import com.sprint.mission.discodeit.exception.binarycontent.BinaryContentNotFoundException;
+import com.sprint.mission.discodeit.exception.binarycontent.BinaryContentSaveException;
 import com.sprint.mission.discodeit.exception.user.DuplicateEmailException;
 import com.sprint.mission.discodeit.exception.user.DuplicateNameException;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
+import com.sprint.mission.discodeit.exception.userstatus.UserStatusNotFoundException;
 import com.sprint.mission.discodeit.exception.userstatus.UserStatusOfUserNotFoundException;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
@@ -17,7 +19,10 @@ import com.sprint.mission.discodeit.repository.UserStatusRepository;
 import com.sprint.mission.discodeit.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -30,43 +35,45 @@ public class BasicUserService implements UserService {
     private final BinaryContentRepository binaryContentRepo;
 
     @Override
-    public UserResponseDto create(UserCreateRequestDto dto) {
-        if(userRepo.existsByName(dto.name())) throw new DuplicateNameException(dto.name());
-        if(userRepo.existsByEmail(dto.email())) throw new DuplicateEmailException(dto.email());
+    public UserDto create(UserCreateRequest dto, MultipartFile profile) {
+        if(userRepo.findByName(dto.username()).isPresent()) throw new DuplicateNameException(dto.username());
+        if(userRepo.findByEmail(dto.email()).isPresent()) throw new DuplicateEmailException(dto.email());
 
-        User user = new User(dto.name(), dto.email(), dto.password(), dto.profileId());
+        UUID profileId = saveProfile(profile);
+
+        User user = new User(dto.username(), dto.email(), dto.password(), profileId);
         userRepo.save(user);
 
-        UserStatus userStatus = new UserStatus(user.getId());
+        UserStatus userStatus = new UserStatus(user.getId(), Instant.now());
         userStatusRepo.save(userStatus);
 
-        return new UserResponseDto(user.getId(), user.getCreatedAt(), user.getUpdatedAt(),
-                user.getName(), user.getEmail(), user.getProfileId(), userStatus.passed());
+        return new UserDto(user.getId(), user.getCreatedAt(), user.getUpdatedAt(),
+                user.getUsername(), user.getEmail(), user.getProfileId(), userStatus.passed());
     }
 
     @Override
-    public UserResponseDto findById(UUID id) {
+    public UserDto findById(UUID id) {
         User user = userRepo.findById(id)
                 .orElseThrow(() -> new UserNotFoundException(id));
         UserStatus userStatus = userStatusRepo.findByUserId(id)
                 .orElseThrow(() -> new UserStatusOfUserNotFoundException(id));
 
-        return new UserResponseDto(user.getId(), user.getCreatedAt(), user.getUpdatedAt(),
-                user.getName(), user.getEmail(), user.getProfileId(), userStatus.passed());
+        return new UserDto(user.getId(), user.getCreatedAt(), user.getUpdatedAt(),
+                user.getUsername(), user.getEmail(), user.getProfileId(), userStatus.passed());
     }
 
     @Override
-    public List<UserResponseDto> findAll() {
+    public List<UserDto> findAll() {
         return userRepo.findAll().stream()
                 .map(user -> {
                             UserStatus userStatus = userStatusRepo.findByUserId(user.getId())
                                     .orElseThrow(() -> new UserStatusOfUserNotFoundException(user.getId()));
 
-                            return new UserResponseDto(
+                            return new UserDto(
                                     user.getId(),
                                     user.getCreatedAt(),
                                     user.getUpdatedAt(),
-                                    user.getName(),
+                                    user.getUsername(),
                                     user.getEmail(),
                                     user.getProfileId(),
                                     userStatus.passed()
@@ -77,20 +84,29 @@ public class BasicUserService implements UserService {
     }
 
     @Override
-    public void update(UUID id, UserUpdateRequestDto dto) {
+    public void update(UUID id, UserUpdateRequest dto, MultipartFile profile) {
         User user = userRepo.findById(id)
                 .orElseThrow(() -> new UserNotFoundException(id));
 
-        if(!user.getName().equals(dto.name()) && userRepo.existsByName(dto.name())) throw new DuplicateNameException(dto.name());
-        if(!user.getEmail().equals(dto.email()) && userRepo.existsByEmail(dto.email())) throw new DuplicateEmailException(dto.email());
+        if(!user.getUsername().equals(dto.newUsername()) && userRepo.findByName(dto.newUsername()).isPresent())
+            throw new DuplicateNameException(dto.newUsername());
+        if(!user.getEmail().equals(dto.newEmail()) && userRepo.findByEmail(dto.newEmail()).isPresent())
+            throw new DuplicateEmailException(dto.newEmail());
 
-        user.setName(dto.name());
-        user.setEmail(dto.email());
-        user.setPassword(dto.password());
-        if(dto.profileId() != null) user.setProfileId(dto.profileId());
+        UUID oldProfileId = user.getProfileId();
+        UUID newProfileId = saveProfile(profile);
+
+        user.setUsername(dto.newUsername());
+        user.setEmail(dto.newEmail());
+        user.setPassword(dto.newPassword());
+        if(newProfileId != null) user.setProfileId(newProfileId);
+
         user.update();
-
         userRepo.save(user);
+
+        if(newProfileId != null && oldProfileId != null) {
+            binaryContentRepo.deleteById(oldProfileId);
+        }
     }
 
     @Override
@@ -98,14 +114,36 @@ public class BasicUserService implements UserService {
         User user = userRepo.findById(id)
                 .orElseThrow(() -> new UserNotFoundException(id));
 
-        userStatusRepo.deleteByUserId(id);
+        UserStatus userStatus = userStatusRepo.findByUserId(id)
+                .orElseThrow(() -> new UserStatusOfUserNotFoundException(id));
+        userStatusRepo.deleteById(userStatus.getId());
 
-        if(user.getProfileId() != null) {
-            BinaryContent binaryContent = binaryContentRepo.findById(user.getProfileId())
-                    .orElseThrow(() -> new BinaryContentNotFoundException(user.getProfileId()));
-            binaryContentRepo.delete(binaryContent);
+        UUID profileId = user.getProfileId();
+        if(profileId != null) {
+            if(!binaryContentRepo.deleteById(profileId)) {
+                throw new BinaryContentNotFoundException(profileId);
+            }
+        }
+        if(!userRepo.deleteById(id)) {
+            throw new UserNotFoundException(id);
+        }
+    }
+
+    private UUID saveProfile(MultipartFile file) {
+        if(file == null || file.isEmpty()) {
+            return null;
         }
 
-        userRepo.delete(user);
+        try {
+            BinaryContent binaryContent = new BinaryContent(
+                    file.getOriginalFilename(),
+                    file.getContentType(),
+                    file.getBytes()
+            );
+            binaryContentRepo.save(binaryContent);
+            return binaryContent.getId();
+        } catch (IOException e){
+            throw new BinaryContentSaveException(file.getOriginalFilename(), e);
+        }
     }
 }

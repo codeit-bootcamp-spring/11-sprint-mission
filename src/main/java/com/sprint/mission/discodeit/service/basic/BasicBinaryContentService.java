@@ -1,7 +1,7 @@
 package com.sprint.mission.discodeit.service.basic;
 
-import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentCreateRequestDto;
-import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentResponseDto;
+import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentCreateRequest;
+import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentDto;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.exception.binarycontent.BinaryContentNotFoundException;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
@@ -20,14 +20,14 @@ public class BasicBinaryContentService implements BinaryContentService {
     private final BinaryContentRepository binaryContentRepo;
 
     @Override
-    public BinaryContentResponseDto create(BinaryContentCreateRequestDto dto) {
+    public BinaryContentDto create(BinaryContentCreateRequest dto) {
         BinaryContent binaryContent = new BinaryContent(dto.fileName(), dto.contentType(), dto.data());
         binaryContentRepo.save(binaryContent);
         return toDto(binaryContent);
     }
 
     @Override
-    public BinaryContentResponseDto find(UUID id) {
+    public BinaryContentDto find(UUID id) {
         BinaryContent binaryContent = binaryContentRepo.findById(id)
                 .orElseThrow(() -> new BinaryContentNotFoundException(id));
 
@@ -35,7 +35,7 @@ public class BasicBinaryContentService implements BinaryContentService {
     }
 
     @Override
-    public List<BinaryContentResponseDto> findAllByIdIn(List<UUID> idList) {
+    public List<BinaryContentDto> findAllByIdIn(List<UUID> idList) {
         return idList.stream()
                 .map(id -> binaryContentRepo.findById(id)
                         .orElseThrow(() -> new BinaryContentNotFoundException(id)))
@@ -45,18 +45,20 @@ public class BasicBinaryContentService implements BinaryContentService {
 
     @Override
     public void delete(UUID id) {
-        BinaryContent binaryContent = binaryContentRepo.findById(id)
-                .orElseThrow(() -> new BinaryContentNotFoundException(id));
-        binaryContentRepo.delete(binaryContent);
+        if(!binaryContentRepo.deleteById(id)) {
+            throw new BinaryContentNotFoundException(id);
+        }
     }
 
-    private BinaryContentResponseDto toDto(BinaryContent binaryContent) {
-        String base64 = Base64.getEncoder().encodeToString(binaryContent.getData());
+    private BinaryContentDto toDto(BinaryContent binaryContent) {
+        String bytes = Base64.getEncoder().encodeToString(binaryContent.getData());
 
-        return new BinaryContentResponseDto(
+        return new BinaryContentDto(
                 binaryContent.getId(),
+                binaryContent.getCreatedAt(),
                 binaryContent.getFileName(),
+                (long) binaryContent.getData().length,
                 binaryContent.getContentType(),
-                base64);
+                bytes);
     }
 }

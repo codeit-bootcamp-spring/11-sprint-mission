@@ -1,16 +1,17 @@
 package com.sprint.mission.discodeit.service;
 
-import com.sprint.mission.discodeit.dto.user.UserCreateRequestDto;
-import com.sprint.mission.discodeit.dto.user.UserResponseDto;
-import com.sprint.mission.discodeit.dto.user.UserUpdateRequestDto;
+import com.sprint.mission.discodeit.dto.user.UserCreateRequest;
+import com.sprint.mission.discodeit.dto.user.UserDto;
+import com.sprint.mission.discodeit.dto.user.UserUpdateRequest;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.UUID;
 
 public interface UserService {
-    UserResponseDto create(UserCreateRequestDto dto);
-    UserResponseDto findById(UUID id);
-    List<UserResponseDto> findAll();
-    void update(UUID id, UserUpdateRequestDto dto);
+    UserDto create(UserCreateRequest dto, MultipartFile profile);
+    UserDto findById(UUID id);
+    List<UserDto> findAll();
+    void update(UUID id, UserUpdateRequest dto, MultipartFile profile);
     void delete(UUID id);
 }

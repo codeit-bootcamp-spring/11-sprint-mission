@@ -1,13 +1,12 @@
 package com.sprint.mission.discodeit.service.basic;
 
-import com.sprint.mission.discodeit.dto.readstatus.ReadStatusCreateRequestDto;
-import com.sprint.mission.discodeit.dto.readstatus.ReadStatusResponseDto;
-import com.sprint.mission.discodeit.dto.readstatus.ReadStatusUpdateRequestDto;
+import com.sprint.mission.discodeit.dto.readstatus.ReadStatusCreateRequest;
+import com.sprint.mission.discodeit.dto.readstatus.ReadStatusDto;
+import com.sprint.mission.discodeit.dto.readstatus.ReadStatusUpdateRequest;
 import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.exception.channel.ChannelNotFoundException;
 import com.sprint.mission.discodeit.exception.readstatus.ReadStatusAlreadyExistsException;
 import com.sprint.mission.discodeit.exception.readstatus.ReadStatusNotFoundException;
-import com.sprint.mission.discodeit.exception.readstatus.ReadStatusOfUserAndChannelNotFoundException;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
@@ -28,25 +27,25 @@ public class BasicReadStatusService implements ReadStatusService {
     private final ReadStatusRepository readStatusRepo;
 
     @Override
-    public ReadStatusResponseDto create(UUID channelId, ReadStatusCreateRequestDto dto) {
-        channelRepo.findById(channelId)
-                .orElseThrow(() -> new ChannelNotFoundException(channelId));
+    public ReadStatusDto create(ReadStatusCreateRequest dto) {
+        channelRepo.findById(dto.channelId())
+                .orElseThrow(() -> new ChannelNotFoundException(dto.channelId()));
 
         userRepo.findById(dto.userId())
                 .orElseThrow(() -> new UserNotFoundException(dto.userId()));
 
         boolean exists = readStatusRepo.findAll().stream()
-                .anyMatch(p -> p.getChannelId().equals(channelId)
+                .anyMatch(p -> p.getChannelId().equals(dto.channelId())
                 && p.getUserId().equals(dto.userId()));
-        if(exists) throw new ReadStatusAlreadyExistsException(dto.userId(), channelId);
+        if(exists) throw new ReadStatusAlreadyExistsException(dto.userId(), dto.channelId());
 
-        ReadStatus readStatus = new ReadStatus(dto.userId(), channelId);
+        ReadStatus readStatus = new ReadStatus(dto.userId(), dto.channelId(), dto.lastReadAt());
         readStatusRepo.save(readStatus);
         return toDto(readStatus);
     }
 
     @Override
-    public ReadStatusResponseDto find(UUID id) {
+    public ReadStatusDto find(UUID id) {
         ReadStatus readStatus = readStatusRepo.findById(id)
                 .orElseThrow(() -> new ReadStatusNotFoundException(id));
 
@@ -54,7 +53,7 @@ public class BasicReadStatusService implements ReadStatusService {
     }
 
     @Override
-    public List<ReadStatusResponseDto> findAllByUserId(UUID id) {
+    public List<ReadStatusDto> findAllByUserId(UUID id) {
         userRepo.findById(id)
                 .orElseThrow(() -> new UserNotFoundException(id));
 
@@ -65,39 +64,30 @@ public class BasicReadStatusService implements ReadStatusService {
     }
 
     @Override
-    public void update(UUID id) {
-        ReadStatus readStatus = readStatusRepo.findById(id)
-                .orElseThrow(() -> new ReadStatusNotFoundException(id));
+    public void update(UUID readStatusId, ReadStatusUpdateRequest dto) {
+        ReadStatus readStatus = readStatusRepo.findById(readStatusId)
+                .orElseThrow(() -> new ReadStatusNotFoundException(readStatusId));
 
-        readStatus.update();
-        readStatusRepo.save(readStatus);
-    }
-
-    @Override
-    public void updateByChannelId(UUID channelId, ReadStatusUpdateRequestDto dto) {
-        channelRepo.findById(channelId)
-                .orElseThrow(() -> new ChannelNotFoundException(channelId));
-
-        userRepo.findById(dto.userId())
-                .orElseThrow(() -> new UserNotFoundException(dto.userId()));
-
-        ReadStatus readStatus = readStatusRepo.findByUserIdAndChannelId(dto.userId(), channelId)
-                        .orElseThrow(() -> new ReadStatusOfUserAndChannelNotFoundException(dto.userId(), channelId));
-
+        readStatus.setLastReadAt(dto.newLastReadAt());
         readStatus.update();
         readStatusRepo.save(readStatus);
     }
 
     @Override
     public void delete(UUID id) {
-        ReadStatus readStatus = readStatusRepo.findById(id)
-                .orElseThrow(() -> new ReadStatusNotFoundException(id));
-
-        readStatusRepo.delete(readStatus);
+        if(!readStatusRepo.deleteById(id)) {
+            throw new ReadStatusNotFoundException(id);
+        }
     }
 
-    private ReadStatusResponseDto toDto(ReadStatus readStatus) {
-        return new ReadStatusResponseDto(
-                readStatus.getId(), readStatus.getUserId(), readStatus.getChannelId(), readStatus.getUpdatedAt());
+    private ReadStatusDto toDto(ReadStatus readStatus) {
+        return new ReadStatusDto(
+                readStatus.getId(),
+                readStatus.getCreatedAt(),
+                readStatus.getUpdatedAt(),
+                readStatus.getUserId(),
+                readStatus.getChannelId(),
+                readStatus.getLastReadAt()
+        );
     }
 }
