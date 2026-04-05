@@ -87,7 +87,7 @@ public class BasicChannelService implements ChannelService {
     }
 
     @Override
-    public ChannelResponseDto update(ChannelUpdateRequestDto dto) {
+    public ChannelResponseDto update(UUID channelId, ChannelUpdateRequestDto dto) {
         Channel channel = channelRepository.findById(dto.getId()).orElseThrow(() -> new IllegalArgumentException("채널없음"));
         if (channel.isPrivate()) {
             // Private 채널 수정 금지

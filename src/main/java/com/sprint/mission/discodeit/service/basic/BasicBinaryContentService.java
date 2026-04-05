@@ -19,7 +19,7 @@ public class BasicBinaryContentService implements BinaryContentService {
     @Override
     public BinaryContentResponseDto create(BinaryContentCreateRequestDto dto) {
         BinaryContent entity = new BinaryContent(
-                dto.getContent(),
+                "text.png", dto.getContent(),
                 dto.getContentType(),
                 dto.getUserId(),
                 dto.getMessageId()

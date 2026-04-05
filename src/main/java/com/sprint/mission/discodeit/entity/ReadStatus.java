@@ -11,6 +11,7 @@ import java.util.UUID;
 @Setter
 @NoArgsConstructor
 public class ReadStatus {
+    public boolean isRead;
     private UUID id;
     private Instant createdAt;
     private Instant updatedAt;
@@ -28,4 +29,6 @@ public class ReadStatus {
         this.lastReadAt = lastReadAt;
     }
 
+    public ReadStatus(UUID userId, UUID channelId, Instant lastReadAt, boolean read) {
+    }
 }

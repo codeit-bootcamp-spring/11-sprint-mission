@@ -1,8 +1,6 @@
 package com.sprint.mission.discodeit.service;
 
-import com.sprint.mission.discodeit.dto.UserCreateRequestDto;
-import com.sprint.mission.discodeit.dto.UserResponseDto;
-import com.sprint.mission.discodeit.dto.UserUpdateRequestDto;
+import com.sprint.mission.discodeit.dto.*;
 
 import java.util.List;
 import java.util.UUID;
@@ -14,7 +12,13 @@ public interface UserService {
 
     List<UserResponseDto> findAll();
 
-    UserResponseDto update(UserUpdateRequestDto dto);
+    UserResponseDto update(UUID id, UserUpdateRequestDto dto);
+
+    UserStatusResponseDto updateOnlineStatus(UUID id, UserStatusResponseDto dto);
+
+    boolean login(LoginRequestDto dto); // email, pw 받아서 성공/실패 boolean 반환
 
     void delete(UUID id);
+
+    List<UserDto> getAllUsers();
 }

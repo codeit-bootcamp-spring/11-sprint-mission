@@ -1,8 +1,6 @@
 package com.sprint.mission.discodeit.service.basic;
 
-import com.sprint.mission.discodeit.dto.UserCreateRequestDto;
-import com.sprint.mission.discodeit.dto.UserResponseDto;
-import com.sprint.mission.discodeit.dto.UserUpdateRequestDto;
+import com.sprint.mission.discodeit.dto.*;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.entity.UserStatus;
@@ -15,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -43,7 +42,7 @@ public class BasicUserService implements UserService {
         // 프로필 이미지 저장(선택)
         if (dto.getProfileImageContent() != null && dto.getProfileImageContentType() != null) {
             BinaryContent profile = new BinaryContent(
-                    dto.getProfileImageContent(),
+                    "text.png", dto.getProfileImageContent(),
                     dto.getProfileImageContentType(),
                     user.getId(),
                     null
@@ -73,15 +72,32 @@ public class BasicUserService implements UserService {
     }
 
     @Override
-    public UserResponseDto update(UserUpdateRequestDto dto) {
+    public List<UserDto> getAllUsers() {
+        List<User> users = userRepository.findAll();
+
+        return users.stream()
+                .map(user -> new UserDto(
+                        user.getId(),
+                        user.getCreatedAt(),
+                        user.getUpdatedAt(),
+                        user.getUsername(),
+                        user.getEmail(),
+                        user.getOnline()
+                ))
+                .collect(Collectors.toList());
+
+    }
+
+    @Override
+    public UserResponseDto update(UUID id, UserUpdateRequestDto dto) {
         User user = userRepository.findById(dto.getId())
                 .orElseThrow(() -> new IllegalArgumentException("해당 유저 없음"));
-        user.update(dto.getUsername(), dto.getEmail(), dto.getPassword());
+        user.update(dto.getUsername(), dto.getEmail(), dto.getPassword(), dto.getProfileImageContent(), dto.getProfileImageContentType());
         userRepository.save(user);
 
         if (dto.getProfileImageContent() != null && dto.getProfileImageContentType() != null) {
             BinaryContent profile = new BinaryContent(
-                    dto.getProfileImageContent(),
+                    "text.png", dto.getProfileImageContent(),
                     dto.getProfileImageContentType(),
                     user.getId(),
                     null
@@ -113,6 +129,25 @@ public class BasicUserService implements UserService {
         dto.setEmail(user.getEmail());
         dto.setOnline(userStatus != null && userStatus.isOnline());
         return dto;
+    }
+
+    @Override
+    public boolean login(LoginRequestDto dto) {
+        Optional<User> optionalUser = userRepository.findByUsername(dto.getUsername());
+        if (optionalUser.isEmpty()) return false;
+        User user = optionalUser.get();
+
+        return user.getPassword().equals(dto.getPassword());
+    }
+
+    @Override
+    public UserStatusResponseDto updateOnlineStatus(UUID id, UserStatusResponseDto dto) {
+        UserStatus status = userStatusRepository.findByUserId(id)
+                .orElseThrow(() -> new IllegalArgumentException("상태 정보를 찾을 수 없습니다."));
+
+        status.setLastAccessAt(Instant.now());
+        userStatusRepository.save(status);
+        return new UserStatusResponseDto(status);
     }
 }
 

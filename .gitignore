@@ -49,8 +49,7 @@ bin/
 fileHashes
 checksums
 *backup*
-<<<<<<< HEAD
->>>>>>> 5238b2a (refactor: Apply Lombok @Getter and @RequiredArgsConstructor to domain and service)
+
 =======
 *.h2.db
 *.db*
@@ -64,11 +63,5 @@ checksums
 *gradlew*
 *settings*
 *.build.gradle*
-
-<<<<<<< HEAD
->>>>>>> 152aa0e (Resolve merge confilicts)
-=======
-
->>>>>>> 23c028e (Resolve merge confilicts)
 *.md
 *.bat

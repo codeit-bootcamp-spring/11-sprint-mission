@@ -4,6 +4,8 @@ import lombok.Getter;
 
 import java.io.Serializable;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Getter
@@ -17,6 +19,8 @@ public class Channel implements Serializable {
     private String name; // 채널 이름
     private String description; // 채널 설명
     private boolean isPrivate; // PUBLIC/PRIVATE 채널 여부
+    private List<UUID> memberIds = new ArrayList<>(); // 참여자 목록
+    private ChannelType type;
 
     // 생성자: id, createdAt, updatedAt을 생성자 내부에서 초기화, 나머지는 파라미터로 받기
     public Channel(String name, String description, boolean isPrivate) {
@@ -26,6 +30,10 @@ public class Channel implements Serializable {
         this.name = name;
         this.description = description;
         this.isPrivate = isPrivate;
+        if (memberIds != null) {
+            this.memberIds = memberIds;
+        }
+        this.type = type;
     }
 
     // 외부 데이터(long 타입)에서 값을 받을 때 Instant 변환용 생성자
@@ -48,12 +56,29 @@ public class Channel implements Serializable {
 
     // 비즈니스 메서드 예시; 정보 업데이트
     public void update(String name, String description) {
-        this.name = name;
-        this.description = description;
+        if (name != null && !name.isEmpty()) {
+            this.name = name;
+        }
+        if (description != null && !description.isEmpty()) {
+            this.description = description;
+        }
+        this.isPrivate = isPrivate;
+        if (memberIds != null) {
+            this.memberIds = memberIds;
+        }
+        if (type != null) {
+            this.type = type;
+        }
         this.updatedAt = Instant.now();
     }
 
     public Channel createChannel(String name) {
         return new Channel(name, "", false);
+    }
+
+    public enum ChannelType {
+        PUBLIC, // 일반 채널
+        PRIVATE  // 개인 채널
+
     }
 }

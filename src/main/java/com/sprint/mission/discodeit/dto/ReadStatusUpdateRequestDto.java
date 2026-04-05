@@ -11,4 +11,5 @@ import java.util.UUID;
 public class ReadStatusUpdateRequestDto {
     private UUID id;
     private Instant lastReadAt;
+    private boolean isRead;
 }

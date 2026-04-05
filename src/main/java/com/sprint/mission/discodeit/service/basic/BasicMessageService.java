@@ -27,14 +27,14 @@ public class BasicMessageService implements MessageService {
     private final BinaryContentRepository binaryContentRepository;
 
     @Override
-    public MessageResponseDto create(MessageCreateRequestDto dto) {
+    public MessageResponseDto create(UUID channelId, MessageCreateRequestDto dto) {
         // 메시지 저장
-        Message message = new Message(dto.getContent(), dto.getAuthorId(), dto.getChannelId());
+        Message message = new Message(dto.getContent(), dto.getAuthorId(), channelId);
         messageRepository.save(message);
         List<UUID> attachmentIds = new ArrayList<>();
         if (dto.getAttachments() != null) {
             for (BinaryContentCreateRequestDto contentDto : dto.getAttachments()) {
-                BinaryContent file = new BinaryContent(contentDto.getContent(), contentDto.getContentType(), null, message.getId());
+                BinaryContent file = new BinaryContent("text.png", contentDto.getContent(), contentDto.getContentType(), null, message.getId());
             }
         }
         return toResponseDto(message, attachmentIds);
@@ -55,7 +55,7 @@ public class BasicMessageService implements MessageService {
     }
 
     @Override
-    public MessageResponseDto update(MessageUpdateRequestDto dto) {
+    public MessageResponseDto update(UUID channelId, UUID messageId, MessageUpdateRequestDto dto) {
         Message msg = messageRepository.findById(dto.getId())
                 .orElseThrow(() -> new IllegalArgumentException("메시지 없음"));
         msg.updateContent(dto.getContent());
@@ -66,7 +66,7 @@ public class BasicMessageService implements MessageService {
             binaryContentRepository.findAllByIdIn(List.of(msg.getId()))
                     .forEach(f -> binaryContentRepository.deleteById(f.getId()));
             for (BinaryContentCreateRequestDto contentDto : dto.getAttachments()) {
-                BinaryContent file = new BinaryContent(contentDto.getContent(), contentDto.getContentType(), null, msg.getId());
+                BinaryContent file = new BinaryContent("text.png", contentDto.getContent(), contentDto.getContentType(), null, msg.getId());
                 binaryContentRepository.save(file);
                 attachmentsIds.add(file.getId());
             }
@@ -75,7 +75,7 @@ public class BasicMessageService implements MessageService {
     }
 
     @Override
-    public void delete(UUID id) {
+    public void delete(UUID id, UUID messageId) {
         // 첨부파일 먼저 삭제
         binaryContentRepository.findAllByIdIn(List.of(id)).forEach(f -> binaryContentRepository.deleteById(f.getId()));
         messageRepository.deleteById(id);

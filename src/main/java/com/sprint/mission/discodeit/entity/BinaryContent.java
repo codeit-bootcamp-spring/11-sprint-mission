@@ -17,7 +17,7 @@ public class BinaryContent {
     private UUID userId;
     private UUID messageId;
 
-    public BinaryContent(byte[] content, String contentType, UUID userId, UUID messageId) {
+    public BinaryContent(String image, byte[] content, String contentType, UUID userId, UUID messageId) {
         this.id = UUID.randomUUID();
         this.createdAt = Instant.now();
         this.content = content;

@@ -13,10 +13,11 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class BasicReadSatusService implements ReadStatusService {
+public class BasicReadStatusService implements ReadStatusService {
     private final ReadStatusRepository readStatusRepository;
     private final ChannelRepository channelRepository;
     private final UserRepository userRepository;
@@ -61,6 +62,7 @@ public class BasicReadSatusService implements ReadStatusService {
     @Override
     public void delete(UUID id) {
         readStatusRepository.deleteById(id);
+
     }
 
     private ReadStatusResponseDto toResponseDto(ReadStatus e) {
@@ -70,6 +72,47 @@ public class BasicReadSatusService implements ReadStatusService {
         dto.setChannelId(e.getChannelId());
         dto.setLastReadAt(e.getLastReadAt());
         return dto;
+    }
+
+    @Override
+    public ReadStatusResponseDto updateReadStatus(
+            UUID channelId,
+            UUID messageId,
+            UUID readStatusId,
+            ReadStatusUpdateRequestDto dto
+    ) {
+        ReadStatus entity = readStatusRepository.findById(readStatusId)
+                .orElseThrow(() -> new IllegalArgumentException("수신 정보를 찾을 수 없습니다."));
+        // channelId, messageId는 추가로 체크할 수도 있음(로직에 따라)
+        entity.setLastReadAt(dto.getLastReadAt());
+        readStatusRepository.save(entity);
+        return toResponseDto(entity);
+    }
+
+    @Override
+    public List<ReadStatusResponseDto> findReadStatusByUserId(UUID userId) {
+        // 1. repository에서 정보 조회
+        List<ReadStatus> readStatusList = readStatusRepository.findAllByUserId(userId);
+        // 2. entity를 DTO로 변환
+        return readStatusList.stream()
+                .map(this::toResponseDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public ReadStatusResponseDto createReadStatus(UUID channelId, UUID messageId, ReadStatusCreateRequestDto dto) {
+        // 1. 새로운 ReadStatus 엔티티 생성
+        ReadStatus entity = new ReadStatus(
+                dto.getUserId(),
+                channelId,
+                dto.getLastReadAt(), // 또는 생성 시각 등
+                dto.isRead()
+        );
+        // 2. 저장
+        readStatusRepository.save(entity);
+
+        // 3. 응답 DTO로 변환해서 반환
+        return new ReadStatusResponseDto(entity);
     }
 
 }

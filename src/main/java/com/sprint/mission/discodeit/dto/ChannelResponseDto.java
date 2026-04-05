@@ -16,6 +16,7 @@ public class ChannelResponseDto {
     private String name;
     private String description;
     private boolean isPrivate;
+    private UUID channelId;
     private List<UUID> participantUserIds;
     private Instant latesMessageCreatedAt;
 }

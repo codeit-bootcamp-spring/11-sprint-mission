@@ -47,4 +47,10 @@ public class ReadStatusRepositoryImpl implements ReadStatusRepository {
     public void deleteById(UUID id) {
         store.remove(id);
     }
+
+    @Override
+    public List<ReadStatus> findAllByChannelIdAndMessageId(UUID channelId, UUID messageId) {
+        List<ReadStatus> result = new ArrayList<>();
+        return result;
+    }
 }
