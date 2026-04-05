@@ -40,3 +40,6 @@ bin/
 
 ### Discodeit ###
 .discodeit
+
+### Local Data Files ###
+data/*
