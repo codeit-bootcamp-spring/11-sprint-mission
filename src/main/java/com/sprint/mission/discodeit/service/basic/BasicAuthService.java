@@ -1,10 +1,8 @@
 package com.sprint.mission.discodeit.service.basic;
 
-import com.sprint.mission.discodeit.dto.auth.LoginRequestDTO;
-import com.sprint.mission.discodeit.dto.auth.LoginResponseDTO;
+import com.sprint.mission.discodeit.dto.auth.LoginRequest;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.entity.UserStatus;
-import com.sprint.mission.discodeit.entity.UserStatusType;
 import com.sprint.mission.discodeit.exception.BusinessException;
 import com.sprint.mission.discodeit.exception.ErrorCode;
 import com.sprint.mission.discodeit.repository.UserRepository;
@@ -21,29 +19,18 @@ public class BasicAuthService implements AuthService {
     private final UserStatusRepository userStatusRepository;
 
     @Override
-    public LoginResponseDTO login(
-            LoginRequestDTO dto
-    ) {
-        // 검증
-        // - username 기반 User가 있는지 확인 (즉, username이 맞는지 검증)
-        User targetUser = userRepository.findByUsername(dto.username())
-                .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_CREDENTIALS));
+    public User login(LoginRequest request) {
+        User user = userRepository.findByUsername(request.username())
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-        // - 비밀번호 검증
-        targetUser.authenticate(dto.password());
+        user.authenticate(request.password());
 
-        // 유저 상태
-        // - 유저 상태 조회
-        UserStatus userStatus = userStatusRepository.findByUserId(targetUser.getId())
+        UserStatus userStatus = userStatusRepository.findByUserId(user.getId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_STATUS_NOT_FOUND));
 
-        // - 유저 상태 온라인으로 업데이트
-//        userStatus.updateUserStatusType(UserStatusType.ONLINE);
         userStatus.updateLastOnlineTime();
         userStatusRepository.save(userStatus);
 
-        return LoginResponseDTO.from(targetUser, userStatus);
+        return user;
     }
 }
-
-// 아이디(username) 혹은 비밀번호 둘 중 뭐가 틀렸는지 알려주지 않음 (ErrorCode.INVALID_CREDENTIALS)

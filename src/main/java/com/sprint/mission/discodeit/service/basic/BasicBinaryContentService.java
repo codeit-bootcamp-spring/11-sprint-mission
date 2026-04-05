@@ -20,9 +20,7 @@ public class BasicBinaryContentService implements BinaryContentService {
     private final BinaryContentRepository binaryContentRepository;
 
     @Override
-    public BinaryContent create(
-            CreateBinaryContentRequestDTO dto
-    ) {
+    public BinaryContent create(CreateBinaryContentRequestDTO dto) {
         BinaryContent newBinaryContent = BinaryContent.create(
                 dto.fileName(),
                 dto.contentType(),
@@ -39,9 +37,7 @@ public class BasicBinaryContentService implements BinaryContentService {
     }
 
     @Override
-    public List<BinaryContent> findAllByIdIn(
-            List<UUID> ids
-    ) {
+    public List<BinaryContent> findAllByIdIn(List<UUID> ids) {
         if (ids == null || ids.isEmpty()) {
             return List.of();
         }
@@ -53,11 +49,8 @@ public class BasicBinaryContentService implements BinaryContentService {
     }
 
     @Override
-    public void delete(
-            UUID binaryContentId
-    ) {
+    public void delete(UUID binaryContentId) {
         BinaryContent binaryContent = find(binaryContentId);
-
         binaryContentRepository.deleteById(binaryContentId);
     }
 }

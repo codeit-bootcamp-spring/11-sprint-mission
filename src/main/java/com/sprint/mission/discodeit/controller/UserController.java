@@ -1,10 +1,9 @@
 package com.sprint.mission.discodeit.controller;
 
 import com.sprint.mission.discodeit.dto.user.*;
-import com.sprint.mission.discodeit.dto.userstatus.UpdateUserStatusByUserIdResponseDTO;
+import com.sprint.mission.discodeit.dto.userstatus.UserStatusDto;
+import com.sprint.mission.discodeit.dto.userstatus.UserStatusUpdateRequest;
 import com.sprint.mission.discodeit.entity.User;
-import com.sprint.mission.discodeit.entity.UserStatus;
-import com.sprint.mission.discodeit.response.ApiResponse;
 import com.sprint.mission.discodeit.service.UserService;
 import com.sprint.mission.discodeit.service.UserStatusService;
 import jakarta.validation.Valid;
@@ -54,11 +53,11 @@ public class UserController {
 
     // 여기 추후 리팩토링 필요
     @PatchMapping("/{userId}/userStatus")
-    public ResponseEntity<UserStatus> updateUserStatus(
+    public ResponseEntity<UserStatusDto> updateUserStatus(
             @PathVariable UUID userId,
             @Valid @RequestBody UserStatusUpdateRequest request
     ) {
-        UserStatus updatedStatus = userStatusService.updateByUserId(userId).userStatus();
+        UserStatusDto updatedStatus = userStatusService.updateUserStatus(userId, request);
         return ResponseEntity.ok(updatedStatus);
     }
 
