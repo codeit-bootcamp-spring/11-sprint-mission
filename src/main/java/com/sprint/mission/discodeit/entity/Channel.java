@@ -4,27 +4,28 @@ import lombok.Getter;
 
 @Getter
 public class Channel extends BaseEntity {
-    private String name;
-    private String description;
-    private final boolean isPrivate;
 
-    public Channel(String name, String description) {
-        this.name = name;
-        this.description = description;
-        this.isPrivate = false;
-    }
+  private String name;
+  private String description;
+  private final boolean isPrivate;
 
-    public Channel() {
-        this.isPrivate = true;
-    }
+  public Channel(String name, String description) {
+    this.name = name;
+    this.description = description;
+    this.isPrivate = false;
+  }
 
-    public void updateName(String name) {
-        this.name = name;
-        this.setUpdatedAt();
-    }
+  public Channel() {
+    this.isPrivate = true;
+  }
 
-    public void updateDescription(String description) {
-        this.description = description;
-        this.setUpdatedAt();
-    }
+  public void updateName(String name) {
+    this.name = name;
+    this.setUpdatedAt();
+  }
+
+  public void updateDescription(String description) {
+    this.description = description;
+    this.setUpdatedAt();
+  }
 }

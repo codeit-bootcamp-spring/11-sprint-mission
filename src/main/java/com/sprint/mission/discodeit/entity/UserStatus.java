@@ -1,14 +1,14 @@
 package com.sprint.mission.discodeit.entity;
 
-import lombok.Getter;
-
 import java.util.UUID;
+import lombok.Getter;
 
 @Getter
 public class UserStatus extends BaseEntity {
-    private final UUID userId;
 
-    public UserStatus(UUID userId) {
-        this.userId = userId;
-    }
+  private final UUID userId;
+
+  public UserStatus(UUID userId) {
+    this.userId = userId;
+  }
 }

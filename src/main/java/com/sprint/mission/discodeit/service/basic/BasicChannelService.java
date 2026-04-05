@@ -1,5 +1,12 @@
 package com.sprint.mission.discodeit.service.basic;
 
+import static com.sprint.mission.discodeit.exception.ApiException.ERROR.CHANNEL_NAME_DUPLICATED;
+import static com.sprint.mission.discodeit.exception.ApiException.ERROR.CHANNEL_NAME_REQUIRED;
+import static com.sprint.mission.discodeit.exception.ApiException.ERROR.CHANNEL_NOT_FOUND;
+import static com.sprint.mission.discodeit.exception.ApiException.ERROR.CHANNEL_NO_VALID_PARTICIPANTS;
+import static com.sprint.mission.discodeit.exception.ApiException.ERROR.CHANNEL_PARTICIPANTS_REQUIRED;
+import static com.sprint.mission.discodeit.exception.ApiException.ERROR.CHANNEL_PRIVATE_UPDATE_FORBIDDEN;
+
 import com.sprint.mission.discodeit.dto.channel.ChannelResponse;
 import com.sprint.mission.discodeit.dto.channel.ChannelUpdateRequest;
 import com.sprint.mission.discodeit.dto.channel.PrivateChannelCreateRequest;
@@ -13,157 +20,181 @@ import com.sprint.mission.discodeit.repository.MessageRepository;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.ChannelService;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-
-import java.time.Instant;
-import java.util.*;
-import java.util.stream.Collectors;
-
-import static com.sprint.mission.discodeit.exception.ApiException.ERROR.*;
 
 @Slf4j
 @RequiredArgsConstructor
 @Service
 public class BasicChannelService implements ChannelService {
-    private final ChannelRepository channelRepository;
-    private final UserRepository userRepository;
-    private final ReadStatusRepository readStatusRepository;
-    private final MessageRepository messageRepository;
 
-    @Override
-    public ChannelResponse createPublicChannel(PublicChannelCreateRequest publicChannelCreateRequest) {
-        if (publicChannelCreateRequest.name() == null || publicChannelCreateRequest.name().isBlank())
-            throw new ApiException(CHANNEL_NAME_REQUIRED);
-        if (this.channelRepository.existByName(publicChannelCreateRequest.name()))
-            throw new ApiException(CHANNEL_NAME_DUPLICATED);
+  private final ChannelRepository channelRepository;
+  private final UserRepository userRepository;
+  private final ReadStatusRepository readStatusRepository;
+  private final MessageRepository messageRepository;
 
-        Channel channel = new Channel(publicChannelCreateRequest.name(), publicChannelCreateRequest.description());
-        this.channelRepository.save(channel);
-
-        log.info("{} channel has been created successfully. ✅ [ID: {}]", channel.getName(), channel.getId());
-        return this.toResponse(channel, new ArrayList<>(), new ArrayList<>());
+  @Override
+  public ChannelResponse createPublicChannel(
+      PublicChannelCreateRequest publicChannelCreateRequest) {
+    if (publicChannelCreateRequest.name() == null || publicChannelCreateRequest.name()
+        .isBlank()) {
+      throw new ApiException(CHANNEL_NAME_REQUIRED);
+    }
+    if (this.channelRepository.existByName(publicChannelCreateRequest.name())) {
+      throw new ApiException(CHANNEL_NAME_DUPLICATED);
     }
 
-    @Override
-    public ChannelResponse createPrivateChannel(PrivateChannelCreateRequest privateChannelCreateRequest) {
-        if (privateChannelCreateRequest.participants() == null || privateChannelCreateRequest.participants().isEmpty())
-            throw new ApiException(CHANNEL_PARTICIPANTS_REQUIRED);
+    Channel channel = new Channel(publicChannelCreateRequest.name(),
+        publicChannelCreateRequest.description());
+    this.channelRepository.save(channel);
 
-        Channel channel = new Channel();
-        this.channelRepository.save(channel);
+    log.info("{} channel has been created successfully. ✅ [ID: {}]", channel.getName(),
+        channel.getId());
+    return this.toResponse(channel, new ArrayList<>(), new ArrayList<>());
+  }
 
-        List<UUID> participants = privateChannelCreateRequest.participants().stream()
-                .distinct()
-                .filter(this.userRepository::existById)
-                .toList();
-
-        if (participants.isEmpty())
-            throw new ApiException(CHANNEL_NO_VALID_PARTICIPANTS);
-
-        participants.forEach(userId -> {
-            ReadStatus status = new ReadStatus(userId, channel.getId());
-            this.readStatusRepository.save(status);
-        });
-
-        log.info("private channel has been created successfully. ✅ [ID: {}]", channel.getId());
-        return this.toResponse(channel, new ArrayList<>(), participants);
+  @Override
+  public ChannelResponse createPrivateChannel(
+      PrivateChannelCreateRequest privateChannelCreateRequest) {
+    if (privateChannelCreateRequest.participants() == null
+        || privateChannelCreateRequest.participants().isEmpty()) {
+      throw new ApiException(CHANNEL_PARTICIPANTS_REQUIRED);
     }
 
-    @Override
-    public ChannelResponse findById(UUID id) {
-        Channel channel = this.channelRepository.findById(id)
-                .orElseThrow(() -> new ApiException(CHANNEL_NOT_FOUND));
+    Channel channel = new Channel();
+    this.channelRepository.save(channel);
 
-        List<Message> messages = this.messageRepository.findAllByChannelId(channel.getId());
-        List<UUID> participants = this.readStatusRepository.findAllByChannelId(channel.getId()).stream()
-                .map(ReadStatus::getUserId)
-                .toList();
+    List<UUID> participants = privateChannelCreateRequest.participants().stream()
+        .distinct()
+        .filter(this.userRepository::existById)
+        .toList();
 
-        return this.toResponse(channel, messages, participants);
+    if (participants.isEmpty()) {
+      throw new ApiException(CHANNEL_NO_VALID_PARTICIPANTS);
     }
 
-    @Override
-    public List<ChannelResponse> findAllByUserId(UUID userId) {
-        Set<UUID> joinedPrivateChannelIds = this.readStatusRepository.findAllByUserId(userId).stream()
-                .map(ReadStatus::getChannelId)
-                .collect(Collectors.toSet());
+    participants.forEach(userId -> {
+      ReadStatus status = new ReadStatus(userId, channel.getId());
+      this.readStatusRepository.save(status);
+    });
 
-        List<Channel> channels = this.channelRepository.findAll().stream()
-                .filter(channel -> !channel.isPrivate() || joinedPrivateChannelIds.contains(channel.getId()))
-                .toList();
+    log.info("private channel has been created successfully. ✅ [ID: {}]", channel.getId());
+    return this.toResponse(channel, new ArrayList<>(), participants);
+  }
 
-        List<UUID> channelIds = channels.stream().map(Channel::getId).toList();
+  @Override
+  public ChannelResponse findById(UUID id) {
+    Channel channel = this.channelRepository.findById(id)
+        .orElseThrow(() -> new ApiException(CHANNEL_NOT_FOUND));
 
-        Map<UUID, List<Message>> messagesByChannel = this.messageRepository.findAllByChannelIdIn(channelIds).stream()
-                .collect(Collectors.groupingBy(Message::getChannelId));
+    List<Message> messages = this.messageRepository.findAllByChannelId(channel.getId());
+    List<UUID> participants = this.readStatusRepository.findAllByChannelId(channel.getId()).stream()
+        .map(ReadStatus::getUserId)
+        .toList();
 
-        Map<UUID, List<UUID>> participantsByChannel = this.readStatusRepository.findAllByChannelIdIn(channelIds).stream()
-                .collect(Collectors.groupingBy(
-                        ReadStatus::getChannelId,
-                        Collectors.mapping(ReadStatus::getUserId, Collectors.toList())
-                ));
+    return this.toResponse(channel, messages, participants);
+  }
 
-        return channels.stream()
-                .map(channel -> this.toResponse(
-                        channel,
-                        messagesByChannel.getOrDefault(channel.getId(), new ArrayList<>()),
-                        participantsByChannel.getOrDefault(channel.getId(), new ArrayList<>())
-                ))
-                .toList();
+  @Override
+  public List<ChannelResponse> findAllByUserId(UUID userId) {
+    Set<UUID> joinedPrivateChannelIds = this.readStatusRepository.findAllByUserId(userId).stream()
+        .map(ReadStatus::getChannelId)
+        .collect(Collectors.toSet());
+
+    List<Channel> channels = this.channelRepository.findAll().stream()
+        .filter(
+            channel -> !channel.isPrivate() || joinedPrivateChannelIds.contains(channel.getId()))
+        .toList();
+
+    List<UUID> channelIds = channels.stream().map(Channel::getId).toList();
+
+    Map<UUID, List<Message>> messagesByChannel = this.messageRepository.findAllByChannelIdIn(
+            channelIds).stream()
+        .collect(Collectors.groupingBy(Message::getChannelId));
+
+    Map<UUID, List<UUID>> participantsByChannel = this.readStatusRepository.findAllByChannelIdIn(
+            channelIds).stream()
+        .collect(Collectors.groupingBy(
+            ReadStatus::getChannelId,
+            Collectors.mapping(ReadStatus::getUserId, Collectors.toList())
+        ));
+
+    return channels.stream()
+        .map(channel -> this.toResponse(
+            channel,
+            messagesByChannel.getOrDefault(channel.getId(), new ArrayList<>()),
+            participantsByChannel.getOrDefault(channel.getId(), new ArrayList<>())
+        ))
+        .toList();
+  }
+
+  @Override
+  public ChannelResponse updateChannel(UUID id, ChannelUpdateRequest channelUpdateRequest) {
+    Channel channel = this.channelRepository.findById(id)
+        .orElseThrow(() -> new ApiException(CHANNEL_NOT_FOUND));
+    if (channel.isPrivate()) {
+      throw new ApiException(CHANNEL_PRIVATE_UPDATE_FORBIDDEN);
+    }
+    if (channelUpdateRequest.name() != null && !channelUpdateRequest.name().isBlank()) {
+      if (!channel.getName().equals(channelUpdateRequest.name())
+          && this.channelRepository.existByName(channelUpdateRequest.name())) {
+        throw new ApiException(CHANNEL_NAME_DUPLICATED);
+      }
+      channel.updateName(channelUpdateRequest.name());
     }
 
-    @Override
-    public ChannelResponse updateChannel(UUID id, ChannelUpdateRequest channelUpdateRequest) {
-        Channel channel = this.channelRepository.findById(id)
-                .orElseThrow(() -> new ApiException(CHANNEL_NOT_FOUND));
-        if (channel.isPrivate()) throw new ApiException(CHANNEL_PRIVATE_UPDATE_FORBIDDEN);
-        if (channelUpdateRequest.name() != null && !channelUpdateRequest.name().isBlank()) {
-            if (!channel.getName().equals(channelUpdateRequest.name()) && this.channelRepository.existByName(channelUpdateRequest.name()))
-                throw new ApiException(CHANNEL_NAME_DUPLICATED);
-            channel.updateName(channelUpdateRequest.name());
-        }
-
-        if (channelUpdateRequest.description() != null) channel.updateDescription(channelUpdateRequest.description());
-
-        this.channelRepository.save(channel);
-
-        List<Message> messages = this.messageRepository.findAllByChannelId(channel.getId());
-        List<UUID> participants = this.readStatusRepository.findAllByChannelId(channel.getId()).stream()
-                .map(ReadStatus::getUserId)
-                .toList();
-
-        log.info("{} channel has been updated successfully. ✅ [ID: {}]", channel.getName(), channel.getId());
-        return this.toResponse(channel, messages, participants);
+    if (channelUpdateRequest.description() != null) {
+      channel.updateDescription(channelUpdateRequest.description());
     }
 
-    @Override
-    public void deleteChannel(UUID id) {
-        Channel channel = this.channelRepository.findById(id)
-                .orElseThrow(() -> new ApiException(CHANNEL_NOT_FOUND));
+    this.channelRepository.save(channel);
 
-        this.messageRepository.deleteAllByChannelId(channel.getId());
+    List<Message> messages = this.messageRepository.findAllByChannelId(channel.getId());
+    List<UUID> participants = this.readStatusRepository.findAllByChannelId(channel.getId()).stream()
+        .map(ReadStatus::getUserId)
+        .toList();
 
-        this.readStatusRepository.deleteAllByChannelId(channel.getId());
+    log.info("{} channel has been updated successfully. ✅ [ID: {}]", channel.getName(),
+        channel.getId());
+    return this.toResponse(channel, messages, participants);
+  }
 
-        this.channelRepository.delete(channel);
+  @Override
+  public void deleteChannel(UUID id) {
+    Channel channel = this.channelRepository.findById(id)
+        .orElseThrow(() -> new ApiException(CHANNEL_NOT_FOUND));
 
-        log.info("{} channel has been deleted successfully. ✅ [ID: {}]", channel.getName(), id);
-    }
+    this.messageRepository.deleteAllByChannelId(channel.getId());
 
-    private ChannelResponse toResponse(Channel channel, List<Message> messages, List<UUID> participants) {
-        Instant lastMessageAt = messages.stream()
-                .map(Message::getCreatedAt)
-                .max(Comparator.naturalOrder())
-                .orElse(null);
-        return new ChannelResponse(
-                channel.getId(),
-                channel.getName(),
-                channel.getDescription(),
-                channel.isPrivate(),
-                lastMessageAt,
-                channel.isPrivate() ? participants : null
-        );
-    }
+    this.readStatusRepository.deleteAllByChannelId(channel.getId());
+
+    this.channelRepository.delete(channel);
+
+    log.info("{} channel has been deleted successfully. ✅ [ID: {}]", channel.getName(), id);
+  }
+
+  private ChannelResponse toResponse(Channel channel, List<Message> messages,
+      List<UUID> participants) {
+    Instant lastMessageAt = messages.stream()
+        .map(Message::getCreatedAt)
+        .max(Comparator.naturalOrder())
+        .orElse(null);
+    return new ChannelResponse(
+        channel.getId(),
+        channel.getName(),
+        channel.getDescription(),
+        channel.isPrivate(),
+        lastMessageAt,
+        channel.isPrivate() ? participants : null
+    );
+  }
 }

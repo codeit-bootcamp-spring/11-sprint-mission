@@ -2,47 +2,47 @@ package com.sprint.mission.discodeit.repository.file;
 
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
-import com.sprint.mission.discodeit.util.FileLockProvider;
 import com.sprint.mission.discodeit.util.FileIOUtil;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.stereotype.Repository;
-
+import com.sprint.mission.discodeit.util.FileLockProvider;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.stereotype.Repository;
 
 @ConditionalOnProperty(name = "discodeit.repository.type", havingValue = "file")
 @Repository
 public class FileChannelRepository implements ChannelRepository {
-    private final FileIOUtil<Channel> fileIOUtil;
 
-    public FileChannelRepository(FileLockProvider fileLockProvider) {
-        this.fileIOUtil = new FileIOUtil<>(Channel.class, fileLockProvider);
-    }
+  private final FileIOUtil<Channel> fileIOUtil;
 
-    @Override
-    public void save(Channel channel) {
-        this.fileIOUtil.save(channel);
-    }
+  public FileChannelRepository(FileLockProvider fileLockProvider) {
+    this.fileIOUtil = new FileIOUtil<>(Channel.class, fileLockProvider);
+  }
 
-    @Override
-    public Optional<Channel> findById(UUID id) {
-        return Optional.ofNullable(this.fileIOUtil.findById(id));
-    }
+  @Override
+  public void save(Channel channel) {
+    this.fileIOUtil.save(channel);
+  }
 
-    @Override
-    public List<Channel> findAll() {
-        return this.fileIOUtil.findAll();
-    }
+  @Override
+  public Optional<Channel> findById(UUID id) {
+    return Optional.ofNullable(this.fileIOUtil.findById(id));
+  }
 
-    @Override
-    public boolean existByName(String name) {
-        return this.fileIOUtil.findAll().stream()
-                .anyMatch(channel -> name.equals(channel.getName()));
-    }
+  @Override
+  public List<Channel> findAll() {
+    return this.fileIOUtil.findAll();
+  }
 
-    @Override
-    public void delete(Channel channel) {
-        this.fileIOUtil.delete(channel);
-    }
+  @Override
+  public boolean existByName(String name) {
+    return this.fileIOUtil.findAll().stream()
+        .anyMatch(channel -> name.equals(channel.getName()));
+  }
+
+  @Override
+  public void delete(Channel channel) {
+    this.fileIOUtil.delete(channel);
+  }
 }

@@ -10,9 +10,16 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface UserService {
-    UserResponse createUser(UserCreateRequest userCreateRequest, Optional<BinaryContentCreateRequest> binaryContentCreateRequest);
-    UserResponse findById(UUID id);
-    List<UserResponse> findAll();
-    UserResponse updateUser(UUID id, UserUpdateRequest userUpdateRequest, Optional<BinaryContentCreateRequest> binaryContentCreateRequest);
-    void deleteUser(UUID id);
+
+  UserResponse createUser(UserCreateRequest userCreateRequest,
+      Optional<BinaryContentCreateRequest> binaryContentCreateRequest);
+
+  UserResponse findById(UUID id);
+
+  List<UserResponse> findAll();
+
+  UserResponse updateUser(UUID id, UserUpdateRequest userUpdateRequest,
+      Optional<BinaryContentCreateRequest> binaryContentCreateRequest);
+
+  void deleteUser(UUID id);
 }

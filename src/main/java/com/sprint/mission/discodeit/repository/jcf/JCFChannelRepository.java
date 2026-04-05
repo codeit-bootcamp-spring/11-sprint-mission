@@ -2,43 +2,48 @@ package com.sprint.mission.discodeit.repository.jcf;
 
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Repository;
-
-import java.util.*;
 
 @ConditionalOnProperty(name = "discodeit.repository.type", havingValue = "jcf", matchIfMissing = true)
 @Repository
 public class JCFChannelRepository implements ChannelRepository {
-    private final Map<UUID, Channel> data;
 
-    public JCFChannelRepository() {
-        this.data = new HashMap<>();
-    }
+  private final Map<UUID, Channel> data;
 
-    @Override
-    public void save(Channel channel) {
-        this.data.put(channel.getId(), channel);
-    }
+  public JCFChannelRepository() {
+    this.data = new HashMap<>();
+  }
 
-    @Override
-    public Optional<Channel> findById(UUID id) {
-        return Optional.ofNullable(this.data.get(id));
-    }
+  @Override
+  public void save(Channel channel) {
+    this.data.put(channel.getId(), channel);
+  }
 
-    @Override
-    public List<Channel> findAll() {
-        return new ArrayList<>(this.data.values());
-    }
+  @Override
+  public Optional<Channel> findById(UUID id) {
+    return Optional.ofNullable(this.data.get(id));
+  }
 
-    @Override
-    public boolean existByName(String name) {
-        return this.data.values().stream()
-                .anyMatch(channel -> name.equals(channel.getName()));
-    }
+  @Override
+  public List<Channel> findAll() {
+    return new ArrayList<>(this.data.values());
+  }
 
-    @Override
-    public void delete(Channel channel) {
-        this.data.remove(channel.getId());
-    }
+  @Override
+  public boolean existByName(String name) {
+    return this.data.values().stream()
+        .anyMatch(channel -> name.equals(channel.getName()));
+  }
+
+  @Override
+  public void delete(Channel channel) {
+    this.data.remove(channel.getId());
+  }
 }

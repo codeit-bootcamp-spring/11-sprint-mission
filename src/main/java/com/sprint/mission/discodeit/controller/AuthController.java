@@ -19,14 +19,16 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 @RestController
 public class AuthController implements AuthApi {
-    private final AuthService authService;
 
-    @PostMapping(path = "login")
-    public ResponseEntity<RestResponse<UserResponse>> login(@RequestBody AuthLoginRequest authLoginRequest) {
-        UserResponse loginUser = this.authService.login(authLoginRequest);
+  private final AuthService authService;
 
-        return ResponseEntity
-                .status(HttpStatus.OK)
-                .body(RestResponse.ok(loginUser));
-    }
+  @PostMapping(path = "login")
+  public ResponseEntity<RestResponse<UserResponse>> login(
+      @RequestBody AuthLoginRequest authLoginRequest) {
+    UserResponse loginUser = this.authService.login(authLoginRequest);
+
+    return ResponseEntity
+        .status(HttpStatus.OK)
+        .body(RestResponse.ok(loginUser));
+  }
 }
