@@ -1,7 +1,6 @@
 package com.sprint.mission.discodeit.repository.file;
 
 import com.sprint.mission.discodeit.entity.Channel;
-import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Repository;
@@ -25,7 +24,7 @@ public class FileChannelRepository implements ChannelRepository {
         if (Files.exists(Paths.get(FILE_PATH))) {
             try (
                     FileInputStream fis = new FileInputStream(FILE_PATH);
-                    ObjectInputStream ois = new ObjectInputStream(fis);
+                    ObjectInputStream ois = new ObjectInputStream(fis)
             ) {
                 return (Map<UUID, Channel>) ois.readObject();
 
@@ -41,7 +40,7 @@ public class FileChannelRepository implements ChannelRepository {
     private void saveMapToFile(Map<UUID, Channel> data) {
         try (
                 FileOutputStream fos = new FileOutputStream(FILE_PATH);
-                ObjectOutputStream oos = new ObjectOutputStream(fos);
+                ObjectOutputStream oos = new ObjectOutputStream(fos)
         ) {
             oos.writeObject(data);
         } catch (IOException e) {

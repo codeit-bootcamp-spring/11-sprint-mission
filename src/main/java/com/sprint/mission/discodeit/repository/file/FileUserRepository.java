@@ -24,7 +24,7 @@ public class FileUserRepository implements UserRepository {
         if (Files.exists(Paths.get(FILE_PATH))) {
             try (
                     FileInputStream fis = new FileInputStream(FILE_PATH);
-                    ObjectInputStream ois = new ObjectInputStream(fis);
+                    ObjectInputStream ois = new ObjectInputStream(fis)
             ) {
                 return (Map<UUID, User>) ois.readObject();
             } catch (IOException | ClassNotFoundException e) {
@@ -39,7 +39,7 @@ public class FileUserRepository implements UserRepository {
     private void saveMapToFile(Map<UUID, User> data) {
         try (
                 FileOutputStream fos = new FileOutputStream(FILE_PATH);
-                ObjectOutputStream oos = new ObjectOutputStream(fos);
+                ObjectOutputStream oos = new ObjectOutputStream(fos)
         ) {
             oos.writeObject(data);
         } catch (IOException e) {

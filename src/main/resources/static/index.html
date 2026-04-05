@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Disclone Portfolio</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-primary: #1e1f22;
+      --bg-secondary: #2b2d31;
+      --bg-tertiary: #313338;
+      --bg-hover: #35373c;
+      --bg-active: #404249;
+      --text-normal: #dbdee1;
+      --text-muted: #80848e;
+      --accent: #5865f2;
+      --accent-hover: #4752c4;
+      --green: #23a55a;
+      --border: #1e1f22;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:'Noto Sans KR',sans-serif; background:var(--bg-primary); color:var(--text-normal); height:100vh; overflow:hidden; display:flex; }
+    ::-webkit-scrollbar { width:6px; }
+    ::-webkit-scrollbar-track { background:transparent; }
+    ::-webkit-scrollbar-thumb { background:#3f4147; border-radius:3px; }
+
+    /* SERVER RAIL */
+    #server-rail { width:72px; background:var(--bg-primary); display:flex; flex-direction:column; align-items:center; padding:12px 0; gap:8px; overflow-y:auto; flex-shrink:0; }
+    .server-icon { width:48px; height:48px; border-radius:50%; background:var(--bg-secondary); display:flex; align-items:center; justify-content:center; cursor:pointer; font-weight:700; font-size:16px; color:var(--text-normal); transition:border-radius .2s, background .2s; position:relative; flex-shrink:0; user-select:none; }
+    .server-icon:hover, .server-icon.active { border-radius:16px; background:var(--accent); color:#fff; }
+    .server-icon::before { content:''; position:absolute; left:-12px; width:4px; background:#fff; border-radius:0 4px 4px 0; transition:height .2s, top .2s; height:0; top:50%; }
+    .server-icon:hover::before { height:20px; top:calc(50% - 10px); }
+    .server-icon.active::before { height:36px; top:calc(50% - 18px); }
+    .server-divider { width:32px; height:2px; background:var(--bg-hover); border-radius:1px; }
+
+    /* CHANNEL SIDEBAR */
+    #channel-sidebar { width:240px; background:var(--bg-secondary); display:flex; flex-direction:column; flex-shrink:0; }
+    #server-header { height:48px; padding:0 16px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--border); cursor:pointer; font-weight:700; font-size:15px; }
+    #server-header:hover { background:var(--bg-hover); }
+    #channel-list { flex:1; overflow-y:auto; padding:8px 0; }
+    .channel-category { padding:16px 8px 4px 8px; font-size:11px; font-weight:700; text-transform:uppercase; color:var(--text-muted); letter-spacing:.5px; cursor:pointer; }
+    .channel-category:hover { color:var(--text-normal); }
+    .channel-item { display:flex; align-items:center; gap:8px; padding:6px 8px 6px 16px; border-radius:4px; margin:1px 8px; cursor:pointer; color:var(--text-muted); font-size:15px; transition:background .1s, color .1s; user-select:none; }
+    .channel-item:hover { background:var(--bg-hover); color:var(--text-normal); }
+    .channel-item.active { background:var(--bg-active); color:var(--text-normal); }
+
+    /* USER PANEL */
+    #user-panel { height:52px; background:#232428; display:flex; align-items:center; padding:0 8px; gap:8px; flex-shrink:0; }
+    .avatar { width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; color:#fff; position:relative; flex-shrink:0; cursor:pointer; }
+    .avatar .status { position:absolute; bottom:-1px; right:-1px; width:10px; height:10px; border-radius:50%; border:2px solid #232428; }
+    .status.online { background:var(--green); }
+    .status.offline { background:var(--text-muted); }
+    .user-info { flex:1; min-width:0; }
+    .user-info .uname { font-size:13px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .user-info .uemail { font-size:11px; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .panel-btn { width:32px; height:32px; border-radius:4px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--text-muted); transition:background .1s, color .1s; font-size:16px; }
+    .panel-btn:hover { background:var(--bg-hover); color:var(--text-normal); }
+
+    /* MAIN */
+    #main { flex:1; display:flex; overflow:hidden; }
+    #chat-area { flex:1; display:flex; flex-direction:column; background:var(--bg-tertiary); overflow:hidden; }
+    #chat-header { height:48px; padding:0 16px; display:flex; align-items:center; gap:8px; border-bottom:1px solid var(--border); flex-shrink:0; }
+    #chat-header .ch-name { font-weight:700; font-size:15px; }
+    #chat-header .ch-desc { font-size:13px; color:var(--text-muted); }
+    .header-actions { margin-left:auto; display:flex; gap:4px; }
+
+    /* MESSAGES */
+    #messages { flex:1; overflow-y:auto; padding:16px 0; display:flex; flex-direction:column; }
+    .date-divider { display:flex; align-items:center; gap:12px; padding:16px 16px 4px; color:var(--text-muted); font-size:12px; font-weight:600; }
+    .date-divider::before, .date-divider::after { content:''; flex:1; height:1px; background:var(--border); }
+    .message-group { display:flex; gap:16px; padding:2px 16px; border-radius:4px; transition:background .05s; }
+    .message-group:hover { background:rgba(0,0,0,.06); }
+    .message-group.first-in-group { margin-top:16px; padding-top:4px; }
+    .msg-avatar { width:40px; height:40px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:700; color:#fff; cursor:pointer; margin-top:2px; }
+    .msg-content-col { flex:1; min-width:0; }
+    .msg-header { display:flex; align-items:baseline; gap:8px; margin-bottom:2px; }
+    .msg-username { font-size:15px; font-weight:600; cursor:pointer; }
+    .msg-username:hover { text-decoration:underline; }
+    .msg-time { font-size:11px; color:var(--text-muted); }
+    .msg-text { font-size:15px; line-height:1.375; word-break:break-word; }
+    .hover-time { font-size:10px; color:var(--text-muted); opacity:0; width:40px; text-align:right; align-self:center; flex-shrink:0; }
+    .message-group:not(.first-in-group):hover .hover-time { opacity:1; }
+
+    /* 이미지 첨부파일 렌더링 스타일 추가 */
+    .msg-attachments-container {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 8px;
+    }
+    .msg-attachment-img {
+      max-width: 300px;
+      max-height: 300px;
+      border-radius: 8px;
+      object-fit: contain;
+      background-color: var(--bg-secondary); /* 투명 이미지일 경우 배경색 */
+      cursor: pointer;
+    }
+
+    /* TYPING */
+    .typing-indicator { height:20px; padding:0 16px; font-size:12px; color:var(--text-muted); display:flex; align-items:center; gap:6px; }
+    .dots span { display:inline-block; width:4px; height:4px; border-radius:50%; background:var(--text-muted); animation:bounce 1.2s infinite; }
+    .dots span:nth-child(2) { animation-delay:.2s; }
+    .dots span:nth-child(3) { animation-delay:.4s; }
+    @keyframes bounce { 0%,80%,100%{transform:translateY(0)} 40%{transform:translateY(-4px)} }
+
+    /* INPUT */
+    #input-area { padding:0 16px 24px; flex-shrink:0; }
+    #input-box { background:var(--bg-hover); border-radius:8px; display:flex; align-items:center; gap:4px; padding:0 4px 0 16px; }
+    #msg-input { flex:1; background:none; border:none; outline:none; color:var(--text-normal); font-family:inherit; font-size:15px; padding:11px 4px; line-height:1.375; resize:none; max-height:200px; }
+    #msg-input::placeholder { color:var(--text-muted); }
+    .input-btn { width:36px; height:36px; border-radius:4px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--text-muted); transition:color .1s; background:none; border:none; font-size:18px; }
+    .input-btn:hover { color:var(--text-normal); }
+    .input-btn.send { color:var(--accent); }
+    .input-btn.send:hover { color:var(--accent-hover); }
+
+    /* MEMBER SIDEBAR */
+    #member-sidebar { width:240px; background:var(--bg-secondary); overflow-y:auto; padding:16px 0; flex-shrink:0; }
+    .member-category { padding:16px 8px 4px 16px; font-size:11px; font-weight:700; text-transform:uppercase; color:var(--text-muted); letter-spacing:.5px; }
+    .member-item { display:flex; align-items:center; gap:12px; padding:4px 8px 4px 16px; border-radius:4px; margin:1px 8px; cursor:pointer; transition:background .1s; }
+    .member-item:hover { background:var(--bg-hover); }
+    .member-avatar { width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; color:#fff; position:relative; flex-shrink:0; }
+    .member-avatar .status { position:absolute; bottom:-1px; right:-1px; width:9px; height:9px; border-radius:50%; border:2px solid var(--bg-secondary); }
+    .member-name { font-size:14px; font-weight:500; color:var(--text-muted); }
+    .member-item:hover .member-name { color:var(--text-normal); }
+
+    /* TOAST */
+    #toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(80px); background:var(--bg-hover); border:1px solid #444; border-radius:8px; padding:10px 20px; font-size:14px; transition:transform .3s; z-index:9999; pointer-events:none; }
+    #toast.show { transform:translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+
+<div id="server-rail">
+  <div class="server-icon active">🏠</div>
+  <div class="server-divider"></div>
+  <div class="server-icon" style="font-size:13px;font-weight:800;">BC</div>
+  <div class="server-icon">☕</div>
+  <div class="server-icon">🌿</div>
+  <div class="server-icon" style="font-size:13px;">DB</div>
+  <div class="server-icon" style="font-size:22px;">＋</div>
+</div>
+
+<div id="channel-sidebar">
+  <div id="server-header">
+    <span>백엔드 부트캠프</span>
+    <span style="color:var(--text-muted);font-size:18px;">⌄</span>
+  </div>
+  <div id="channel-list"></div>
+
+  <div id="user-panel">
+    <div class="avatar" id="my-avatar">
+      <span id="my-letter">?</span>
+      <div class="status online" id="my-status"></div>
+    </div>
+    <div class="user-info">
+      <div class="uname" id="my-username">로그인 대기중...</div>
+      <div class="uemail" id="my-email">-</div>
+    </div>
+    <div class="panel-btn">🎤</div>
+    <div class="panel-btn">🎧</div>
+    <div class="panel-btn">⚙️</div>
+  </div>
+</div>
+
+<div id="main">
+  <div id="chat-area">
+    <div id="chat-header">
+      <span style="color:var(--text-muted);font-size:20px;">#</span>
+      <span class="ch-name" id="active-ch-name">채널을 선택하세요</span>
+      <span class="ch-desc" id="active-ch-desc"></span>
+
+      <div class="header-actions">
+        <div class="panel-btn" id="refresh-btn" title="데이터 새로고침">🔄</div>
+        <div class="panel-btn">🔔</div>
+        <div class="panel-btn">📌</div>
+        <div class="panel-btn">👥</div>
+        <div class="panel-btn">🔍</div>
+      </div>
+    </div>
+
+    <div id="messages">
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:var(--text-muted);">
+        <div style="font-size:64px;">💬</div>
+        <div style="font-size:20px;color:var(--text-normal);font-weight:700;">대화창이 비어있습니다</div>
+        <div>우측 상단의 🔄 새로고침 버튼을 눌러 데이터를 불러오세요.</div>
+      </div>
+    </div>
+
+    <div class="typing-indicator" id="typing-area" style="display:none;">
+      <div class="dots"><span></span><span></span><span></span></div>
+      <span id="typing-text"></span>
+    </div>
+
+    <div id="input-area">
+      <div id="input-box">
+        <button class="input-btn">➕</button>
+        <textarea id="msg-input" rows="1" placeholder="채널을 선택하세요..." disabled></textarea>
+        <button class="input-btn">😊</button>
+        <button class="input-btn send" id="send-btn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="member-sidebar"></div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+  // ══════════════════════════════════════════
+  // 상태 및 유틸리티 설정
+  // ══════════════════════════════════════════
+  const API_BASE_URL = '/api';
+
+  let currentUser = null;
+  let users = [];
+  let channels = [];
+  let activeChannelId = null;
+
+  // 이미지 캐싱
+  const imageCache = {};
+
+  const PALETTE = ['#5865f2','#eb459e','#fee75c','#57f287','#ed4245','#00b0f4','#f0b232'];
+
+  function colorFor(s) {
+    if (!s) return PALETTE[0];
+    let h = 0;
+    for (const c of s) h = (h * 31 + c.charCodeAt(0)) & 0xffffffff;
+    return PALETTE[Math.abs(h) % PALETTE.length];
+  }
+  function initial(name) { return name ? name[0].toUpperCase() : '?'; }
+  function esc(s) { return s ? s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') : ''; }
+
+  // ══════════════════════════════════════════
+  // API Fetch 로직
+  // ══════════════════════════════════════════
+  async function getImageUrl(imageId) {
+    if (!imageId) return null;
+    if (imageCache[imageId]) return imageCache[imageId];
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/binaryContent/find?binaryContentId=${imageId}`);
+      if (response.ok) {
+        const data = await response.json();
+        const contentType = data.contentType || 'image/png';
+        const url = `data:${contentType};base64,${data.bytes}`;
+        imageCache[imageId] = url;
+        return url;
+      }
+    } catch (error) {
+      console.error('이미지 로드 실패:', error);
+    }
+    return null;
+  }
+
+  async function fetchAllData() {
+    try {
+      const userRes = await fetch(`${API_BASE_URL}/user/findAll`);
+      if (userRes.ok) {
+        const rawUsers = await userRes.json();
+
+        const userMap = new Map();
+        rawUsers.forEach(u => userMap.set(u.id, u));
+        users = Array.from(userMap.values());
+
+        await renderMembers();
+
+        if (users.length > 0) {
+          currentUser = users[0];
+          await updateMyProfileUI();
+
+          const channelRes = await fetch(`${API_BASE_URL}/channel?userId=${currentUser.id}`);
+          if (channelRes.ok) {
+            channels = await channelRes.json();
+            renderChannels();
+
+            if (activeChannelId) {
+              await fetchMessages(activeChannelId);
+            } else if (channels.length > 0) {
+              selectChannel(channels[0].id, channels[0].name, channels[0].description);
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error('데이터를 불러오는 중 에러 발생:', error);
+    }
+  }
+
+  async function fetchMessages(channelId) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/message?channelId=${channelId}`);
+      if (response.ok) {
+        const messages = await response.json();
+        await renderMessages(messages);
+      }
+    } catch (error) {
+      console.error('메시지를 불러오지 못했습니다.', error);
+    }
+  }
+
+  async function postMessage(content) {
+    if (!content || !activeChannelId || !currentUser) return;
+
+    const payload = {
+      userId: currentUser.id,
+      channelId: activeChannelId,
+      content: content,
+      attachments: []
+    };
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/message`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (response.ok) {
+        document.getElementById('msg-input').value = '';
+        document.getElementById('msg-input').style.height = 'auto';
+        await fetchMessages(activeChannelId);
+      }
+    } catch (error) {
+      showToast('❌ 메시지 전송 실패');
+    }
+  }
+
+  // ══════════════════════════════════════════
+  // 렌더링 (화면 그리기) 로직
+  // ══════════════════════════════════════════
+  async function updateMyProfileUI() {
+    if (!currentUser) return;
+
+    let bgStyle = `background:${colorFor(currentUser.username)}`;
+    let letter = initial(currentUser.username);
+
+    if (currentUser.profileImageId) {
+      const imgUrl = await getImageUrl(currentUser.profileImageId);
+      if (imgUrl) {
+        bgStyle = `background: url(${imgUrl}) center/cover no-repeat`;
+        letter = '';
+      }
+    }
+
+    document.getElementById('my-avatar').style = bgStyle;
+    document.getElementById('my-letter').textContent = letter;
+    document.getElementById('my-username').textContent = currentUser.username || '알 수 없음';
+    document.getElementById('my-email').textContent = currentUser.email || '';
+
+    const statusEl = document.getElementById('my-status');
+    if(statusEl) {
+      statusEl.className = `status ${currentUser.online === true ? 'online' : 'offline'}`;
+    }
+  }
+
+  function renderChannels() {
+    const list = document.getElementById('channel-list');
+    list.innerHTML = '';
+
+    if (channels.length === 0) {
+      list.innerHTML = `<div style="padding: 16px; color: var(--text-muted); font-size: 13px;">채널이 없습니다. Postman으로 생성해보세요.</div>`;
+      return;
+    }
+
+    const cat = document.createElement('div');
+    cat.className = 'channel-category';
+    cat.textContent = '📝 텍스트 채널';
+    list.appendChild(cat);
+
+    channels.forEach(ch => {
+      const el = document.createElement('div');
+      el.className = 'channel-item' + (ch.id === activeChannelId ? ' active' : '');
+      el.dataset.id = ch.id;
+
+      const userCountHtml = ch.type === 'PUBLIC'
+              ? ''
+              : `<span style="font-size:11px; color:var(--text-muted);">👥 ${ch.users ? ch.users.length : 0}</span>`;
+
+      el.innerHTML = `
+              <span>${ch.type === 'PRIVATE' ? '🔒' : '#'}</span>
+              <span style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${ch.name}</span>
+              ${userCountHtml}
+            `;
+      el.addEventListener('click', () => selectChannel(ch.id, ch.name, ch.description));
+      list.appendChild(el);
+    });
+  }
+
+  async function renderMembers() {
+    const sidebar = document.getElementById('member-sidebar');
+    sidebar.innerHTML = '';
+
+    if (users.length === 0) {
+      sidebar.innerHTML = `<div style="padding: 16px; color: var(--text-muted); font-size: 13px;">접속자가 없습니다.</div>`;
+      return;
+    }
+
+    const cat = document.createElement('div');
+    cat.className = 'member-category';
+    cat.textContent = `서버 참여자 — ${users.length}`;
+    sidebar.appendChild(cat);
+
+    for (const u of users) {
+      const el = document.createElement('div');
+      el.className = 'member-item';
+
+      const statusClass = (u.online === true) ? 'online' : 'offline';
+      let bgStyle = `background:${colorFor(u.username)}`;
+      let letter = initial(u.username);
+
+      if (u.profileImageId) {
+        const imgUrl = await getImageUrl(u.profileImageId);
+        if (imgUrl) {
+          bgStyle = `background: url(${imgUrl}) center/cover no-repeat`;
+          letter = '';
+        }
+      }
+
+      el.innerHTML = `
+              <div class="member-avatar" style="${bgStyle}">
+                ${letter}
+                <div class="status ${statusClass}"></div>
+              </div>
+              <span class="member-name">${u.username || '알 수 없음'}</span>`;
+      sidebar.appendChild(el);
+    }
+  }
+
+  async function renderMessages(messages) {
+    const container = document.getElementById('messages');
+    container.innerHTML = '';
+
+    if (!messages || messages.length === 0) {
+      container.innerHTML = `<div style="flex:1;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:14px;">첫 메시지를 보내보세요! 👋</div>`;
+      return;
+    }
+
+    const divider = document.createElement('div');
+    divider.className = 'date-divider';
+    divider.textContent = new Date().toLocaleDateString('ko-KR', { year:'numeric', month:'long', day:'numeric' });
+    container.appendChild(divider);
+
+    let prevUid = null;
+    for (const msg of messages) {
+      const user = users.find(u => u.id === msg.userId) || { username: `User ${msg.userId.slice(0,5)}` };
+      const isFirst = msg.userId !== prevUid;
+      prevUid = msg.userId;
+
+      const g = document.createElement('div');
+      g.className = 'message-group' + (isFirst ? ' first-in-group' : '');
+
+      const timeStr = msg.createdAt
+              ? new Date(msg.createdAt).toLocaleTimeString('ko-KR', { hour:'2-digit', minute:'2-digit' })
+              : new Date().toLocaleTimeString('ko-KR', { hour:'2-digit', minute:'2-digit' });
+
+      // [추가된 로직] 첨부파일 UUID들을 실제 이미지 태그로 렌더링
+      let attachmentsHtml = '';
+      if (msg.attachments && msg.attachments.length > 0) {
+        attachmentsHtml += '<div class="msg-attachments-container">';
+        for (const attId of msg.attachments) {
+          const imgUrl = await getImageUrl(attId);
+          if (imgUrl) {
+            attachmentsHtml += `<img src="${imgUrl}" alt="첨부 이미지" class="msg-attachment-img" />`;
+          }
+        }
+        attachmentsHtml += '</div>';
+      }
+
+      if (isFirst) {
+        let bgStyle = `background:${colorFor(user.username)}`;
+        let letter = initial(user.username);
+
+        if (user.profileImageId) {
+          const imgUrl = await getImageUrl(user.profileImageId);
+          if (imgUrl) {
+            bgStyle = `background: url(${imgUrl}) center/cover no-repeat`;
+            letter = '';
+          }
+        }
+
+        g.innerHTML = `
+                <div class="msg-avatar" style="${bgStyle}">${letter}</div>
+                <div class="msg-content-col">
+                  <div class="msg-header">
+                    <span class="msg-username" style="color:${colorFor(user.username)}">${user.username}</span>
+                    <span class="msg-time">오늘 ${timeStr}</span>
+                  </div>
+                  <div class="msg-text">${esc(msg.content)}</div>
+                  ${attachmentsHtml}
+                </div>`;
+      } else {
+        g.innerHTML = `
+                <div class="hover-time">${timeStr}</div>
+                <div class="msg-content-col">
+                  <div class="msg-text">${esc(msg.content)}</div>
+                  ${attachmentsHtml}
+                </div>`;
+      }
+      container.appendChild(g);
+    }
+
+    container.scrollTop = container.scrollHeight;
+  }
+
+  // ══════════════════════════════════════════
+  // 사용자 액션
+  // ══════════════════════════════════════════
+  async function selectChannel(id, name, description) {
+    activeChannelId = id;
+
+    document.querySelectorAll('.channel-item').forEach(el => {
+      el.classList.toggle('active', el.dataset.id === id);
+    });
+
+    document.getElementById('active-ch-name').textContent = name;
+    document.getElementById('active-ch-desc').textContent = description ? '— ' + description : '';
+
+    const input = document.getElementById('msg-input');
+    input.disabled = false;
+    input.placeholder = `#${name} 에 메시지 보내기`;
+
+    await fetchMessages(id);
+  }
+
+  function showToast(msg, duration=2000) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), duration);
+  }
+
+  // ══════════════════════════════════════════
+  // 초기화 세팅
+  // ══════════════════════════════════════════
+  function init() {
+    fetchAllData();
+
+    document.getElementById('refresh-btn').addEventListener('click', async () => {
+      await fetchAllData();
+      showToast('🔄 최신 데이터를 불러왔습니다');
+    });
+
+    const input = document.getElementById('msg-input');
+    document.getElementById('send-btn').addEventListener('click', () => {
+      postMessage(input.value.trim());
+    });
+
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        postMessage(input.value.trim());
+      }
+    });
+
+    input.addEventListener('input', function() {
+      this.style.height = 'auto';
+      this.style.height = Math.min(this.scrollHeight, 200) + 'px';
+    });
+  }
+
+  init();
+</script>
+</body>
+</html>

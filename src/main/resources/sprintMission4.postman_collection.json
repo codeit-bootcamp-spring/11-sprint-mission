@@ -1,0 +1,1264 @@
+{
+  "info": {
+    "_postman_id": "02dde624-7799-4400-b53f-30c3d2eba82a",
+    "name": "스프린트 미션 4",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "53323941",
+    "_collection_link": "https://go.postman.co/collection/53323941-02dde624-7799-4400-b53f-30c3d2eba82a?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "http://localhost:8080/api/binaryContent",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "file",
+              "type": "file",
+              "uuid": "09b0dcf5-2304-4b3e-94ab-b46bc0fa3d1c",
+              "value": null,
+              "disabled": true
+            },
+            {
+              "key": "file",
+              "type": "file",
+              "uuid": "ea6dd703-ff3d-4d21-a8bf-0a4d5f72ac0d",
+              "value": null,
+              "disabled": true
+            },
+            {
+              "key": "file",
+              "type": "file",
+              "uuid": "4bd92001-62c4-44d3-94f8-ec8d995c9e4a",
+              "value": null,
+              "disabled": true
+            },
+            {
+              "key": "file",
+              "type": "file",
+              "uuid": "0fb5b902-575b-4bec-9256-20872af93bdb",
+              "value": null
+            }
+          ]
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/binaryContent",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "binaryContent"
+          ],
+          "query": [
+            {
+              "key": "userId",
+              "value": "a0f5b847-6107-4b31-81e4-5d85c22e9309",
+              "disabled": true
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "http://localhost:8080/api/binaryContent",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "file",
+              "type": "file",
+              "uuid": "09b0dcf5-2304-4b3e-94ab-b46bc0fa3d1c",
+              "value": null,
+              "disabled": true
+            },
+            {
+              "key": "file",
+              "type": "file",
+              "uuid": "ea6dd703-ff3d-4d21-a8bf-0a4d5f72ac0d",
+              "value": null,
+              "disabled": true
+            },
+            {
+              "key": "file",
+              "type": "file",
+              "uuid": "4bd92001-62c4-44d3-94f8-ec8d995c9e4a",
+              "value": null
+            },
+            {
+              "key": "file",
+              "type": "file",
+              "uuid": "0fb5b902-575b-4bec-9256-20872af93bdb",
+              "value": null
+            }
+          ]
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/binaryContent",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "binaryContent"
+          ],
+          "query": [
+            {
+              "key": "userId",
+              "value": "a0f5b847-6107-4b31-81e4-5d85c22e9309",
+              "disabled": true
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "http://localhost:8080/api/binaryContent",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "file",
+              "type": "file",
+              "uuid": "09b0dcf5-2304-4b3e-94ab-b46bc0fa3d1c",
+              "value": null,
+              "disabled": true
+            },
+            {
+              "key": "file",
+              "type": "file",
+              "uuid": "ea6dd703-ff3d-4d21-a8bf-0a4d5f72ac0d",
+              "value": null
+            },
+            {
+              "key": "file",
+              "type": "file",
+              "uuid": "4bd92001-62c4-44d3-94f8-ec8d995c9e4a",
+              "value": null
+            },
+            {
+              "key": "file",
+              "type": "file",
+              "uuid": "0fb5b902-575b-4bec-9256-20872af93bdb",
+              "value": null
+            }
+          ]
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/binaryContent",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "binaryContent"
+          ],
+          "query": [
+            {
+              "key": "userId",
+              "value": "a0f5b847-6107-4b31-81e4-5d85c22e9309",
+              "disabled": true
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "http://localhost:8080/api/binaryContent",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "file",
+              "type": "file",
+              "uuid": "09b0dcf5-2304-4b3e-94ab-b46bc0fa3d1c",
+              "value": null
+            },
+            {
+              "key": "file",
+              "type": "file",
+              "uuid": "ea6dd703-ff3d-4d21-a8bf-0a4d5f72ac0d",
+              "value": null
+            },
+            {
+              "key": "file",
+              "type": "file",
+              "uuid": "4bd92001-62c4-44d3-94f8-ec8d995c9e4a",
+              "value": null
+            },
+            {
+              "key": "file",
+              "type": "file",
+              "uuid": "0fb5b902-575b-4bec-9256-20872af93bdb",
+              "value": null
+            }
+          ]
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/binaryContent",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "binaryContent"
+          ],
+          "query": [
+            {
+              "key": "userId",
+              "value": "a0f5b847-6107-4b31-81e4-5d85c22e9309",
+              "disabled": true
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "http://localhost:8080/api/user",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"name\": \"파치리스\",\n    \"email\": \"pachirisu@example.com\",\n    \"password\": \"123456\",\n    \"profileImageId\": \"58608d9f-5b65-4bd5-a27d-85a4d39789b8\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/user",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "user"
+          ],
+          "query": [
+            {
+              "key": "userId",
+              "value": "a0f5b847-6107-4b31-81e4-5d85c22e9309",
+              "disabled": true
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "http://localhost:8080/api/user",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"name\": \"글레이시아\",\n    \"email\": \"glaceon@example.com\",\n    \"password\": \"123456\",\n    \"profileImageId\": \"c4d43e83-25a2-45e9-9f52-d7225f5d7b64\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/user",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "user"
+          ],
+          "query": [
+            {
+              "key": "userId",
+              "value": "a0f5b847-6107-4b31-81e4-5d85c22e9309",
+              "disabled": true
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "http://localhost:8080/api/user",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"name\": \"리피아\",\n    \"email\": \"leafeon@example.com\",\n    \"password\": \"123456\",\n    \"profileImageId\": \"01f86de1-9741-4398-a1c6-fa160d88aa80\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/user",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "user"
+          ],
+          "query": [
+            {
+              "key": "userId",
+              "value": "a0f5b847-6107-4b31-81e4-5d85c22e9309",
+              "disabled": true
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "http://localhost:8080/api/user",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"name\": \"피카츄\",\n    \"email\": \"pikachu@example.com\",\n    \"password\": \"123456\",\n    \"profileImageId\": \"6f8ac46e-d816-4327-b6bd-7d1595c4a419\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/user",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "user"
+          ],
+          "query": [
+            {
+              "key": "userId",
+              "value": "a0f5b847-6107-4b31-81e4-5d85c22e9309",
+              "disabled": true
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "http://localhost:8080/api/user/findAll",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"name\": \"파치리스\",\n    \"email\": \"pachirisu@example.com\",\n    \"password\": \"123456\",\n    \"profileImageId\": \"58608d9f-5b65-4bd5-a27d-85a4d39789b8\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/user/findAll",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "user",
+            "findAll"
+          ],
+          "query": [
+            {
+              "key": "userId",
+              "value": "a0f5b847-6107-4b31-81e4-5d85c22e9309",
+              "disabled": true
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "http://localhost:8080/api/auth/login",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"name\": \"피카츄\",\n    \"password\": \"123456\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/auth/login",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "auth",
+            "login"
+          ],
+          "query": [
+            {
+              "key": "userId",
+              "value": "a0f5b847-6107-4b31-81e4-5d85c22e9309",
+              "disabled": true
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "http://localhost:8080/api/user",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"name\": \"라이츄\",\n    \"email\": \"raichu@example.com\",\n    \"password\": \"123456\",\n    \"profileImageId\": \"58608d9f-5b65-4bd5-a27d-85a4d39789b8\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/user/",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "user",
+            ""
+          ],
+          "query": [
+            {
+              "key": "userId",
+              "value": "a0f5b847-6107-4b31-81e4-5d85c22e9309",
+              "disabled": true
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "http://localhost:8080/api/user/073b2f91-9210-442c-bdce-bc9adb562aa0",
+      "request": {
+        "method": "PATCH",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/user/4d9d9a42-92f8-4dd7-9da2-b5dcd1a53abb",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "user",
+            "4d9d9a42-92f8-4dd7-9da2-b5dcd1a53abb"
+          ],
+          "query": [
+            {
+              "key": "userId",
+              "value": "a0f5b847-6107-4b31-81e4-5d85c22e9309",
+              "disabled": true
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "http://localhost:8080/api/user/4d9d9a42-92f8-4dd7-9da2-b5dcd1a53abb",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"users\": \n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/channel/private",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "channel",
+            "private"
+          ],
+          "query": [
+            {
+              "key": "userId",
+              "value": "a0f5b847-6107-4b31-81e4-5d85c22e9309",
+              "disabled": true
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "http://localhost:8080/api/channel/private",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"users\": [\"4d9d9a42-92f8-4dd7-9da2-b5dcd1a53abb\"]\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/channel/private",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "channel",
+            "private"
+          ],
+          "query": [
+            {
+              "key": "userId",
+              "value": "a0f5b847-6107-4b31-81e4-5d85c22e9309",
+              "disabled": true
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "http://localhost:8080/api/channel/private",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"users\": [\"4d9d9a42-92f8-4dd7-9da2-b5dcd1a53abb\", \"073b2f91-9210-442c-bdce-bc9adb562aa0\",\n    \"a385d7be-8d3a-424a-9bda-9a583fbe3daf\",\n    \"34523a64-5d73-4e56-b8bb-6d0712c94209\"]\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/channel/private",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "channel",
+            "private"
+          ],
+          "query": [
+            {
+              "key": "userId",
+              "value": "a0f5b847-6107-4b31-81e4-5d85c22e9309",
+              "disabled": true
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "http://localhost:8080/api/channel/public",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"name\": \"행정-공지방\",\n    \"description\": \"공지사항을 공유하는 채널입니다.\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/channel/public",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "channel",
+            "public"
+          ],
+          "query": [
+            {
+              "key": "userId",
+              "value": "a0f5b847-6107-4b31-81e4-5d85c22e9309",
+              "disabled": true
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "http://localhost:8080/api/channel?userId=4d9d9a42-92f8-4dd7-9da2-b5dcd1a53abb",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/channel?userId=4d9d9a42-92f8-4dd7-9da2-b5dcd1a53abb",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "channel"
+          ],
+          "query": [
+            {
+              "key": "userId",
+              "value": "4d9d9a42-92f8-4dd7-9da2-b5dcd1a53abb"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "http://localhost:8080/api/channel/623d6b72-247a-4907-a6f0-519d7208d950",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8080/api/channel/623d6b72-247a-4907-a6f0-519d7208d950",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "channel",
+            "623d6b72-247a-4907-a6f0-519d7208d950"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "http://localhost:8080/api/channel/a292ff5a-f3cc-4f0b-902a-cf7a1b595112",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"name\": \"학습-공지방\",\n    \"description\": \"학습 관련 정보를 공유하는 채널입니다.\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/channel/a292ff5a-f3cc-4f0b-902a-cf7a1b595112",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "channel",
+            "a292ff5a-f3cc-4f0b-902a-cf7a1b595112"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "http://localhost:8080/api/message",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"userId\": \"4d9d9a42-92f8-4dd7-9da2-b5dcd1a53abb\",\n    \"channelId\": \"34ccb756-5e22-4b39-97f8-e18b96257cc3\",\n    \"content\": \"안녕하세요!\",\n    \"attachments\": []\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/message",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "message"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "http://localhost:8080/api/message",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"userId\": \"4d9d9a42-92f8-4dd7-9da2-b5dcd1a53abb\",\n    \"channelId\": \"34ccb756-5e22-4b39-97f8-e18b96257cc3\",\n    \"content\": \"안녕하세요!\",\n    \"attachments\": []\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/message",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "message"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "http://localhost:8080/api/message",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"userId\": \"073b2f91-9210-442c-bdce-bc9adb562aa0\",\n    \"channelId\": \"34ccb756-5e22-4b39-97f8-e18b96257cc3\",\n    \"content\": \"저는 물 타입 입니다.\",\n    \"attachments\": []\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/message",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "message"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "http://localhost:8080/api/message?channelId=34ccb756-5e22-4b39-97f8-e18b96257cc3",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"userId\": \"073b2f91-9210-442c-bdce-bc9adb562aa0\",\n    \"channelId\": \"34ccb756-5e22-4b39-97f8-e18b96257cc3\",\n    \"content\": \"저는 물 타입 입니다.\",\n    \"attachments\": []\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/message?channelId=34ccb756-5e22-4b39-97f8-e18b96257cc3",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "message"
+          ],
+          "query": [
+            {
+              "key": "channelId",
+              "value": "34ccb756-5e22-4b39-97f8-e18b96257cc3",
+              "type": "text"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "http://localhost:8080/api/message/5c0efbf1-1b36-4870-af7d-0c6e130f9807",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"id\": \"5c0efbf1-1b36-4870-af7d-0c6e130f9807\",\n    \"content\": \"저는 전기 타입 입니다.\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/message/5c0efbf1-1b36-4870-af7d-0c6e130f9807",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "message",
+            "5c0efbf1-1b36-4870-af7d-0c6e130f9807"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "http://localhost:8080/api/message/5c0efbf1-1b36-4870-af7d-0c6e130f9807",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/message/5c0efbf1-1b36-4870-af7d-0c6e130f9807",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "message",
+            "5c0efbf1-1b36-4870-af7d-0c6e130f9807"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "http://localhost:8080/api/message?channelId=34ccb756-5e22-4b39-97f8-e18b96257cc3",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8080/api/message?channelId=34ccb756-5e22-4b39-97f8-e18b96257cc3",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "message"
+          ],
+          "query": [
+            {
+              "key": "channelId",
+              "value": "34ccb756-5e22-4b39-97f8-e18b96257cc3"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "http://localhost:8080/readStatus?userId=a385d7be-8d3a-424a-9bda-9a583fbe3daf",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8080/readStatus?userId=a385d7be-8d3a-424a-9bda-9a583fbe3daf",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "readStatus"
+          ],
+          "query": [
+            {
+              "key": "userId",
+              "value": "a385d7be-8d3a-424a-9bda-9a583fbe3daf",
+              "type": "text"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "http://localhost:8080/readStatus",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"userId\": \"a385d7be-8d3a-424a-9bda-9a583fbe3daf\",\n    \"channelId\": \"34ccb756-5e22-4b39-97f8-e18b96257cc3\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8080/readStatus",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "readStatus"
+          ],
+          "query": [
+            {
+              "key": "userId",
+              "value": "a385d7be-8d3a-424a-9bda-9a583fbe3daf",
+              "disabled": true
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "http://localhost:8080/readStatus",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"userId\": \"a385d7be-8d3a-424a-9bda-9a583fbe3daf\",\n    \"channelId\": \"34ccb756-5e22-4b39-97f8-e18b96257cc3\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8080/readStatus",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "readStatus"
+          ],
+          "query": [
+            {
+              "key": "userId",
+              "value": "a385d7be-8d3a-424a-9bda-9a583fbe3daf",
+              "disabled": true
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "http://localhost:8080/readStatus",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"userId\": \"a385d7be-8d3a-424a-9bda-9a583fbe3daf\",\n    \"channelId\": \"a292ff5a-f3cc-4f0b-902a-cf7a1b595112\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8080/readStatus",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "readStatus"
+          ],
+          "query": [
+            {
+              "key": "userId",
+              "value": "a385d7be-8d3a-424a-9bda-9a583fbe3daf",
+              "disabled": true
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "http://localhost:8080/readStatus",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"userId\": \"a385d7be-8d3a-424a-9bda-9a583fbe3daf\",\n    \"channelId\": \"a292ff5a-f3cc-4f0b-902a-cf7a1b595112\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8080/readStatus",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "readStatus"
+          ],
+          "query": [
+            {
+              "key": "userId",
+              "value": "a292ff5a-f3cc-4f0b-902a-cf7a1b595112",
+              "disabled": true
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "http://localhost:8080/readStatus?userId=a292ff5a-f3cc-4f0b-902a-cf7a1b595112",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"userId\": \"a385d7be-8d3a-424a-9bda-9a583fbe3daf\",\n    \"channelId\": \"a292ff5a-f3cc-4f0b-902a-cf7a1b595112\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8080/readStatus?userId=a292ff5a-f3cc-4f0b-902a-cf7a1b595112",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "readStatus"
+          ],
+          "query": [
+            {
+              "key": "userId",
+              "value": "a292ff5a-f3cc-4f0b-902a-cf7a1b595112"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "http://localhost:8080/readStatus?userId=a385d7be-8d3a-424a-9bda-9a583fbe3daf",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8080/readStatus?userId=a385d7be-8d3a-424a-9bda-9a583fbe3daf",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "readStatus"
+          ],
+          "query": [
+            {
+              "key": "userId",
+              "value": "a385d7be-8d3a-424a-9bda-9a583fbe3daf"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "http://localhost:8080/api/user/34523a64-5d73-4e56-b8bb-6d0712c94209",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8080/api/user/34523a64-5d73-4e56-b8bb-6d0712c94209",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "user",
+            "34523a64-5d73-4e56-b8bb-6d0712c94209"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "http://localhost:8080/api/user/findAll",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8080/api/user/findAll",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "user",
+            "findAll"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}

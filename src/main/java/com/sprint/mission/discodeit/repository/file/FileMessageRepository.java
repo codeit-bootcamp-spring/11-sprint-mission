@@ -21,7 +21,7 @@ public class FileMessageRepository implements MessageRepository {
         if (Files.exists(Paths.get(FILE_PATH))) {
             try (
                     FileInputStream fis = new FileInputStream(FILE_PATH);
-                    ObjectInputStream ois = new ObjectInputStream(fis);
+                    ObjectInputStream ois = new ObjectInputStream(fis)
             ) {
                 return (List<Message>) ois.readObject();
             } catch (IOException | ClassNotFoundException e) {
@@ -34,7 +34,7 @@ public class FileMessageRepository implements MessageRepository {
     private void saveListToFile(List<Message> data) {
         try (
                 FileOutputStream fos = new FileOutputStream(FILE_PATH);
-                ObjectOutputStream oos = new ObjectOutputStream(fos);
+                ObjectOutputStream oos = new ObjectOutputStream(fos)
         ) {
             oos.writeObject(data);
         } catch (IOException e) {
@@ -54,6 +54,13 @@ public class FileMessageRepository implements MessageRepository {
     @Override
     public List<Message> findAll() {
         return load();
+    }
+
+    @Override
+    public List<Message> findAllByChannelId(UUID chanelId) {
+        return load().stream()
+                .filter(m -> m.getChannelId().equals(chanelId))
+                .toList();
     }
 
     @Override
