@@ -1,13 +1,17 @@
 package com.sprint.mission.discodeit.controller;
 
 import com.sprint.mission.discodeit.dto.channel.*;
+import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.response.ApiResponse;
 import com.sprint.mission.discodeit.service.ChannelService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -18,46 +22,47 @@ public class ChannelController {
 
     private final ChannelService channelService;
 
-    // 공개 채널 생성
-    @RequestMapping(value = "/public", method = RequestMethod.POST)
-    public ApiResponse<ChannelResponseDTO> createPublicChannel(
-            @Valid @RequestBody CreatePublicChannelRequestDTO dto
+    @GetMapping
+    public ResponseEntity<List<ChannelDto>> findAllyByUserId(
+            @RequestParam UUID userId
     ) {
-        return ApiResponse.success(channelService.createPublicChannel(dto));
+        return ResponseEntity.ok(channelService.findAllByUserId(userId));
     }
 
-    // 비공개 채널 생성
-    @RequestMapping(value = "/private", method = RequestMethod.POST)
-    public ApiResponse<ChannelResponseDTO> createPrivateChannel(
-            @Valid @RequestBody CreatePrivateChannelRequestDTO dto
+    @PostMapping("/public")
+    public ResponseEntity<Channel> createPublicChannel(
+            @RequestParam UUID requestUserId,
+            @Valid @RequestBody PublicChannelCreateRequest request
     ) {
-        return ApiResponse.success(channelService.createPrivateChannel(dto));
+        Channel createChannel = channelService.createPublicChannel(requestUserId, request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createChannel);
     }
 
-    // 공개 채널 정보 수정
-    @RequestMapping(value = "/{id}", method = RequestMethod.PATCH)
-    public ApiResponse<ChannelResponseDTO> updatePublicChannel(
-            @PathVariable UUID id,
-            @Valid @RequestBody UpdateChannelRequestDTO dto
+    @PostMapping("/private")
+    public ResponseEntity<Channel> createPrivateChannel(
+            @RequestParam UUID requestUserId,
+            @Valid @RequestBody PrivateChannelCreateRequest request
     ) {
-        return ApiResponse.success(channelService.updateChannel(id, dto));
+        Channel createdChannel = channelService.createPrivateChannel(requestUserId, request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdChannel);
     }
 
-    // 채널 삭제
-    @RequestMapping(value = "/{id}", method = RequestMethod.DELETE)
-    public ApiResponse<Void> deleteChannel(
-            @PathVariable UUID id,
-            @Valid @RequestBody DeleteChannelRequestDTO dto
+    @PatchMapping("/{channelId}")
+    public ResponseEntity<Channel> updateChannel(
+            @PathVariable UUID channelId,
+            @RequestParam UUID requestUserId,
+            @Valid @RequestBody PublicChannelUpdateRequest request
     ) {
-        channelService.deleteChannel(id, dto);
-        return ApiResponse.success();
+        Channel updatedChannel = channelService.updateChannel(requestUserId, channelId, request);
+        return ResponseEntity.ok(updatedChannel);
     }
 
-    // 특정 사용자가 볼 수 있는 채널 조회
-    @RequestMapping(value = "/user/{userId}", method = RequestMethod.GET)
-    public ApiResponse<FindChannelsResponseDTO> findChannelByUserId(
-            @Valid @PathVariable UUID userId
+    @DeleteMapping("/{channelId}")
+    public ResponseEntity<Void> deleteChannel(
+            @PathVariable UUID channelId,
+            @RequestParam UUID requestUserId
     ) {
-        return ApiResponse.success(channelService.findAllByUserId(userId));
+        channelService.deleteChannel(requestUserId, channelId);
+        return ResponseEntity.noContent().build();
     }
 }

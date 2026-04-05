@@ -43,20 +43,6 @@ public class User extends BaseEntity {
     }
 
     // 도메인 로직
-    public void authenticate(String rawPassword) {
-        if (!password.equals(rawPassword)) {
-            throw new BusinessException(ErrorCode.INVALID_CREDENTIALS);
-        }
-    }
-
-    public void updateUserInfo(String username, String email, String password, UUID profileId) {
-        this.username = username;
-        this.email = email;
-        this.password = password;
-        this.profileId = profileId;
-        touch();
-    }
-
     public void updateUsername(String username) {
         this.username = username;
         touch();
@@ -76,5 +62,13 @@ public class User extends BaseEntity {
         this.profileId = profileId;
         touch();
     }
+
+    public void authenticate(String rawPassword) {
+        if (!password.equals(rawPassword)) {
+            throw new BusinessException(ErrorCode.INVALID_CREDENTIALS);
+        }
+    }
+
+
 
 }

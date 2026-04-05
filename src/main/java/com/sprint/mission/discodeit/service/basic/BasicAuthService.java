@@ -38,7 +38,8 @@ public class BasicAuthService implements AuthService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_STATUS_NOT_FOUND));
 
         // - 유저 상태 온라인으로 업데이트
-        userStatus.updateUserStatusType(UserStatusType.ONLINE);
+//        userStatus.updateUserStatusType(UserStatusType.ONLINE);
+        userStatus.updateLastOnlineTime();
         userStatusRepository.save(userStatus);
 
         return LoginResponseDTO.from(targetUser, userStatus);

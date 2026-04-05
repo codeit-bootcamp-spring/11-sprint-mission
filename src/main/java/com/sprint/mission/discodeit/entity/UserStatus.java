@@ -45,6 +45,7 @@ public class UserStatus extends BaseEntity {
         touch();
     }
 
+    // 이거 쓰면 안되는건데? 이거 원래 요구 조건에 없었는데 내가 추가한거였네
     public void updateUserStatusType(UserStatusType userStatusType) {
         this.userStatusType = userStatusType;
         // 유저가 앱을 켜서 상태 정보를 수정했다는 의미로 마지막 접속 시간을 현재 시간으로 명시
