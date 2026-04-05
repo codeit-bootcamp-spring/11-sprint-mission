@@ -1,5 +1,6 @@
 package com.sprint.mission.discodeit.controller;
 
+import com.sprint.mission.discodeit.controller.api.MessageApi;
 import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentCreateRequest;
 import com.sprint.mission.discodeit.dto.common.RestResponse;
 import com.sprint.mission.discodeit.dto.message.MessageCreateRequest;
@@ -22,11 +23,11 @@ import java.util.UUID;
 @RequestMapping("/api/messages")
 @RequiredArgsConstructor
 @RestController
-public class MessageController {
+public class MessageController implements MessageApi {
     private final MessageService messageService;
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<RestResponse> create(
+    public ResponseEntity<RestResponse<MessageResponse>> create(
             @RequestPart(value = "messageCreateRequest") MessageCreateRequest messageCreateRequest,
             @RequestPart(value = "attachments", required = false) List<MultipartFile> attachments
     ) {
@@ -40,7 +41,7 @@ public class MessageController {
     }
 
     @PatchMapping(path = "{messageId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<RestResponse> update(
+    public ResponseEntity<RestResponse<MessageResponse>> update(
             @PathVariable UUID messageId,
             @RequestPart(value = "messageUpdateRequest", required = false) MessageUpdateRequest messageUpdateRequest,
             @RequestPart(value = "attachments", required = false) List<MultipartFile> attachments
@@ -64,7 +65,7 @@ public class MessageController {
     }
 
     @GetMapping
-    public ResponseEntity<RestResponse> findAllByChannelId(@RequestParam(value = "channelId") UUID channelId) {
+    public ResponseEntity<RestResponse<List<MessageResponse>>> findAllByChannelId(@RequestParam(value = "channelId") UUID channelId) {
         List<MessageResponse> messages = this.messageService.findAllByChannelId(channelId);
 
         return ResponseEntity

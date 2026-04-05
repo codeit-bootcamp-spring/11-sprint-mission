@@ -1,5 +1,6 @@
 package com.sprint.mission.discodeit.controller;
 
+import com.sprint.mission.discodeit.controller.api.ChannelApi;
 import com.sprint.mission.discodeit.dto.channel.ChannelResponse;
 import com.sprint.mission.discodeit.dto.channel.ChannelUpdateRequest;
 import com.sprint.mission.discodeit.dto.channel.PrivateChannelCreateRequest;
@@ -19,11 +20,11 @@ import java.util.UUID;
 @RequestMapping("/api/channels")
 @RequiredArgsConstructor
 @RestController
-public class ChannelController {
+public class ChannelController implements ChannelApi {
     private final ChannelService channelService;
 
     @PostMapping(path = "public")
-    public ResponseEntity<RestResponse> create(@RequestBody PublicChannelCreateRequest publicChannelCreateRequest) {
+    public ResponseEntity<RestResponse<ChannelResponse>> create(@RequestBody PublicChannelCreateRequest publicChannelCreateRequest) {
         ChannelResponse createdChannel = this.channelService.createPublicChannel(publicChannelCreateRequest);
 
         return ResponseEntity
@@ -32,7 +33,7 @@ public class ChannelController {
     }
 
     @PostMapping(path = "private")
-    public ResponseEntity<RestResponse> create(@RequestBody PrivateChannelCreateRequest privateChannelCreateRequest) {
+    public ResponseEntity<RestResponse<ChannelResponse>> create(@RequestBody PrivateChannelCreateRequest privateChannelCreateRequest) {
         ChannelResponse createdChannel = this.channelService.createPrivateChannel(privateChannelCreateRequest);
 
         return ResponseEntity
@@ -41,7 +42,7 @@ public class ChannelController {
     }
 
     @PatchMapping(path = "{channelId}")
-    public ResponseEntity<RestResponse> update(
+    public ResponseEntity<RestResponse<ChannelResponse>> update(
             @PathVariable UUID channelId,
             @RequestBody ChannelUpdateRequest channelUpdateRequest
     ) {
@@ -62,7 +63,7 @@ public class ChannelController {
     }
 
     @GetMapping
-    public ResponseEntity<RestResponse> findAllByUserId(@RequestParam(value = "userId") UUID userId) {
+    public ResponseEntity<RestResponse<List<ChannelResponse>>> findAllByUserId(@RequestParam(value = "userId") UUID userId) {
         List<ChannelResponse> channels = this.channelService.findAllByUserId(userId);
 
         return ResponseEntity

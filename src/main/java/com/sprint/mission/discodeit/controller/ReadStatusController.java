@@ -1,5 +1,6 @@
 package com.sprint.mission.discodeit.controller;
 
+import com.sprint.mission.discodeit.controller.api.ReadStatusApi;
 import com.sprint.mission.discodeit.dto.common.RestResponse;
 import com.sprint.mission.discodeit.dto.readstatus.ReadStatusCreateRequest;
 import com.sprint.mission.discodeit.dto.readstatus.ReadStatusResponse;
@@ -17,11 +18,11 @@ import java.util.UUID;
 @RequestMapping("/api/read-statuses")
 @RequiredArgsConstructor
 @RestController
-public class ReadStatusController {
+public class ReadStatusController implements ReadStatusApi {
     private final ReadStatusService readStatusService;
 
     @PostMapping
-    public ResponseEntity<RestResponse> create(@RequestBody ReadStatusCreateRequest readStatusCreateRequest) {
+    public ResponseEntity<RestResponse<ReadStatusResponse>> create(@RequestBody ReadStatusCreateRequest readStatusCreateRequest) {
         ReadStatusResponse createdReadStatusResponse = this.readStatusService.createReadStatus(readStatusCreateRequest);
 
         return ResponseEntity
@@ -30,7 +31,7 @@ public class ReadStatusController {
     }
 
     @PatchMapping(path = "{readStatusId}")
-    public ResponseEntity<RestResponse> update(@PathVariable UUID readStatusId) {
+    public ResponseEntity<RestResponse<ReadStatusResponse>> update(@PathVariable UUID readStatusId) {
         ReadStatusResponse updatedReadStatusResponse = this.readStatusService.updateReadStatus(readStatusId);
 
         return ResponseEntity
@@ -39,7 +40,7 @@ public class ReadStatusController {
     }
 
     @GetMapping
-    public ResponseEntity<RestResponse> findAllByUserId(@RequestParam UUID userId) {
+    public ResponseEntity<RestResponse<List<ReadStatusResponse>>> findAllByUserId(@RequestParam UUID userId) {
         List<ReadStatusResponse> readStatusResponses = this.readStatusService.findAllByUserId(userId);
 
         return ResponseEntity

@@ -1,14 +1,15 @@
 package com.sprint.mission.discodeit.controller;
 
+import com.sprint.mission.discodeit.controller.api.UserApi;
 import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentCreateRequest;
 import com.sprint.mission.discodeit.dto.common.RestResponse;
-import com.sprint.mission.discodeit.util.MultipartFileUtil;
 import com.sprint.mission.discodeit.dto.user.UserCreateRequest;
 import com.sprint.mission.discodeit.dto.user.UserResponse;
 import com.sprint.mission.discodeit.dto.user.UserUpdateRequest;
 import com.sprint.mission.discodeit.dto.userstatus.UserStatusResponse;
 import com.sprint.mission.discodeit.service.UserService;
 import com.sprint.mission.discodeit.service.UserStatusService;
+import com.sprint.mission.discodeit.util.MultipartFileUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -25,12 +26,12 @@ import java.util.UUID;
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
 @RestController
-public class UserController {
+public class UserController implements UserApi {
     private final UserService userService;
     private final UserStatusService userStatusService;
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<RestResponse> create(
+    public ResponseEntity<RestResponse<UserResponse>> create(
             @RequestPart(value = "userCreateRequest") UserCreateRequest userCreateRequest,
             @RequestPart(value = "profile", required = false) MultipartFile profile
     ) {
@@ -44,7 +45,7 @@ public class UserController {
     }
 
     @PatchMapping(path = "{userId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<RestResponse> update(
+    public ResponseEntity<RestResponse<UserResponse>> update(
             @PathVariable UUID userId,
             @RequestPart(value = "userUpdateRequest", required = false) UserUpdateRequest userUpdateRequest,
             @RequestPart(value = "profile", required = false) MultipartFile profile
@@ -68,7 +69,7 @@ public class UserController {
     }
 
     @GetMapping
-    public ResponseEntity<RestResponse> findAll() {
+    public ResponseEntity<RestResponse<List<UserResponse>>> findAll() {
         List<UserResponse> users = this.userService.findAll();
 
         return ResponseEntity
@@ -77,7 +78,7 @@ public class UserController {
     }
 
     @PatchMapping(path = "{userId}/user-status")
-    public ResponseEntity<RestResponse> updateUserStatus(@PathVariable UUID userId) {
+    public ResponseEntity<RestResponse<UserStatusResponse>> updateUserStatus(@PathVariable UUID userId) {
         UserStatusResponse updatedUserStatus = this.userStatusService.updateUserStatusByUserId(userId);
 
         return ResponseEntity
