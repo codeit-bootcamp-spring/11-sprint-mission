@@ -35,16 +35,7 @@ public class BasicChannelService implements ChannelService {
         Channel channel = new Channel(request.name(), request.description());
         Channel savedChannel = channelRepository.save(channel);
 
-        return new ChannelDto(
-                savedChannel.getId(),
-                savedChannel.getName(),
-                savedChannel.getDescription(),
-                savedChannel.getType().name(),
-                savedChannel.getParticipantIds(),
-                null,
-                savedChannel.getCreatedAt(),
-                savedChannel.getUpdatedAt()
-        );
+        return toDto(savedChannel);
     }
 
     @Override
@@ -63,16 +54,7 @@ public class BasicChannelService implements ChannelService {
             readStatusRepository.save(readStatus);
         }
 
-        return new ChannelDto(
-                savedChannel.getId(),
-                savedChannel.getName(),
-                savedChannel.getDescription(),
-                savedChannel.getType().name(),
-                savedChannel.getParticipantIds(),
-                null,
-                savedChannel.getCreatedAt(),
-                savedChannel.getUpdatedAt()
-        );
+        return toDto(savedChannel);
     }
 
     @Override
@@ -84,25 +66,7 @@ public class BasicChannelService implements ChannelService {
         }
 
         Channel channel = optionalChannel.get();
-
-        Instant lastMessageAt = messageRepository.findAll().stream()
-                .filter(message -> message.getChannelId().equals(channel.getId()))
-                .map(Message::getCreatedAt)
-                .max(Instant::compareTo)
-                .orElse(null);
-
-        ChannelDto channelDto = new ChannelDto(
-                channel.getId(),
-                channel.getName(),
-                channel.getDescription(),
-                channel.getType().name(),
-                channel.getParticipantIds(),
-                lastMessageAt,
-                channel.getCreatedAt(),
-                channel.getUpdatedAt()
-        );
-
-        return Optional.of(channelDto);
+        return Optional.of(toDto(channel));
     }
 
     @Override
@@ -112,24 +76,7 @@ public class BasicChannelService implements ChannelService {
                         channel.getType() == ChannelType.PUBLIC ||
                                 channel.getParticipantIds().contains(userId)
                 )
-                .map(channel -> {
-                    Instant lastMessageAt = messageRepository.findAll().stream()
-                            .filter(message -> message.getChannelId().equals(channel.getId()))
-                            .map(Message::getCreatedAt)
-                            .max(Instant::compareTo)
-                            .orElse(null);
-
-                    return new ChannelDto(
-                            channel.getId(),
-                            channel.getName(),
-                            channel.getDescription(),
-                            channel.getType().name(),
-                            channel.getParticipantIds(),
-                            lastMessageAt,
-                            channel.getCreatedAt(),
-                            channel.getUpdatedAt()
-                    );
-                })
+                .map(this::toDto)
                 .toList();
     }
 
@@ -148,23 +95,7 @@ public class BasicChannelService implements ChannelService {
         );
 
         Channel savedChannel = channelRepository.save(channel);
-
-        Instant lastMessageAt = messageRepository.findAll().stream()
-                .filter(message -> message.getChannelId().equals(savedChannel.getId()))
-                .map(Message::getCreatedAt)
-                .max(Instant::compareTo)
-                .orElse(null);
-
-        return new ChannelDto(
-                savedChannel.getId(),
-                savedChannel.getName(),
-                savedChannel.getDescription(),
-                savedChannel.getType().name(),
-                savedChannel.getParticipantIds(),
-                lastMessageAt,
-                savedChannel.getCreatedAt(),
-                savedChannel.getUpdatedAt()
-        );
+        return toDto(savedChannel);
     }
 
     @Override
@@ -181,5 +112,23 @@ public class BasicChannelService implements ChannelService {
                 .forEach(readStatus -> readStatusRepository.delete(readStatus.getId()));
 
         channelRepository.delete(id);
+    }
+
+    private ChannelDto toDto(Channel channel) {
+        Instant lastMessageAt = messageRepository.findAllByChannelId(channel.getId()).stream()
+                .map(Message::getCreatedAt)
+                .max(Instant::compareTo)
+                .orElse(null);
+
+        return new ChannelDto(
+                channel.getId(),
+                channel.getName(),
+                channel.getDescription(),
+                channel.getType().name(),
+                channel.getParticipantIds(),
+                lastMessageAt,
+                channel.getCreatedAt(),
+                channel.getUpdatedAt()
+        );
     }
 }

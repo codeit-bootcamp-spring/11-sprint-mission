@@ -62,16 +62,7 @@ public class BasicMessageService implements MessageService {
         message.updateAttachments(attachmentIds);
 
         Message savedMessage = messageRepository.save(message);
-
-        return new MessageDto(
-                savedMessage.getId(),
-                savedMessage.getUserId(),
-                savedMessage.getChannelId(),
-                savedMessage.getContent(),
-                savedMessage.getAttachmentIds(),
-                savedMessage.getCreatedAt(),
-                savedMessage.getUpdatedAt()
-        );
+        return toDto(savedMessage);
     }
 
     @Override
@@ -83,33 +74,14 @@ public class BasicMessageService implements MessageService {
         }
 
         Message message = optionalMessage.get();
-
-        MessageDto messageDto = new MessageDto(
-                message.getId(),
-                message.getUserId(),
-                message.getChannelId(),
-                message.getContent(),
-                message.getAttachmentIds(),
-                message.getCreatedAt(),
-                message.getUpdatedAt()
-        );
-
-        return Optional.of(messageDto);
+        return Optional.of(toDto(message));
     }
 
     @Override
     public List<MessageDto> findAllByChannelId(UUID channelId) {
         return messageRepository.findAll().stream()
                 .filter(message -> message.getChannelId().equals(channelId))
-                .map(message -> new MessageDto(
-                        message.getId(),
-                        message.getUserId(),
-                        message.getChannelId(),
-                        message.getContent(),
-                        message.getAttachmentIds(),
-                        message.getCreatedAt(),
-                        message.getUpdatedAt()
-                ))
+                .map(this::toDto)
                 .toList();
     }
 
@@ -121,16 +93,7 @@ public class BasicMessageService implements MessageService {
         message.update(param.request().content());
 
         Message savedMessage = messageRepository.save(message);
-
-        return new MessageDto(
-                savedMessage.getId(),
-                savedMessage.getUserId(),
-                savedMessage.getChannelId(),
-                savedMessage.getContent(),
-                savedMessage.getAttachmentIds(),
-                savedMessage.getCreatedAt(),
-                savedMessage.getUpdatedAt()
-        );
+        return toDto(savedMessage);
     }
 
     @Override
@@ -143,5 +106,17 @@ public class BasicMessageService implements MessageService {
         }
 
         messageRepository.delete(id);
+    }
+
+    private MessageDto toDto(Message message) {
+        return new MessageDto(
+                message.getId(),
+                message.getUserId(),
+                message.getChannelId(),
+                message.getContent(),
+                message.getAttachmentIds(),
+                message.getCreatedAt(),
+                message.getUpdatedAt()
+        );
     }
 }

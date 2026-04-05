@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI User List</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg: #f4f7fb;
+            --card: #ffffff;
+            --text: #1f2937;
+            --subtle: #6b7280;
+            --line: #e5e7eb;
+            --shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+            --online: #22c55e;
+            --offline: #9ca3af;
+            --accent: #2563eb;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(180deg, #f8fbff 0%, var(--bg) 100%);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        .page {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 48px 20px 64px;
+        }
+
+        .hero {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+
+        .hero h1 {
+            font-size: 34px;
+            margin-bottom: 10px;
+            letter-spacing: -0.02em;
+        }
+
+        .hero p {
+            color: var(--subtle);
+            font-size: 15px;
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            background: rgba(255,255,255,0.75);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.8);
+            box-shadow: var(--shadow);
+            border-radius: 18px;
+            padding: 14px;
+            margin-bottom: 20px;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 220px;
+        }
+
+        .search-box input {
+            width: 100%;
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 12px 14px;
+            font-size: 14px;
+            outline: none;
+            background: #fff;
+        }
+
+        .search-box input:focus {
+            border-color: #93c5fd;
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.08);
+        }
+
+        .stats {
+            color: var(--subtle);
+            font-size: 14px;
+            white-space: nowrap;
+        }
+
+        .panel {
+            background: var(--card);
+            border-radius: 24px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            border: 1px solid rgba(229, 231, 235, 0.8);
+        }
+
+        .list {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 18px 20px;
+            border-bottom: 1px solid var(--line);
+            transition: background-color 0.2s ease;
+        }
+
+        .item:hover {
+            background-color: #f9fbff;
+        }
+
+        .item:last-child {
+            border-bottom: none;
+        }
+
+        .avatar {
+            width: 64px;
+            height: 64px;
+            border-radius: 999px;
+            object-fit: cover;
+            flex-shrink: 0;
+            border: 1px solid var(--line);
+            background: #eef2f7;
+        }
+
+        .info {
+            min-width: 0;
+            flex: 1;
+        }
+
+        .name-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 6px;
+        }
+
+        .username {
+            font-size: 17px;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 7px 12px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 700;
+            color: #fff;
+            letter-spacing: 0.02em;
+        }
+
+        .badge.online {
+            background: var(--online);
+        }
+
+        .badge.offline {
+            background: var(--offline);
+        }
+
+        .email {
+            font-size: 14px;
+            color: var(--subtle);
+            word-break: break-all;
+        }
+
+        .empty,
+        .error,
+        .loading {
+            padding: 48px 24px;
+            text-align: center;
+            color: var(--subtle);
+        }
+
+        .error {
+            color: #b91c1c;
+            background: #fff1f2;
+        }
+
+        .loading-spinner {
+            width: 28px;
+            height: 28px;
+            border: 3px solid #dbeafe;
+            border-top-color: var(--accent);
+            border-radius: 999px;
+            margin: 0 auto 14px;
+            animation: spin 0.9s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 640px) {
+            .page {
+                padding-top: 28px;
+            }
+
+            .hero h1 {
+                font-size: 28px;
+            }
+
+            .item {
+                align-items: flex-start;
+            }
+
+            .avatar {
+                width: 56px;
+                height: 56px;
+            }
+
+            .name-row {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+<main class="page">
+    <section class="hero">
+        <h1>사용자 목록</h1>
+    </section>
+
+    <section class="toolbar">
+        <div class="search-box">
+            <input id="searchInput" type="text" placeholder="이름 또는 이메일로 검색" />
+        </div>
+        <div class="stats" id="statsText">불러오는 중...</div>
+    </section>
+
+    <section class="panel">
+        <div id="app" class="list">
+            <div class="loading">
+                <div class="loading-spinner"></div>
+                <div>사용자 목록을 불러오는 중입니다...</div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<script>
+    const USERS_API = '/api/user/findAll';
+    const BINARY_API = '/api/binaryContent/find';
+    const DEFAULT_AVATAR = '/default-avatar.png';
+
+    let allUsers = [];
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        const searchInput = document.getElementById('searchInput');
+        searchInput.addEventListener('input', () => {
+            renderUsers(filterUsers(searchInput.value));
+        });
+
+        await loadUsers();
+    });
+
+    async function loadUsers() {
+        const app = document.getElementById('app');
+        const statsText = document.getElementById('statsText');
+
+        try {
+            const response = await fetch(USERS_API);
+            if (!response.ok) {
+                throw new Error('사용자 목록 조회 실패');
+            }
+
+            const users = await response.json();
+            allUsers = Array.isArray(users) ? users : [];
+            statsText.textContent = `총 ${allUsers.length}명`;
+            renderUsers(allUsers);
+        } catch (error) {
+            console.error(error);
+            app.innerHTML = '<div class="error">사용자 목록을 불러오지 못했습니다.</div>';
+            statsText.textContent = '오류 발생';
+        }
+    }
+
+    function filterUsers(keyword) {
+        const q = keyword.trim().toLowerCase();
+        if (!q) return allUsers;
+
+        return allUsers.filter(user => {
+            const username = (user.username || '').toLowerCase();
+            const email = (user.email || '').toLowerCase();
+            return username.includes(q) || email.includes(q);
+        });
+    }
+
+    async function renderUsers(users) {
+        const app = document.getElementById('app');
+        const statsText = document.getElementById('statsText');
+
+        if (!users.length) {
+            app.innerHTML = '<div class="empty">표시할 사용자가 없습니다.</div>';
+            statsText.textContent = '사용자 0명';
+            return;
+        }
+
+        statsText.textContent = `표시 중 ${users.length}명`;
+
+        const rows = await Promise.all(users.map(createUserItem));
+        app.innerHTML = '';
+        rows.forEach(row => app.appendChild(row));
+    }
+
+    async function createUserItem(user) {
+        const item = document.createElement('div');
+        item.className = 'item';
+
+        const avatar = document.createElement('img');
+        avatar.className = 'avatar';
+        avatar.alt = user.username || 'user';
+        avatar.src = await resolveAvatar(user.profileId);
+
+        const info = document.createElement('div');
+        info.className = 'info';
+
+        const nameRow = document.createElement('div');
+        nameRow.className = 'name-row';
+
+        const username = document.createElement('div');
+        username.className = 'username';
+        username.textContent = user.username || '이름 없음';
+
+        const badge = document.createElement('div');
+        badge.className = 'badge ' + (user.online ? 'online' : 'offline');
+        badge.textContent = user.online ? 'ONLINE' : 'OFFLINE';
+
+        const email = document.createElement('div');
+        email.className = 'email';
+        email.textContent = user.email || '이메일 없음';
+
+        nameRow.appendChild(username);
+        nameRow.appendChild(badge);
+        info.appendChild(nameRow);
+        info.appendChild(email);
+
+        item.appendChild(avatar);
+        item.appendChild(info);
+
+        return item;
+    }
+
+    async function resolveAvatar(profileId) {
+        if (!profileId) {
+            return DEFAULT_AVATAR;
+        }
+
+        try {
+            const response = await fetch(`${BINARY_API}?binaryContentId=${profileId}`);
+            if (!response.ok) {
+                throw new Error('프로필 이미지 조회 실패');
+            }
+
+            const binary = await response.json();
+            return toDataUrl(binary);
+        } catch (error) {
+            console.error(error);
+            return DEFAULT_AVATAR;
+        }
+    }
+
+    function toDataUrl(binary) {
+        if (!binary || !binary.contentType || !binary.bytes) {
+            return DEFAULT_AVATAR;
+        }
+
+        let base64 = '';
+
+        if (typeof binary.bytes === 'string') {
+            base64 = binary.bytes;
+        } else if (Array.isArray(binary.bytes)) {
+            const uint8Array = new Uint8Array(binary.bytes);
+            let binaryString = '';
+            for (let i = 0; i < uint8Array.length; i++) {
+                binaryString += String.fromCharCode(uint8Array[i]);
+            }
+            base64 = btoa(binaryString);
+        } else {
+            return DEFAULT_AVATAR;
+        }
+
+        return `data:${binary.contentType};base64,${base64}`;
+    }
+</script>
+</body>
+</html>

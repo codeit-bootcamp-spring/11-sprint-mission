@@ -64,15 +64,7 @@ public class BasicUserService implements UserService {
         UserStatus userStatus = new UserStatus(savedUser.getId(), Instant.now());
         userStatusRepository.save(userStatus);
 
-        return new UserDto(
-                savedUser.getId(),
-                savedUser.getUsername(),
-                savedUser.getEmail(),
-                savedUser.getProfileId(),
-                userStatus.isOnline(),
-                savedUser.getCreatedAt(),
-                savedUser.getUpdatedAt()
-        );
+        return toDto(savedUser);
     }
 
     @Override
@@ -84,42 +76,13 @@ public class BasicUserService implements UserService {
         }
 
         User user = optionalUser.get();
-
-        boolean online = userStatusRepository.findByUserId(user.getId())
-                .map(UserStatus::isOnline)
-                .orElse(false);
-
-        UserDto userDto = new UserDto(
-                user.getId(),
-                user.getUsername(),
-                user.getEmail(),
-                user.getProfileId(),
-                online,
-                user.getCreatedAt(),
-                user.getUpdatedAt()
-        );
-
-        return Optional.of(userDto);
+        return Optional.of(toDto(user));
     }
 
     @Override
     public List<UserDto> findAll() {
         return userRepository.findAll().stream()
-                .map(user -> {
-                    boolean online = userStatusRepository.findByUserId(user.getId())
-                            .map(UserStatus::isOnline)
-                            .orElse(false);
-
-                    return new UserDto(
-                            user.getId(),
-                            user.getUsername(),
-                            user.getEmail(),
-                            user.getProfileId(),
-                            online,
-                            user.getCreatedAt(),
-                            user.getUpdatedAt()
-                    );
-                })
+                .map(this::toDto)
                 .toList();
     }
 
@@ -160,20 +123,7 @@ public class BasicUserService implements UserService {
         }
 
         User savedUser = userRepository.save(user);
-
-        boolean online = userStatusRepository.findByUserId(savedUser.getId())
-                .map(UserStatus::isOnline)
-                .orElse(false);
-
-        return new UserDto(
-                savedUser.getId(),
-                savedUser.getUsername(),
-                savedUser.getEmail(),
-                savedUser.getProfileId(),
-                online,
-                savedUser.getCreatedAt(),
-                savedUser.getUpdatedAt()
-        );
+        return toDto(savedUser);
     }
 
     @Override
@@ -189,5 +139,21 @@ public class BasicUserService implements UserService {
                 .ifPresent(status -> userStatusRepository.delete(status.getId()));
 
         userRepository.delete(id);
+    }
+
+    private UserDto toDto(User user) {
+        boolean online = userStatusRepository.findByUserId(user.getId())
+                .map(UserStatus::isOnline)
+                .orElse(false);
+
+        return new UserDto(
+                user.getId(),
+                user.getUsername(),
+                user.getEmail(),
+                user.getProfileId(),
+                online,
+                user.getCreatedAt(),
+                user.getUpdatedAt()
+        );
     }
 }

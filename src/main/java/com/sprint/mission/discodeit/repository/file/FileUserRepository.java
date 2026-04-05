@@ -78,13 +78,6 @@ public class FileUserRepository implements UserRepository {
         }
     }
 
-    private void createDirectory() {
-    try {
-        Files.createDirectories(baseDir);
-    } catch (IOException e) {
-        throw new RuntimeException(e);
-    }
-    }
     @Override
     public Optional<User> findByUsername(String username) {
         return findAll().stream()

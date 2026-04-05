@@ -51,14 +51,6 @@ public class FileMessageRepository implements MessageRepository {
         }
     }
 
-    private void createDirectory() {
-        try {
-            Files.createDirectories(baseDir);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     @Override
     public List<Message> findAll() {
         List<Message> messages = new ArrayList<>();
@@ -82,5 +74,12 @@ public class FileMessageRepository implements MessageRepository {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public List<Message> findAllByChannelId(UUID channelId) {
+        return findAll().stream()
+                .filter(message -> message.getChannelId().equals(channelId))
+                .toList();
     }
 }

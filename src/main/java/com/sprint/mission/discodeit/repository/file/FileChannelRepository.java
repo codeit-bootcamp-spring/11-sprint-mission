@@ -35,10 +35,6 @@ public class FileChannelRepository implements ChannelRepository {
         }
     }
 
-    private UUID getId() {
-        return UUID.randomUUID();
-    }
-
     @Override
     public Optional<Channel> findById(UUID id) {
         Path filePath = directory.resolve(id + ".ser");
@@ -65,9 +61,9 @@ public class FileChannelRepository implements ChannelRepository {
                 }
             }
         } catch (IOException | ClassNotFoundException e) {
-                        throw new RuntimeException(e);
-                    }
-                    return channels;
+            throw new RuntimeException(e);
+        }
+        return channels;
     }
 
     @Override
@@ -76,14 +72,6 @@ public class FileChannelRepository implements ChannelRepository {
 
         try {
             Files.deleteIfExists(filePath);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private void createDicectory() {
-        try {
-            Files.createDirectories(directory);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

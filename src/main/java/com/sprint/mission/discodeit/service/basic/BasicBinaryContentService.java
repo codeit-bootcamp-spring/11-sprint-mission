@@ -81,4 +81,9 @@ public class BasicBinaryContentService implements BinaryContentService {
 
         binaryContentRepository.delete(id);
     }
+
+    @Override
+    public Optional<BinaryContent> findEntity(UUID id) {
+        return binaryContentRepository.findById(id);
+    }
 }
