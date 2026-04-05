@@ -1,7 +1,7 @@
 package com.sprint.mission.discodeit.controller;
 
 import com.sprint.mission.discodeit.dto.auth.AuthLoginRequest;
-import com.sprint.mission.discodeit.dto.common.ApiResponse;
+import com.sprint.mission.discodeit.dto.common.RestResponse;
 import com.sprint.mission.discodeit.dto.user.UserResponse;
 import com.sprint.mission.discodeit.service.AuthService;
 import lombok.RequiredArgsConstructor;
@@ -21,11 +21,11 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping(path = "login")
-    public ResponseEntity<ApiResponse> login(@RequestBody AuthLoginRequest authLoginRequest) {
+    public ResponseEntity<RestResponse> login(@RequestBody AuthLoginRequest authLoginRequest) {
         UserResponse loginUser = this.authService.login(authLoginRequest);
 
         return ResponseEntity
                 .status(HttpStatus.OK)
-                .body(ApiResponse.ok(loginUser));
+                .body(RestResponse.ok(loginUser));
     }
 }

@@ -1,6 +1,6 @@
 package com.sprint.mission.discodeit.exception;
 
-import com.sprint.mission.discodeit.dto.common.ApiResponse;
+import com.sprint.mission.discodeit.dto.common.RestResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -14,16 +14,16 @@ import static com.sprint.mission.discodeit.exception.ApiException.ERROR.COMMON_U
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(ApiException.class)
-    public ResponseEntity<ApiResponse<Void>> handleDiscodeitException(ApiException e) {
+    public ResponseEntity<RestResponse<Void>> handleDiscodeitException(ApiException e) {
         return ResponseEntity
                 .status(e.getError().getHttpStatus())
-                .body(ApiResponse.error(ErrorResponse.from(e.getError())));
+                .body(RestResponse.error(ErrorResponse.from(e.getError())));
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiResponse<Void>> handleException(Exception e) {
+    public ResponseEntity<RestResponse<Void>> handleException(Exception e) {
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.error(ErrorResponse.from(COMMON_UNEXPECTED_ERROR)));
+                .body(RestResponse.error(ErrorResponse.from(COMMON_UNEXPECTED_ERROR)));
     }
 }

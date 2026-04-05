@@ -1,6 +1,6 @@
 package com.sprint.mission.discodeit.controller;
 
-import com.sprint.mission.discodeit.dto.common.ApiResponse;
+import com.sprint.mission.discodeit.dto.common.RestResponse;
 import com.sprint.mission.discodeit.dto.readstatus.ReadStatusCreateRequest;
 import com.sprint.mission.discodeit.dto.readstatus.ReadStatusResponse;
 import com.sprint.mission.discodeit.service.ReadStatusService;
@@ -21,29 +21,29 @@ public class ReadStatusController {
     private final ReadStatusService readStatusService;
 
     @PostMapping
-    public ResponseEntity<ApiResponse> create(@RequestBody ReadStatusCreateRequest readStatusCreateRequest) {
+    public ResponseEntity<RestResponse> create(@RequestBody ReadStatusCreateRequest readStatusCreateRequest) {
         ReadStatusResponse createdReadStatusResponse = this.readStatusService.createReadStatus(readStatusCreateRequest);
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(ApiResponse.ok(createdReadStatusResponse));
+                .body(RestResponse.ok(createdReadStatusResponse));
     }
 
     @PatchMapping(path = "{readStatusId}")
-    public ResponseEntity<ApiResponse> update(@PathVariable UUID readStatusId) {
+    public ResponseEntity<RestResponse> update(@PathVariable UUID readStatusId) {
         ReadStatusResponse updatedReadStatusResponse = this.readStatusService.updateReadStatus(readStatusId);
 
         return ResponseEntity
                 .status(HttpStatus.OK)
-                .body(ApiResponse.ok(updatedReadStatusResponse));
+                .body(RestResponse.ok(updatedReadStatusResponse));
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse> findAllByUserId(@RequestParam UUID userId) {
+    public ResponseEntity<RestResponse> findAllByUserId(@RequestParam UUID userId) {
         List<ReadStatusResponse> readStatusResponses = this.readStatusService.findAllByUserId(userId);
 
         return ResponseEntity
                 .status(HttpStatus.OK)
-                .body(ApiResponse.ok(readStatusResponses));
+                .body(RestResponse.ok(readStatusResponses));
     }
 }

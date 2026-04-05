@@ -1,7 +1,7 @@
 package com.sprint.mission.discodeit.controller;
 
 import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentResponse;
-import com.sprint.mission.discodeit.dto.common.ApiResponse;
+import com.sprint.mission.discodeit.dto.common.RestResponse;
 import com.sprint.mission.discodeit.service.BinaryContentService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,20 +20,20 @@ public class BinaryContentController {
     private final BinaryContentService binaryContentService;
 
     @GetMapping(path = "{binaryContentId}")
-    public ResponseEntity<ApiResponse> findById(@PathVariable UUID binaryContentId) {
+    public ResponseEntity<RestResponse> findById(@PathVariable UUID binaryContentId) {
         BinaryContentResponse binaryContent = this.binaryContentService.findById(binaryContentId);
 
         return ResponseEntity
                 .status(HttpStatus.OK)
-                .body(ApiResponse.ok(binaryContent));
+                .body(RestResponse.ok(binaryContent));
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse> findAllByIdIn(@RequestParam("binaryContentIds") List<UUID> binaryContentIds) {
+    public ResponseEntity<RestResponse> findAllByIdIn(@RequestParam("binaryContentIds") List<UUID> binaryContentIds) {
         List<BinaryContentResponse> binaryContents = this.binaryContentService.findAllByIdIn(binaryContentIds);
 
         return ResponseEntity
                 .status(HttpStatus.OK)
-                .body(ApiResponse.ok(binaryContents));
+                .body(RestResponse.ok(binaryContents));
     }
 }
