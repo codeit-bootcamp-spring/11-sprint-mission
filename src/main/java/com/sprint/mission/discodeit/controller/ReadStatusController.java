@@ -38,10 +38,13 @@ public class ReadStatusController {
     @PatchMapping("/{readStatusId}")
     public ResponseEntity<ReadStatus> updateReadStatus(
             @PathVariable UUID readStatusId,
-            @RequestParam UUID requestUserId,
             @Valid @RequestBody ReadStatusUpdateRequest request
     ) {
-        ReadStatus updatedStatus = readStatusService.updateReadStatus(requestUserId, readStatusId, request);
+        ReadStatus updatedStatus = readStatusService.updateReadStatus(getLoginUserId(), readStatusId, request);
         return ResponseEntity.ok(updatedStatus);
+    }
+
+    private UUID getLoginUserId() {
+        return UUID.fromString("4073c64c-d65b-44f3-946a-e883a9799022");
     }
 }
