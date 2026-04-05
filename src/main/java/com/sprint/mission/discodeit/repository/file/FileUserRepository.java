@@ -2,6 +2,7 @@ package com.sprint.mission.discodeit.repository.file;
 
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.repository.UserRepository;
+import com.sprint.mission.discodeit.util.FileLockProvider;
 import com.sprint.mission.discodeit.util.FileIOUtil;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Repository;
@@ -15,8 +16,8 @@ import java.util.UUID;
 public class FileUserRepository implements UserRepository {
     private final FileIOUtil<User> fileIOUtil;
 
-    public FileUserRepository() {
-        this.fileIOUtil = new FileIOUtil<>(User.class);
+    public FileUserRepository(FileLockProvider fileLockProvider) {
+        this.fileIOUtil = new FileIOUtil<>(User.class, fileLockProvider);
     }
 
     @Override

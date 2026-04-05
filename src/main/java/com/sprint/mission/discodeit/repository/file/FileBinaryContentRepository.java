@@ -2,6 +2,7 @@ package com.sprint.mission.discodeit.repository.file;
 
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
+import com.sprint.mission.discodeit.util.FileLockProvider;
 import com.sprint.mission.discodeit.util.FileIOUtil;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Repository;
@@ -17,8 +18,8 @@ import java.util.UUID;
 public class FileBinaryContentRepository implements BinaryContentRepository {
     private final FileIOUtil<BinaryContent> fileIOUtil;
 
-    public FileBinaryContentRepository() {
-        this.fileIOUtil = new FileIOUtil<>(BinaryContent.class);
+    public FileBinaryContentRepository(FileLockProvider fileLockProvider) {
+        this.fileIOUtil = new FileIOUtil<>(BinaryContent.class, fileLockProvider);
     }
 
     @Override

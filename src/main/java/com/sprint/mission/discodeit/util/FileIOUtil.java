@@ -9,17 +9,20 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Stream;
 
 public class FileIOUtil<T extends Serializable & Identifiable> {
     private final Class<T> type;
     private final Path dir;
+    private final FileLockProvider fileLockProvider;
     private static String rootDirectory;
     private static String ddlAuto;
 
-    public FileIOUtil(Class<T> type) {
+    public FileIOUtil(Class<T> type, FileLockProvider fileLockProvider) {
         this.type = type;
         this.dir = Paths.get(rootDirectory, type.getSimpleName().toLowerCase());
+        this.fileLockProvider = fileLockProvider;
         this.init(dir);
     }
 
@@ -57,6 +60,8 @@ public class FileIOUtil<T extends Serializable & Identifiable> {
 
     public void save(T data) {
         Path path = uuidToPath(data.getId());
+        ReentrantLock lock = fileLockProvider.getLock(path);
+        lock.lock();
         try (
                 FileOutputStream fos = new FileOutputStream(path.toFile());
                 ObjectOutputStream oos = new ObjectOutputStream(fos)
@@ -64,6 +69,8 @@ public class FileIOUtil<T extends Serializable & Identifiable> {
             oos.writeObject(data);
         } catch (IOException e) {
             throw new RuntimeException("failed to save data to " + path + ". ❌", e);
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -72,6 +79,8 @@ public class FileIOUtil<T extends Serializable & Identifiable> {
     }
 
     private T findByPath(Path path) {
+        ReentrantLock lock = fileLockProvider.getLock(path);
+        lock.lock();
         try (
                 FileInputStream fis = new FileInputStream(path.toFile());
                 ObjectInputStream ois = new ObjectInputStream(fis)
@@ -83,6 +92,8 @@ public class FileIOUtil<T extends Serializable & Identifiable> {
             return null;
         } catch (IOException | ClassNotFoundException e) {
             throw new RuntimeException("failed to load data from " + path + ". ❌", e);
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -99,10 +110,14 @@ public class FileIOUtil<T extends Serializable & Identifiable> {
 
     public void delete(T data) {
         Path path = uuidToPath(data.getId());
+        ReentrantLock lock = fileLockProvider.getLock(path);
+        lock.lock();
         try {
             Files.delete(path);
         } catch (IOException e) {
             throw new RuntimeException("failed to delete data from " + path + ". ❌", e);
+        } finally {
+            lock.unlock();
         }
     }
 }

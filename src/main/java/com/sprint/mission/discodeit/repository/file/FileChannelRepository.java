@@ -2,6 +2,7 @@ package com.sprint.mission.discodeit.repository.file;
 
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
+import com.sprint.mission.discodeit.util.FileLockProvider;
 import com.sprint.mission.discodeit.util.FileIOUtil;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Repository;
@@ -15,8 +16,8 @@ import java.util.UUID;
 public class FileChannelRepository implements ChannelRepository {
     private final FileIOUtil<Channel> fileIOUtil;
 
-    public FileChannelRepository() {
-        this.fileIOUtil = new FileIOUtil<>(Channel.class);
+    public FileChannelRepository(FileLockProvider fileLockProvider) {
+        this.fileIOUtil = new FileIOUtil<>(Channel.class, fileLockProvider);
     }
 
     @Override

@@ -2,6 +2,7 @@ package com.sprint.mission.discodeit.repository.file;
 
 import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
+import com.sprint.mission.discodeit.util.FileLockProvider;
 import com.sprint.mission.discodeit.util.FileIOUtil;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Repository;
@@ -17,8 +18,8 @@ import java.util.UUID;
 public class FileReadStatusRepository implements ReadStatusRepository {
     private final FileIOUtil<ReadStatus> fileIOUtil;
 
-    public FileReadStatusRepository() {
-        this.fileIOUtil = new FileIOUtil<>(ReadStatus.class);
+    public FileReadStatusRepository(FileLockProvider fileLockProvider) {
+        this.fileIOUtil = new FileIOUtil<>(ReadStatus.class, fileLockProvider);
     }
 
     @Override

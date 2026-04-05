@@ -2,6 +2,7 @@ package com.sprint.mission.discodeit.repository.file;
 
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.repository.MessageRepository;
+import com.sprint.mission.discodeit.util.FileLockProvider;
 import com.sprint.mission.discodeit.util.FileIOUtil;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Repository;
@@ -17,8 +18,8 @@ import java.util.UUID;
 public class FileMessageRepository implements MessageRepository {
     private final FileIOUtil<Message> fileIOUtil;
 
-    public FileMessageRepository() {
-        this.fileIOUtil = new FileIOUtil<>(Message.class);
+    public FileMessageRepository(FileLockProvider fileLockProvider) {
+        this.fileIOUtil = new FileIOUtil<>(Message.class, fileLockProvider);
     }
 
     @Override
