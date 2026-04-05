@@ -20,12 +20,8 @@ import java.util.UUID;
 public class ReadStatusController {
     private final ReadStatusService readStatusService;
 
-    @RequestMapping(
-            method = RequestMethod.POST
-    )
-    public ResponseEntity<ApiResponse> create(
-            @RequestBody ReadStatusCreateRequest readStatusCreateRequest
-    ) {
+    @PostMapping
+    public ResponseEntity<ApiResponse> create(@RequestBody ReadStatusCreateRequest readStatusCreateRequest) {
         ReadStatusResponse createdReadStatusResponse = this.readStatusService.createReadStatus(readStatusCreateRequest);
 
         return ResponseEntity
@@ -33,13 +29,8 @@ public class ReadStatusController {
                 .body(ApiResponse.ok(createdReadStatusResponse));
     }
 
-    @RequestMapping(
-            path = "{readStatusId}",
-            method = RequestMethod.PATCH
-    )
-    public ResponseEntity<ApiResponse> update(
-            @PathVariable UUID readStatusId
-    ) {
+    @PatchMapping(path = "{readStatusId}")
+    public ResponseEntity<ApiResponse> update(@PathVariable UUID readStatusId) {
         ReadStatusResponse updatedReadStatusResponse = this.readStatusService.updateReadStatus(readStatusId);
 
         return ResponseEntity
@@ -47,12 +38,8 @@ public class ReadStatusController {
                 .body(ApiResponse.ok(updatedReadStatusResponse));
     }
 
-    @RequestMapping(
-            method = RequestMethod.GET
-    )
-    public ResponseEntity<ApiResponse> findAllByUserId(
-            @RequestParam UUID userId
-    ) {
+    @GetMapping
+    public ResponseEntity<ApiResponse> findAllByUserId(@RequestParam UUID userId) {
         List<ReadStatusResponse> readStatusResponses = this.readStatusService.findAllByUserId(userId);
 
         return ResponseEntity

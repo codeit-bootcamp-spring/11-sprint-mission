@@ -29,10 +29,7 @@ public class UserController {
     private final UserService userService;
     private final UserStatusService userStatusService;
 
-    @RequestMapping(
-            method = RequestMethod.POST,
-            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
-    )
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse> create(
             @RequestPart(value = "userCreateRequest") UserCreateRequest userCreateRequest,
             @RequestPart(value = "profile", required = false) MultipartFile profile
@@ -46,11 +43,7 @@ public class UserController {
                 .body(ApiResponse.ok(createdUser));
     }
 
-    @RequestMapping(
-            path = "{userId}",
-            method = RequestMethod.PATCH,
-            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
-    )
+    @PatchMapping(path = "{userId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse> update(
             @PathVariable UUID userId,
             @RequestPart(value = "userUpdateRequest", required = false) UserUpdateRequest userUpdateRequest,
@@ -65,13 +58,8 @@ public class UserController {
                 .body(ApiResponse.ok(updatedUser));
     }
 
-    @RequestMapping(
-            path = "{userId}",
-            method = RequestMethod.DELETE
-    )
-    public ResponseEntity<Void> delete(
-            @PathVariable UUID userId
-    ) {
+    @DeleteMapping(path = "{userId}")
+    public ResponseEntity<Void> delete(@PathVariable UUID userId) {
         this.userService.deleteUser(userId);
 
         return ResponseEntity
@@ -79,9 +67,7 @@ public class UserController {
                 .build();
     }
 
-    @RequestMapping(
-            method = RequestMethod.GET
-    )
+    @GetMapping
     public ResponseEntity<ApiResponse> findAll() {
         List<UserResponse> users = this.userService.findAll();
 
@@ -90,13 +76,8 @@ public class UserController {
                 .body(ApiResponse.ok(users));
     }
 
-    @RequestMapping(
-            path = "{userId}/user-status",
-            method = RequestMethod.PATCH
-    )
-    public ResponseEntity<ApiResponse> updateUserStatus(
-            @PathVariable UUID userId
-    ) {
+    @PatchMapping(path = "{userId}/user-status")
+    public ResponseEntity<ApiResponse> updateUserStatus(@PathVariable UUID userId) {
         UserStatusResponse updatedUserStatus = this.userStatusService.updateUserStatusByUserId(userId);
 
         return ResponseEntity

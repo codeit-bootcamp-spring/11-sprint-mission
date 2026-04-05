@@ -19,13 +19,8 @@ import java.util.UUID;
 public class BinaryContentController {
     private final BinaryContentService binaryContentService;
 
-    @RequestMapping(
-            path = "{binaryContentId}",
-            method = RequestMethod.GET
-    )
-    public ResponseEntity<ApiResponse> findById(
-            @PathVariable UUID binaryContentId
-    ) {
+    @GetMapping(path = "{binaryContentId}")
+    public ResponseEntity<ApiResponse> findById(@PathVariable UUID binaryContentId) {
         BinaryContentResponse binaryContent = this.binaryContentService.findById(binaryContentId);
 
         return ResponseEntity
@@ -33,12 +28,8 @@ public class BinaryContentController {
                 .body(ApiResponse.ok(binaryContent));
     }
 
-    @RequestMapping(
-            method = RequestMethod.GET
-    )
-    public ResponseEntity<ApiResponse> findAllByIdIn(
-            @RequestParam("binaryContentIds") List<UUID> binaryContentIds
-    ) {
+    @GetMapping
+    public ResponseEntity<ApiResponse> findAllByIdIn(@RequestParam("binaryContentIds") List<UUID> binaryContentIds) {
         List<BinaryContentResponse> binaryContents = this.binaryContentService.findAllByIdIn(binaryContentIds);
 
         return ResponseEntity

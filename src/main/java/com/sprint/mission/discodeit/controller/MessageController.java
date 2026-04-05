@@ -25,10 +25,7 @@ import java.util.UUID;
 public class MessageController {
     private final MessageService messageService;
 
-    @RequestMapping(
-            method = RequestMethod.POST,
-            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
-    )
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse> create(
             @RequestPart(value = "messageCreateRequest") MessageCreateRequest messageCreateRequest,
             @RequestPart(value = "attachments", required = false) List<MultipartFile> attachments
@@ -42,11 +39,7 @@ public class MessageController {
                 .body(ApiResponse.ok(createdMessage));
     }
 
-    @RequestMapping(
-            path = "{messageId}",
-            method = RequestMethod.PATCH,
-            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
-    )
+    @PatchMapping(path = "{messageId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse> update(
             @PathVariable UUID messageId,
             @RequestPart(value = "messageUpdateRequest", required = false) MessageUpdateRequest messageUpdateRequest,
@@ -61,13 +54,8 @@ public class MessageController {
                 .body(ApiResponse.ok(updatedMessage));
     }
 
-    @RequestMapping(
-            path = "{messageId}",
-            method = RequestMethod.DELETE
-    )
-    public ResponseEntity<Void> delete(
-            @PathVariable UUID messageId
-    ) {
+    @DeleteMapping(path = "{messageId}")
+    public ResponseEntity<Void> delete(@PathVariable UUID messageId) {
         this.messageService.deleteMessage(messageId);
 
         return ResponseEntity
@@ -75,12 +63,8 @@ public class MessageController {
                 .build();
     }
 
-    @RequestMapping(
-            method = RequestMethod.GET
-    )
-    public ResponseEntity<ApiResponse> findAllByChannelId(
-            @RequestParam(value = "channelId") UUID channelId
-    ) {
+    @GetMapping
+    public ResponseEntity<ApiResponse> findAllByChannelId(@RequestParam(value = "channelId") UUID channelId) {
         List<MessageResponse> messages = this.messageService.findAllByChannelId(channelId);
 
         return ResponseEntity

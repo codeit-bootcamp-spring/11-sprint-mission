@@ -22,13 +22,8 @@ import java.util.UUID;
 public class ChannelController {
     private final ChannelService channelService;
 
-    @RequestMapping(
-            path = "public",
-            method = RequestMethod.POST
-    )
-    public ResponseEntity<ApiResponse> create(
-            @RequestBody PublicChannelCreateRequest publicChannelCreateRequest
-    ) {
+    @PostMapping(path = "public")
+    public ResponseEntity<ApiResponse> create(@RequestBody PublicChannelCreateRequest publicChannelCreateRequest) {
         ChannelResponse createdChannel = this.channelService.createPublicChannel(publicChannelCreateRequest);
 
         return ResponseEntity
@@ -36,13 +31,8 @@ public class ChannelController {
                 .body(ApiResponse.ok(createdChannel));
     }
 
-    @RequestMapping(
-            path = "private",
-            method = RequestMethod.POST
-    )
-    public ResponseEntity<ApiResponse> create(
-            @RequestBody PrivateChannelCreateRequest privateChannelCreateRequest
-    ) {
+    @PostMapping(path = "private")
+    public ResponseEntity<ApiResponse> create(@RequestBody PrivateChannelCreateRequest privateChannelCreateRequest) {
         ChannelResponse createdChannel = this.channelService.createPrivateChannel(privateChannelCreateRequest);
 
         return ResponseEntity
@@ -50,10 +40,7 @@ public class ChannelController {
                 .body(ApiResponse.ok(createdChannel));
     }
 
-    @RequestMapping(
-            path = "{channelId}",
-            method = RequestMethod.PATCH
-    )
+    @PatchMapping(path = "{channelId}")
     public ResponseEntity<ApiResponse> update(
             @PathVariable UUID channelId,
             @RequestBody ChannelUpdateRequest channelUpdateRequest
@@ -65,13 +52,8 @@ public class ChannelController {
                 .body(ApiResponse.ok(updatedChannel));
     }
 
-    @RequestMapping(
-            path = "{channelId}",
-            method = RequestMethod.DELETE
-    )
-    public ResponseEntity<Void> delete(
-            @PathVariable UUID channelId
-    ) {
+    @DeleteMapping(path = "{channelId}")
+    public ResponseEntity<Void> delete(@PathVariable UUID channelId) {
         this.channelService.deleteChannel(channelId);
 
         return ResponseEntity
@@ -79,12 +61,8 @@ public class ChannelController {
                 .build();
     }
 
-    @RequestMapping(
-            method = RequestMethod.GET
-    )
-    public ResponseEntity<ApiResponse> findAllByUserId(
-            @RequestParam(value = "userId") UUID userId
-    ) {
+    @GetMapping
+    public ResponseEntity<ApiResponse> findAllByUserId(@RequestParam(value = "userId") UUID userId) {
         List<ChannelResponse> channels = this.channelService.findAllByUserId(userId);
 
         return ResponseEntity
