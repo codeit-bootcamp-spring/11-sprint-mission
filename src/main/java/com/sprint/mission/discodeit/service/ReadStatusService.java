@@ -10,5 +10,5 @@ import java.util.UUID;
 public interface ReadStatusService {
     List<ReadStatus> findAllByUserId(UUID userId);
     ReadStatus createReadStatus(ReadStatusCreateRequest request);
-    ReadStatus updateReadStatus(UUID requestUserId, UUID readStatusId, ReadStatusUpdateRequest request);
+    ReadStatus updateReadStatus(UUID readStatusId, ReadStatusUpdateRequest request);
 }

@@ -30,7 +30,7 @@ public class ChannelController {
     public ResponseEntity<Channel> createPublicChannel(
             @Valid @RequestBody PublicChannelCreateRequest request
     ) {
-        Channel createdChannel = channelService.createPublicChannel(getLoginUserId(), request);
+        Channel createdChannel = channelService.createPublicChannel(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdChannel);
     }
 
@@ -38,7 +38,7 @@ public class ChannelController {
     public ResponseEntity<Channel> createPrivateChannel(
             @Valid @RequestBody PrivateChannelCreateRequest request
     ) {
-        Channel createdChannel = channelService.createPrivateChannel(getLoginUserId(), request);
+        Channel createdChannel = channelService.createPrivateChannel(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdChannel);
     }
 
@@ -47,7 +47,7 @@ public class ChannelController {
             @PathVariable UUID channelId,
             @Valid @RequestBody PublicChannelUpdateRequest request
     ) {
-        Channel updatedChannel = channelService.updateChannel(getLoginUserId(), channelId, request);
+        Channel updatedChannel = channelService.updateChannel(channelId, request);
         return ResponseEntity.ok(updatedChannel);
     }
 
@@ -55,11 +55,7 @@ public class ChannelController {
     public ResponseEntity<Void> deleteChannel(
             @PathVariable UUID channelId
     ) {
-        channelService.deleteChannel(getLoginUserId(), channelId);
+        channelService.deleteChannel(channelId);
         return ResponseEntity.noContent().build();
-    }
-
-    private UUID getLoginUserId() {
-        return UUID.fromString("4073c64c-d65b-44f3-946a-e883a9799022");
     }
 }

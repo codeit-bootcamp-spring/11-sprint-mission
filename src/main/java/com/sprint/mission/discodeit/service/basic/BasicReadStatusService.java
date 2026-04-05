@@ -51,13 +51,9 @@ public class BasicReadStatusService implements ReadStatusService {
     }
 
     @Override
-    public ReadStatus updateReadStatus(UUID requestUserId, UUID readStatusId, ReadStatusUpdateRequest request) {
+    public ReadStatus updateReadStatus(UUID readStatusId, ReadStatusUpdateRequest request) {
         ReadStatus readStatus = readStatusRepository.findById(readStatusId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.READ_STATUS_NOT_FOUND));
-
-        if (!readStatus.getUserId().equals(requestUserId)) {
-            throw new BusinessException(ErrorCode.UNAUTHORIZED_ACCESS);
-        }
 
         readStatus.updateReadAt();
 

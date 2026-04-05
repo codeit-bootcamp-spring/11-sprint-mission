@@ -24,7 +24,7 @@ public class MessageController {
     public ResponseEntity<List<MessageDto>> findAllByChannelId(
             @RequestParam UUID channelId
     ) {
-        return ResponseEntity.ok(messageService.findAllByChannelId(getLoginUserId(), channelId));
+        return ResponseEntity.ok(messageService.findAllByChannelId(channelId));
     }
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -41,7 +41,7 @@ public class MessageController {
             @PathVariable UUID messageId,
             @Valid @RequestBody MessageUpdateRequest request
     ) {
-        MessageDto updatedMessage = messageService.updateMessage(getLoginUserId(), messageId, request);
+        MessageDto updatedMessage = messageService.updateMessage(messageId, request);
         return ResponseEntity.ok(updatedMessage);
     }
 
@@ -49,11 +49,7 @@ public class MessageController {
     public ResponseEntity<Void> deleteMessage(
             @PathVariable UUID messageId
     ) {
-        messageService.deleteMessage(getLoginUserId(), messageId);
+        messageService.deleteMessage(messageId);
         return ResponseEntity.noContent().build();
-    }
-
-    private UUID getLoginUserId() {
-        return UUID.fromString("4073c64c-d65b-44f3-946a-e883a9799022");
     }
 }
