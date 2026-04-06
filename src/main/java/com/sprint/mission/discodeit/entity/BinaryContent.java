@@ -7,33 +7,24 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Getter
-public class BinaryContent implements Serializable { // 수정불가능한 도메인 모델로, updatedAt를 정의 하지않으므로 BaseEntity 상속x
+public class BinaryContent implements Serializable {
 
-    private static final long serialVersionUID = 1L;
+  private static final long serialVersionUID = 1L;
+  private UUID id;
+  private Instant createdAt;
+  //
+  private String fileName;
+  private Long size;
+  private String contentType;
+  private byte[] bytes;
 
-    private final UUID id;
-    private final Instant createdAt;
-
-    private final byte[] bytes; // 실제 바이너리 데이터
-    private final String fileName;
-    private final String contentType; // ex) image/png
-
-    private boolean isDeleted;
-
-    // 생성자
-    public BinaryContent(byte[] bytes, String fileName, String contentType) {
-        this.id = UUID.randomUUID();
-        this.createdAt = Instant.now();
-        this.bytes = bytes;
-        this.fileName = fileName;
-        this.contentType = contentType;
-    }
-
-    public void softDelete() {
-        this.isDeleted = true;
-    }
-
-    public void restore() {
-        this.isDeleted = false;
-    }
+  public BinaryContent(String fileName, Long size, String contentType, byte[] bytes) {
+    this.id = UUID.randomUUID();
+    this.createdAt = Instant.now();
+    //
+    this.fileName = fileName;
+    this.size = size;
+    this.contentType = contentType;
+    this.bytes = bytes;
+  }
 }
