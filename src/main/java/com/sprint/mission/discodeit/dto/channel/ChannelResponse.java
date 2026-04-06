@@ -5,10 +5,12 @@ import java.util.List;
 import java.util.UUID;
 
 public record ChannelResponse(
-        UUID id,
-        String name,
-        String description,
-        boolean isPrivate,
-        Instant lastMessageAt,
-        List<UUID> participants
-) {}
+    UUID id,
+    String name,
+    String description,
+    boolean isPrivate,
+    Instant lastMessageAt,
+    List<UUID> participants
+) {
+
+}

@@ -7,14 +7,15 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class FileIOConfig {
-    @Value("${discodeit.repository.file-directory}")
-    private String rootDirectory;
 
-    @Value("${discodeit.repository.ddl-auto}")
-    private String ddlAuto;
+  @Value("${discodeit.repository.file-directory}")
+  private String rootDirectory;
 
-    @PostConstruct
-    public void init() {
-        FileIOUtil.setInitValue(rootDirectory, ddlAuto);
-    }
+  @Value("${discodeit.repository.ddl-auto}")
+  private String ddlAuto;
+
+  @PostConstruct
+  public void init() {
+    FileIOUtil.setInitValue(rootDirectory, ddlAuto);
+  }
 }
