@@ -33,6 +33,7 @@ public class BasicAuthService implements AuthService {
                 user.getId(),
                 user.getUsername(),
                 user.getEmail(),
+                user.getPassword(),
                 user.getProfileId(),
                 online,
                 user.getCreatedAt(),

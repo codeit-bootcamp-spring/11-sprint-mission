@@ -30,7 +30,7 @@ public class BasicMessageService implements MessageService {
 
     @Override
     public MessageDto create(MessageCreateRequest request) {
-        if (userRepository.findById(request.userId()).isEmpty()) {
+        if (userRepository.findById(request.authorId()).isEmpty()) {
             throw new IllegalArgumentException("존재하지 않는 사용자입니다.");
         }
 
@@ -54,7 +54,7 @@ public class BasicMessageService implements MessageService {
         }
 
         Message message = new Message(
-                request.userId(),
+                request.authorId(),
                 request.channelId(),
                 request.content()
         );
@@ -90,7 +90,7 @@ public class BasicMessageService implements MessageService {
         Message message = messageRepository.findById(param.id())
                 .orElseThrow(() -> new IllegalArgumentException("해당 메시지가 존재하지 않습니다."));
 
-        message.update(param.request().content());
+        message.update(param.request().newContent());
 
         Message savedMessage = messageRepository.save(message);
         return toDto(savedMessage);

@@ -90,8 +90,8 @@ public class BasicChannelService implements ChannelService {
         }
 
         channel.update(
-                param.request().name(),
-                param.request().description()
+                param.request().newName(),
+                param.request().newDescription()
         );
 
         Channel savedChannel = channelRepository.save(channel);

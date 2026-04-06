@@ -33,6 +33,7 @@ public class BasicBinaryContentService implements BinaryContentService {
                 savedBinaryContent.getFileName(),
                 savedBinaryContent.getContentType(),
                 savedBinaryContent.getBytes(),
+                savedBinaryContent.getBytes().length,
                 savedBinaryContent.getCreatedAt()
         );
     }
@@ -52,6 +53,7 @@ public class BasicBinaryContentService implements BinaryContentService {
                 binaryContent.getFileName(),
                 binaryContent.getContentType(),
                 binaryContent.getBytes(),
+                binaryContent.getBytes().length,
                 binaryContent.getCreatedAt()
         );
 
@@ -69,6 +71,7 @@ public class BasicBinaryContentService implements BinaryContentService {
                         binaryContent.getFileName(),
                         binaryContent.getContentType(),
                         binaryContent.getBytes(),
+                        binaryContent.getBytes().length,
                         binaryContent.getCreatedAt()
                 ))
                 .toList();

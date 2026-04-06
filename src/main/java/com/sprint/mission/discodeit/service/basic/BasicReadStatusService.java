@@ -103,7 +103,7 @@ public class BasicReadStatusService implements ReadStatusService {
         ReadStatus readStatus = readStatusRepository.findById(param.id())
                 .orElseThrow(() -> new IllegalArgumentException("해당 ReadStatus가 존재하지 않습니다."));
 
-        readStatus.update(param.request().lastReadAt());
+        readStatus.update(param.request().newLastReadAt());
 
         ReadStatus savedReadStatus = readStatusRepository.save(readStatus);
 

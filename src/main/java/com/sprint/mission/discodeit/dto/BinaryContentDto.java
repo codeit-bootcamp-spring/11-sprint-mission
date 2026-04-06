@@ -8,6 +8,7 @@ public record BinaryContentDto(
         String fileName,
         String contentType,
         byte[] bytes,
+        long size,
         Instant createdAt
 ) {
 }

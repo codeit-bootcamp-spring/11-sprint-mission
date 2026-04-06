@@ -90,7 +90,7 @@ public class BasicUserStatusService implements UserStatusService {
         UserStatus userStatus = userStatusRepository.findById(param.id())
                 .orElseThrow(() -> new IllegalArgumentException("해당 UserStatus가 존재하지 않습니다."));
 
-        userStatus.update(param.request().lastActiveAt());
+        userStatus.update(param.request().newLastActiveAt());
 
         UserStatus savedUserStatus = userStatusRepository.save(userStatus);
 
@@ -109,7 +109,7 @@ public class BasicUserStatusService implements UserStatusService {
         UserStatus userStatus = userStatusRepository.findByUserId(userId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 사용자의 UserStatus가 존재하지 않습니다."));
 
-        userStatus.update(request.lastActiveAt());
+        userStatus.update(request.newLastActiveAt());
 
         UserStatus savedUserStatus = userStatusRepository.save(userStatus);
 

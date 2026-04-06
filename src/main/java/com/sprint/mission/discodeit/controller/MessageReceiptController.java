@@ -10,11 +10,15 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ResponseStatus;
 
 import java.util.List;
 import java.util.UUID;
 
 @RestController
+@RequestMapping("/api/readStatuses")
 public class MessageReceiptController {
 
     private final ReadStatusService readStatusService;
@@ -23,29 +27,22 @@ public class MessageReceiptController {
         this.readStatusService = readStatusService;
     }
 
-    @RequestMapping(value = "/channels/{channelId}/message-receipts", method = RequestMethod.POST)
-    public ReadStatusDto create(@PathVariable UUID channelId,
-                                @RequestBody ReadStatusCreateRequest request) {
-        return readStatusService.create(
-                new ReadStatusCreateRequest(
-                        request.userId(),
-                        channelId,
-                        request.lastReadAt()
-                )
-        );
+    @ResponseStatus(HttpStatus.CREATED)
+    @RequestMapping(method = RequestMethod.POST)
+    public ReadStatusDto create(@RequestBody ReadStatusCreateRequest request) {
+        return readStatusService.create(request);
     }
 
-    @RequestMapping(value = "/channels/{channelId}/message-receipts/{messageReceiptId}", method = RequestMethod.PUT)
-    public ReadStatusDto update(@PathVariable UUID channelId,
-                                @PathVariable UUID messageReceiptId,
+    @RequestMapping(value = "/{readStatusId}", method = RequestMethod.PATCH)
+    public ReadStatusDto update(@PathVariable UUID readStatusId,
                                 @RequestBody ReadStatusUpdateRequest request) {
         return readStatusService.update(
-                new ReadStatusUpdateParam(messageReceiptId, request)
+                new ReadStatusUpdateParam(readStatusId, request)
         );
     }
 
-    @RequestMapping(value = "/users/{userId}/message-receipts", method = RequestMethod.GET)
-    public List<ReadStatusDto> findAllByUserId(@PathVariable UUID userId) {
+    @RequestMapping(method = RequestMethod.GET)
+    public List<ReadStatusDto> findAllByUserId(@RequestParam UUID userId) {
         return readStatusService.findAllByUserId(userId);
     }
 }
