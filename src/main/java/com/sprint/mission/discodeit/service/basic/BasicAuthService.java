@@ -24,6 +24,13 @@ public class BasicAuthService implements AuthService {
             throw new BusinessException(ErrorCode.INVALID_PASSWORD);
         }
 
-        return new LoginResponseDto(user.getId(), user.getCreatedAt(), user.getUpdatedAt(), user.getUsername(), user.getEmail(), user.getProfileId());
+        return new LoginResponseDto(
+                user.getId(),
+                user.getCreatedAt(),
+                user.getUpdatedAt(),
+                user.getUsername(),
+                user.getEmail(),
+                user.getProfileId()
+        );
     }
 }

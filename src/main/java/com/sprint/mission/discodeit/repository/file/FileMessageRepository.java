@@ -24,7 +24,7 @@ public class FileMessageRepository extends CommonFileRepository<Message> impleme
     }
 
     @Override
-    public Optional<Instant> findLatestCreatedAtByChannelId(UUID id) {
+    public Optional<Instant> findLastMessageAtByChannelId(UUID id) {
         return findAll().stream()
                 .filter(p -> (p.getChannelId().equals(id)))
                 .map(Message::getCreatedAt)

@@ -22,7 +22,7 @@ public class JCFMessageRepository extends CommonJCFRepository<Message> implement
     }
 
     @Override
-    public Optional<Instant> findLatestCreatedAtByChannelId(UUID id) {
+    public Optional<Instant> findLastMessageAtByChannelId(UUID id) {
         return findAll().stream()
                 .filter(p -> (p.getChannelId().equals(id)))
                 .map(Message::getCreatedAt)

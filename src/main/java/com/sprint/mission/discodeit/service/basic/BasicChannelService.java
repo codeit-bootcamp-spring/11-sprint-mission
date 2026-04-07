@@ -38,8 +38,7 @@ public class BasicChannelService implements ChannelService {
     public ChannelDto createPublicChannel(PublicChannelCreateRequest dto) {
         Channel channel = new Channel(ChannelType.PUBLIC, dto.name(), dto.description());
         channelRepo.save(channel);
-        return new ChannelDto(channel.getId(), channel.getCreatedAt(), channel.getUpdatedAt(), ChannelType.PUBLIC, channel.getName(), channel.getDescription(),
-                null, new ArrayList<>());
+        return toDto(channel, null, List.of());
     }
 
     public ChannelDto createPrivateChannel(PrivateChannelCreateRequest dto) {
@@ -53,25 +52,23 @@ public class BasicChannelService implements ChannelService {
             readStatusRepo.save(new ReadStatus(userId, channel.getId(), Instant.now()));
         }
 
-        return new ChannelDto(channel.getId(), channel.getCreatedAt(), channel.getUpdatedAt(), ChannelType.PRIVATE, null, null,
-                null, dto.participantIds());
+        return toDto(channel, null, dto.participantIds());
     }
 
     public ChannelDto findById(UUID id) {
         Channel channel = channelRepo.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.CHANNEL_NOT_FOUND));
 
-        Instant latestMessageCreatedAt = messageRepo.findLatestCreatedAtByChannelId(channel.getId())
+        Instant lastMessageAt = messageRepo.findLastMessageAtByChannelId(channel.getId())
                 .orElse(null);
 
-        if(channel.getChannelType()==ChannelType.PUBLIC) {
-            return new ChannelDto(id, channel.getCreatedAt(), channel.getUpdatedAt(), ChannelType.PUBLIC, channel.getName(), channel.getDescription(),
-                    latestMessageCreatedAt, new ArrayList<>());
-        } else { // PRIVATE
-            List<UUID> userIds = readStatusRepo.findUserIdsByChannelId(id);
-            return new ChannelDto(id, channel.getCreatedAt(), channel.getUpdatedAt(), ChannelType.PRIVATE, null, null,
-                    latestMessageCreatedAt, userIds);
-        }
+        return switch(channel.getChannelType()) {
+            case PUBLIC -> toDto(channel, lastMessageAt, List.of());
+            case PRIVATE -> {
+                List<UUID> userIds = readStatusRepo.findUserIdsByChannelId(channel.getId());
+                yield toDto(channel, lastMessageAt, userIds);
+            }
+        };
     }
 
     public List<ChannelDto> findAllByUserId(UUID id) {
@@ -86,25 +83,21 @@ public class BasicChannelService implements ChannelService {
                 .collect(Collectors.groupingBy(ReadStatus::getChannelId));
 
         for(Channel channel : channelList) {
-
             List<Message> channelMessages = messagesByChannel.getOrDefault(channel.getId(),List.of());
-
-            Instant latestMessageCreatedAt = channelMessages.stream()
+            Instant lastMessageAt = channelMessages.stream()
                     .map(Message::getCreatedAt)
                     .max(Comparator.naturalOrder())
                     .orElse(null);
 
-            if(channel.getChannelType() == ChannelType.PUBLIC) {
-                response.add(new ChannelDto(channel.getId(), channel.getCreatedAt(), channel.getUpdatedAt(), ChannelType.PUBLIC, channel.getName(),
-                        channel.getDescription(), latestMessageCreatedAt, new ArrayList<>()));
-            } else { // PRIVATE
-                List<UUID> userIds = readStatusesByChannel.getOrDefault(channel.getId(), List.of()).stream()
-                        .map(ReadStatus::getUserId)
-                        .toList();
-                if(!userIds.contains(id)) continue;
-
-                response.add(new ChannelDto(channel.getId(), channel.getCreatedAt(), channel.getUpdatedAt(), ChannelType.PRIVATE, null,
-                        null, latestMessageCreatedAt, userIds));
+            switch(channel.getChannelType()) {
+                case PUBLIC -> response.add(toDto(channel, lastMessageAt, List.of()));
+                case PRIVATE -> {
+                    List<UUID> userIds = readStatusesByChannel.getOrDefault(channel.getId(), List.of()).stream()
+                            .map(ReadStatus::getUserId)
+                            .toList();
+                    if(!userIds.contains(id)) continue;
+                    response.add(toDto(channel, lastMessageAt, userIds));
+                }
             }
         }
         return response;
@@ -114,7 +107,8 @@ public class BasicChannelService implements ChannelService {
         Channel channel = channelRepo.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.CHANNEL_NOT_FOUND));
 
-        if(channel.getChannelType() == ChannelType.PRIVATE) throw new BusinessException(ErrorCode.PRIVATE_CHANNEL_UPDATE_NOT_ALLOWED);
+        if(channel.getChannelType() == ChannelType.PRIVATE)
+            throw new BusinessException(ErrorCode.PRIVATE_CHANNEL_UPDATE_NOT_ALLOWED);
 
         channel.setName(dto.newName());
         channel.setDescription(dto.newDescription());
@@ -153,5 +147,32 @@ public class BasicChannelService implements ChannelService {
         if(!channelRepo.deleteById(id)) {
             throw new BusinessException(ErrorCode.CHANNEL_NOT_FOUND);
         }
+    }
+
+    private ChannelDto toDto(Channel channel, Instant lastMessageAt, List<UUID> userIds) {
+        ChannelType channelType = channel.getChannelType();
+
+        return switch (channelType) {
+            case PUBLIC -> new ChannelDto(
+                    channel.getId(),
+                    channel.getCreatedAt(),
+                    channel.getUpdatedAt(),
+                    channelType,
+                    channel.getName(),
+                    channel.getDescription(),
+                    lastMessageAt,
+                    List.of()
+            );
+            case PRIVATE -> new ChannelDto(
+                    channel.getId(),
+                    channel.getCreatedAt(),
+                    channel.getUpdatedAt(),
+                    channelType,
+                    null,
+                    null,
+                    lastMessageAt,
+                    userIds
+            );
+        };
     }
 }

@@ -42,8 +42,7 @@ public class BasicUserService implements UserService {
         UserStatus userStatus = new UserStatus(user.getId(), Instant.now());
         userStatusRepo.save(userStatus);
 
-        return new UserDto(user.getId(), user.getCreatedAt(), user.getUpdatedAt(),
-                user.getUsername(), user.getEmail(), user.getProfileId(), userStatus.passed());
+        return toDto(user, userStatus);
     }
 
     @Override
@@ -53,8 +52,7 @@ public class BasicUserService implements UserService {
         UserStatus userStatus = userStatusRepo.findByUserId(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_STATUS_NOT_FOUND));
 
-        return new UserDto(user.getId(), user.getCreatedAt(), user.getUpdatedAt(),
-                user.getUsername(), user.getEmail(), user.getProfileId(), userStatus.passed());
+        return toDto(user, userStatus);
     }
 
     @Override
@@ -63,16 +61,7 @@ public class BasicUserService implements UserService {
                 .map(user -> {
                             UserStatus userStatus = userStatusRepo.findByUserId(user.getId())
                                     .orElseThrow(() -> new BusinessException(ErrorCode.USER_STATUS_NOT_FOUND));
-
-                            return new UserDto(
-                                    user.getId(),
-                                    user.getCreatedAt(),
-                                    user.getUpdatedAt(),
-                                    user.getUsername(),
-                                    user.getEmail(),
-                                    user.getProfileId(),
-                                    userStatus.passed()
-                            );
+                            return toDto(user, userStatus);
                         }
                 )
                 .toList();
@@ -140,5 +129,17 @@ public class BasicUserService implements UserService {
         } catch (IOException e){
             throw new BusinessException(ErrorCode.FILE_SAVE_FAILED);
         }
+    }
+
+    private UserDto toDto(User user, UserStatus userStatus) {
+        return new UserDto(
+                user.getId(),
+                user.getCreatedAt(),
+                user.getUpdatedAt(),
+                user.getUsername(),
+                user.getEmail(),
+                user.getProfileId(),
+                userStatus.passed()
+        );
     }
 }

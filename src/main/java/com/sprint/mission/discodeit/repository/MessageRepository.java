@@ -10,7 +10,7 @@ import java.util.UUID;
 public interface MessageRepository {
     void save(Message message);
     Optional<Message> findById(UUID id);
-    Optional<Instant> findLatestCreatedAtByChannelId(UUID id);
+    Optional<Instant> findLastMessageAtByChannelId(UUID id);
     List<Message> findAll();
     boolean deleteById(UUID id);
 }
