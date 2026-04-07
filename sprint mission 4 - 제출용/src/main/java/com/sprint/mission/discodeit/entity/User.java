@@ -1,15 +1,15 @@
 package com.sprint.mission.discodeit.entity;
 
+import com.sprint.mission.discodeit.entity.base.BaseEntity;
 import lombok.Getter;
 import java.io.Serializable;
 
 @Getter
-public class User extends BaseEntity implements Serializable {
+public class User extends BaseEntity {
 
   private String userName;
   private String userEmail;
   private String userPassword;
-  private static final long serialVersionUID = 1L;
 
   public User(String userName, String userEmail, String userPassword) {
     super();

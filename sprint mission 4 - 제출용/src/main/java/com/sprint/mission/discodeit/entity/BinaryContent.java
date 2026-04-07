@@ -8,9 +8,8 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Getter
-public class BinaryContent implements Serializable {
+public class BinaryContent {
 
-  private static final long serialVersionUID = 1L;
   private UUID id;
   private Instant createdAt;
   private UUID userId;

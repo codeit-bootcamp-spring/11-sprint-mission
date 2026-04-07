@@ -1,5 +1,6 @@
 package com.sprint.mission.discodeit.entity;
 
+import com.sprint.mission.discodeit.entity.base.BaseEntity;
 import lombok.Getter;
 
 import java.io.Serializable;
@@ -7,12 +8,11 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Getter
-public class ReadStatus extends BaseEntity implements Serializable {
+public class ReadStatus extends BaseEntity {
 
   private UUID userId;
   private UUID channelId;
   private Instant lastMessageAt;
-  private static final long serialVersionUID = 1L;
 
   public ReadStatus(UUID userId, UUID channelId, Instant lastMessageAt) {
     super();

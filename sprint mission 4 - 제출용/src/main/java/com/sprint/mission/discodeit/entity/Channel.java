@@ -1,16 +1,16 @@
 package com.sprint.mission.discodeit.entity;
 
+import com.sprint.mission.discodeit.entity.base.BaseEntity;
 import lombok.Getter;
 
 import java.io.Serializable;
 
 @Getter
-public class Channel extends BaseEntity implements Serializable {
+public class Channel extends BaseEntity {
 
   private String channelName;
   private String channelDescription;
   private ChannelType channelType;
-  private static final long serialVersionUID = 1L;
 
   public Channel(String channelName, String channelDescription, ChannelType channelType) {
     super();
