@@ -3,7 +3,8 @@ package com.sprint.mission.discodeit.service.basic;
 import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentCreateRequest;
 import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentDto;
 import com.sprint.mission.discodeit.entity.BinaryContent;
-import com.sprint.mission.discodeit.exception.binarycontent.BinaryContentNotFoundException;
+import com.sprint.mission.discodeit.exception.BusinessException;
+import com.sprint.mission.discodeit.exception.ErrorCode;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.service.BinaryContentService;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +30,7 @@ public class BasicBinaryContentService implements BinaryContentService {
     @Override
     public BinaryContentDto find(UUID id) {
         BinaryContent binaryContent = binaryContentRepo.findById(id)
-                .orElseThrow(() -> new BinaryContentNotFoundException(id));
+                .orElseThrow(() -> new BusinessException(ErrorCode.BINARY_CONTENT_NOT_FOUND));
 
         return toDto(binaryContent);
     }
@@ -38,7 +39,7 @@ public class BasicBinaryContentService implements BinaryContentService {
     public List<BinaryContentDto> findAllByIdIn(List<UUID> idList) {
         return idList.stream()
                 .map(id -> binaryContentRepo.findById(id)
-                        .orElseThrow(() -> new BinaryContentNotFoundException(id)))
+                        .orElseThrow(() -> new BusinessException(ErrorCode.BINARY_CONTENT_NOT_FOUND)))
                 .map(this::toDto)
                 .toList();
     }
@@ -46,7 +47,7 @@ public class BasicBinaryContentService implements BinaryContentService {
     @Override
     public void delete(UUID id) {
         if(!binaryContentRepo.deleteById(id)) {
-            throw new BinaryContentNotFoundException(id);
+            throw new BusinessException(ErrorCode.BINARY_CONTENT_NOT_FOUND);
         }
     }
 

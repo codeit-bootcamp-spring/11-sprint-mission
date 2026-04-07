@@ -4,17 +4,12 @@ import com.sprint.mission.discodeit.dto.channel.ChannelDto;
 import com.sprint.mission.discodeit.dto.channel.ChannelUpdateRequest;
 import com.sprint.mission.discodeit.dto.channel.PrivateChannelCreateRequest;
 import com.sprint.mission.discodeit.dto.channel.PublicChannelCreateRequest;
-import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.ChannelType;
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.entity.ReadStatus;
-import com.sprint.mission.discodeit.exception.binarycontent.BinaryContentNotFoundException;
-import com.sprint.mission.discodeit.exception.channel.ChannelNotFoundException;
-import com.sprint.mission.discodeit.exception.channel.PrivateChannelUpdateNotAllowedException;
-import com.sprint.mission.discodeit.exception.message.MessageNotFoundException;
-import com.sprint.mission.discodeit.exception.readstatus.ReadStatusAlreadyExistsException;
-import com.sprint.mission.discodeit.exception.readstatus.ReadStatusNotFoundException;
+import com.sprint.mission.discodeit.exception.BusinessException;
+import com.sprint.mission.discodeit.exception.ErrorCode;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
@@ -53,7 +48,7 @@ public class BasicChannelService implements ChannelService {
 
         for(UUID userId : dto.participantIds()) {
             if(readStatusRepo.findByUserIdAndChannelId(userId, channel.getId()).isPresent()) {
-                throw new ReadStatusAlreadyExistsException(userId, channel.getId());
+                throw new BusinessException(ErrorCode.READ_STATUS_ALREADY_EXISTS);
             }
             readStatusRepo.save(new ReadStatus(userId, channel.getId(), Instant.now()));
         }
@@ -64,7 +59,7 @@ public class BasicChannelService implements ChannelService {
 
     public ChannelDto findById(UUID id) {
         Channel channel = channelRepo.findById(id)
-                .orElseThrow(() -> new ChannelNotFoundException(id));
+                .orElseThrow(() -> new BusinessException(ErrorCode.CHANNEL_NOT_FOUND));
 
         Instant latestMessageCreatedAt = messageRepo.findLatestCreatedAtByChannelId(channel.getId())
                 .orElse(null);
@@ -117,9 +112,9 @@ public class BasicChannelService implements ChannelService {
 
     public void update(UUID id, ChannelUpdateRequest dto) {
         Channel channel = channelRepo.findById(id)
-                .orElseThrow(() -> new ChannelNotFoundException(id));
+                .orElseThrow(() -> new BusinessException(ErrorCode.CHANNEL_NOT_FOUND));
 
-        if(channel.getChannelType() == ChannelType.PRIVATE) throw new PrivateChannelUpdateNotAllowedException();
+        if(channel.getChannelType() == ChannelType.PRIVATE) throw new BusinessException(ErrorCode.PRIVATE_CHANNEL_UPDATE_NOT_ALLOWED);
 
         channel.setName(dto.newName());
         channel.setDescription(dto.newDescription());
@@ -130,7 +125,7 @@ public class BasicChannelService implements ChannelService {
 
     public void delete(UUID id) {
         channelRepo.findById(id)
-                .orElseThrow(() -> new ChannelNotFoundException(id));
+                .orElseThrow(() -> new BusinessException(ErrorCode.CHANNEL_NOT_FOUND));
 
         List<Message> messageList = messageRepo.findAll().stream()
                 .filter(p -> (p.getChannelId().equals(id)))
@@ -138,11 +133,11 @@ public class BasicChannelService implements ChannelService {
         for(Message message : messageList) {
             for(UUID binaryContentId : message.getAttachmentIds()) {
                 if(!binaryContentRepo.deleteById(binaryContentId)) {
-                    throw new BinaryContentNotFoundException(binaryContentId);
+                    throw new BusinessException(ErrorCode.BINARY_CONTENT_NOT_FOUND);
                 }
             }
             if(!messageRepo.deleteById(message.getId())) {
-                throw new MessageNotFoundException(message.getId());
+                throw new BusinessException(ErrorCode.MESSAGE_NOT_FOUND);
             }
         }
 
@@ -151,12 +146,12 @@ public class BasicChannelService implements ChannelService {
                 .toList();
         for(ReadStatus readStatus : readStatusList) {
             if(!readStatusRepo.deleteById(readStatus.getId())) {
-                throw new ReadStatusNotFoundException(readStatus.getId());
+                throw new BusinessException(ErrorCode.READ_STATUS_NOT_FOUND);
             }
         }
 
         if(!channelRepo.deleteById(id)) {
-            throw new ChannelNotFoundException(id);
+            throw new BusinessException(ErrorCode.CHANNEL_NOT_FOUND);
         }
     }
 }

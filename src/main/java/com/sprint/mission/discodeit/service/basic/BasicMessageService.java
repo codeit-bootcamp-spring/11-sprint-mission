@@ -5,11 +5,8 @@ import com.sprint.mission.discodeit.dto.message.MessageDto;
 import com.sprint.mission.discodeit.dto.message.MessageUpdateRequest;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.Message;
-import com.sprint.mission.discodeit.exception.binarycontent.BinaryContentNotFoundException;
-import com.sprint.mission.discodeit.exception.binarycontent.BinaryContentSaveException;
-import com.sprint.mission.discodeit.exception.channel.ChannelNotFoundException;
-import com.sprint.mission.discodeit.exception.message.MessageNotFoundException;
-import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
+import com.sprint.mission.discodeit.exception.BusinessException;
+import com.sprint.mission.discodeit.exception.ErrorCode;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
@@ -35,10 +32,10 @@ public class BasicMessageService implements MessageService {
     @Override
     public MessageDto create(MessageCreateRequest dto, List<MultipartFile> attachments) {
         channelRepo.findById(dto.channelId())
-                .orElseThrow(() -> new ChannelNotFoundException(dto.channelId()));
+                .orElseThrow(() -> new BusinessException(ErrorCode.CHANNEL_NOT_FOUND));
 
         userRepo.findById(dto.authorId())
-                .orElseThrow(() -> new UserNotFoundException(dto.authorId()));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         List<UUID> attachmentIds = saveAttachments(attachments);
 
@@ -50,14 +47,14 @@ public class BasicMessageService implements MessageService {
     @Override
     public MessageDto findById(UUID id) {
         Message message = messageRepo.findById(id)
-                .orElseThrow(() -> new MessageNotFoundException(id));
+                .orElseThrow(() -> new BusinessException(ErrorCode.MESSAGE_NOT_FOUND));
         return toDto(message);
     }
 
     @Override
     public List<MessageDto> findAllByChannelId(UUID id) {
         channelRepo.findById(id)
-                .orElseThrow(() -> new ChannelNotFoundException(id));
+                .orElseThrow(() -> new BusinessException(ErrorCode.CHANNEL_NOT_FOUND));
 
         return messageRepo.findAll().stream()
                 .filter(p -> p.getChannelId().equals(id))
@@ -68,7 +65,7 @@ public class BasicMessageService implements MessageService {
     @Override
     public void update(UUID id, MessageUpdateRequest dto) {
         Message message = messageRepo.findById(id)
-                .orElseThrow(() -> new MessageNotFoundException(id));
+                .orElseThrow(() -> new BusinessException(ErrorCode.MESSAGE_NOT_FOUND));
 
         message.setContents(dto.newContent());
         message.update();
@@ -79,15 +76,15 @@ public class BasicMessageService implements MessageService {
     @Override
     public void delete(UUID id) {
         Message message = messageRepo.findById(id)
-                .orElseThrow(() -> new MessageNotFoundException(id));
+                .orElseThrow(() -> new BusinessException(ErrorCode.MESSAGE_NOT_FOUND));
 
         for(UUID binaryContentId : message.getAttachmentIds()) {
             if(!binaryContentRepo.deleteById(binaryContentId)) {
-                throw new BinaryContentNotFoundException(binaryContentId);
+                throw new BusinessException(ErrorCode.BINARY_CONTENT_NOT_FOUND);
             }
         }
         if(!messageRepo.deleteById(message.getId())) {
-            throw new MessageNotFoundException(message.getId());
+            throw new BusinessException(ErrorCode.MESSAGE_NOT_FOUND);
         }
     }
 
@@ -127,7 +124,7 @@ public class BasicMessageService implements MessageService {
             binaryContentRepo.save(binaryContent);
             return binaryContent.getId();
         } catch (IOException e){
-            throw new BinaryContentSaveException(file.getOriginalFilename(), e);
+            throw new BusinessException(ErrorCode.FILE_SAVE_FAILED);
         }
     }
 }

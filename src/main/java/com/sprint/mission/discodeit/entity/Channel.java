@@ -1,10 +1,10 @@
 package com.sprint.mission.discodeit.entity;
 
-import com.sprint.mission.discodeit.entity.baseentity.UpdatableEntity;
+import com.sprint.mission.discodeit.entity.baseentity.BaseUpdatableEntity;
 import lombok.Getter;
 
 @Getter
-public class Channel extends UpdatableEntity {
+public class Channel extends BaseUpdatableEntity {
 
     private ChannelType channelType;
     private String name;

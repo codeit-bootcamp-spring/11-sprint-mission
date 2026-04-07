@@ -5,10 +5,10 @@ import lombok.Getter;
 import java.time.Instant;
 
 @Getter
-public class UpdatableEntity extends Common {
+public class BaseUpdatableEntity extends BaseEntity {
     private Instant updatedAt;
 
-    public UpdatableEntity() {
+    public BaseUpdatableEntity() {
         super();
         this.updatedAt = Instant.now();
     }

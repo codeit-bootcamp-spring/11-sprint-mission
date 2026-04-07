@@ -1,7 +1,6 @@
 package com.sprint.mission.discodeit.entity;
 
-import com.sprint.mission.discodeit.dto.userstatus.UserStatusDto;
-import com.sprint.mission.discodeit.entity.baseentity.UpdatableEntity;
+import com.sprint.mission.discodeit.entity.baseentity.BaseUpdatableEntity;
 import lombok.Getter;
 
 import java.time.Duration;
@@ -9,7 +8,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Getter
-public class UserStatus extends UpdatableEntity {
+public class UserStatus extends BaseUpdatableEntity {
     private UUID userId;
     private Instant lastActiveAt;
 

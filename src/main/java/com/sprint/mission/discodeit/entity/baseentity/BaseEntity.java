@@ -7,12 +7,12 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Getter
-public class Common implements Serializable {
+public class BaseEntity {
     private static final long serialVersionUID = 1L;
     private UUID id;
     private Instant createdAt;
 
-    public Common() {
+    public BaseEntity() {
         this.id = UUID.randomUUID();
         this.createdAt = Instant.now();
     }

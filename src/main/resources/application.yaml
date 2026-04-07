@@ -10,3 +10,7 @@ discodeit:
     type: file
     file:
       base-dir: data
+
+logging:
+  file:
+    name: logs/app.log

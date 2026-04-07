@@ -1,10 +1,8 @@
 package com.sprint.mission.discodeit.repository.file;
 
-import com.sprint.mission.discodeit.entity.baseentity.Common;
-import com.sprint.mission.discodeit.exception.repository.DirectoryCreationException;
-import com.sprint.mission.discodeit.exception.repository.FileDeleteException;
-import com.sprint.mission.discodeit.exception.repository.FileLoadException;
-import com.sprint.mission.discodeit.exception.repository.FileSaveException;
+import com.sprint.mission.discodeit.entity.baseentity.BaseEntity;
+import com.sprint.mission.discodeit.exception.BusinessException;
+import com.sprint.mission.discodeit.exception.ErrorCode;
 
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -12,7 +10,6 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -21,7 +18,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
 
-public abstract class CommonFileRepository<T extends Common> {
+public abstract class CommonFileRepository<T extends BaseEntity> {
 
     private final Path directory;
     private final Class<T> type;
@@ -37,7 +34,7 @@ public abstract class CommonFileRepository<T extends Common> {
             try {
                 Files.createDirectories(directory);
             } catch (IOException e) {
-                throw new DirectoryCreationException(directory, e);
+                throw new BusinessException(ErrorCode.DIRECTORY_CREATION_FAILED);
             }
         }
     }
@@ -54,7 +51,7 @@ public abstract class CommonFileRepository<T extends Common> {
         ) {
             oos.writeObject(obj);
         } catch (IOException e) {
-            throw new FileSaveException(path, e);
+            throw new BusinessException(ErrorCode.FILE_SAVE_FAILED);
         }
     }
 
@@ -72,7 +69,7 @@ public abstract class CommonFileRepository<T extends Common> {
             Object obj = ois.readObject();
             return Optional.of(type.cast(obj));
         } catch (IOException | ClassNotFoundException e) {
-            throw new FileLoadException(path, e);
+            throw new BusinessException(ErrorCode.FILE_LOAD_FAILED);
         }
     }
 
@@ -90,12 +87,12 @@ public abstract class CommonFileRepository<T extends Common> {
                             ) {
                                 return type.cast(ois.readObject());
                             } catch (IOException | ClassNotFoundException e) {
-                                throw new FileLoadException(path, e);
+                                throw new BusinessException(ErrorCode.FILE_LOAD_FAILED);
                             }
                         })
                         .toList();
             } catch (IOException e) {
-                throw new FileLoadException(directory, e);
+                throw new BusinessException(ErrorCode.FILE_LOAD_FAILED);
             }
         } else {
             return new ArrayList<>();
@@ -107,7 +104,7 @@ public abstract class CommonFileRepository<T extends Common> {
         try {
             return Files.deleteIfExists(path);
         } catch (IOException e) {
-            throw new FileDeleteException(path, e);
+            throw new BusinessException(ErrorCode.FILE_DELETE_FAILED);
         }
     }
 

@@ -1,24 +1,6 @@
 package com.sprint.mission.discodeit.exception;
 
-import com.sprint.mission.discodeit.exception.binarycontent.BinaryContentNotFoundException;
-import com.sprint.mission.discodeit.exception.channel.ChannelNotFoundException;
-import com.sprint.mission.discodeit.exception.channel.PrivateChannelUpdateNotAllowedException;
-import com.sprint.mission.discodeit.exception.login.InvalidPasswordException;
-import com.sprint.mission.discodeit.exception.message.MessageNotFoundException;
-import com.sprint.mission.discodeit.exception.readstatus.ReadStatusAlreadyExistsException;
-import com.sprint.mission.discodeit.exception.readstatus.ReadStatusNotFoundException;
-import com.sprint.mission.discodeit.exception.readstatus.ReadStatusOfUserAndChannelNotFoundException;
-import com.sprint.mission.discodeit.exception.repository.DirectoryCreationException;
-import com.sprint.mission.discodeit.exception.repository.FileDeleteException;
-import com.sprint.mission.discodeit.exception.repository.FileLoadException;
-import com.sprint.mission.discodeit.exception.repository.FileSaveException;
-import com.sprint.mission.discodeit.exception.user.DuplicateEmailException;
-import com.sprint.mission.discodeit.exception.user.DuplicateNameException;
-import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
-import com.sprint.mission.discodeit.exception.userstatus.UserStatusAlreadyExistsException;
-import com.sprint.mission.discodeit.exception.userstatus.UserStatusNotFoundException;
-import com.sprint.mission.discodeit.exception.userstatus.UserStatusOfUserNotFoundException;
-import org.springframework.http.HttpStatus;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -27,9 +9,11 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.util.HashMap;
 import java.util.Map;
 
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    // DTO 검증
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, String>> handleValidationException(MethodArgumentNotValidException e) {
         Map<String, String> errors = new HashMap<>();
@@ -41,50 +25,21 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(errors);
     }
 
-    @ExceptionHandler({
-            DuplicateEmailException.class,
-            DuplicateNameException.class,
-            UserStatusAlreadyExistsException.class,
-            InvalidPasswordException.class,
-            PrivateChannelUpdateNotAllowedException.class,
-            ReadStatusAlreadyExistsException.class
-    })
-    public ResponseEntity<String> handleBadRequest(RuntimeException e) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+    // 지정 예외
+    @ExceptionHandler(BusinessException.class)
+    public ResponseEntity<String> handleBusinessException(BusinessException e) {
+        if(e.getErrorCode().getStatus().is5xxServerError()) {
+            log.error("Business exception occurred: {}", e.getErrorCode(), e);
+        }
+
+        return ResponseEntity.status(e.getErrorCode().getStatus())
+                .body(e.getErrorCode().getMessage());
     }
 
-    @ExceptionHandler({
-            UserNotFoundException.class,
-            UserStatusOfUserNotFoundException.class,
-            UserStatusNotFoundException.class,
-            ChannelNotFoundException.class,
-            MessageNotFoundException.class,
-            ReadStatusNotFoundException.class,
-            ReadStatusOfUserAndChannelNotFoundException.class,
-            BinaryContentNotFoundException.class
-    })
-    public ResponseEntity<String> handleNotFound(RuntimeException e) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-    }
-
-    @ExceptionHandler({
-            DirectoryCreationException.class,
-            FileDeleteException.class,
-            FileLoadException.class,
-            FileSaveException.class
-    })
-    public ResponseEntity<String> handleInternalServerError(RuntimeException e) {
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
-    }
-
+    // 비지정 예외
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<String> handleExceptionForDebugging(Exception e) {
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(e.getClass().getName() + " : " + e.getMessage());
+    public ResponseEntity<String> handleException(Exception e) {
+        log.error("Unhandled exception occurred", e);
+        return ResponseEntity.internalServerError().body("Internal Server Error");
     }
-
-//    @ExceptionHandler(Exception.class)
-//    public ResponseEntity<String> handleException(Exception e) {
-//        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Internal Server Error");
-//    }
 }
