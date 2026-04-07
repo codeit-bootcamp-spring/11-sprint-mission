@@ -1,40 +1,32 @@
 package com.sprint.mission.discodeit.entity;
 
-import com.sprint.mission.discodeit.entity.base.BaseEntity;
+import com.sprint.mission.discodeit.entity.base.BaseUpdatableEntity;
 import lombok.Getter;
-import java.io.Serializable;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Getter
-public class User extends BaseEntity {
+@Setter
+@NoArgsConstructor
+public class User extends BaseUpdatableEntity {
 
-  private String userName;
-  private String userEmail;
-  private String userPassword;
+  private String username;
+  private String email;
+  private String password;
 
-  public User(String userName, String userEmail, String userPassword) {
-    super();
-    this.userName = userName;
-    this.userEmail = userEmail;
-    this.userPassword = userPassword;
+  // 별도로 엔티티있음.
+  private BinaryContent profile;
+  private UserStatus status;
+
+  public User(String username, String email, String password) {
+    this.username = username;
+    this.email = email;
+    this.password = password;
   }
 
-  public void updateUser(String userName, String userEmail, String userPassword) {
-    this.userName = userName;
-    this.userEmail = userEmail;
-    this.userPassword = userPassword;
-    updateTimestamp();
-  }
-
-
-  @Override
-  public String toString() {
-    return "User ---- " +
-        "[id=" + id +
-        "] [userName='" + userName + '\'' +
-        "] [userEmail='" + userEmail + '\'' +
-        "] [userPassword='" + userPassword + '\'' +
-        "] [createdAt=" + createdAt + '\'' +
-        "] [updatedAt=" + updatedAt + '\'' +
-        "]";
+  public void updateUser(String username, String email, String password) {
+    this.username = username;
+    this.email = email;
+    this.password = password;
   }
 }

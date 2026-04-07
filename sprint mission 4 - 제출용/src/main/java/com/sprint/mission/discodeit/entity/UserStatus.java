@@ -1,27 +1,29 @@
 package com.sprint.mission.discodeit.entity;
 
+import com.sprint.mission.discodeit.entity.base.BaseUpdatableEntity;
 import lombok.Getter;
-
 import java.time.Instant;
-import java.util.UUID;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Getter
-public class UserStatus {
+@Setter
+@NoArgsConstructor
+public class UserStatus extends BaseUpdatableEntity {
 
-  private UUID userId;
-  private Instant lastOnlineAt;
+  private User user;
+  private Instant lastActiveAt;
 
-  public UserStatus(UUID userId, Instant lastOnlineAt) {
-    this.userId = userId;
-    this.lastOnlineAt = lastOnlineAt;
+  public UserStatus(User user, Instant lastActiveAt) {
+    this.user = user;
+    this.lastActiveAt = lastActiveAt;
   }
 
-  public void updateLastOnlineAt(Instant lastOnlineAt) {  // 마지막 접속시간 설정하는 메소드
-    this.lastOnlineAt = lastOnlineAt;
+  public void updateUserStatus(Instant lastActiveAt) {
+    this.lastActiveAt = lastActiveAt;
   }
 
-  // 마지막 접속시간이 5분이내일시 접속 중
   public boolean isOnline() {
-    return Instant.now().minusSeconds(300).isBefore(this.lastOnlineAt);
+    return Instant.now().minusSeconds(300).isBefore(this.lastActiveAt);
   }
 }

@@ -1,29 +1,27 @@
 package com.sprint.mission.discodeit.entity;
 
-import com.sprint.mission.discodeit.entity.base.BaseEntity;
+import com.sprint.mission.discodeit.entity.base.BaseUpdatableEntity;
 import lombok.Getter;
-
-import java.io.Serializable;
 import java.time.Instant;
-import java.util.UUID;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Getter
-public class ReadStatus extends BaseEntity {
+@Setter
+@NoArgsConstructor
+public class ReadStatus extends BaseUpdatableEntity {
 
-  private UUID userId;
-  private UUID channelId;
-  private Instant lastMessageAt;
+  private User user;
+  private Channel channel;
+  private Instant lastReadAt;
 
-  public ReadStatus(UUID userId, UUID channelId, Instant lastMessageAt) {
-    super();
-    this.userId = userId;
-    this.channelId = channelId;
-    this.lastMessageAt = lastMessageAt;
+  public ReadStatus(User user, Channel channel, Instant lastReadAt) {
+    this.user = user;
+    this.channel = channel;
+    this.lastReadAt = lastReadAt;
   }
 
-  // 마지막으로 메세지 읽은 시간
-  public void updateLastMessageReadAt(Instant lastMessageAt) {
-    this.lastMessageAt = lastMessageAt;
-    updateTimestamp();
+  public void updateReadStatus(Instant lastReadAt) {
+    this.lastReadAt = lastReadAt;
   }
 }

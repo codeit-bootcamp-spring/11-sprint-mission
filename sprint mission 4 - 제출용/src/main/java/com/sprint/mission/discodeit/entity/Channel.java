@@ -1,37 +1,28 @@
 package com.sprint.mission.discodeit.entity;
 
-import com.sprint.mission.discodeit.entity.base.BaseEntity;
+import com.sprint.mission.discodeit.entity.base.BaseUpdatableEntity;
 import lombok.Getter;
-
-import java.io.Serializable;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Getter
-public class Channel extends BaseEntity {
+@Setter
+@NoArgsConstructor
+public class Channel extends BaseUpdatableEntity {
 
-  private String channelName;
-  private String channelDescription;
-  private ChannelType channelType;
+  private ChannelType type;
+  private String name;
+  private String description;
 
-  public Channel(String channelName, String channelDescription, ChannelType channelType) {
-    super();
-    this.channelName = channelName;
-    this.channelDescription = channelDescription;
-    this.channelType = channelType;
+  public Channel(ChannelType type, String name, String description) {
+    this.type = type;
+    this.name = name;
+    this.description = description;
   }
 
-  public void updateChannel(String channelName, String channelDescription) {
-    this.channelName = channelName;
-    this.channelDescription = channelDescription;
-    updateTimestamp();
-  }
-
-  @Override
-  public String toString() {
-    return
-        "Channel ---- " + "[id=" + id + "] " +
-            "[channelName='" + channelName + "'] " +
-            "[channelDescription='" + channelDescription + "']" +
-            " [createdAt='" + createdAt + "']" +
-            " [updatedAt='" + updatedAt + "']";
+  public void updateChannel(ChannelType type, String name, String description) {
+    this.type = type;
+    this.name = name;
+    this.description = description;
   }
 }
