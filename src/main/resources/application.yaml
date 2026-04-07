@@ -1,7 +1,13 @@
 spring:
   application:
     name: discodeit
+
 discodeit:
   repository:
-    type: file          # JCF | file
+    type: file
     file-directory: .discodeit
+
+logging:
+  level:
+    org.springframework.web: DEBUG
+    com.sprint.mission: DEBUG
