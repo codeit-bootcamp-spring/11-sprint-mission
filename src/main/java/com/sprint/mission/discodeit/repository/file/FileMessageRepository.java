@@ -26,7 +26,7 @@ public class FileMessageRepository extends CommonFileRepository<Message> impleme
     @Override
     public Optional<Instant> findLastMessageAtByChannelId(UUID id) {
         return findAll().stream()
-                .filter(p -> (p.getChannelId().equals(id)))
+                .filter(p -> (p.getChannel().getId().equals(id)))
                 .map(Message::getCreatedAt)
                 .max(Comparator.naturalOrder());
     }

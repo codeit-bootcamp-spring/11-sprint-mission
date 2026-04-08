@@ -26,7 +26,7 @@ public class FileUserStatusRepository extends CommonFileRepository<UserStatus> i
     public Optional<UserStatus> findByUserId(UUID id) {
         List<UserStatus> userStatusList = findAll();
         for(UserStatus userStatus : userStatusList) {
-            if(userStatus.getUserId().equals(id)) {
+            if(userStatus.getUser().getId().equals(id)) {
                 return Optional.of(userStatus);
             }
         }

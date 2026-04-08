@@ -3,6 +3,7 @@ package com.sprint.mission.discodeit.service.basic;
 import com.sprint.mission.discodeit.dto.userstatus.UserStatusCreateRequest;
 import com.sprint.mission.discodeit.dto.userstatus.UserStatusDto;
 import com.sprint.mission.discodeit.dto.userstatus.UserStatusUpdateRequest;
+import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.entity.UserStatus;
 import com.sprint.mission.discodeit.exception.BusinessException;
 import com.sprint.mission.discodeit.exception.ErrorCode;
@@ -24,15 +25,17 @@ public class BasicUserStatusService implements UserStatusService {
 
     @Override
     public UserStatusDto create(UserStatusCreateRequest dto) {
-        userRepo.findById(dto.userId())
+        User user = userRepo.findById(dto.userId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         boolean exists = userStatusRepo.findAll().stream()
-                .anyMatch(p -> p.getUserId().equals(dto.userId()));
+                .anyMatch(p -> p.getUser().equals(user));
         if(exists) throw new BusinessException(ErrorCode.USER_STATUS_ALREADY_EXISTS);
 
-        UserStatus userStatus = new UserStatus(dto.userId(), dto.lastActiveAt());
+        UserStatus userStatus = new UserStatus(user, dto.lastActiveAt());
         userStatusRepo.save(userStatus);
+        user.setStatus(userStatus);
+
         return toDto(userStatus);
     }
 
@@ -67,8 +70,7 @@ public class BasicUserStatusService implements UserStatusService {
         UserStatus userStatus = userStatusRepo.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_STATUS_NOT_FOUND));
 
-        userStatus.setLastActiveAt(dto.newLastActiveAt());
-        userStatus.update();
+        userStatus.update(dto.newLastActiveAt());
         userStatusRepo.save(userStatus);
     }
 
@@ -80,8 +82,7 @@ public class BasicUserStatusService implements UserStatusService {
         UserStatus userStatus = userStatusRepo.findByUserId(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_STATUS_NOT_FOUND));
 
-        userStatus.setLastActiveAt(dto.newLastActiveAt());
-        userStatus.update();
+        userStatus.update(dto.newLastActiveAt());
         userStatusRepo.save(userStatus);
     }
 
@@ -93,6 +94,6 @@ public class BasicUserStatusService implements UserStatusService {
     }
 
     private UserStatusDto toDto(UserStatus userStatus) {
-        return new UserStatusDto(userStatus.getId(), userStatus.getUserId(), userStatus.getLastActiveAt());
+        return new UserStatusDto(userStatus.getId(), userStatus.getUser().getId(), userStatus.getLastActiveAt());
     }
 }

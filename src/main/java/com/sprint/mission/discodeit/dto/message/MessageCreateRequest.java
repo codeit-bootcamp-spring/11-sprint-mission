@@ -9,8 +9,6 @@ import java.util.UUID;
 
 public record MessageCreateRequest(
 
-        @NotBlank(message = "빈 메시지는 보낼 수 없습니다.")
-        @Size(max = 300, message = "메시지는 300자 이하로 작성해야 합니다.")
         String content,
 
         @NotNull(message = "메시지가 업로드되는 채널은 필수로 기재해야 합니다.")

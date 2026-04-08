@@ -3,7 +3,9 @@ package com.sprint.mission.discodeit.service.basic;
 import com.sprint.mission.discodeit.dto.readstatus.ReadStatusCreateRequest;
 import com.sprint.mission.discodeit.dto.readstatus.ReadStatusDto;
 import com.sprint.mission.discodeit.dto.readstatus.ReadStatusUpdateRequest;
+import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.ReadStatus;
+import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.exception.BusinessException;
 import com.sprint.mission.discodeit.exception.ErrorCode;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
@@ -26,18 +28,18 @@ public class BasicReadStatusService implements ReadStatusService {
 
     @Override
     public ReadStatusDto create(ReadStatusCreateRequest dto) {
-        channelRepo.findById(dto.channelId())
+        Channel channel = channelRepo.findById(dto.channelId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.CHANNEL_NOT_FOUND));
 
-        userRepo.findById(dto.userId())
+        User user = userRepo.findById(dto.userId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         boolean exists = readStatusRepo.findAll().stream()
-                .anyMatch(p -> p.getChannelId().equals(dto.channelId())
-                && p.getUserId().equals(dto.userId()));
+                .anyMatch(p -> p.getChannel().equals(channel)
+                && p.getUser().equals(user));
         if(exists) throw new BusinessException(ErrorCode.READ_STATUS_ALREADY_EXISTS);
 
-        ReadStatus readStatus = new ReadStatus(dto.userId(), dto.channelId(), dto.lastReadAt());
+        ReadStatus readStatus = new ReadStatus(user, channel, dto.lastReadAt());
         readStatusRepo.save(readStatus);
         return toDto(readStatus);
     }
@@ -56,7 +58,7 @@ public class BasicReadStatusService implements ReadStatusService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         return readStatusRepo.findAll().stream()
-                .filter(p -> p.getUserId().equals(id))
+                .filter(p -> p.getUser().getId().equals(id))
                 .map(this::toDto)
                 .toList();
     }
@@ -66,8 +68,7 @@ public class BasicReadStatusService implements ReadStatusService {
         ReadStatus readStatus = readStatusRepo.findById(readStatusId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.READ_STATUS_NOT_FOUND));
 
-        readStatus.setLastReadAt(dto.newLastReadAt());
-        readStatus.update();
+        readStatus.update(dto.newLastReadAt());
         readStatusRepo.save(readStatus);
     }
 
@@ -83,8 +84,8 @@ public class BasicReadStatusService implements ReadStatusService {
                 readStatus.getId(),
                 readStatus.getCreatedAt(),
                 readStatus.getUpdatedAt(),
-                readStatus.getUserId(),
-                readStatus.getChannelId(),
+                readStatus.getUser().getId(),
+                readStatus.getChannel().getId(),
                 readStatus.getLastReadAt()
         );
     }

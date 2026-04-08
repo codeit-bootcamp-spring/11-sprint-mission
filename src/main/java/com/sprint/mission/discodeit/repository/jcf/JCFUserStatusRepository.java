@@ -24,7 +24,7 @@ public class JCFUserStatusRepository extends CommonJCFRepository<UserStatus> imp
     public Optional<UserStatus> findByUserId(UUID id) {
         List<UserStatus> userStatusList = findAll();
         for(UserStatus userStatus : userStatusList) {
-            if(userStatus.getUserId().equals(id)) {
+            if(userStatus.getUser().getId().equals(id)) {
                 return Optional.of(userStatus);
             }
         }

@@ -34,13 +34,14 @@ public class BasicUserService implements UserService {
         if(userRepo.findByName(dto.username()).isPresent()) throw new BusinessException(ErrorCode.DUPLICATE_NAME);
         if(userRepo.findByEmail(dto.email()).isPresent()) throw new BusinessException(ErrorCode.DUPLICATE_EMAIL);
 
-        UUID profileId = saveProfile(profile);
+        BinaryContent binaryContent = saveProfile(profile);
 
-        User user = new User(dto.username(), dto.email(), dto.password(), profileId);
+        User user = new User(dto.username(), dto.email(), dto.password(), binaryContent);
         userRepo.save(user);
 
-        UserStatus userStatus = new UserStatus(user.getId(), Instant.now());
+        UserStatus userStatus = new UserStatus(user, Instant.now());
         userStatusRepo.save(userStatus);
+        user.setStatus(userStatus);
 
         return toDto(user, userStatus);
     }
@@ -77,19 +78,14 @@ public class BasicUserService implements UserService {
         if(!user.getEmail().equals(dto.newEmail()) && userRepo.findByEmail(dto.newEmail()).isPresent())
             throw new BusinessException(ErrorCode.DUPLICATE_EMAIL);
 
-        UUID oldProfileId = user.getProfileId();
-        UUID newProfileId = saveProfile(profile);
-
-        user.setUsername(dto.newUsername());
-        user.setEmail(dto.newEmail());
-        user.setPassword(dto.newPassword());
-        if(newProfileId != null) user.setProfileId(newProfileId);
-
-        user.update();
+        BinaryContent oldProfile = user.getProfile();
+        BinaryContent newProfile = saveProfile(profile);
+        BinaryContent updateProfile = newProfile!=null?oldProfile:newProfile;
+        user.update(dto.newUsername(), dto.newEmail(), dto.newPassword(), updateProfile);
         userRepo.save(user);
 
-        if(newProfileId != null && oldProfileId != null) {
-            binaryContentRepo.deleteById(oldProfileId);
+        if(newProfile != null && oldProfile != null) {
+            binaryContentRepo.deleteById(oldProfile.getId());
         }
     }
 
@@ -102,17 +98,17 @@ public class BasicUserService implements UserService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_STATUS_NOT_FOUND));
         userStatusRepo.deleteById(userStatus.getId());
 
-        UUID profileId = user.getProfileId();
-        if(profileId != null) {
-            binaryContentRepo.findById(profileId)
+        BinaryContent profile = user.getProfile();
+        if(profile != null) {
+            binaryContentRepo.findById(profile.getId())
                     .orElseThrow(() -> new BusinessException(ErrorCode.BINARY_CONTENT_NOT_FOUND));
-            binaryContentRepo.deleteById(profileId);
+            binaryContentRepo.deleteById(profile.getId());
         }
 
         userRepo.deleteById(id);
     }
 
-    private UUID saveProfile(MultipartFile file) {
+    private BinaryContent saveProfile(MultipartFile file) {
         if(file == null || file.isEmpty()) {
             return null;
         }
@@ -124,7 +120,7 @@ public class BasicUserService implements UserService {
                     file.getBytes()
             );
             binaryContentRepo.save(binaryContent);
-            return binaryContent.getId();
+            return binaryContent;
         } catch (IOException e){
             throw new BusinessException(ErrorCode.FILE_SAVE_FAILED);
         }
@@ -137,7 +133,7 @@ public class BasicUserService implements UserService {
                 user.getUpdatedAt(),
                 user.getUsername(),
                 user.getEmail(),
-                user.getProfileId(),
+                user.getProfile().getId(),
                 userStatus.passed()
         );
     }

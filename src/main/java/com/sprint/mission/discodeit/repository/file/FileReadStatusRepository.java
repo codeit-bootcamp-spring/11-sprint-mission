@@ -1,6 +1,7 @@
 package com.sprint.mission.discodeit.repository.file;
 
 import com.sprint.mission.discodeit.entity.ReadStatus;
+import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -25,16 +26,17 @@ public class FileReadStatusRepository extends CommonFileRepository<ReadStatus> i
     @Override
     public Optional<ReadStatus> findByUserIdAndChannelId(UUID userId, UUID channelId) {
         return findAll().stream()
-                .filter(p -> p.getUserId().equals(userId))
-                .filter(p -> p.getChannelId().equals(channelId))
+                .filter(p -> p.getUser().getId().equals(userId))
+                .filter(p -> p.getChannel().getId().equals(channelId))
                 .findFirst();
     }
 
     @Override
     public List<UUID> findUserIdsByChannelId(UUID channelId) {
         return findAll().stream()
-                .filter(p -> (p.getChannelId().equals(channelId)))
-                .map(ReadStatus::getUserId)
+                .filter(p -> (p.getChannel().getId().equals(channelId)))
+                .map(ReadStatus::getUser)
+                .map(User::getId)
                 .toList();
     }
 }

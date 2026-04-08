@@ -1,19 +1,21 @@
 package com.sprint.mission.discodeit.entity.base;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.MappedSuperclass;
 import lombok.Getter;
+import org.springframework.data.annotation.LastModifiedDate;
 
 import java.time.Instant;
 
 @Getter
-public class BaseUpdatableEntity extends BaseEntity {
+@MappedSuperclass
+public abstract class BaseUpdatableEntity extends BaseEntity {
+
+    @LastModifiedDate
+    @Column
     private Instant updatedAt;
 
     public BaseUpdatableEntity() {
         super();
-        this.updatedAt = Instant.now();
-    }
-
-    public void update() {
-        this.updatedAt = Instant.now();
     }
 }
