@@ -10,8 +10,8 @@ import java.util.UUID;
 @Getter
 public class Message extends BaseUpdatableEntity {
     private String contents;
-    private UUID userId;
-    private UUID channelId;
+    private final UUID userId;
+    private final UUID channelId;
     private List<UUID> attachmentIds;
 
     public Message(String contents, UUID userId, UUID channelId) {

@@ -7,10 +7,10 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Getter
-public class BaseEntity {
+public class BaseEntity implements Serializable{
     private static final long serialVersionUID = 1L;
-    private UUID id;
-    private Instant createdAt;
+    private final UUID id;
+    private final Instant createdAt;
 
     public BaseEntity() {
         this.id = UUID.randomUUID();

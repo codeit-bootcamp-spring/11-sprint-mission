@@ -9,7 +9,7 @@ import java.util.UUID;
 
 @Getter
 public class UserStatus extends BaseUpdatableEntity {
-    private UUID userId;
+    private final UUID userId;
     private Instant lastActiveAt;
 
     public UserStatus(UUID userId, Instant lastActiveAt) {

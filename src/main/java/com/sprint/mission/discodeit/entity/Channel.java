@@ -6,7 +6,7 @@ import lombok.Getter;
 @Getter
 public class Channel extends BaseUpdatableEntity {
 
-    private ChannelType channelType;
+    private final ChannelType channelType;
     private String name;
     private String description;
 

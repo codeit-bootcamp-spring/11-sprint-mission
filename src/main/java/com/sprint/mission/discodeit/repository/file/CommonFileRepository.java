@@ -47,7 +47,7 @@ public abstract class CommonFileRepository<T extends BaseEntity> {
         Path path = filePath(obj.getId());
         try (
                 FileOutputStream fos = new FileOutputStream(path.toFile());
-                ObjectOutputStream oos = new ObjectOutputStream(fos);
+                ObjectOutputStream oos = new ObjectOutputStream(fos)
         ) {
             oos.writeObject(obj);
         } catch (IOException e) {
@@ -64,7 +64,7 @@ public abstract class CommonFileRepository<T extends BaseEntity> {
 
         try (
                 FileInputStream fis = new FileInputStream(path.toFile());
-                ObjectInputStream ois = new ObjectInputStream(fis);
+                ObjectInputStream ois = new ObjectInputStream(fis)
         ) {
             Object obj = ois.readObject();
             return Optional.of(type.cast(obj));
@@ -76,14 +76,14 @@ public abstract class CommonFileRepository<T extends BaseEntity> {
     public List<T> findAll() {
         if(Files.exists(directory)) {
             try (
-                    Stream<Path> paths = Files.list(directory);
+                    Stream<Path> paths = Files.list(directory)
             ){
                 return paths
                         .filter(path -> path.getFileName().toString().endsWith(".ser"))
                         .map(path -> {
                             try (
                                     FileInputStream fis = new FileInputStream(path.toFile());
-                                    ObjectInputStream ois = new ObjectInputStream(fis);
+                                    ObjectInputStream ois = new ObjectInputStream(fis)
                             ) {
                                 return type.cast(ois.readObject());
                             } catch (IOException | ClassNotFoundException e) {

@@ -1,7 +1,7 @@
 package com.sprint.mission.discodeit.service.basic;
 
 import com.sprint.mission.discodeit.dto.login.LoginRequest;
-import com.sprint.mission.discodeit.dto.login.LoginResponseDto;
+import com.sprint.mission.discodeit.dto.login.LoginResponse;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.exception.BusinessException;
 import com.sprint.mission.discodeit.exception.ErrorCode;
@@ -16,7 +16,7 @@ public class BasicAuthService implements AuthService {
 
     private final UserRepository userRepo;
 
-    public LoginResponseDto login(LoginRequest dto) {
+    public LoginResponse login(LoginRequest dto) {
         User user = userRepo.findByName(dto.username())
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
@@ -24,7 +24,7 @@ public class BasicAuthService implements AuthService {
             throw new BusinessException(ErrorCode.INVALID_PASSWORD);
         }
 
-        return new LoginResponseDto(
+        return new LoginResponse(
                 user.getId(),
                 user.getCreatedAt(),
                 user.getUpdatedAt(),

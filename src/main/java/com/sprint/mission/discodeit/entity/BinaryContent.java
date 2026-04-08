@@ -8,9 +8,9 @@ import java.util.Arrays;
 @Getter
 public class BinaryContent extends BaseEntity {
 
-    private String fileName;
-    private String contentType;
-    private byte[] data;
+    private final String fileName;
+    private final String contentType;
+    private final byte[] data;
 
     public BinaryContent(String fileName, String contentType, byte[] data) {
         super();
