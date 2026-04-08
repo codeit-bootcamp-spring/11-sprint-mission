@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <annotationProcessing>
+      <profile name="Gradle Imported" enabled="true">
+        <outputRelativeToContentRoot value="true" />
+        <processorPath useClasspath="false">
+          <entry name="$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.projectlombok/lombok/1.18.36/5a30490a6e14977d97d9c73c924c1f1b5311ea95/lombok-1.18.36.jar" />
+        </processorPath>
+        <module name="com.sprint.mission.discodeit.main" />
+      </profile>
+    </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="com.sprint.mission.discodeit" target="17" />
+      <module name="com.sprint.mission.discodeit.main" target="17" />
+      <module name="com.sprint.mission.discodeit.test" target="17" />
+      <module name="discodeit" target="17" />
+      <module name="discodeit.main" target="17" />
+      <module name="discodeit.test" target="17" />
+      <module name="Sprint1" target="17" />
+      <module name="Sprint1.main" target="17" />
+      <module name="Sprint1.test" target="17" />
+      <module name="Sprint2" target="17" />
+      <module name="Sprint2.main" target="17" />
+      <module name="Sprint2.test" target="17" />
+      <module name="Sprint4" target="17" />
+      <module name="Sprint4.main" target="17" />
+      <module name="Sprint4.test" target="17" />
+      <module name="Sprint5" target="17" />
+      <module name="Sprint5.main" target="17" />
+      <module name="Sprint5.test" target="17" />
+    </bytecodeTargetLevel>
+  </component>
+  <component name="JavacSettings">
+    <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="com.sprint.mission.discodeit" options="-parameters -parameters" />
+      <module name="com.sprint.mission.discodeit.main" options="-parameters -parameters" />
+      <module name="com.sprint.mission.discodeit.test" options="-parameters -parameters" />
+      <module name="discodeit" options="-parameters" />
+      <module name="discodeit.main" options="-parameters" />
+      <module name="discodeit.test" options="-parameters" />
+    </option>
+  </component>
+</project>

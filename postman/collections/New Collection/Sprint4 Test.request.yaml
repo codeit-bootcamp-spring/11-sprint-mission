@@ -1,0 +1,11 @@
+$kind: http-request
+name: Sprint4 Test
+description: |-
+  {  
+  "username": "tester123",  
+  "email": "[test@sprint.com](https://mailto:test@sprint.com)",  
+  "password": "password123"  
+  }
+url: ""
+method: GET
+order: 1774664401612
