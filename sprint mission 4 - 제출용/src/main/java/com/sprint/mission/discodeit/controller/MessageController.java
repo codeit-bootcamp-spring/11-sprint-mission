@@ -7,47 +7,67 @@ import com.sprint.mission.discodeit.service.MessageService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
-@RequestMapping("/api/message")
+@RequestMapping("/api/messages")
 @RequiredArgsConstructor
 public class MessageController {
-    private final MessageService messageService;
 
-    // create
-    @RequestMapping(method = RequestMethod.POST)
-    public ResponseEntity<Message> create(@Valid @RequestBody MessageCreateRequest request){
-        return ResponseEntity.status(HttpStatus.CREATED).body(messageService.create(request));
-    }
+  private final MessageService messageService;
 
-    // read
-    @RequestMapping(value = "/{id}", method = RequestMethod.GET)
-    public ResponseEntity<Message> read(@PathVariable UUID id){
-        return ResponseEntity.ok(messageService.read(id));
-    }
+  // POST /api/messages - 201 Created
+  // Json만 입력받기
+  @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<Message> create(@Valid @RequestBody MessageCreateRequest request) {
+    return ResponseEntity.status(HttpStatus.CREATED)
+        .body(messageService.create(request));
+  }
 
-    // readAllByChannelId
-    @RequestMapping(method = RequestMethod.GET)
-    public ResponseEntity<List<Message>> readAllByChannelId(@RequestParam UUID channelId){
-        return ResponseEntity.ok(messageService.readAllByChannelId(channelId));
-    }
+  // POST /api/messages - 201 Created
+  // multipart/form-data만 입력받기
+  // Postman에서는 Json파일로 넘겨야 작동함.
+  @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  public ResponseEntity<Message> createMultipart(
+      @Valid @RequestPart("messageCreateRequest") MessageCreateRequest request,
+      @RequestPart(value = "attachments", required = false) List<MultipartFile> attachments
+  ) {
+    return ResponseEntity.status(HttpStatus.CREATED)
+        .body(messageService.create(request));
+  }
 
-    // update
-    @RequestMapping(value = "/{id}", method = RequestMethod.PUT)
-    public ResponseEntity<Void> update(@PathVariable UUID id, @Valid @RequestBody MessageUpdateRequest request){
-        messageService.update(request);
-        return ResponseEntity.ok().build();
-    }
+  // PUT /api/messages/{messageId} - 200 OK
+  @PutMapping(value = "/{messageId}", consumes = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<Message> update(
+      @PathVariable UUID messageId,
+      @Valid @RequestBody MessageUpdateRequest request
+  ) {
+    messageService.update(new MessageUpdateRequest(messageId, request.getNewContent()));
+    return ResponseEntity.ok(messageService.read(messageId));
+  }
 
-    // delete
-    @RequestMapping(value = "/{id}", method = RequestMethod.DELETE)
-    public ResponseEntity<Void> delete(@PathVariable UUID id){
-        messageService.delete(id);
-        return ResponseEntity.noContent().build();
-    }
+  // GET /api/messages/{messageId} - 200 OK
+  @GetMapping("/{messageId}")
+  public ResponseEntity<Message> read(@PathVariable UUID messageId) {
+    return ResponseEntity.ok(messageService.read(messageId));
+  }
+
+  // GET /api/messages?channelId=123 - 200 OK
+  @GetMapping
+  public ResponseEntity<List<Message>> readAllByChannelId(@RequestParam UUID channelId) {
+    return ResponseEntity.ok(messageService.readAllByChannelId(channelId));
+  }
+
+  // DELETE /api/messages/{messageId} - 204 No Content
+  @DeleteMapping("/{messageId}")
+  public ResponseEntity<Void> delete(@PathVariable UUID messageId) {
+    messageService.delete(messageId);
+    return ResponseEntity.noContent().build();
+  }
 }

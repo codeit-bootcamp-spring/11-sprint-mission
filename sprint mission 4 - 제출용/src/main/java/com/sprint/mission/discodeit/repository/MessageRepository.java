@@ -6,15 +6,18 @@ import java.util.List;
 import java.util.UUID;
 
 public interface MessageRepository {
-    Message create(Message message);
 
-    Message read(UUID id);
+  Message create(Message message);
 
-    List<Message> readAll();
-    List<Message> readAllByChannelId(UUID channelId);
+  Message read(UUID id);
 
-    Message update(Message message);
+  List<Message> readAll();
 
-    void delete(UUID id);
-    void deleteAllByChannelId(UUID channelId);  // 추가
+  List<Message> readAllByChannelId(UUID channelId);
+
+  Message update(Message message);
+
+  void delete(UUID id);
+
+  void deleteAllByChannelId(UUID channelId);  // 추가
 }

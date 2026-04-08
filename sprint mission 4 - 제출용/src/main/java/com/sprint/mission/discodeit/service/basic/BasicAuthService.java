@@ -1,26 +1,26 @@
 package com.sprint.mission.discodeit.service.basic;
 
 import com.sprint.mission.discodeit.dto.auth.LoginRequest;
-import com.sprint.mission.discodeit.dto.user.UserResponse;
+import com.sprint.mission.discodeit.dto.auth.LoginResponse;
 import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.exception.DiscodeitInvalidPasswordException;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.UUID;
-
 @Service
 @RequiredArgsConstructor
 public class BasicAuthService implements AuthService {
-    private final UserRepository userRepository;
 
-    @Override
-    public UserResponse login(LoginRequest request) {
-        User user = userRepository.findByUserName(request.getUserName());
-        if (user == null || !user.getUserPassword().equals(request.getUserPassword())) {
-            throw new IllegalArgumentException("아이디 비밀번호가 일치하지 않습니다.");
-        }
-        return new UserResponse(user.getId(), user.getUserName(), user.getUserEmail(), true);
+  private final UserRepository userRepository;
+
+  @Override
+  public LoginResponse login(LoginRequest request) {
+    User user = userRepository.findByUserName(request.getUsername());
+    if (user == null || !user.getUserPassword().equals(request.getPassword())) {
+      throw new DiscodeitInvalidPasswordException();
     }
+    return new LoginResponse(user.getId(), user.getUserName(), user.getUserEmail(), true);
+  }
 }

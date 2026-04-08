@@ -9,17 +9,16 @@ import java.util.List;
 import java.util.UUID;
 
 public interface UserService {
-    UserResponse create(UserCreateRequest request);
 
-    UserResponse read(UUID id);
+  UserResponse create(UserCreateRequest request);
 
-    List<UserResponse> readAll();
+  UserResponse read(UUID id);
 
-    void update(UserUpdateRequest request);
+  List<UserResponse> readAll();
 
-    void delete(UUID id);
+  void update(UserUpdateRequest request);
 
-    void restore(UUID id);
+  void delete(UUID id);
 
-    List<UserDto> readAllDto();
+  List<UserDto> readAllDto();
 }

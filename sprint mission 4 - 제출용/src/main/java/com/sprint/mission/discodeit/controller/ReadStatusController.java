@@ -14,28 +14,32 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/readStatus")
+@RequestMapping("/api/readStatuses")
 @RequiredArgsConstructor
 public class ReadStatusController {
-    private final ReadStatusService readStatusService;
 
-    // create
-    @RequestMapping(method = RequestMethod.POST)
-    public ResponseEntity<ReadStatus> create(@Valid @RequestBody ReadStatusCreateRequest request){
-        return ResponseEntity.status(HttpStatus.CREATED).body(readStatusService.create(request));
-    }
+  private final ReadStatusService readStatusService;
 
-    // readAllByUserId
-    @RequestMapping (method = RequestMethod.GET)
-    public ResponseEntity<List<ReadStatus>> readAllByUserId(@RequestParam UUID userId){
-        return ResponseEntity.ok(readStatusService.readAllByUserId(userId));
-    }
+  // POST /api/readStatuses - 201 Created
+  @PostMapping
+  public ResponseEntity<ReadStatus> create(@Valid @RequestBody ReadStatusCreateRequest request) {
+    return ResponseEntity.status(HttpStatus.CREATED)
+        .body(readStatusService.create(request));
+  }
 
-    // update
-    @RequestMapping(method = RequestMethod.PUT)
-    public ResponseEntity<Void> update(@Valid @RequestBody ReadStatusUpdateRequest request){
-        readStatusService.update(request);
-        return ResponseEntity.ok().build();
-    }
+  // GET /api/readStatuses?userId=123 - 200 OK
+  @GetMapping
+  public ResponseEntity<List<ReadStatus>> readAllByUserId(@RequestParam UUID userId) {
+    return ResponseEntity.ok(readStatusService.readAllByUserId(userId));
+  }
 
+  // POST /api/readStatuses/{readStatusId} - 200 OK
+  @PatchMapping("/{readStatusId}")
+  public ResponseEntity<ReadStatus> update(
+      @PathVariable UUID readStatusId,
+      @Valid @RequestBody ReadStatusUpdateRequest request) {
+    readStatusService.update(new ReadStatusUpdateRequest(readStatusId, request.getNewLastReadAt())
+    );
+    return ResponseEntity.ok(readStatusService.read(readStatusId));
+  }
 }

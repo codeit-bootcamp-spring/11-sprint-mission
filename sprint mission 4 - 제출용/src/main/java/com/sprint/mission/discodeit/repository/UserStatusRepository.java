@@ -7,15 +7,16 @@ import java.util.List;
 import java.util.UUID;
 
 public interface UserStatusRepository {
-    UserStatus create(UserStatus userStatus);
 
-    UserStatus readByUserId(UUID userId);
+  UserStatus create(UserStatus userStatus);
 
-    List<UserStatus> readAll();
+  UserStatus readByUserId(UUID userId);
 
-    UserStatus update(UUID userId, Instant lastOnlineAt);
+  List<UserStatus> readAll();
 
-    void delete(UUID userId);
+  UserStatus update(UUID userId, Instant lastOnlineAt);
 
-    void restore(UUID id);
+  void delete(UUID userId);
+
+  void restore(UUID id);
 }

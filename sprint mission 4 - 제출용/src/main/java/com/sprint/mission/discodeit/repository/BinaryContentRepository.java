@@ -6,16 +6,18 @@ import java.util.List;
 import java.util.UUID;
 
 public interface BinaryContentRepository {
-    BinaryContent create(BinaryContent binaryContent);
 
-    BinaryContent readById(UUID id);
+  BinaryContent create(BinaryContent binaryContent);
 
-    BinaryContent readByUserId(UUID userId);
+  BinaryContent readById(UUID id);
 
-    List<BinaryContent> readAllByMessageId(UUID messageId);
+  BinaryContent readByUserId(UUID userId);
 
-    void delete(UUID id);
-    void deleteByMessageId(UUID messageId);
+  List<BinaryContent> readAllByMessageId(UUID messageId);
 
-    void deleteByUserId(UUID userId);
+  void delete(UUID id);
+
+  void deleteByMessageId(UUID messageId);
+
+  void deleteByUserId(UUID userId);
 }

@@ -8,14 +8,15 @@ import java.util.List;
 import java.util.UUID;
 
 public interface ReadStatusService {
-    ReadStatus create(ReadStatusCreateRequest request);
 
-    ReadStatus read(UUID id);
+  ReadStatus create(ReadStatusCreateRequest request);
 
-    // User의 모든 채널 ReadStatus 조회
-    List<ReadStatus> readAllByUserId(UUID userId);
+  ReadStatus read(UUID id);
 
-    void update(ReadStatusUpdateRequest request);
+  // User의 모든 채널 ReadStatus 조회
+  List<ReadStatus> readAllByUserId(UUID userId);
 
-    void delete(UUID id);
+  void update(ReadStatusUpdateRequest request);
+
+  void delete(UUID id);
 }

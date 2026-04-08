@@ -7,20 +7,21 @@ import java.util.List;
 import java.util.UUID;
 
 public interface ReadStatusRepository {
-    ReadStatus create(ReadStatus readStatus);
 
-    ReadStatus read(UUID id);
+  ReadStatus create(ReadStatus readStatus);
 
-    ReadStatus readByUserIdAndChannelId(UUID userId, UUID channelId);
+  ReadStatus read(UUID id);
 
-    List<ReadStatus> readAllByChannelId(UUID channelId);
+  ReadStatus readByUserIdAndChannelId(UUID userId, UUID channelId);
 
-    List<ReadStatus> readAllByUserId(UUID userId);
+  List<ReadStatus> readAllByChannelId(UUID channelId);
 
-    ReadStatus update(UUID userId, UUID channelId, Instant lastMessageReadAt);
+  List<ReadStatus> readAllByUserId(UUID userId);
 
-    void deleteByChannelId(UUID channelId);
+  ReadStatus update(UUID userId, UUID channelId, Instant lastMessageReadAt);
 
-    void deleteByUserId(UUID userId);
+  void deleteByChannelId(UUID channelId);
+
+  void deleteByUserId(UUID userId);
 }
 
