@@ -13,85 +13,69 @@ import java.util.UUID;
 
 public class UserDto {
 
-    @Builder
-    public record CreateRequest(
-            @NotBlank(message = "이름은 필수 항목입니다.")
-            @Size(min = 2, max = 10, message = "이름은 2~10자 사이여야 합니다.")
-            String username,
+  @Builder
+  public record CreateRequest(
+      @NotBlank(message = "이름은 필수 항목입니다.")
+      @Size(min = 2, max = 20, message = "이름은 2~20자 사이여야 합니다.")
+      String username,
 
-            @NotBlank(message = "닉네임은 필수 항목입니다.")
-            @Size(max = 20, message = "닉네임은 20자를 초과할 수 없습니다.")
-            String nickname,
+      @NotBlank(message = "이메일은 필수 항목입니다.")
+      @Email(message = "올바른 이메일 형식이 아닙니다.")
+      String email,
 
-            @Size(max = 100, message = "소개글은 100자를 초과할 수 없습니다.")
-            String description,
+      @NotBlank(message = "비밀번호는 필수 항목입니다.")
+      @Pattern(regexp = "^(?=.*[A-Za-z])(?=.*\\d)(?=.*[@$!%*#?&])[A-Za-z\\d@$!%*#?&]{8,}$",
+          message = "비밀번호는 8자 이상으로 영문, 숫자, 특수문자를 포함해야 합니다.")
+      String password
+  ) {
 
-            @NotBlank(message = "이메일은 필수 항목입니다.")
-            @Email(message = "올바른 이메일 형식이 아닙니다.")
-            String email,
-
-            @NotBlank(message = "비밀번호는 필수 항목입니다.")
-            @Pattern(regexp = "^(?=.*[A-Za-z])(?=.*\\d)(?=.*[@$!%*#?&])[A-Za-z\\d@$!%*#?&]{8,}$",
-                    message = "비밀번호는 8자 이상으로 영문, 숫자, 특수문자를 포함해야 합니다.")
-            String password
-    ) {
-        // DTO -> Entity
-        public User toEntity(UUID profileImageId) {
-            return User.builder()
-                    .username(this.username)
-                    .nickname(this.nickname)
-                    .description(this.description)
-                    .email(this.email)
-                    .password(this.password)
-                    .profileImageId(profileImageId)
-                    .build();
-        }
+    // DTO -> Entity
+    public User toEntity(UUID profileImageId) {
+      return User.builder()
+          .username(this.username)
+          .email(this.email)
+          .password(this.password)
+          .profileImageId(profileImageId)
+          .build();
     }
+  }
 
-    public record UpdateRequest(
-            @NotBlank(message = "이름은 필수 항목입니다.")
-            @Size(min = 2, max = 10, message = "이름은 2~10자 사이여야 합니다.")
-            String username,
+  public record UpdateRequest(
+      @Size(min = 2, max = 10, message = "이름은 2~10자 사이여야 합니다.")
+      String newUsername,
 
-            @NotBlank(message = "닉네임은 필수 항목입니다.")
-            @Size(max = 20, message = "닉네임은 20자를 초과할 수 없습니다.")
-            String nickname,
+      @Email(message = "올바른 이메일 형식이 아닙니다.")
+      String newEmail,
 
-            @Size(max = 100, message = "소개글은 100자를 초과할 수 없습니다.")
-            String description,
+      @Pattern(regexp = "^(?=.*[A-Za-z])(?=.*\\d)(?=.*[@$!%*#?&])[A-Za-z\\d@$!%*#?&]{8,}$",
+          message = "비밀번호는 8자 이상으로 영문, 숫자, 특수문자를 포함해야 합니다.")
+      String newPassword
+  ) {
 
-            @NotBlank(message = "이메일은 필수 항목입니다.")
-            @Email(message = "올바른 이메일 형식이 아닙니다.")
-            String email,
+  }
 
-            @NotBlank(message = "비밀번호는 필수 항목입니다.")
-            @Pattern(regexp = "^(?=.*[A-Za-z])(?=.*\\d)(?=.*[@$!%*#?&])[A-Za-z\\d@$!%*#?&]{8,}$",
-                    message = "비밀번호는 8자 이상으로 영문, 숫자, 특수문자를 포함해야 합니다.")
-            String password
-    ) {}
+  @Builder
+  public record Response(
+      UUID id,
+      Instant createdAt,
+      Instant updatedAt,
+      String username,
+      String email,
+      UUID profileId,
+      Boolean online
+  ) {
 
-    @Builder
-    public record Response(
-            UUID id,
-            Instant createdAt,
-            Instant updatedAt,
-            String username,
-            String email,
-            UUID profileId,
-            Boolean online
-    ) {
-
-        // Entity -> DTO
-        public static Response of(User user, UserStatus status) {
-            return Response.builder()
-                    .id(user.getId())
-                    .createdAt(user.getCreatedAt())
-                    .updatedAt(user.getUpdatedAt())
-                    .username(user.getUsername())
-                    .email(user.getEmail())
-                    .profileId(user.getProfileImageId())
-                    .online(status.isOnline())
-                    .build();
-        }
+    // Entity -> DTO
+    public static Response of(User user, UserStatus status) {
+      return Response.builder()
+          .id(user.getId())
+          .createdAt(user.getCreatedAt())
+          .updatedAt(user.getUpdatedAt())
+          .username(user.getUsername())
+          .email(user.getEmail())
+          .profileId(user.getProfileImageId())
+          .online(status.isOnline())
+          .build();
     }
+  }
 }

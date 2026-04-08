@@ -20,69 +20,70 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/users")
+@RequestMapping("/api/users")
 @RequiredArgsConstructor
 public class UserController {
 
-    private final UserService userService;
-    private final UserStatusService userStatusService;
+  private final UserService userService;
+  private final UserStatusService userStatusService;
 
-    @RequestMapping(method = RequestMethod.POST, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<UserDto.Response> create(
-            @Valid @RequestPart("request") UserDto.CreateRequest request,
-            @RequestPart(value = "profileImage", required = false) MultipartFile profileImage) {
-        BinaryContentDto.CreateRequest profileImageRequest = convertToProfileImageDto(profileImage);
+  @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  public ResponseEntity<UserDto.Response> create(
+      @Valid @RequestPart("userCreateRequest") UserDto.CreateRequest request,
+      @RequestPart(value = "profile", required = false) MultipartFile profileImage) {
+    BinaryContentDto.CreateRequest profileImageRequest = convertToProfileImageDto(profileImage);
 
-        UserDto.Response response = userService.create(request, profileImageRequest);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    UserDto.Response response = userService.create(request, profileImageRequest);
+    return ResponseEntity.status(HttpStatus.CREATED).body(response);
+  }
+
+  @PatchMapping(path = "/{userId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  public ResponseEntity<UserDto.Response> update(
+      @PathVariable UUID userId,
+      @Valid @RequestPart("userUpdateRequest") UserDto.UpdateRequest request,
+      @RequestPart(value = "profile", required = false) MultipartFile profileImage) {
+    BinaryContentDto.CreateRequest profileImageRequest = convertToProfileImageDto(profileImage);
+
+    UserDto.Response response = userService.update(userId, request, profileImageRequest);
+    return ResponseEntity.ok(response);
+  }
+
+  @DeleteMapping(path = "/{userId}")
+  public ResponseEntity<Void> delete(
+      @PathVariable UUID userId) {
+    userService.delete(userId);
+    return ResponseEntity.noContent().build();
+  }
+
+  @GetMapping
+  public ResponseEntity<List<UserDto.Response>> findAll() {
+    List<UserDto.Response> responseList = userService.findAll();
+    return ResponseEntity.ok(responseList);
+  }
+
+  @PatchMapping(path = "/{userId}/userStatus")
+  public ResponseEntity<UserStatusDto.Response> updateUserStatus(
+      @PathVariable UUID userId,
+      @RequestBody @Valid UserStatusDto.UpdateRequest request) {
+
+    UserStatusDto.Response response = userStatusService.updateByUserId(userId, request);
+    return ResponseEntity.ok(response);
+  }
+
+  // 파일을 DTO 형태로 변환
+  private BinaryContentDto.CreateRequest convertToProfileImageDto(MultipartFile file) {
+    if (file == null || file.isEmpty()) {
+      return null;
     }
-
-    @RequestMapping(value = "/{id}", method = RequestMethod.PUT, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<UserDto.Response> update(
-            @PathVariable UUID id,
-            @Valid @RequestPart("request")  UserDto.UpdateRequest request,
-            @RequestPart(value = "profileImage", required = false) MultipartFile profileImage) {
-        BinaryContentDto.CreateRequest profileImageRequest = convertToProfileImageDto(profileImage);
-
-        UserDto.Response response = userService.update(id, request, profileImageRequest);
-        return ResponseEntity.ok(response);
+    try {
+      return BinaryContentDto.CreateRequest.builder()
+          .fileName(file.getOriginalFilename())
+          .size(file.getSize())
+          .contentType(file.getContentType())
+          .bytes(file.getBytes())
+          .build();
+    } catch (IOException e) {
+      throw new BusinessException(ErrorCode.FILE_READ_FAILED);
     }
-
-    @RequestMapping(value = "/{id}", method = RequestMethod.DELETE)
-    public ResponseEntity<Void> delete(
-            @PathVariable UUID id) {
-        userService.delete(id);
-        return ResponseEntity.noContent().build();
-    }
-
-    @RequestMapping(method = RequestMethod.GET)
-    public ResponseEntity<List<UserDto.Response>> findAll() {
-        List<UserDto.Response> responseList = userService.findAll();
-        return ResponseEntity.ok(responseList);
-    }
-
-    @RequestMapping(value = "/{id}/status", method = RequestMethod.PATCH)
-    public ResponseEntity<UserStatusDto.Response> updateUserStatus(
-            @PathVariable UUID id) {
-
-        UserStatusDto.Response response = userStatusService.updateByUserId(id);
-        return ResponseEntity.ok(response);
-    }
-
-    // 파일을 DTO 형태로 변환
-    private BinaryContentDto.CreateRequest convertToProfileImageDto(MultipartFile file) {
-        if (file == null || file.isEmpty()) {
-            return null;
-        }
-        try {
-            return BinaryContentDto.CreateRequest.builder()
-                    .fileName(file.getOriginalFilename())
-                    .size(file.getSize())
-                    .contentType(file.getContentType())
-                    .bytes(file.getBytes())
-                    .build();
-        } catch (IOException e) {
-            throw new BusinessException(ErrorCode.FILE_READ_FAILED);
-        }
-    }
+  }
 }

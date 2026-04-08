@@ -12,31 +12,31 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/read-statuses")
+@RequestMapping("/api/readStatuses")
 @RequiredArgsConstructor
 public class ReadStatusController {
 
-    private final ReadStatusService readStatusService;
+  private final ReadStatusService readStatusService;
 
-    @RequestMapping(method = RequestMethod.POST)
-    public ResponseEntity<ReadStatusDto.Response> create(
-            @Valid @RequestBody ReadStatusDto.CreateRequest request) {
-        ReadStatusDto.Response response = readStatusService.create(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
-    }
+  @PostMapping
+  public ResponseEntity<ReadStatusDto.Response> create(
+      @Valid @RequestBody ReadStatusDto.CreateRequest request) {
+    ReadStatusDto.Response response = readStatusService.create(request);
+    return ResponseEntity.status(HttpStatus.CREATED).body(response);
+  }
 
-    @RequestMapping(value = "/{id}", method = RequestMethod.PUT)
-    public ResponseEntity<ReadStatusDto.Response> update(
-            @PathVariable UUID id,
-            @Valid @RequestBody ReadStatusDto.UpdateRequest request) {
-        ReadStatusDto.Response response = readStatusService.update(id, request);
-        return ResponseEntity.ok(response);
-    }
+  @PatchMapping("/{readStatusId}")
+  public ResponseEntity<ReadStatusDto.Response> update(
+      @PathVariable UUID readStatusId,
+      @Valid @RequestBody ReadStatusDto.UpdateRequest request) {
+    ReadStatusDto.Response response = readStatusService.update(readStatusId, request);
+    return ResponseEntity.ok(response);
+  }
 
-    @RequestMapping(method = RequestMethod.GET)
-    public ResponseEntity<List<ReadStatusDto.Response>> findAllByUserId(
-            @RequestParam UUID userId) {
-        List<ReadStatusDto.Response> responseList = readStatusService.findAllByUserId(userId);
-        return ResponseEntity.ok(responseList);
-    }
+  @GetMapping
+  public ResponseEntity<List<ReadStatusDto.Response>> findAllByUserId(
+      @RequestParam UUID userId) {
+    List<ReadStatusDto.Response> responseList = readStatusService.findAllByUserId(userId);
+    return ResponseEntity.ok(responseList);
+  }
 }

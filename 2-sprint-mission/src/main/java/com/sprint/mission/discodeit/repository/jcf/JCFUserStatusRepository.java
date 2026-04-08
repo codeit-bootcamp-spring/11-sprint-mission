@@ -11,42 +11,49 @@ import java.util.*;
 @Repository
 @ConditionalOnProperty(name = "discodeit.repository.type", havingValue = "jcf", matchIfMissing = true)
 public class JCFUserStatusRepository implements UserStatusRepository {
-    private final Map<UUID, UserStatus> data;
 
-    public JCFUserStatusRepository() {
-        this.data = new HashMap<>();
-    }
+  private final Map<UUID, UserStatus> data;
 
-    @Override
-    public UserStatus save(UserStatus userStatus) {
-        data.put(userStatus.getId(), userStatus);
-        return userStatus;
-    }
+  public JCFUserStatusRepository() {
+    this.data = new HashMap<>();
+  }
 
-    @Override
-    public Optional<UserStatus> findById(UUID id) {
-        return Optional.ofNullable(data.get(id));
-    }
+  @Override
+  public UserStatus save(UserStatus userStatus) {
+    data.put(userStatus.getId(), userStatus);
+    return userStatus;
+  }
 
-    @Override
-    public List<UserStatus> findAll() {
-        return data.values().stream().toList();
-    }
+  @Override
+  public Optional<UserStatus> findById(UUID id) {
+    return Optional.ofNullable(data.get(id));
+  }
 
-    @Override
-    public boolean existsById(UUID id) {
-        return data.containsKey(id);
-    }
+  @Override
+  public List<UserStatus> findAll() {
+    return data.values().stream().toList();
+  }
 
-    @Override
-    public void deleteById(UUID id) {
-        data.remove(id);
-    }
+  @Override
+  public boolean existsById(UUID id) {
+    return data.containsKey(id);
+  }
 
-    @Override
-    public Optional<UserStatus> findByUserId(UUID userId) {
-        return data.values().stream()
-                .filter(status -> status.getUserId().equals(userId))
-                .findFirst();
-    }
+  @Override
+  public void deleteById(UUID id) {
+    data.remove(id);
+  }
+
+  @Override
+  public void deleteByUserId(UUID userId) {
+    findByUserId(userId)
+        .ifPresent(userStatus -> deleteById(userStatus.getId()));
+  }
+
+  @Override
+  public Optional<UserStatus> findByUserId(UUID userId) {
+    return data.values().stream()
+        .filter(status -> status.getUserId().equals(userId))
+        .findFirst();
+  }
 }

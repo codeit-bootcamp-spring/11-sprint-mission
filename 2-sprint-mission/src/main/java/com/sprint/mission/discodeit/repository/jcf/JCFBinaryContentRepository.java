@@ -6,47 +6,47 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Repository;
 
 import java.util.*;
+import org.springframework.util.CollectionUtils;
 
 @Repository
 @ConditionalOnProperty(name = "discodeit.repository.type", havingValue = "jcf", matchIfMissing = true)
 public class JCFBinaryContentRepository implements BinaryContentRepository {
-    private final Map<UUID, BinaryContent> data;
 
-    public JCFBinaryContentRepository() {
-        this.data = new HashMap<>();
+  private final Map<UUID, BinaryContent> data;
+
+  public JCFBinaryContentRepository() {
+    this.data = new HashMap<>();
+  }
+
+  @Override
+  public BinaryContent save(BinaryContent binaryContent) {
+    data.put(binaryContent.getId(), binaryContent);
+    return binaryContent;
+  }
+
+  @Override
+  public Optional<BinaryContent> findById(UUID id) {
+    return Optional.ofNullable(data.get(id));
+  }
+
+  @Override
+  public List<BinaryContent> findAllByIdIn(List<UUID> ids) {
+    if (CollectionUtils.isEmpty(ids)) {
+      return Collections.emptyList();
     }
 
-    @Override
-    public BinaryContent save(BinaryContent binaryContent) {
-        data.put(binaryContent.getId(), binaryContent);
-        return binaryContent;
-    }
+    return data.values().stream()
+        .filter(content -> ids.contains(content.getId()))
+        .toList();
+  }
 
-    @Override
-    public Optional<BinaryContent> findById(UUID id) {
-        return Optional.ofNullable(data.get(id));
-    }
+  @Override
+  public boolean existsById(UUID id) {
+    return data.containsKey(id);
+  }
 
-    @Override
-    public List<BinaryContent> findAllByIdIn(List<UUID> ids) {
-        // 1. 전달받은 ids가 null이거나 비어있으면 빈 리스트 반환
-        if (ids == null || ids.isEmpty()) {
-            return Collections.emptyList();
-        }
-
-        // 2. storage의 값들 중 id가 요청 리스트(ids)에 포함된 것만 필터링
-        return data.values().stream()
-                .filter(content -> ids.contains(content.getId()))
-                .toList();
-    }
-
-    @Override
-    public boolean existsById(UUID id) {
-        return data.containsKey(id);
-    }
-
-    @Override
-    public void deleteById(UUID id) {
-        data.remove(id);
-    }
+  @Override
+  public void deleteById(UUID id) {
+    data.remove(id);
+  }
 }

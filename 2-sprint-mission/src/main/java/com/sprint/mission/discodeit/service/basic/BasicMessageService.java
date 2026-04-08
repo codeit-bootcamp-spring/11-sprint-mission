@@ -20,67 +20,68 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class BasicMessageService implements MessageService {
-    private final MessageRepository messageRepository;
-    private final ChannelRepository channelRepository;
-    private final UserRepository userRepository;
-    private final BinaryContentRepository binaryContentRepository;
+
+  private final MessageRepository messageRepository;
+  private final ChannelRepository channelRepository;
+  private final UserRepository userRepository;
+  private final BinaryContentRepository binaryContentRepository;
 
 
-    @Override
-    public MessageDto.Response create(MessageDto.CreateRequest request,
-                                      List<BinaryContentDto.CreateRequest> fileRequests) {
-        if (!channelRepository.existsById(request.channelId())) {
-            throw new BusinessException(ErrorCode.CHANNEL_NOT_FOUND);
-        }
-        if (!userRepository.existsById(request.authorId())) {
-            throw new BusinessException(ErrorCode.USER_NOT_FOUND);
-        }
-
-        List<UUID> attachmentIds = fileRequests.stream()
-                .map(fileRequest -> {
-                    BinaryContent binaryContent = fileRequest.toEntity();
-
-                    BinaryContent createdBinaryContent = binaryContentRepository.save(binaryContent);
-                    return createdBinaryContent.getId();
-                })
-                .toList();
-
-        Message message = request.toEntity(attachmentIds);
-
-        return MessageDto.Response.of(messageRepository.save(message));
+  @Override
+  public MessageDto.Response create(MessageDto.CreateRequest request,
+      List<BinaryContentDto.CreateRequest> fileRequests) {
+    if (!channelRepository.existsById(request.channelId())) {
+      throw new BusinessException(ErrorCode.CHANNEL_NOT_FOUND);
+    }
+    if (!userRepository.existsById(request.authorId())) {
+      throw new BusinessException(ErrorCode.USER_NOT_FOUND);
     }
 
+    List<UUID> attachmentIds = fileRequests.stream()
+        .map(fileRequest -> {
+          BinaryContent binaryContent = fileRequest.toEntity();
 
-    @Override
-    public List<MessageDto.Response> findAllByChannelId(UUID channelId) {
-        if (!channelRepository.existsById(channelId)) {
-            throw new BusinessException(ErrorCode.CHANNEL_NOT_FOUND);
-        }
+          BinaryContent createdBinaryContent = binaryContentRepository.save(binaryContent);
+          return createdBinaryContent.getId();
+        })
+        .toList();
 
-        return messageRepository.findAll().stream()
-                .filter(message -> message.getChannelId().equals(channelId))
-                .map(MessageDto.Response::of)
-                .toList();
+    Message message = request.toEntity(attachmentIds);
+
+    return MessageDto.Response.of(messageRepository.save(message));
+  }
+
+
+  @Override
+  public List<MessageDto.Response> findAllByChannelId(UUID channelId) {
+    if (!channelRepository.existsById(channelId)) {
+      throw new BusinessException(ErrorCode.CHANNEL_NOT_FOUND);
     }
 
-    @Override
-    public MessageDto.Response update(UUID id, MessageDto.UpdateRequest request) {
-        Message message = messageRepository.findById(id)
-                .orElseThrow(() -> new BusinessException(ErrorCode.MESSAGE_NOT_FOUND));
+    return messageRepository.findAll().stream()
+        .filter(message -> message.getChannelId().equals(channelId))
+        .map(MessageDto.Response::of)
+        .toList();
+  }
 
-        message.update(request.content());
-        messageRepository.save(message);
+  @Override
+  public MessageDto.Response update(UUID id, MessageDto.UpdateRequest request) {
+    Message message = messageRepository.findById(id)
+        .orElseThrow(() -> new BusinessException(ErrorCode.MESSAGE_NOT_FOUND));
 
-        return MessageDto.Response.of(message);
-    }
+    message.update(request.newContent());
+    messageRepository.save(message);
 
-    @Override
-    public void delete(UUID id) {
-        Message message = messageRepository.findById(id)
-                .orElseThrow(() -> new BusinessException(ErrorCode.MESSAGE_NOT_FOUND));
+    return MessageDto.Response.of(message);
+  }
 
-        message.getAttachmentIds().forEach(binaryContentRepository::deleteById);
+  @Override
+  public void delete(UUID id) {
+    Message message = messageRepository.findById(id)
+        .orElseThrow(() -> new BusinessException(ErrorCode.MESSAGE_NOT_FOUND));
 
-        messageRepository.deleteById(id);
-    }
+    message.getAttachmentIds().forEach(binaryContentRepository::deleteById);
+
+    messageRepository.deleteById(id);
+  }
 }

@@ -10,21 +10,21 @@ import java.util.UUID;
 @Getter
 public abstract class BaseEntity implements Serializable {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+  @Serial
+  private static final long serialVersionUID = 1L;
 
-    private final UUID id;
-    private final Instant createdAt;
-    private Instant updatedAt;
+  private final UUID id;
+  private final Instant createdAt;
+  private Instant updatedAt;
 
-    public BaseEntity() {
-        this.id = UUID.randomUUID();
-        this.createdAt = Instant.now();
-        this.updatedAt = this.createdAt;
-    }
+  protected BaseEntity() {
+    this.id = UUID.randomUUID();
+    this.createdAt = Instant.now();
+    this.updatedAt = this.createdAt;
+  }
 
-    protected void timeUpdate() {
-        this.updatedAt = Instant.now();
-    }
+  protected void timeUpdate() {
+    this.updatedAt = Instant.now();
+  }
 
 }

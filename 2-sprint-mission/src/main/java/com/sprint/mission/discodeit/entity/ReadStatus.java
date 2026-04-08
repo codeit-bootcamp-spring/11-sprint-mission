@@ -11,17 +11,18 @@ import java.util.UUID;
 @Builder
 @AllArgsConstructor
 public class ReadStatus extends BaseEntity {
-    private final UUID userId;
-    private final UUID channelId;
 
-    @Builder.Default
-    private Instant lastReadAt = Instant.now();
+  private final UUID userId;
+  private final UUID channelId;
 
-    // updatedAt을 현재 시간으로 갱신
-    public void update(Instant newLastReadAt) {
-        if (newLastReadAt != null && !newLastReadAt.equals(this.lastReadAt)) {
-            this.lastReadAt = newLastReadAt;
-            super.timeUpdate();
-        }
+  @Builder.Default
+  private Instant lastReadAt = Instant.now();
+
+  // updatedAt을 현재 시간으로 갱신
+  public void update(Instant newLastReadAt) {
+    if (newLastReadAt != null && !newLastReadAt.equals(this.lastReadAt)) {
+      this.lastReadAt = newLastReadAt;
+      super.timeUpdate();
     }
+  }
 }
