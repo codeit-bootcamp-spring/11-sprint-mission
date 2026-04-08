@@ -21,8 +21,9 @@ public class CommonJCFRepository<T extends BaseEntity> {
         repo = new ConcurrentHashMap<>();
     }
 
-    public void save(T obj) {
+    public T save(T obj) {
         repo.put(obj.getId(), obj);
+        return obj;
     }
 
     public Optional<T> findById(UUID id) {
@@ -33,8 +34,8 @@ public class CommonJCFRepository<T extends BaseEntity> {
         return new ArrayList<>(repo.values());
     }
 
-    public boolean deleteById(UUID id) {
-        return repo.remove(id) != null;
+    public void deleteById(UUID id) {
+        repo.remove(id);
     }
 
 }

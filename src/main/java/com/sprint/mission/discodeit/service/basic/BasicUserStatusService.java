@@ -87,9 +87,9 @@ public class BasicUserStatusService implements UserStatusService {
 
     @Override
     public void delete(UUID id) {
-        if(!userStatusRepo.deleteById(id)) {
-            throw new BusinessException(ErrorCode.USER_STATUS_NOT_FOUND);
-        }
+        userStatusRepo.findById(id)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_STATUS_NOT_FOUND));
+        userStatusRepo.deleteById(id);
     }
 
     private UserStatusDto toDto(UserStatus userStatus) {

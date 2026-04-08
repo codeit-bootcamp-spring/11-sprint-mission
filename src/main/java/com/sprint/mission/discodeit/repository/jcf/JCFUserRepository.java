@@ -1,6 +1,8 @@
 package com.sprint.mission.discodeit.repository.jcf;
 
 import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.exception.BusinessException;
+import com.sprint.mission.discodeit.exception.ErrorCode;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Repository;
@@ -29,7 +31,7 @@ public class JCFUserRepository extends CommonJCFRepository<User> implements User
     }
 
     @Override
-    public void save(User obj) {
+    public User save(User obj) {
         Optional<User> oldUserOpt = findById(obj.getId());
 
         if(oldUserOpt.isPresent()) {
@@ -45,21 +47,18 @@ public class JCFUserRepository extends CommonJCFRepository<User> implements User
         super.save(obj);
         usernameToId.put(obj.getUsername(), obj.getId());
         emailToId.put(obj.getEmail(), obj.getId());
+
+        return obj;
     }
 
     @Override
-    public boolean deleteById(UUID id) {
-        Optional<User> userOpt = findById(id);
-
-        if(userOpt.isEmpty()) {
-            return false;
-        }
-
-        User user = userOpt.get();
+    public void deleteById(UUID id) {
+        User user = super.findById(id)
+                        .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
         usernameToId.remove(user.getUsername());
         emailToId.remove(user.getEmail());
 
-        return super.deleteById(id);
+        super.deleteById(id);
     }
 
     @Override

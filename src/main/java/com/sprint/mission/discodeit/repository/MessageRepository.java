@@ -8,9 +8,9 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface MessageRepository {
-    void save(Message message);
+    Message save(Message message);
     Optional<Message> findById(UUID id);
     Optional<Instant> findLastMessageAtByChannelId(UUID id);
     List<Message> findAll();
-    boolean deleteById(UUID id);
+    void deleteById(UUID id);
 }

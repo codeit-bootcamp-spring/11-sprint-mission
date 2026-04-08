@@ -43,13 +43,14 @@ public abstract class CommonFileRepository<T extends BaseEntity> {
         return directory.resolve(id.toString() + ".ser");
     }
 
-    public void save(T obj) {
+    public T save(T obj) {
         Path path = filePath(obj.getId());
         try (
                 FileOutputStream fos = new FileOutputStream(path.toFile());
                 ObjectOutputStream oos = new ObjectOutputStream(fos)
         ) {
             oos.writeObject(obj);
+            return obj;
         } catch (IOException e) {
             throw new BusinessException(ErrorCode.FILE_SAVE_FAILED);
         }
@@ -99,10 +100,10 @@ public abstract class CommonFileRepository<T extends BaseEntity> {
         }
     }
 
-    public boolean deleteById(UUID id) {
+    public void deleteById(UUID id) {
         Path path = filePath(id);
         try {
-            return Files.deleteIfExists(path);
+            Files.deleteIfExists(path);
         } catch (IOException e) {
             throw new BusinessException(ErrorCode.FILE_DELETE_FAILED);
         }

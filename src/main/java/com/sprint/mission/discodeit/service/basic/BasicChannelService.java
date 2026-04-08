@@ -126,27 +126,21 @@ public class BasicChannelService implements ChannelService {
                 .toList();
         for(Message message : messageList) {
             for(UUID binaryContentId : message.getAttachmentIds()) {
-                if(!binaryContentRepo.deleteById(binaryContentId)) {
-                    throw new BusinessException(ErrorCode.BINARY_CONTENT_NOT_FOUND);
-                }
+                binaryContentRepo.findById(binaryContentId)
+                        .orElseThrow(() -> new BusinessException(ErrorCode.BINARY_CONTENT_NOT_FOUND));
+                binaryContentRepo.deleteById(binaryContentId);
             }
-            if(!messageRepo.deleteById(message.getId())) {
-                throw new BusinessException(ErrorCode.MESSAGE_NOT_FOUND);
-            }
+            messageRepo.deleteById(message.getId());
         }
 
         List<ReadStatus> readStatusList = readStatusRepo.findAll().stream()
                 .filter(p -> (p.getChannelId().equals(id)))
                 .toList();
         for(ReadStatus readStatus : readStatusList) {
-            if(!readStatusRepo.deleteById(readStatus.getId())) {
-                throw new BusinessException(ErrorCode.READ_STATUS_NOT_FOUND);
-            }
+            readStatusRepo.deleteById(readStatus.getId());
         }
 
-        if(!channelRepo.deleteById(id)) {
-            throw new BusinessException(ErrorCode.CHANNEL_NOT_FOUND);
-        }
+        channelRepo.deleteById(id);
     }
 
     private ChannelDto toDto(Channel channel, Instant lastMessageAt, List<UUID> userIds) {

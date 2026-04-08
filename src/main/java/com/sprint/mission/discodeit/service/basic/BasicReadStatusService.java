@@ -73,9 +73,9 @@ public class BasicReadStatusService implements ReadStatusService {
 
     @Override
     public void delete(UUID id) {
-        if(!readStatusRepo.deleteById(id)) {
-            throw new BusinessException(ErrorCode.READ_STATUS_NOT_FOUND);
-        }
+        readStatusRepo.findById(id)
+                .orElseThrow(() -> new BusinessException(ErrorCode.READ_STATUS_NOT_FOUND));
+        readStatusRepo.deleteById(id);
     }
 
     private ReadStatusDto toDto(ReadStatus readStatus) {

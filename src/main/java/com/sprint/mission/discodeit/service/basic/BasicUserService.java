@@ -104,13 +104,12 @@ public class BasicUserService implements UserService {
 
         UUID profileId = user.getProfileId();
         if(profileId != null) {
-            if(!binaryContentRepo.deleteById(profileId)) {
-                throw new BusinessException(ErrorCode.BINARY_CONTENT_NOT_FOUND);
-            }
+            binaryContentRepo.findById(profileId)
+                    .orElseThrow(() -> new BusinessException(ErrorCode.BINARY_CONTENT_NOT_FOUND));
+            binaryContentRepo.deleteById(profileId);
         }
-        if(!userRepo.deleteById(id)) {
-            throw new BusinessException(ErrorCode.USER_NOT_FOUND);
-        }
+
+        userRepo.deleteById(id);
     }
 
     private UUID saveProfile(MultipartFile file) {
