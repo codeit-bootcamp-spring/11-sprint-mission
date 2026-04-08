@@ -1,6 +1,6 @@
 package com.sprint.mission.discodeit.entity;
 
-import com.sprint.mission.discodeit.entity.baseentity.BaseEntity;
+import com.sprint.mission.discodeit.entity.base.BaseEntity;
 import lombok.Getter;
 
 import java.util.Arrays;

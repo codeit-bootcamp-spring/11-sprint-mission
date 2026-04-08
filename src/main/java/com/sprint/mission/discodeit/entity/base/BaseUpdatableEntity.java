@@ -1,4 +1,4 @@
-package com.sprint.mission.discodeit.entity.baseentity;
+package com.sprint.mission.discodeit.entity.base;
 
 import lombok.Getter;
 

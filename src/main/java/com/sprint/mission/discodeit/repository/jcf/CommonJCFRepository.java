@@ -1,6 +1,6 @@
 package com.sprint.mission.discodeit.repository.jcf;
 
-import com.sprint.mission.discodeit.entity.baseentity.BaseEntity;
+import com.sprint.mission.discodeit.entity.base.BaseEntity;
 
 import java.util.ArrayList;
 import java.util.List;
