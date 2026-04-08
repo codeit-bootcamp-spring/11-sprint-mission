@@ -2,6 +2,9 @@ package com.sprint.mission.discodeit.repository.file;
 
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
+import com.sprint.mission.discodeit.util.FileLockProvider;
+import java.nio.file.Path;
+import java.util.concurrent.locks.ReentrantLock;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Repository;
@@ -12,65 +15,84 @@ import java.util.*;
 @Repository
 @ConditionalOnProperty(name = "discodeit.repository.type", havingValue = "file")
 public class FileChannelRepository implements ChannelRepository {
-    private final String CHANNEL_FILE = "channels.ser";
-    private final File file;
-    private final Map<UUID, Channel> channelMap;
 
-    public FileChannelRepository(@Value("${discodeit.repository.file-directory}") String fileDirectory) {
-        File dir = new File(fileDirectory);
+  private final String CHANNEL_FILE = "channels.ser";
+  private final File file;
+  private final Map<UUID, Channel> channelMap;
 
-        if(!dir.exists()) {
-            dir.mkdirs();
-        }
+  private final FileLockProvider fileLockProvider;
 
-        this.file = new File(dir, CHANNEL_FILE);
+  public FileChannelRepository(
+      @Value("${discodeit.repository.file-directory}") String fileDirectory,
+      FileLockProvider fileLockProvider
+  ) {
+    this.fileLockProvider = fileLockProvider;
+    File dir = new File(fileDirectory);
 
-        this.channelMap = loadChannels();
+    if (!dir.exists()) {
+      dir.mkdirs();
     }
 
-    private Map<UUID, Channel> loadChannels() {
+    this.file = new File(dir, CHANNEL_FILE);
 
-        if(!file.exists()) {
-            return new HashMap<>();
-        }
-        try(ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))) {
-            return (Map<UUID, Channel>) ois.readObject();
-        } catch (IOException | ClassNotFoundException e) {
-            throw new RuntimeException("채널 로드실패", e);
-        }
+    this.channelMap = loadChannels();
+  }
+
+  private Map<UUID, Channel> loadChannels() {
+    if (!file.exists()) {
+      return new HashMap<>();
     }
 
-    private void saveChannel() {
-        try(ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(file))) {
-            oos.writeObject(channelMap);
-        } catch (IOException e) {
-            throw new RuntimeException("채널 저장실패", e);
-        }
-    }
+    Path path = file.toPath();
+    ReentrantLock lock = fileLockProvider.getLock(path);
 
-    @Override
-    public Channel save(Channel channel) {
-        channelMap.put(channel.getId(),channel);
-        saveChannel();
-        return channel;
+    lock.lock();
+    try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))) {
+      return (Map<UUID, Channel>) ois.readObject();
+    } catch (IOException | ClassNotFoundException e) {
+      throw new RuntimeException("채널 로드실패", e);
+    } finally {
+      lock.unlock();
     }
+  }
 
-    @Override
-    public Optional<Channel> findById(UUID id) {
-        return Optional.ofNullable(channelMap.get(id));
-    }
+  private void saveChannel() {
+    Path path = file.toPath();
+    ReentrantLock lock = fileLockProvider.getLock(path);
 
-    @Override
-    public List<Channel> findAll() {
-        return new ArrayList<>(channelMap.values());
+    lock.lock();
+    try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(file))) {
+      oos.writeObject(channelMap);
+    } catch (IOException e) {
+      throw new RuntimeException("채널 저장실패", e);
+    } finally {
+      lock.unlock();
     }
+  }
 
-    @Override
-    public void delete(UUID id) {
-        if(channelMap.containsKey(id)) {
-            channelMap.remove(id);
-            saveChannel();
-        }
+  @Override
+  public Channel save(Channel channel) {
+    channelMap.put(channel.getId(), channel);
+    saveChannel();
+    return channel;
+  }
+
+  @Override
+  public Optional<Channel> findById(UUID id) {
+    return Optional.ofNullable(channelMap.get(id));
+  }
+
+  @Override
+  public List<Channel> findAll() {
+    return new ArrayList<>(channelMap.values());
+  }
+
+  @Override
+  public void delete(UUID id) {
+    if (channelMap.containsKey(id)) {
+      channelMap.remove(id);
+      saveChannel();
     }
+  }
 
 }

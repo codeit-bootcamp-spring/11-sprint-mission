@@ -19,58 +19,65 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class BasicReadStatusService implements ReadStatusService {
-    private final ReadStatusRepository readStatusRepository;
-    private final UserRepository userRepository;
-    private final ChannelRepository channelRepository;
 
-    @Override
-    public void createReadStatus(ReadStatusCreateDto statusCreateDto) {
-        userRepository.findById(statusCreateDto.authorId())
-                .orElseThrow(() -> new BusinessLogicException(ExceptionCode.MEMBER_NOT_FOUND));
-        channelRepository.findById(statusCreateDto.channelId())
-                .orElseThrow(() -> new BusinessLogicException(ExceptionCode.CHANNEL_NOT_FOUND));
+  private final ReadStatusRepository readStatusRepository;
+  private final UserRepository userRepository;
+  private final ChannelRepository channelRepository;
 
-        readStatusRepository.findByUserIdAndChannelId(statusCreateDto.authorId(), statusCreateDto.channelId())
-                .ifPresent(rs -> {throw new BusinessLogicException(ExceptionCode.READ_STATUS_EXISTS);});
+  @Override
+  public ReadStatus createReadStatus(ReadStatusCreateDto statusCreateDto) {
+    userRepository.findById(statusCreateDto.userId())
+        .orElseThrow(() -> new BusinessLogicException(ExceptionCode.MEMBER_NOT_FOUND));
+    channelRepository.findById(statusCreateDto.channelId())
+        .orElseThrow(() -> new BusinessLogicException(ExceptionCode.CHANNEL_NOT_FOUND));
 
-        ReadStatus readStatus = ReadStatus.builder()
-                .id(UUID.randomUUID())
-                .userId(statusCreateDto.authorId())
-                .channelId(statusCreateDto.channelId())
-                .lastReadAt(Instant.now())
-                .build();
+    readStatusRepository.findByUserIdAndChannelId(statusCreateDto.userId(),
+            statusCreateDto.channelId())
+        .ifPresent(rs -> {
+          throw new BusinessLogicException(ExceptionCode.READ_STATUS_EXISTS);
+        });
 
-        readStatusRepository.save(readStatus);
+    ReadStatus readStatus = ReadStatus.builder()
+        .id(UUID.randomUUID())
+        .userId(statusCreateDto.userId())
+        .channelId(statusCreateDto.channelId())
+        .lastReadAt(Instant.now())
+        .build();
 
-        System.out.println("✅ 읽음 상태 기록 완료 : [유저 : " + statusCreateDto.authorId() + ", 채널 : " + statusCreateDto.channelId());
-    }
+    readStatusRepository.save(readStatus);
 
-    public ReadStatus findById(UUID id) {
-        return readStatusRepository.findById(id)
-                .orElseThrow(() -> new BusinessLogicException(ExceptionCode.READ_STATUS_NOT_FOUND));
-    }
+    System.out.println("✅ 읽음 상태 기록 완료 : [유저 : " + statusCreateDto.userId() + ", 채널 : "
+        + statusCreateDto.channelId());
 
-    @Override
-    public List<ReadStatus> findAllByUserId(UUID authorId) {
-        return readStatusRepository.findAllByUserId(authorId);
-    }
+    return readStatus;
+  }
 
-    @Override
-    public void deleteReadStatus(UUID id) {
-        ReadStatus status = findById(id);
+  public ReadStatus findById(UUID id) {
+    return readStatusRepository.findById(id)
+        .orElseThrow(() -> new BusinessLogicException(ExceptionCode.READ_STATUS_NOT_FOUND));
+  }
 
-        readStatusRepository.deleteById(status.getId());
+  @Override
+  public List<ReadStatus> findAllByUserId(UUID authorId) {
+    return readStatusRepository.findAllByUserId(authorId);
+  }
 
-        System.out.println("✅ 읽음 상태 삭제 완료 : [ID : " + id + "]");
-    }
+  @Override
+  public void deleteReadStatus(UUID id) {
+    ReadStatus status = findById(id);
 
-    @Override
-    public ReadStatus updateStatus(UUID userId, UUID channelId, ReadStatusUpdateDto request) {
-        ReadStatus readStatus = readStatusRepository.findByUserIdAndChannelId(userId, channelId)
-                .orElseThrow(() -> new BusinessLogicException(ExceptionCode.READ_STATUS_NOT_FOUND));
+    readStatusRepository.deleteById(status.getId());
 
-        readStatus.update(request.lastReadAt());
+    System.out.println("✅ 읽음 상태 삭제 완료 : [ID : " + id + "]");
+  }
 
-        return readStatusRepository.save(readStatus);
-    }
+  @Override
+  public ReadStatus updateStatus(UUID readStatusId, ReadStatusUpdateDto request) {
+    ReadStatus readStatus = readStatusRepository.findById(readStatusId)
+        .orElseThrow(() -> new BusinessLogicException(ExceptionCode.READ_STATUS_NOT_FOUND));
+
+    readStatus.update(request.newLastReadAt());
+
+    return readStatusRepository.save(readStatus);
+  }
 }

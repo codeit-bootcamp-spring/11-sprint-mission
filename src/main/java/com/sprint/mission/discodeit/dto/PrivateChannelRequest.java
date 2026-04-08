@@ -8,7 +8,7 @@ import java.util.UUID;
 
 @Builder
 public record PrivateChannelRequest(
-        UUID ownerId,
-        List<UUID> participantsIds
+    List<UUID> participantIds
 ) {
+
 }

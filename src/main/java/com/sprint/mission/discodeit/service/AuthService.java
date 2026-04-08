@@ -15,25 +15,26 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class AuthService {
-    private final UserRepository userRepository;
-    private final UserStatusRepository userStatusRepository;
 
-    public UserDto login(LoginRequest loginRequest) {
-        String name = loginRequest.username();
-        String password = loginRequest.password();
+  private final UserRepository userRepository;
+  private final UserStatusRepository userStatusRepository;
 
-        User user = userRepository.findByUserName(name)
-                .orElseThrow(() -> new BusinessLogicException(ExceptionCode.MEMBER_NOT_FOUND));
-        if(!user.getPassword().equals(password.trim())) {
-            throw new BusinessLogicException(ExceptionCode.LOGIN_FAILED);
-        }
-        UserStatus status = userStatusRepository.findByUserId(user.getId())
-                .orElseThrow(() -> new BusinessLogicException(ExceptionCode.INTERNAL_SERVER_ERROR));
+  public User login(LoginRequest loginRequest) {
+    String name = loginRequest.username();
+    String password = loginRequest.password();
 
-        status.update();
-
-        userStatusRepository.save(status);
-
-        return UserDto.from(user, status);
+    User user = userRepository.findByUserName(name)
+        .orElseThrow(() -> new BusinessLogicException(ExceptionCode.MEMBER_NOT_FOUND));
+    if (!user.getPassword().equals(password.trim())) {
+      throw new BusinessLogicException(ExceptionCode.LOGIN_FAILED);
     }
+    UserStatus status = userStatusRepository.findByUserId(user.getId())
+        .orElseThrow(() -> new BusinessLogicException(ExceptionCode.INTERNAL_SERVER_ERROR));
+
+    status.update(null);
+
+    userStatusRepository.save(status);
+
+    return user;
+  }
 }
