@@ -1,42 +1,53 @@
 package com.sprint.mission.discodeit.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.sprint.mission.discodeit.entity.base.BaseUpdatableEntity;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
 import lombok.Getter;
 
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.UUID;
+import lombok.NoArgsConstructor;
 
 @Getter
-public class UserStatus implements Serializable {
+@Entity
+@Table(name = "user_statuses")
+@NoArgsConstructor
+public class UserStatus extends BaseUpdatableEntity {
 
-  private static final long serialVersionUID = 1L;
+  @OneToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "user_id", nullable = false)
+  private User user;
 
-  private final UUID id;
-  private final UUID userId;
-  private final Instant createdAt;
-  private Instant updatedAt;
+  @Column(nullable = false)
+  private Instant lastActiveAt;
 
-  public UserStatus(UUID userId) {
-    this.id = UUID.randomUUID();
-    this.userId = userId;
-    this.createdAt = Instant.now();
-    this.updatedAt = createdAt;
+  public UserStatus(User user) {
+    this.user = user;
+    this.lastActiveAt = Instant.now();
   }
 
   public void update(Instant newLastActiveAt) {
-    this.updatedAt = (newLastActiveAt != null) ? newLastActiveAt : Instant.now();
+    this.lastActiveAt = (newLastActiveAt != null) ? newLastActiveAt : Instant.now();
   }
 
   @JsonIgnore
   public boolean getOnlineStatus() {
-    if (updatedAt == null) {
+    if (lastActiveAt == null) {
       return false;
     }
 
     Instant now = Instant.now();
     Instant fiveMinuteAgo = now.minusSeconds(5 * 60);
 
-    return updatedAt.isAfter(fiveMinuteAgo);
+    return lastActiveAt.isAfter(fiveMinuteAgo);
   }
 }

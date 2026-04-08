@@ -1,5 +1,11 @@
 package com.sprint.mission.discodeit.entity;
 
+import com.sprint.mission.discodeit.entity.base.BaseUpdatableEntity;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -7,46 +13,39 @@ import lombok.Getter;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.UUID;
+import lombok.NoArgsConstructor;
 
 
 @Getter
-@Builder
-@AllArgsConstructor
-public class Channel implements Serializable {
-    private static final long serialVersionUID = 1L;
+@Entity
+@Table(name = "channels")
+@NoArgsConstructor
+public class Channel extends BaseUpdatableEntity {
 
-    private final UUID id;
-    private final UUID ownerId;
-    private final Instant createdAt;
-    private Instant updatedAt;
+  @Column
+  private String name = "";
 
-    @Builder.Default
-    private String name = "";
-    private ChannelType type;
+  @Enumerated(EnumType.STRING)
+  @Column(name = "type", nullable = false, length = 10)
+  private ChannelType type;
 
-    @Builder.Default
-    private String description = "";
+  @Column
+  private String description = "";
 
-    public Channel(String name, String description, ChannelType type, UUID ownerId) {
-        this.id = UUID.randomUUID();
-        this.ownerId = ownerId;
-        this.createdAt = Instant.now();
-        this.updatedAt = Instant.now();
-        this.name = name;
-        this.type = type;
-        this.description = description;
-    }
+  public Channel(String name, String description, ChannelType type) {
+    this.name = name;
+    this.type = type;
+    this.description = description;
+  }
 
-    // 필드를 수정하는 update 함수
-    public void update(String name, String description) {
-        this.name = name;
-        this.description = description;
-        this.updatedAt = Instant.now();
-        System.out.println("채널의 정보가 수정되었습니다. 수정시간: " + getUpdatedAt());
-    }
+  // 필드를 수정하는 update 함수
+  public void update(String name, String description) {
+    this.name = name;
+    this.description = description;
+  }
 
-    @Override
-    public String toString() {
-        return "채널명 : " + name + ", 채널 타입 : " + type;
-    }
+  @Override
+  public String toString() {
+    return "채널명 : " + name + ", 채널 타입 : " + type;
+  }
 }

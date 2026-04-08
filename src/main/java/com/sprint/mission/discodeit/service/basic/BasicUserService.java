@@ -42,20 +42,19 @@ public class BasicUserService implements UserService {
       throw new BusinessLogicException(ExceptionCode.EMAIL_EXISTS);
     }
 
-    UUID profileId = null;
+    BinaryContent profileEntity = null;
     if (profile != null && !profile.isEmpty()) {
       try {
-        BinaryContent binaryContent = new BinaryContent(profile.getBytes(),
-            profile.getOriginalFilename(), profile.getContentType());
-        binaryContentRepository.save(binaryContent);
-        profileId = binaryContent.getId();
-      } catch (IOException e) {
+        profileEntity = new BinaryContent(profileEntity.getBytes(), profile.getOriginalFilename(),
+            profile.getContentType());
+        binaryContentRepository.save(profileEntity);
+      } catch (Exception e) {
         throw new BusinessLogicException(ExceptionCode.INTERNAL_SERVER_ERROR);
       }
     }
 
-    User newUser = new User(name, email, password, profileId);
-    UserStatus newStatus = new UserStatus(newUser.getId());
+    User newUser = new User(name, email, password, profileEntity);
+    UserStatus newStatus = new UserStatus(newUser);
     try {
       userRepository.save(newUser);
       userStatusRepository.save(newStatus);
@@ -93,11 +92,10 @@ public class BasicUserService implements UserService {
     User user = userRepository.findById(id)
         .orElseThrow(() -> new BusinessLogicException(ExceptionCode.USER_NOT_FOUND));
 
-    if (user.getProfileId() != null) {
-      binaryContentRepository.delete(user.getProfileId());
+    if (user.getProfile() != null) {
+      binaryContentRepository.delete(user.getProfile());
     }
-    userStatusRepository.deleteByUserId(id);
-    userRepository.delete(id);
+    userRepository.delete(user);
   }
 
   @Override

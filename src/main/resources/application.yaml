@@ -14,6 +14,7 @@ spring:
       hibernate:
         format_sql: true
         dialect: org.hibernate.dialect.PostgreSQLDialect
+        highlight_sql: true
   sql:
     init:
       mode: always
