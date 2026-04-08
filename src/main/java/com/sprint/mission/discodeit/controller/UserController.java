@@ -6,67 +6,59 @@ import com.sprint.mission.discodeit.dto.UserStatusUpdateRequest;
 import com.sprint.mission.discodeit.dto.UserUpdateRequest;
 import com.sprint.mission.discodeit.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
 
-@Controller
+@RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
 public class UserController {
 
-    private final UserService userService;
+  private final UserService userService;
 
-    @ResponseBody
-    @RequestMapping(method = RequestMethod.POST)
-    public UserDto create(@RequestBody UserCreateRequest request) {
-        return userService.create(request);
-    }
+  @PostMapping
+  public ResponseEntity<UserDto> create(@RequestBody UserCreateRequest request) {
+    UserDto result = userService.create(request);
+    return ResponseEntity.status(HttpStatus.CREATED).body(result);
+  }
 
-    @ResponseBody
-    @RequestMapping(value = "/findAll", method = RequestMethod.GET)
-    public ResponseEntity<List<UserDto>> findAll() {
-        return ResponseEntity.ok(userService.findAll());
-    }
+  @GetMapping
+  public ResponseEntity<List<UserDto>> findAll() {
+    return ResponseEntity.ok(userService.findAll());
+  }
 
-    @ResponseBody
-    @RequestMapping(value = "/{userId}", method = RequestMethod.GET)
-    public UserDto findById(@PathVariable UUID userId) {
-        return userService.findById(userId);
-    }
+  @GetMapping("/{userId}")
+  public ResponseEntity<UserDto> findById(@PathVariable UUID userId) {
+    return ResponseEntity.ok(userService.findById(userId));
+  }
 
-    @ResponseBody
-    @RequestMapping(value = "/{userId}", method = RequestMethod.PUT)
-    public UserDto update(@PathVariable UUID userId,
-                          @RequestBody UserUpdateRequest request) {
-        UserUpdateRequest updateRequest = new UserUpdateRequest(
-                userId,
-                request.userName(),
-                request.email(),
-                request.password(),
-                request.statusMessage(),
-                request.profileImage()
-        );
-        return userService.update(updateRequest);
-    }
+  @PutMapping("/{userId}")
+  public ResponseEntity<UserDto> update(@PathVariable UUID userId,
+      @RequestBody UserUpdateRequest request) {
+    UserUpdateRequest updateRequest = new UserUpdateRequest(
+        userId,
+        request.userName(),
+        request.email(),
+        request.password(),
+        request.statusMessage(),
+        request.profileImage()
+    );
+    return ResponseEntity.ok(userService.update(updateRequest));
+  }
 
-    @ResponseBody
-    @RequestMapping(value = "/{userId}", method = RequestMethod.DELETE)
-    public void delete(@PathVariable UUID userId) {
-        userService.delete(userId);
-    }
-
-    @ResponseBody
-    @RequestMapping(value = "/{userId}/status", method = RequestMethod.PUT)
-    public UserDto updateStatus(@PathVariable UUID userId,
-                                @RequestBody UserStatusUpdateRequest request) {
-        return userService.updateStatus(userId, request);
-    }
+  @DeleteMapping("/{userId}")
+  public ResponseEntity<Void> delete(@PathVariable UUID userId) {
+    userService.delete(userId);
+    return ResponseEntity.noContent().build(); // 204 반환
+  }
+  
+  @PatchMapping("/{userId}/status")
+  public ResponseEntity<UserDto> updateStatus(@PathVariable UUID userId,
+      @RequestBody UserStatusUpdateRequest request) {
+    return ResponseEntity.ok(userService.updateStatus(userId, request));
+  }
 }

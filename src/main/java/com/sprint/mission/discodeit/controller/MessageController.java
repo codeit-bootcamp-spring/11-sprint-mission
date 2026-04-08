@@ -3,52 +3,49 @@ package com.sprint.mission.discodeit.controller;
 import com.sprint.mission.discodeit.dto.MessageCreateRequest;
 import com.sprint.mission.discodeit.dto.MessageResponse;
 import com.sprint.mission.discodeit.dto.MessageUpdateRequest;
-import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.service.MessageService;
 import lombok.RequiredArgsConstructor;
-import lombok.Value;
-import org.springframework.stereotype.Controller;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
 
-@Controller
+@RestController
 @RequestMapping("/api/messages")
 @RequiredArgsConstructor
 public class MessageController {
-    private final MessageService messageService;
 
-    @ResponseBody
-    @RequestMapping(method = RequestMethod.POST)
-    public MessageResponse create(@RequestBody MessageCreateRequest request) {
-        return messageService.create(request);
-    }
+  private final MessageService messageService;
 
-    @ResponseBody
-    @RequestMapping(value = "/{messageId}", method = RequestMethod.GET)
-    public MessageResponse findById(@PathVariable UUID messageId) {
-        return messageService.findById(messageId);
-    }
+  @PostMapping
+  public ResponseEntity<MessageResponse> create(@RequestBody MessageCreateRequest request) {
+    return ResponseEntity.status(HttpStatus.CREATED)
+        .body(messageService.create(request)); // 201 반환
+  }
 
-    @ResponseBody
-    @RequestMapping(value = "/channels/{channelId}", method = RequestMethod.GET)
-    public List<MessageResponse> findAllByChannelId(@PathVariable UUID channelId) {
-        return messageService.findAllByChannelId(channelId);
-    }
+  @GetMapping("/{messageId}")
+  public ResponseEntity<MessageResponse> findById(@PathVariable UUID messageId) {
+    return ResponseEntity.ok(messageService.findById(messageId));
+  }
 
-    @ResponseBody
-    @RequestMapping(value = "/{messageId}", method = RequestMethod.PUT)
-    public MessageResponse update(
-            @PathVariable UUID messageId,
-            @RequestBody MessageUpdateRequest request
-    ) {
-        return messageService.update(messageId, request);
-    }
+  @GetMapping("/channels/{channelId}")
+  public ResponseEntity<List<MessageResponse>> findAllByChannelId(@PathVariable UUID channelId) {
+    return ResponseEntity.ok(messageService.findAllByChannelId(channelId));
+  }
 
-    @ResponseBody
-    @RequestMapping(value = "/{messageId}", method = RequestMethod.DELETE)
-    public void delete(@PathVariable UUID messageId) {
-        messageService.delete(messageId);
-    }
+  @PutMapping("/{messageId}")
+  public ResponseEntity<MessageResponse> update(
+      @PathVariable UUID messageId,
+      @RequestBody MessageUpdateRequest request
+  ) {
+    return ResponseEntity.ok(messageService.update(messageId, request));
+  }
+
+  @DeleteMapping("/{messageId}")
+  public ResponseEntity<Void> delete(@PathVariable UUID messageId) {
+    messageService.delete(messageId);
+    return ResponseEntity.noContent().build(); // 204 반환
+  }
 }
