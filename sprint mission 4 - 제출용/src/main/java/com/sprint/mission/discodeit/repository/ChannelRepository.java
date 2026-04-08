@@ -1,25 +1,12 @@
 package com.sprint.mission.discodeit.repository;
 
 import com.sprint.mission.discodeit.entity.Channel;
-
-import java.util.List;
 import java.util.UUID;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface ChannelRepository {
+public interface ChannelRepository extends JpaRepository<Channel, UUID> {
 
-  Channel create(Channel channel);
+  boolean existsByName(String name);
 
-  Channel read(UUID id);
-
-  List<Channel> readAll();
-
-  Channel update(Channel channel);
-
-  void delete(UUID id);
-
-  void restore(UUID id);
-
-  boolean existsByChannelName(String channelName);
-
-  boolean existsByChannelNameExcluding(String channelName, UUID excludeId);
+  boolean existsByNameAndIdNot(String name, UUID id);
 }

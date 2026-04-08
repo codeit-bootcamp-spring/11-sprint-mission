@@ -4,20 +4,12 @@ import com.sprint.mission.discodeit.entity.Message;
 
 import java.util.List;
 import java.util.UUID;
+import org.springframework.data.domain.Limit;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface MessageRepository {
+public interface MessageRepository extends JpaRepository<Message, UUID> {
 
-  Message create(Message message);
+  List<Message> findAllByChannel_Id(UUID channelId, Limit limit);
 
-  Message read(UUID id);
-
-  List<Message> readAll();
-
-  List<Message> readAllByChannelId(UUID channelId);
-
-  Message update(Message message);
-
-  void delete(UUID id);
-
-  void deleteAllByChannelId(UUID channelId);  // 추가
+  void deleteAllByChannel_Id(UUID channelId);
 }
