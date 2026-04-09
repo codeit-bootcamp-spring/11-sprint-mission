@@ -29,17 +29,14 @@ public class UserStatus extends BaseUpdatableEntity {
         super();
         this.user = user;
         this.lastActiveAt = lastActiveAt;
+        user.setStatus(this);
     }
 
     public void update(Instant lastActiveAt) {
         this.lastActiveAt = lastActiveAt;
     }
 
-    public void setUser(User user) {
-        this.user = user;
-    }
-
     public boolean passed() {
-        return Duration.between(getUpdatedAt(), Instant.now()).toMinutes() <= 5;
+        return Duration.between(getLastActiveAt(), Instant.now()).toMinutes() <= 5;
     }
 }

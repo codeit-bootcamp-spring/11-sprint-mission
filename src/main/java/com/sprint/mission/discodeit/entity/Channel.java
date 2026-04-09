@@ -27,14 +27,8 @@ public class Channel extends BaseUpdatableEntity {
     @Column(length = 100)
     private String name;
 
-    @Column(length = 50)
+    @Column(length = 500)
     private String description;
-
-    @OneToMany(mappedBy = "channel", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Message> messages = new ArrayList<>();
-
-    @OneToMany(mappedBy = "channel", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ReadStatus> readStatuses = new ArrayList<>();
 
     public Channel(ChannelType channelType, String name, String description) {
         super();

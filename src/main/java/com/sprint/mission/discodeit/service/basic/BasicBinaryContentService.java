@@ -1,7 +1,7 @@
 package com.sprint.mission.discodeit.service.basic;
 
-import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentCreateRequest;
-import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentDto;
+import com.sprint.mission.discodeit.dto.request.BinaryContentCreateRequest;
+import com.sprint.mission.discodeit.dto.response.BinaryContentDto;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.exception.BusinessException;
 import com.sprint.mission.discodeit.exception.ErrorCode;

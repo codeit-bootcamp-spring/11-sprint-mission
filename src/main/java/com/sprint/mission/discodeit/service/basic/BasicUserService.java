@@ -1,8 +1,8 @@
 package com.sprint.mission.discodeit.service.basic;
 
-import com.sprint.mission.discodeit.dto.user.UserCreateRequest;
-import com.sprint.mission.discodeit.dto.user.UserDto;
-import com.sprint.mission.discodeit.dto.user.UserUpdateRequest;
+import com.sprint.mission.discodeit.dto.request.UserCreateRequest;
+import com.sprint.mission.discodeit.dto.response.UserDto;
+import com.sprint.mission.discodeit.dto.request.UserUpdateRequest;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.entity.UserStatus;
@@ -37,11 +37,11 @@ public class BasicUserService implements UserService {
         BinaryContent binaryContent = saveProfile(profile);
 
         User user = new User(dto.username(), dto.email(), dto.password(), binaryContent);
-        userRepo.save(user);
 
         UserStatus userStatus = new UserStatus(user, Instant.now());
+
+        userRepo.save(user);
         userStatusRepo.save(userStatus);
-        user.setStatus(userStatus);
 
         return toDto(user, userStatus);
     }

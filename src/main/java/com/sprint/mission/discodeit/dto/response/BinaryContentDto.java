@@ -1,4 +1,4 @@
-package com.sprint.mission.discodeit.dto.binarycontent;
+package com.sprint.mission.discodeit.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 

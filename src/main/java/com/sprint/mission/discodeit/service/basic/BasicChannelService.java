@@ -1,9 +1,9 @@
 package com.sprint.mission.discodeit.service.basic;
 
-import com.sprint.mission.discodeit.dto.channel.ChannelDto;
-import com.sprint.mission.discodeit.dto.channel.ChannelUpdateRequest;
-import com.sprint.mission.discodeit.dto.channel.PrivateChannelCreateRequest;
-import com.sprint.mission.discodeit.dto.channel.PublicChannelCreateRequest;
+import com.sprint.mission.discodeit.dto.response.ChannelDto;
+import com.sprint.mission.discodeit.dto.request.ChannelUpdateRequest;
+import com.sprint.mission.discodeit.dto.request.PrivateChannelCreateRequest;
+import com.sprint.mission.discodeit.dto.request.PublicChannelCreateRequest;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.ChannelType;

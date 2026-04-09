@@ -9,6 +9,7 @@ import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Getter
 @Entity
@@ -47,8 +48,7 @@ public class User extends BaseUpdatableEntity {
         this.profile = profile;
     }
 
-    public void setStatus(UserStatus status) {
+    protected void setStatus(UserStatus status) {
         this.status = status;
-        status.setUser(this);
     }
 }

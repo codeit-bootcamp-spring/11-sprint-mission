@@ -1,7 +1,7 @@
 package com.sprint.mission.discodeit.controller.api;
 
-import com.sprint.mission.discodeit.dto.login.LoginRequest;
-import com.sprint.mission.discodeit.dto.login.LoginResponse;
+import com.sprint.mission.discodeit.dto.request.LoginRequest;
+import com.sprint.mission.discodeit.dto.response.LoginResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;

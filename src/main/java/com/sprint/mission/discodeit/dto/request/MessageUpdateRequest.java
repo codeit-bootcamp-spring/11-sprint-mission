@@ -1,11 +1,8 @@
-package com.sprint.mission.discodeit.dto.message;
+package com.sprint.mission.discodeit.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
-
-import java.util.List;
-import java.util.UUID;
 
 @Schema(description = "수정할 Message 내용")
 public record MessageUpdateRequest(
