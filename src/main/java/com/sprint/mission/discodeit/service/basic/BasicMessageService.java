@@ -15,6 +15,7 @@ import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.MessageService;
+import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,6 +34,7 @@ public class BasicMessageService implements MessageService {
     private final UserRepository userRepo;
     private final BinaryContentRepository binaryContentRepo;
     private final MessageMapper messageMapper;
+    private final BinaryContentStorage binaryContentStorage;
 
     @Override
     @Transactional
@@ -85,8 +87,9 @@ public class BasicMessageService implements MessageService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.MESSAGE_NOT_FOUND));
 
         // n+1 문제 해결 필요
-        for(BinaryContent binaryContent : message.getAttachments()) {
-            binaryContentRepo.delete(binaryContent);
+        for(BinaryContent attachment : message.getAttachments()) {
+            binaryContentStorage.deleteById(attachment.getId());
+            binaryContentRepo.delete(attachment);
         }
 
         messageRepo.delete(message);
@@ -104,12 +107,15 @@ public class BasicMessageService implements MessageService {
 
     private BinaryContent saveAttachment(MultipartFile file) {
         try {
+            byte[] bytes = file.getBytes();
             BinaryContent binaryContent = new BinaryContent(
                     file.getOriginalFilename(),
                     file.getContentType(),
-                    file.getBytes()
+                    (long) bytes.length
             );
             binaryContentRepo.save(binaryContent);
+            binaryContentStorage.put(binaryContent.getId(), bytes);
+
             return binaryContent;
         } catch (IOException e){
             throw new BusinessException(ErrorCode.FILE_SAVE_FAILED);

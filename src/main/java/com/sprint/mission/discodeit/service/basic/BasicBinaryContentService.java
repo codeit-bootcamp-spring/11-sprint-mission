@@ -8,6 +8,7 @@ import com.sprint.mission.discodeit.exception.ErrorCode;
 import com.sprint.mission.discodeit.mapper.BinaryContentMapper;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.service.BinaryContentService;
+import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,12 +22,19 @@ public class BasicBinaryContentService implements BinaryContentService {
 
     private final BinaryContentRepository binaryContentRepo;
     private final BinaryContentMapper binaryContentMapper;
+    private final BinaryContentStorage binaryContentStorage;
 
     @Override
     @Transactional
     public BinaryContentDto create(BinaryContentCreateRequest dto) {
-        BinaryContent binaryContent = new BinaryContent(dto.fileName(), dto.contentType(), dto.bytes());
+        BinaryContent binaryContent = new BinaryContent(
+                dto.fileName(),
+                dto.contentType(),
+                (long) dto.bytes().length
+        );
         binaryContentRepo.save(binaryContent);
+        binaryContentStorage.put(binaryContent.getId(), dto.bytes());
+
         return binaryContentMapper.toDto(binaryContent);
     }
 
@@ -57,6 +65,8 @@ public class BasicBinaryContentService implements BinaryContentService {
     public void delete(UUID id) {
         BinaryContent binaryContent = binaryContentRepo.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.BINARY_CONTENT_NOT_FOUND));
+
+        binaryContentStorage.deleteById(binaryContent.getId());
         binaryContentRepo.delete(binaryContent);
     }
 }

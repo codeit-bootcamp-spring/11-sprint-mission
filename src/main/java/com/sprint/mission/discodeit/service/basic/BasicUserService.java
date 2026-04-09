@@ -13,6 +13,7 @@ import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.repository.UserStatusRepository;
 import com.sprint.mission.discodeit.service.UserService;
+import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,6 +32,7 @@ public class BasicUserService implements UserService {
     private final UserStatusRepository userStatusRepo;
     private final BinaryContentRepository binaryContentRepo;
     private final UserMapper userMapper;
+    private final BinaryContentStorage binaryContentStorage;
 
     @Override
     @Transactional
@@ -81,7 +83,8 @@ public class BasicUserService implements UserService {
         user.update(dto.newUsername(), dto.newEmail(), dto.newPassword(), updateProfile);
 
         if(newProfile != null && oldProfile != null) {
-            binaryContentRepo.deleteById(oldProfile.getId());
+            binaryContentStorage.deleteById(oldProfile.getId());
+            binaryContentRepo.delete(oldProfile);
         }
     }
 
@@ -93,7 +96,8 @@ public class BasicUserService implements UserService {
         BinaryContent profile = user.getProfile();
 
         if(profile != null) {
-            binaryContentRepo.deleteById(profile.getId());
+            binaryContentStorage.deleteById(profile.getId());
+            binaryContentRepo.delete(profile);
         }
 
         userRepo.delete(user);
@@ -105,12 +109,16 @@ public class BasicUserService implements UserService {
         }
 
         try {
+            byte[] bytes = file.getBytes();
+
             BinaryContent binaryContent = new BinaryContent(
                     file.getOriginalFilename(),
                     file.getContentType(),
-                    file.getBytes()
+                    (long) bytes.length
             );
             binaryContentRepo.save(binaryContent);
+            binaryContentStorage.put(binaryContent.getId(), bytes);
+
             return binaryContent;
         } catch (IOException e){
             throw new BusinessException(ErrorCode.FILE_SAVE_FAILED);

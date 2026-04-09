@@ -23,6 +23,12 @@ spring:
     init:
       mode: always
 
+discodeit:
+  storage:
+    type: local
+    local:
+      root-path: data/binaryContents
+
 logging:
   file:
     name: logs/app.log

@@ -31,4 +31,8 @@ public interface BinaryContentApi {
             @Parameter(description = "조회할 첨부 파일 ID 목록") List<UUID> binaryContentIds
     );
 
+    ResponseEntity<?> download (
+            UUID binaryContentId
+    );
+
 }
