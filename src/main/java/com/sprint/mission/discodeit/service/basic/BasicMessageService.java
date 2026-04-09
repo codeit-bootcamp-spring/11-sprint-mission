@@ -3,6 +3,7 @@ package com.sprint.mission.discodeit.service.basic;
 import com.sprint.mission.discodeit.dto.request.MessageCreateRequest;
 import com.sprint.mission.discodeit.dto.request.MessageUpdateRequest;
 import com.sprint.mission.discodeit.dto.response.MessageDto;
+import com.sprint.mission.discodeit.dto.response.PageResponse;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.Message;
@@ -10,6 +11,7 @@ import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.exception.BusinessException;
 import com.sprint.mission.discodeit.exception.ErrorCode;
 import com.sprint.mission.discodeit.mapper.MessageMapper;
+import com.sprint.mission.discodeit.mapper.PageResponseMapper;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
@@ -17,6 +19,8 @@ import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.MessageService;
 import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -35,6 +39,7 @@ public class BasicMessageService implements MessageService {
     private final BinaryContentRepository binaryContentRepo;
     private final MessageMapper messageMapper;
     private final BinaryContentStorage binaryContentStorage;
+    private final PageResponseMapper pageResponseMapper;
 
     @Override
     @Transactional
@@ -61,14 +66,14 @@ public class BasicMessageService implements MessageService {
     }
 
     @Override
-    public List<MessageDto> findAllByChannelId(UUID id) {
+    public PageResponse<MessageDto> findAllByChannelId(UUID id, int page) {
         Channel channel = channelRepo.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.CHANNEL_NOT_FOUND));
 
+        Pageable pageable = PageRequest.of(page, 50);
+        var slice = messageRepo.findAllByChannelOrderByCreatedAtDesc(channel, pageable);
         // n+1 문제 해결 필요
-        return messageRepo.findAllByChannel(channel).stream()
-                .map(messageMapper::toDto)
-                .toList();
+        return pageResponseMapper.toDto(slice, messageMapper::toDto);
     }
 
     @Override

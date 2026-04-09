@@ -7,8 +7,6 @@ import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.util.Arrays;
-
 @Getter
 @Entity
 @Table(name = "binary_contents")
