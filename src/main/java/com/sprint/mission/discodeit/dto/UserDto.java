@@ -14,11 +14,7 @@ public record UserDto(
     UUID profileId,
     String username,
     String email,
-
-    @JsonProperty("online")
-    @Schema(type = "boolean")
     Boolean online,
-
     Instant createdAt,
     Instant updatedAt
 ) {

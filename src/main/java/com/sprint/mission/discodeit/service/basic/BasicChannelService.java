@@ -146,9 +146,9 @@ public class BasicChannelService implements ChannelService {
       throw new BusinessLogicException(ExceptionCode.CHANNEL_MODIFY_PRIVATE);
     }
 
-    String name = (request.newName() != null) ? request.newName() : channel.getName();
+    String name = (request.name() != null) ? request.name() : channel.getName();
     String description =
-        (request.newDescription() != null) ? request.newDescription() : channel.getDescription();
+        (request.description() != null) ? request.description() : channel.getDescription();
 
     channel.update(name, description);
     channelRepository.save(channel);

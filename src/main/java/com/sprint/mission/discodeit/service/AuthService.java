@@ -19,7 +19,7 @@ public class AuthService {
   private final UserRepository userRepository;
   private final UserStatusRepository userStatusRepository;
 
-  public User login(LoginRequest loginRequest) {
+  public UserDto login(LoginRequest loginRequest) {
     String name = loginRequest.username();
     String password = loginRequest.password();
 
@@ -35,6 +35,6 @@ public class AuthService {
 
     userStatusRepository.save(status);
 
-    return user;
+    return UserDto.from(user, status);
   }
 }

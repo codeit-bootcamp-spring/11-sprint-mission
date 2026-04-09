@@ -6,6 +6,7 @@ import com.sprint.mission.discodeit.dto.MessageUpdate;
 import com.sprint.mission.discodeit.service.MessageService;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
+import java.net.URI;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -30,7 +31,8 @@ public class MessageController {
       @RequestPart("messageCreateRequest") CreateMessageRequest request,
       @RequestPart(value = "attachments", required = false) List<MultipartFile> attachments) {
     MessageResponseDto createdMessage = messageService.createMessage(request, attachments);
-    return ResponseEntity.status(HttpStatus.CREATED).body(createdMessage);
+    URI location = URI.create("/api/messages/" + createdMessage.id());
+    return ResponseEntity.created(location).body(createdMessage);
   }
 
   @GetMapping(params = "channelId")

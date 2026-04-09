@@ -3,6 +3,7 @@ package com.sprint.mission.discodeit.control;
 import com.sprint.mission.discodeit.dto.*;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.service.ChannelService;
+import java.net.URI;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,7 +24,8 @@ public class ChannelController {
   public ResponseEntity<ChannelDto> createPublicChannel(@RequestBody PublicChannelRequest request) {
     Channel savedPublicChannel = channelService.createPublicChannel(request);
     ChannelDto response = ChannelDto.from(savedPublicChannel);
-    return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    URI location = URI.create("/api/channels/" + response.id());
+    return ResponseEntity.created(location).body(response);
   }
 
   @PostMapping("/private")
@@ -32,7 +34,8 @@ public class ChannelController {
       @RequestBody PrivateChannelRequest request) {
     Channel savedPrivateChannel = channelService.createPrivateChannel(request);
     ChannelDto response = ChannelDto.from(savedPrivateChannel);
-    return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    URI location = URI.create("/api/channels/" + response.id());
+    return ResponseEntity.created(location).body(response);
   }
 
   @GetMapping(params = "userId")
