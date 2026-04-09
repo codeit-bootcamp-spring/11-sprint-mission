@@ -8,6 +8,7 @@ import com.sprint.mission.discodeit.service.UserService;
 import com.sprint.mission.discodeit.service.UserStatusService;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
+import java.net.URI;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -27,13 +28,12 @@ public class UserController {
   private final UserStatusService userStatusService;
 
   @PostMapping(consumes = "multipart/form-data")
-  @ResponseStatus(HttpStatus.CREATED)
   public ResponseEntity<User> createUser(
-      @Parameter(content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE))
       @RequestPart("userCreateRequest") UserCreateRequest request,
       @RequestPart(value = "profile", required = false) MultipartFile profile) {
     User createdUser = userService.createUser(request, profile);
-    return ResponseEntity.status(HttpStatus.CREATED).body(createdUser);
+    URI location = URI.create("/api/users/" + createdUser.getId());
+    return ResponseEntity.created(location).body(createdUser);
   }
 
   @GetMapping

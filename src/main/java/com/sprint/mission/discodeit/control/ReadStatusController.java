@@ -4,6 +4,7 @@ import com.sprint.mission.discodeit.dto.ReadStatusCreateDto;
 import com.sprint.mission.discodeit.dto.ReadStatusUpdateDto;
 import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.service.ReadStatusService;
+import java.net.URI;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,7 +24,8 @@ public class ReadStatusController {
   @ResponseStatus(HttpStatus.CREATED)
   public ResponseEntity<ReadStatus> createReadStatus(@RequestBody ReadStatusCreateDto request) {
     ReadStatus createdStatus = readStatusService.createReadStatus(request);
-    return ResponseEntity.status(HttpStatus.CREATED).body(createdStatus);
+    URI location = URI.create("/api/readStatuses/" + createdStatus.getId());
+    return ResponseEntity.created(location).body(createdStatus);
   }
 
   @GetMapping(params = "userId")

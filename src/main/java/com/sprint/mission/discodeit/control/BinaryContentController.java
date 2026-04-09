@@ -28,9 +28,6 @@ public class BinaryContentController {
   public ResponseEntity<List<BinaryContentResponse>> findMultipleBinaryContents(
       @RequestParam("binaryContentIds") List<UUID> binaryContentIds
   ) {
-    List<BinaryContent> contents = binaryContentService.findAllByIdIn(binaryContentIds);
-    return ResponseEntity.ok(contents.stream()
-        .map(BinaryContentResponse::from)
-        .toList());
+    return ResponseEntity.ok(binaryContentService.findAllByIdIn(binaryContentIds));
   }
 }
