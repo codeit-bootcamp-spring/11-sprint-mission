@@ -10,7 +10,7 @@ public record ChannelUpdateRequest(
         @NotBlank(message = "이름은 필수로 기재해야 합니다.")
         String newName,
 
-        @Size(max = 200, message = "소개글은 200자 이하로 작성해야 합니다.")
+        @Size(max = 500, message = "소개글은 200자 이하로 작성해야 합니다.")
         String newDescription
 ) {
 }
