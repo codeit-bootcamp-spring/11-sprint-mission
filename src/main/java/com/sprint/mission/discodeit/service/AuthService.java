@@ -6,6 +6,7 @@ import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.entity.UserStatus;
 import com.sprint.mission.discodeit.exception.BusinessLogicException;
 import com.sprint.mission.discodeit.exception.ExceptionCode;
+import com.sprint.mission.discodeit.mapper.UserMapper;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.repository.UserStatusRepository;
 import lombok.RequiredArgsConstructor;
@@ -19,11 +20,13 @@ public class AuthService {
   private final UserRepository userRepository;
   private final UserStatusRepository userStatusRepository;
 
+  private final UserMapper userMapper;
+
   public UserDto login(LoginRequest loginRequest) {
     String name = loginRequest.username();
     String password = loginRequest.password();
 
-    User user = userRepository.findByUserName(name)
+    User user = userRepository.findByUsername(name)
         .orElseThrow(() -> new BusinessLogicException(ExceptionCode.MEMBER_NOT_FOUND));
     if (!user.getPassword().equals(password.trim())) {
       throw new BusinessLogicException(ExceptionCode.LOGIN_FAILED);
@@ -35,6 +38,6 @@ public class AuthService {
 
     userStatusRepository.save(status);
 
-    return UserDto.from(user, status);
+    return userMapper.toDto(user, status);
   }
 }

@@ -7,6 +7,7 @@ import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.entity.UserStatus;
 import com.sprint.mission.discodeit.exception.BusinessLogicException;
 import com.sprint.mission.discodeit.exception.ExceptionCode;
+import com.sprint.mission.discodeit.mapper.UserStatusMapper;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.repository.UserStatusRepository;
 import com.sprint.mission.discodeit.service.UserStatusService;
@@ -25,6 +26,8 @@ public class BasicUserStatusService implements UserStatusService {
   private final UserRepository userRepository;
   private final UserStatusRepository userStatusRepository;
 
+  private final UserStatusMapper userStatusMapper;
+
   @Override
   @Transactional
   public UserStatusDto createUserStatus(UserStatusCreateRequest statusCreateDto) {
@@ -38,7 +41,7 @@ public class BasicUserStatusService implements UserStatusService {
 
     UserStatus userStatus = new UserStatus(user);
     userStatusRepository.save(userStatus);
-    return UserStatusDto.from(userStatus);
+    return userStatusMapper.toDto(userStatus);
   }
 
   @Override
@@ -46,13 +49,13 @@ public class BasicUserStatusService implements UserStatusService {
     UserStatus status = userStatusRepository.findByUserId(userId)
         .orElseThrow(() -> new BusinessLogicException(ExceptionCode.USER_STATUS_NOT_FOUND));
 
-    return UserStatusDto.from(status);
+    return userStatusMapper.toDto(status);
   }
 
   @Override
   public List<UserStatusDto> findAllUserStatus() {
     return userStatusRepository.findAll().stream()
-        .map(UserStatusDto::from)
+        .map(userStatusMapper::toDto)
         .toList();
   }
 
@@ -75,6 +78,6 @@ public class BasicUserStatusService implements UserStatusService {
         })
         .orElseThrow(() -> new BusinessLogicException(ExceptionCode.USER_STATUS_NOT_FOUND));
 
-    return UserStatusDto.from(userStatus);
+    return userStatusMapper.toDto(userStatus);
   }
 }

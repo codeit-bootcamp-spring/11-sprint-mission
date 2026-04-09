@@ -8,6 +8,7 @@ import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.entity.UserStatus;
 import com.sprint.mission.discodeit.exception.BusinessLogicException;
 import com.sprint.mission.discodeit.exception.ExceptionCode;
+import com.sprint.mission.discodeit.mapper.UserMapper;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.repository.UserStatusRepository;
@@ -30,6 +31,8 @@ public class BasicUserService implements UserService {
   private final UserRepository userRepository;
   private final UserStatusRepository userStatusRepository;
   private final BinaryContentRepository binaryContentRepository;
+
+  private final UserMapper userMapper;
 
   @Override
   @Transactional
@@ -61,21 +64,21 @@ public class BasicUserService implements UserService {
     newUser.initStatus(newStatus);
     userRepository.save(newUser);
 
-    return UserDto.from(newUser, newStatus);
+    return userMapper.toDto(newUser, newStatus);
   }
 
   @Override
   public UserDto readUser(UUID id) {
     User user = userRepository.findById(id)
         .orElseThrow(() -> new BusinessLogicException(ExceptionCode.USER_NOT_FOUND));
-    return UserDto.from(user, user.getStatus());
+    return userMapper.toDto(user, user.getStatus());
   }
 
   @Override
   public List<UserDto> allReadUser() {
     List<User> users = userRepository.findAll();
     return users.stream()
-        .map(user -> UserDto.from(user, user.getStatus()))
+        .map(user -> userMapper.toDto(user, user.getStatus()))
         .collect(Collectors.toList());
   }
 
@@ -135,6 +138,6 @@ public class BasicUserService implements UserService {
 
     user.update(name, email, password, currentProfile);
 
-    return UserDto.from(user, user.getStatus());
+    return userMapper.toDto(user, user.getStatus());
   }
 }

@@ -8,6 +8,7 @@ import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.exception.BusinessLogicException;
 import com.sprint.mission.discodeit.exception.ExceptionCode;
+import com.sprint.mission.discodeit.mapper.ReadStatusMapper;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
@@ -29,6 +30,8 @@ public class BasicReadStatusService implements ReadStatusService {
   private final UserRepository userRepository;
   private final ChannelRepository channelRepository;
 
+  private final ReadStatusMapper readStatusMapper;
+
   @Override
   @Transactional
   public ReadStatusDto createReadStatus(ReadStatusCreateRequest request) {
@@ -47,19 +50,19 @@ public class BasicReadStatusService implements ReadStatusService {
 
     readStatusRepository.save(readStatus);
 
-    return ReadStatusDto.from(readStatus);
+    return readStatusMapper.toDto(readStatus);
   }
 
   public ReadStatusDto findById(UUID id) {
     ReadStatus status = readStatusRepository.findById(id)
         .orElseThrow(() -> new BusinessLogicException(ExceptionCode.READ_STATUS_NOT_FOUND));
-    return ReadStatusDto.from(status);
+    return readStatusMapper.toDto(status);
   }
 
   @Override
   public List<ReadStatusDto> findAllByUserId(UUID authorId) {
     return readStatusRepository.findAllByUserId(authorId).stream()
-        .map(ReadStatusDto::from)
+        .map(readStatusMapper::toDto)
         .toList();
   }
 
@@ -80,6 +83,6 @@ public class BasicReadStatusService implements ReadStatusService {
 
     readStatus.update(request.newLastReadAt());
 
-    return ReadStatusDto.from(readStatus);
+    return readStatusMapper.toDto(readStatus);
   }
 }

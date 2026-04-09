@@ -12,6 +12,8 @@ import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.exception.BusinessLogicException;
 import com.sprint.mission.discodeit.exception.ExceptionCode;
+import com.sprint.mission.discodeit.mapper.ChannelMapper;
+import com.sprint.mission.discodeit.mapper.UserMapper;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
@@ -35,6 +37,9 @@ public class BasicChannelService implements ChannelService {
   private final MessageRepository messageRepository;
   private final UserRepository userRepository;
 
+  private final UserMapper userMapper;
+  private final ChannelMapper channelMapper;
+
   @Override
   @Transactional
   public ChannelDto createPublicChannel(PublicChannelRequest request) {
@@ -45,7 +50,7 @@ public class BasicChannelService implements ChannelService {
     );
     Channel savedChannel = channelRepository.save(channel);
 
-    return ChannelDto.from(savedChannel, savedChannel.getCreatedAt(), Collections.emptyList());
+    return channelMapper.toDto(savedChannel, savedChannel.getCreatedAt(), Collections.emptyList());
   }
 
   @Override
@@ -67,10 +72,10 @@ public class BasicChannelService implements ChannelService {
       ReadStatus readStatus = new ReadStatus(user, createdChannel, createdChannel.getCreatedAt());
       readStatusRepository.save(readStatus);
 
-      participants.add(UserDto.from(user, user.getStatus()));
+      participants.add(userMapper.toDto(user, user.getStatus()));
     });
 
-    return ChannelDto.from(createdChannel, createdChannel.getCreatedAt(), participants);
+    return channelMapper.toDto(createdChannel, createdChannel.getCreatedAt(), participants);
   }
 
   @Override
@@ -81,7 +86,7 @@ public class BasicChannelService implements ChannelService {
     List<UserDto> participants = Collections.emptyList();
     if (channel.getType() == ChannelType.PRIVATE) {
       participants = readStatusRepository.findAllByChannelId(channel.getId()).stream()
-          .map(rs -> UserDto.from(rs.getUser(), rs.getUser().getStatus()))
+          .map(rs -> userMapper.toDto(rs.getUser(), rs.getUser().getStatus()))
           .toList();
     }
 
@@ -89,7 +94,7 @@ public class BasicChannelService implements ChannelService {
         .map(Message::getCreatedAt)
         .orElse(channel.getCreatedAt());
 
-    return ChannelDto.from(channel, lastMessageAt, participants);
+    return channelMapper.toDto(channel, lastMessageAt, participants);
   }
 
   @Override
@@ -111,10 +116,10 @@ public class BasicChannelService implements ChannelService {
           List<UserDto> participants = Collections.emptyList();
           if (channel.getType() == ChannelType.PRIVATE) {
             participants = readStatusRepository.findAllByChannelId(channel.getId()).stream()
-                .map(rs -> UserDto.from(rs.getUser(), rs.getUser().getStatus()))
+                .map(rs -> userMapper.toDto(rs.getUser(), rs.getUser().getStatus()))
                 .toList();
           }
-          return ChannelDto.from(channel, lastMessageAt, participants);
+          return channelMapper.toDto(channel, lastMessageAt, participants);
         })
         .sorted(Comparator.comparing(ChannelDto::lastMessageAt).reversed())
         .toList();

@@ -5,6 +5,7 @@ import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentDto;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.exception.BusinessLogicException;
 import com.sprint.mission.discodeit.exception.ExceptionCode;
+import com.sprint.mission.discodeit.mapper.BinaryContentMapper;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.service.BinaryContentService;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,8 @@ public class BasicBinaryContentService implements BinaryContentService {
 
   private final BinaryContentRepository binaryContentRepository;
 
+  private final BinaryContentMapper binaryContentMapper;
+
   @Override
   @Transactional
   public BinaryContentDto createBinaryContent(BinaryContentCreateRequest request) {
@@ -32,7 +35,7 @@ public class BasicBinaryContentService implements BinaryContentService {
 
     BinaryContent savedContent = binaryContentRepository.save(content);
 
-    return BinaryContentDto.from(savedContent);
+    return binaryContentMapper.toDto(savedContent);
   }
 
   @Override
@@ -40,7 +43,7 @@ public class BasicBinaryContentService implements BinaryContentService {
     BinaryContent content = binaryContentRepository.findById(id)
         .orElseThrow(() -> new BusinessLogicException(ExceptionCode.FILE_NOT_FOUND));
 
-    return BinaryContentDto.from(content);
+    return binaryContentMapper.toDto(content);
   }
 
   @Override
@@ -51,7 +54,7 @@ public class BasicBinaryContentService implements BinaryContentService {
 
     return binaryContentRepository.findAllById(ids)
         .stream()
-        .map(BinaryContentDto::from)
+        .map(binaryContentMapper::toDto)
         .toList();
   }
 

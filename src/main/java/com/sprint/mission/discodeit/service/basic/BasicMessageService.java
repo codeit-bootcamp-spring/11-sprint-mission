@@ -10,6 +10,7 @@ import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.exception.BusinessLogicException;
 import com.sprint.mission.discodeit.exception.ExceptionCode;
+import com.sprint.mission.discodeit.mapper.MessageMapper;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
@@ -34,6 +35,8 @@ public class BasicMessageService implements MessageService {
   private final UserRepository userRepository;
   private final ChannelRepository channelRepository;
   private final BinaryContentRepository binaryContentRepository;
+
+  private final MessageMapper messageMapper;
 
   @Override
   @Transactional
@@ -64,21 +67,21 @@ public class BasicMessageService implements MessageService {
 
     Message savedMessage = messageRepository.save(message);
 
-    return MessageDto.from(savedMessage);
+    return messageMapper.toDto(savedMessage);
   }
 
   @Override
   public MessageDto readMessage(UUID id) {
     Message message = messageRepository.findById(id)
         .orElseThrow(() -> new BusinessLogicException(ExceptionCode.MESSAGE_NOT_FOUND));
-    return MessageDto.from(message);
+    return messageMapper.toDto(message);
   }
 
   @Override
   public List<MessageDto> readMessagesByChannel(UUID channelId) {
     return messageRepository.findByChannelId(channelId).stream()
         .sorted(Comparator.comparing(Message::getCreatedAt))
-        .map(MessageDto::from)
+        .map(messageMapper::toDto)
         .toList();
   }
 
@@ -86,7 +89,7 @@ public class BasicMessageService implements MessageService {
   public List<MessageDto> findAllByChannelId(ChannelMessageList request) {
     return messageRepository.findByChannelId(request.channelId()).stream()
         .sorted(Comparator.comparing(Message::getCreatedAt))
-        .map(MessageDto::from)
+        .map(messageMapper::toDto)
         .toList();
   }
 
@@ -111,6 +114,6 @@ public class BasicMessageService implements MessageService {
 
     mes.update(request.newContent());
 
-    return MessageDto.from(mes);
+    return messageMapper.toDto(mes);
   }
 }

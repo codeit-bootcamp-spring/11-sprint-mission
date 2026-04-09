@@ -15,15 +15,4 @@ public record UserDto(
     Boolean online
 ) {
 
-  public static UserDto from(User user, UserStatus status) {
-    return new UserDto(
-        user.getId(),
-        user.getUsername(),
-        user.getEmail(),
-        Optional.ofNullable(user.getProfile())
-            .map(BinaryContentDto::from).orElse(null),
-        Optional.ofNullable(status)
-            .map(UserStatus::getOnlineStatus).orElse(false)
-    );
-  }
 }
