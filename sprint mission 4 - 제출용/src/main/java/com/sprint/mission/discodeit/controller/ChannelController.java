@@ -1,6 +1,6 @@
 package com.sprint.mission.discodeit.controller;
 
-import com.sprint.mission.discodeit.dto.channel.ChannelResponse;
+import com.sprint.mission.discodeit.dto.channel.ChannelDto;
 import com.sprint.mission.discodeit.dto.channel.ChannelUpdateRequest;
 import com.sprint.mission.discodeit.dto.channel.PrivateChannelCreateRequest;
 import com.sprint.mission.discodeit.dto.channel.PublicChannelCreateRequest;
@@ -24,7 +24,7 @@ public class ChannelController {
 
   // POST /api/channels/public - 201 Created
   @PostMapping("/public")
-  public ResponseEntity<ChannelResponse> createPublic(
+  public ResponseEntity<ChannelDto> createPublic(
       @Valid @RequestBody PublicChannelCreateRequest request
   ) {
     return ResponseEntity.status(HttpStatus.CREATED)
@@ -33,7 +33,7 @@ public class ChannelController {
 
   // POST /api/channels/private - 201 Created
   @PostMapping("/private")
-  public ResponseEntity<ChannelResponse> createPrivate(
+  public ResponseEntity<ChannelDto> createPrivate(
       @Valid @RequestBody PrivateChannelCreateRequest request
   ) {
     return ResponseEntity.status(HttpStatus.CREATED)
@@ -42,19 +42,19 @@ public class ChannelController {
 
   // GET /api/channels/{channelId} - 200 OK
   @GetMapping("/{channelId}")
-  public ResponseEntity<ChannelResponse> read(@PathVariable UUID channelId) {
+  public ResponseEntity<ChannelDto> read(@PathVariable UUID channelId) {
     return ResponseEntity.ok(channelService.read(channelId));
   }
 
   // GET /api/channels?userId=123 - 200 OK
   @GetMapping
-  public ResponseEntity<List<ChannelResponse>> readAllByUserId(@RequestParam UUID userId) {
+  public ResponseEntity<List<ChannelDto>> readAllByUserId(@RequestParam UUID userId) {
     return ResponseEntity.ok(channelService.readAllByUserId(userId));
   }
 
   // PATCH /api/channels/{channelId} - 200 OK
   @PatchMapping("/{channelId}")
-  public ResponseEntity<ChannelResponse> update(
+  public ResponseEntity<ChannelDto> update(
       @PathVariable UUID channelId,
       @Valid @RequestBody PublicChannelUpdateRequest request
   ) {

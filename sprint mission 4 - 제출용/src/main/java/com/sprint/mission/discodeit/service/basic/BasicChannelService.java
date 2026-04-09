@@ -4,7 +4,7 @@ import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.ChannelType;
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.entity.ReadStatus;
-import com.sprint.mission.discodeit.dto.channel.ChannelResponse;
+import com.sprint.mission.discodeit.dto.channel.ChannelDto;
 import com.sprint.mission.discodeit.dto.channel.ChannelUpdateRequest;
 import com.sprint.mission.discodeit.dto.channel.PrivateChannelCreateRequest;
 import com.sprint.mission.discodeit.dto.channel.PublicChannelCreateRequest;
@@ -39,7 +39,7 @@ public class BasicChannelService implements ChannelService {
 
   @Override
   @Transactional
-  public ChannelResponse createPublicChannel(PublicChannelCreateRequest request) {
+  public ChannelDto createPublicChannel(PublicChannelCreateRequest request) {
     if (channelRepository.existsByName(request.getName())) {
       throw DiscodeitDuplicateException.channel(request.getName());
     }
@@ -47,7 +47,7 @@ public class BasicChannelService implements ChannelService {
     Channel channel = new Channel(ChannelType.PUBLIC, request.getName(), request.getDescription());
     Channel savedChannel = channelRepository.save(channel);
 
-    return new ChannelResponse(
+    return new ChannelDto(
         savedChannel.getId(),
         savedChannel.getCreatedAt(),
         savedChannel.getUpdatedAt(),
@@ -61,7 +61,7 @@ public class BasicChannelService implements ChannelService {
 
   @Override
   @Transactional
-  public ChannelResponse createPrivateChannel(PrivateChannelCreateRequest request) {
+  public ChannelDto createPrivateChannel(PrivateChannelCreateRequest request) {
     if (request.getParticipantIds() == null || request.getParticipantIds().size() < 2) {
       throw DiscodeitInvalidInputException.participantIds("participantIds");
     }
@@ -78,7 +78,7 @@ public class BasicChannelService implements ChannelService {
       readStatusRepository.save(readStatus);
     });
 
-    return new ChannelResponse(
+    return new ChannelDto(
         savedChannel.getId(),
         savedChannel.getCreatedAt(),
         savedChannel.getUpdatedAt(),
@@ -92,7 +92,7 @@ public class BasicChannelService implements ChannelService {
 
   @Override
   @Transactional(readOnly = true)
-  public ChannelResponse find(UUID id) {
+  public ChannelDto find(UUID id) {
     Channel channel = channelRepository.findById(id)
         .orElseThrow(() -> DiscodeitNotFoundException.channel(id));
 
@@ -107,7 +107,7 @@ public class BasicChannelService implements ChannelService {
           .map(readStatus -> readStatus.getUser().getId())
           .toList();
     }
-    return new ChannelResponse(
+    return new ChannelDto(
         channel.getId(),
         channel.getCreatedAt(),
         channel.getUpdatedAt(),
@@ -121,7 +121,7 @@ public class BasicChannelService implements ChannelService {
 
   @Override
   @Transactional(readOnly = true)
-  public List<ChannelResponse> findAllByUserId(UUID userId) {
+  public List<ChannelDto> findAllByUserId(UUID userId) {
     // public 채널 가져오기
     List<Channel> publicChannels = channelRepository.findAllByType(ChannelType.PUBLIC);
 
@@ -149,7 +149,7 @@ public class BasicChannelService implements ChannelService {
                 .toList();
           }
 
-          return new ChannelResponse(
+          return new ChannelDto(
               channel.getId(),
               channel.getCreatedAt(),
               channel.getUpdatedAt(),
