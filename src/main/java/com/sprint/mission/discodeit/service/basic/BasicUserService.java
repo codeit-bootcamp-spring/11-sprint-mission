@@ -7,6 +7,7 @@ import com.sprint.mission.discodeit.dto.request.UserUpdateRequest;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.entity.UserStatus;
+import com.sprint.mission.discodeit.mapper.UserMapper;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.repository.UserStatusRepository;
@@ -25,13 +26,13 @@ import java.util.UUID;
 public class BasicUserService implements UserService {
 
   private final UserRepository userRepository;
-  //
   private final BinaryContentRepository binaryContentRepository;
   private final UserStatusRepository userStatusRepository;
+  private final UserMapper userMapper;
 
   @Override
-  public User create(UserCreateRequest userCreateRequest,
-                     Optional<BinaryContentCreateRequest> optionalProfileCreateRequest) {
+  public UserDto create(UserCreateRequest userCreateRequest,
+                        Optional<BinaryContentCreateRequest> optionalProfileCreateRequest) {
     String username = userCreateRequest.username();
     String email = userCreateRequest.email();
 
@@ -59,27 +60,30 @@ public class BasicUserService implements UserService {
     UserStatus userStatus = new UserStatus(createdUser, Instant.now());
     userStatusRepository.save(userStatus);
 
-    return createdUser;
+    return userMapper.toDto(createdUser, userStatus);
   }
 
   @Override
   public UserDto find(UUID userId) {
-    return userRepository.findById(userId)
-        .map(this::toDto)
-        .orElseThrow(() -> new NoSuchElementException("User with id " + userId + " not found"));
+    User user = userRepository.findById(userId)
+            .orElseThrow(() -> new NoSuchElementException("User with id " + userId + " not found"));
+    UserStatus userStatus = userStatusRepository.findByUserId(userId).orElse(null);
+    return userMapper.toDto(user, userStatus);
   }
 
   @Override
   public List<UserDto> findAll() {
-    return userRepository.findAll()
-        .stream()
-        .map(this::toDto)
-        .toList();
+    return userRepository.findAll().stream()
+            .map(user -> {
+              UserStatus userStatus = userStatusRepository.findByUserId(user.getId()).orElse(null);
+              return userMapper.toDto(user, userStatus);
+            })
+            .toList();
   }
 
   @Override
-  public User update(UUID userId, UserUpdateRequest userUpdateRequest,
-                     Optional<BinaryContentCreateRequest> optionalProfileCreateRequest) {
+  public UserDto update(UUID userId, UserUpdateRequest userUpdateRequest,
+                        Optional<BinaryContentCreateRequest> optionalProfileCreateRequest) {
     User user = userRepository.findById(userId)
             .orElseThrow(() -> new NoSuchElementException("User with id " + userId + " not found"));
 
@@ -96,7 +100,6 @@ public class BasicUserService implements UserService {
             .map(profileRequest -> {
               Optional.ofNullable(user.getProfile())
                       .ifPresent(profile -> binaryContentRepository.deleteById(profile.getId()));
-
               return binaryContentRepository.save(new BinaryContent(
                       profileRequest.fileName(),
                       (long) profileRequest.bytes().length,
@@ -106,7 +109,10 @@ public class BasicUserService implements UserService {
             .orElse(null);
 
     user.update(newUsername, newEmail, userUpdateRequest.newPassword(), nullableProfile);
-    return userRepository.save(user);
+    User updatedUser = userRepository.save(user);
+
+    UserStatus userStatus = userStatusRepository.findByUserId(userId).orElse(null);
+    return userMapper.toDto(updatedUser, userStatus);
   }
 
   @Override
@@ -118,21 +124,5 @@ public class BasicUserService implements UserService {
             .ifPresent(profile -> binaryContentRepository.deleteById(profile.getId()));
     userStatusRepository.deleteByUserId(userId);
     userRepository.deleteById(userId);
-  }
-
-  private UserDto toDto(User user) {
-    Boolean online = userStatusRepository.findByUserId(user.getId())
-        .map(UserStatus::isOnline)
-        .orElse(null);
-
-    return new UserDto(
-        user.getId(),
-        user.getCreatedAt(),
-        user.getUpdatedAt(),
-        user.getUsername(),
-        user.getEmail(),
-        user.getProfile() != null ? user.getProfile().getId() : null,
-        online
-    );
   }
 }
