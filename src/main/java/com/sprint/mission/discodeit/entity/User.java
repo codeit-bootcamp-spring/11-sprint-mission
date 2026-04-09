@@ -1,35 +1,46 @@
 package com.sprint.mission.discodeit.entity;
 
-import java.util.UUID;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
+@NoArgsConstructor
 @Getter
-public class User extends BaseEntity {
+@Entity(name = "users")
+public class User extends BaseUpdatableEntity {
 
-  private String nickname;
+  @Column(length = 50, nullable = false, unique = true)
   private String username;
-  private String email;
-  private String password;
-  private String phoneNumber;
-  private UUID profileId;
 
-  public User(String nickname, String username, String email, String password, String phoneNumber,
-      UUID profileId) {
-    this.nickname = nickname;
+  @Column(length = 100, nullable = false, unique = true)
+  private String email;
+
+  @Column(length = 60, nullable = false)
+  private String password;
+
+  @OneToOne
+  @JoinColumn(name = "profile_id", unique = true)
+  private BinaryContent profile;
+
+  @OneToOne(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+  private UserStatus status;
+
+  public User(String username, String email, String password, BinaryContent profile) {
     this.username = username;
     this.email = email;
     this.password = password;
-    this.phoneNumber = phoneNumber;
-    this.profileId = profileId;
+    this.profile = profile;
   }
 
-  public void update(String nickname, String username, String email, String password,
-      String phoneNumber, UUID profileId) {
-    this.nickname = nickname;
+  public void update(String username, String email, String password, BinaryContent profile) {
     this.username = username;
     this.email = email;
     this.password = password;
-    this.phoneNumber = phoneNumber;
-    this.profileId = profileId;
+    this.profile = profile;
   }
 }
