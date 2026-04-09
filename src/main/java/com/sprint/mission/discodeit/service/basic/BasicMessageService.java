@@ -16,6 +16,7 @@ import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.MessageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -32,6 +33,7 @@ public class BasicMessageService implements MessageService {
     private final BinaryContentRepository binaryContentRepo;
 
     @Override
+    @Transactional
     public MessageDto create(MessageCreateRequest dto, List<MultipartFile> attachments) {
         Channel channel = channelRepo.findById(dto.channelId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.CHANNEL_NOT_FOUND));
@@ -43,6 +45,7 @@ public class BasicMessageService implements MessageService {
 
         Message message = new Message(dto.content(), channel, author, binaryContents);
         messageRepo.save(message);
+
         return toDto(message);
     }
 
@@ -55,37 +58,36 @@ public class BasicMessageService implements MessageService {
 
     @Override
     public List<MessageDto> findAllByChannelId(UUID id) {
-        channelRepo.findById(id)
+        Channel channel = channelRepo.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.CHANNEL_NOT_FOUND));
 
-        return messageRepo.findAll().stream()
-                .filter(p -> p.getChannel().getId().equals(id))
+        // n+1 문제 해결 필요
+        return messageRepo.findAllByChannel(channel).stream()
                 .map(this::toDto)
                 .toList();
     }
 
     @Override
+    @Transactional
     public void update(UUID id, MessageUpdateRequest dto) {
         Message message = messageRepo.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MESSAGE_NOT_FOUND));
 
         message.update(dto.newContent());
-
-        messageRepo.save(message);
     }
 
     @Override
+    @Transactional
     public void delete(UUID id) {
         Message message = messageRepo.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MESSAGE_NOT_FOUND));
 
+        // n+1 문제 해결 필요
         for(BinaryContent binaryContent : message.getAttachments()) {
-            binaryContentRepo.findById(binaryContent.getId())
-                    .orElseThrow(() -> new BusinessException(ErrorCode.BINARY_CONTENT_NOT_FOUND));
-            binaryContentRepo.deleteById(binaryContent.getId());
+            binaryContentRepo.delete(binaryContent);
         }
 
-        messageRepo.deleteById(id);
+        messageRepo.delete(message);
     }
 
     private MessageDto toDto(Message message) {
@@ -113,10 +115,6 @@ public class BasicMessageService implements MessageService {
     }
 
     private BinaryContent saveAttachment(MultipartFile file) {
-        if(file == null || file.isEmpty()) {
-            return null;
-        }
-
         try {
             BinaryContent binaryContent = new BinaryContent(
                     file.getOriginalFilename(),

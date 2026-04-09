@@ -1,9 +1,9 @@
 package com.sprint.mission.discodeit.service.basic;
 
-import com.sprint.mission.discodeit.dto.response.ChannelDto;
 import com.sprint.mission.discodeit.dto.request.ChannelUpdateRequest;
 import com.sprint.mission.discodeit.dto.request.PrivateChannelCreateRequest;
 import com.sprint.mission.discodeit.dto.request.PublicChannelCreateRequest;
+import com.sprint.mission.discodeit.dto.response.ChannelDto;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.ChannelType;
@@ -20,14 +20,12 @@ import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.ChannelService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -39,20 +37,21 @@ public class BasicChannelService implements ChannelService {
     private final BinaryContentRepository binaryContentRepo;
     private final UserRepository userRepo;
 
+    @Override
+    @Transactional
     public ChannelDto createPublicChannel(PublicChannelCreateRequest dto) {
         Channel channel = new Channel(ChannelType.PUBLIC, dto.name(), dto.description());
         channelRepo.save(channel);
         return toDto(channel, null, List.of());
     }
 
+    @Override
+    @Transactional
     public ChannelDto createPrivateChannel(PrivateChannelCreateRequest dto) {
         Channel channel = new Channel(ChannelType.PRIVATE, null, null);
         channelRepo.save(channel);
 
         for(UUID userId : dto.participantIds()) {
-            if(readStatusRepo.findByUser_IdAndChannel_Id(userId, channel.getId()).isPresent()) {
-                throw new BusinessException(ErrorCode.READ_STATUS_ALREADY_EXISTS);
-            }
             User user = userRepo.findById(userId)
                             .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
             readStatusRepo.save(new ReadStatus(user, channel, Instant.now()));
@@ -61,6 +60,7 @@ public class BasicChannelService implements ChannelService {
         return toDto(channel, null, dto.participantIds());
     }
 
+    @Override
     public ChannelDto findById(UUID id) {
         Channel channel = channelRepo.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.CHANNEL_NOT_FOUND));
@@ -77,39 +77,32 @@ public class BasicChannelService implements ChannelService {
         };
     }
 
+    @Override
     public List<ChannelDto> findAllByUserId(UUID id) {
-        List<Channel> channelList = channelRepo.findAll();
-        List<Message> messageList = messageRepo.findAll();
-        List<ReadStatus> readStatusList = readStatusRepo.findAll();
+        List<Channel> publicChannels = channelRepo.findAllByChannelType(ChannelType.PUBLIC);
+        List<Channel> privateChannels = channelRepo.findPrivateChannelsByUserId(id);
         List<ChannelDto> response = new ArrayList<>();
 
-        Map<UUID, List<Message>> messagesByChannel = messageList.stream()
-                .collect(Collectors.groupingBy(message -> message.getChannel().getId()));
-        Map<UUID, List<ReadStatus>> readStatusesByChannel = readStatusList.stream()
-                .collect(Collectors.groupingBy(readStatus -> readStatus.getChannel().getId()));
-
-        for(Channel channel : channelList) {
-            List<Message> channelMessages = messagesByChannel.getOrDefault(channel.getId(),List.of());
-            Instant lastMessageAt = channelMessages.stream()
-                    .map(Message::getCreatedAt)
-                    .max(Comparator.naturalOrder())
+        // n+1 문제 해결 필요
+        for(Channel channel : publicChannels) {
+            Instant lastMessageAt = messageRepo.findLastMessageAtByChannelId(channel.getId())
                     .orElse(null);
 
-            switch(channel.getChannelType()) {
-                case PUBLIC -> response.add(toDto(channel, lastMessageAt, List.of()));
-                case PRIVATE -> {
-                    List<UUID> userIds = readStatusesByChannel.getOrDefault(channel.getId(), List.of()).stream()
-                            .map(ReadStatus::getUser)
-                            .map(User::getId)
-                            .toList();
-                    if(!userIds.contains(id)) continue;
-                    response.add(toDto(channel, lastMessageAt, userIds));
-                }
-            }
+            response.add(toDto(channel, lastMessageAt, List.of()));
         }
+        for(Channel channel : privateChannels) {
+            Instant lastMessageAt = messageRepo.findLastMessageAtByChannelId(channel.getId())
+                    .orElse(null);
+            List<UUID> userIds = readStatusRepo.findUserIdsByChannelId(channel.getId());
+
+            response.add(toDto(channel, lastMessageAt, userIds));
+        }
+
         return response;
     }
 
+    @Override
+    @Transactional
     public void update(UUID id, ChannelUpdateRequest dto) {
         Channel channel = channelRepo.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.CHANNEL_NOT_FOUND));
@@ -118,34 +111,24 @@ public class BasicChannelService implements ChannelService {
             throw new BusinessException(ErrorCode.PRIVATE_CHANNEL_UPDATE_NOT_ALLOWED);
 
         channel.update(dto.newName(), dto.newDescription());
-
-        channelRepo.save(channel);
     }
 
+    @Override
+    @Transactional
     public void delete(UUID id) {
-        channelRepo.findById(id)
+        Channel channel = channelRepo.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.CHANNEL_NOT_FOUND));
 
-        List<Message> messageList = messageRepo.findAll().stream()
-                .filter(p -> (p.getChannel().getId().equals(id)))
-                .toList();
-        for(Message message : messageList) {
+        List<Message> messages = messageRepo.findAllByChannel(channel);
+
+        // n+1 문제 해결 필요
+        for(Message message : messages) {
             for(BinaryContent binaryContent : message.getAttachments()) {
-                binaryContentRepo.findById(binaryContent.getId())
-                        .orElseThrow(() -> new BusinessException(ErrorCode.BINARY_CONTENT_NOT_FOUND));
-                binaryContentRepo.deleteById(binaryContent.getId());
+                binaryContentRepo.delete(binaryContent);
             }
-            messageRepo.deleteById(message.getId());
         }
 
-        List<ReadStatus> readStatusList = readStatusRepo.findAll().stream()
-                .filter(p -> (p.getChannel().getId().equals(id)))
-                .toList();
-        for(ReadStatus readStatus : readStatusList) {
-            readStatusRepo.deleteById(readStatus.getId());
-        }
-
-        channelRepo.deleteById(id);
+        channelRepo.delete(channel);
     }
 
     private ChannelDto toDto(Channel channel, Instant lastMessageAt, List<UUID> userIds) {

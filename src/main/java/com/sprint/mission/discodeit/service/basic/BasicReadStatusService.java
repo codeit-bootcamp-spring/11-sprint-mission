@@ -14,6 +14,7 @@ import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.ReadStatusService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
@@ -27,6 +28,7 @@ public class BasicReadStatusService implements ReadStatusService {
     private final ReadStatusRepository readStatusRepo;
 
     @Override
+    @Transactional
     public ReadStatusDto create(ReadStatusCreateRequest dto) {
         Channel channel = channelRepo.findById(dto.channelId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.CHANNEL_NOT_FOUND));
@@ -34,13 +36,12 @@ public class BasicReadStatusService implements ReadStatusService {
         User user = userRepo.findById(dto.userId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-        boolean exists = readStatusRepo.findAll().stream()
-                .anyMatch(p -> p.getChannel().equals(channel)
-                && p.getUser().equals(user));
-        if(exists) throw new BusinessException(ErrorCode.READ_STATUS_ALREADY_EXISTS);
+        if(readStatusRepo.findByUserIdAndChannelId(user.getId(), channel.getId()).isPresent())
+            throw new BusinessException(ErrorCode.READ_STATUS_ALREADY_EXISTS);
 
         ReadStatus readStatus = new ReadStatus(user, channel, dto.lastReadAt());
         readStatusRepo.save(readStatus);
+
         return toDto(readStatus);
     }
 
@@ -54,29 +55,29 @@ public class BasicReadStatusService implements ReadStatusService {
 
     @Override
     public List<ReadStatusDto> findAllByUserId(UUID id) {
-        userRepo.findById(id)
+        User user = userRepo.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-        return readStatusRepo.findAll().stream()
-                .filter(p -> p.getUser().getId().equals(id))
+        return readStatusRepo.findAllByUser(user).stream()
                 .map(this::toDto)
                 .toList();
     }
 
     @Override
+    @Transactional
     public void update(UUID readStatusId, ReadStatusUpdateRequest dto) {
         ReadStatus readStatus = readStatusRepo.findById(readStatusId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.READ_STATUS_NOT_FOUND));
 
         readStatus.update(dto.newLastReadAt());
-        readStatusRepo.save(readStatus);
     }
 
     @Override
+    @Transactional
     public void delete(UUID id) {
-        readStatusRepo.findById(id)
+        ReadStatus readStatus = readStatusRepo.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.READ_STATUS_NOT_FOUND));
-        readStatusRepo.deleteById(id);
+        readStatusRepo.delete(readStatus);
     }
 
     private ReadStatusDto toDto(ReadStatus readStatus) {

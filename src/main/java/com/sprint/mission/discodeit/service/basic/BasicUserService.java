@@ -14,6 +14,7 @@ import com.sprint.mission.discodeit.repository.UserStatusRepository;
 import com.sprint.mission.discodeit.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -30,6 +31,7 @@ public class BasicUserService implements UserService {
     private final BinaryContentRepository binaryContentRepo;
 
     @Override
+    @Transactional
     public UserDto create(UserCreateRequest dto, MultipartFile profile) {
         if(userRepo.findByUsername(dto.username()).isPresent()) throw new BusinessException(ErrorCode.DUPLICATE_NAME);
         if(userRepo.findByEmail(dto.email()).isPresent()) throw new BusinessException(ErrorCode.DUPLICATE_EMAIL);
@@ -37,11 +39,9 @@ public class BasicUserService implements UserService {
         BinaryContent binaryContent = saveProfile(profile);
 
         User user = new User(dto.username(), dto.email(), dto.password(), binaryContent);
-
         UserStatus userStatus = new UserStatus(user, Instant.now());
 
         userRepo.save(user);
-        userStatusRepo.save(userStatus);
 
         return toDto(user, userStatus);
     }
@@ -58,6 +58,7 @@ public class BasicUserService implements UserService {
 
     @Override
     public List<UserDto> findAll() {
+        // n+1 문제 해결 필요
         return userRepo.findAll().stream()
                 .map(user -> {
                             UserStatus userStatus = userStatusRepo.findByUser(user)
@@ -69,20 +70,23 @@ public class BasicUserService implements UserService {
     }
 
     @Override
+    @Transactional
     public void update(UUID id, UserUpdateRequest dto, MultipartFile profile) {
         User user = userRepo.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-        if(!user.getUsername().equals(dto.newUsername()) && userRepo.findByUsername(dto.newUsername()).isPresent())
+        if(!user.getUsername().equals(dto.newUsername())
+                && userRepo.findByUsername(dto.newUsername()).isPresent())
             throw new BusinessException(ErrorCode.DUPLICATE_NAME);
-        if(!user.getEmail().equals(dto.newEmail()) && userRepo.findByEmail(dto.newEmail()).isPresent())
+        if(!user.getEmail().equals(dto.newEmail())
+                && userRepo.findByEmail(dto.newEmail()).isPresent())
             throw new BusinessException(ErrorCode.DUPLICATE_EMAIL);
 
         BinaryContent oldProfile = user.getProfile();
         BinaryContent newProfile = saveProfile(profile);
-        BinaryContent updateProfile = newProfile!=null?oldProfile:newProfile;
+        BinaryContent updateProfile = newProfile != null ? newProfile : oldProfile;
+
         user.update(dto.newUsername(), dto.newEmail(), dto.newPassword(), updateProfile);
-        userRepo.save(user);
 
         if(newProfile != null && oldProfile != null) {
             binaryContentRepo.deleteById(oldProfile.getId());
@@ -90,22 +94,17 @@ public class BasicUserService implements UserService {
     }
 
     @Override
+    @Transactional
     public void delete(UUID id) {
         User user = userRepo.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-
-        UserStatus userStatus = userStatusRepo.findByUser(user)
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_STATUS_NOT_FOUND));
-        userStatusRepo.deleteById(userStatus.getId());
-
         BinaryContent profile = user.getProfile();
+
         if(profile != null) {
-            binaryContentRepo.findById(profile.getId())
-                    .orElseThrow(() -> new BusinessException(ErrorCode.BINARY_CONTENT_NOT_FOUND));
             binaryContentRepo.deleteById(profile.getId());
         }
 
-        userRepo.deleteById(id);
+        userRepo.delete(user);
     }
 
     private BinaryContent saveProfile(MultipartFile file) {
@@ -133,7 +132,7 @@ public class BasicUserService implements UserService {
                 user.getUpdatedAt(),
                 user.getUsername(),
                 user.getEmail(),
-                user.getProfile().getId(),
+                user.getProfile() != null ? user.getProfile().getId() : null,
                 userStatus.passed()
         );
     }

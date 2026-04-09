@@ -12,6 +12,7 @@ import com.sprint.mission.discodeit.repository.UserStatusRepository;
 import com.sprint.mission.discodeit.service.UserStatusService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
@@ -24,13 +25,13 @@ public class BasicUserStatusService implements UserStatusService {
     private final UserRepository userRepo;
 
     @Override
+    @Transactional
     public UserStatusDto create(UserStatusCreateRequest dto) {
         User user = userRepo.findById(dto.userId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-        boolean exists = userStatusRepo.findAll().stream()
-                .anyMatch(p -> p.getUser().equals(user));
-        if(exists) throw new BusinessException(ErrorCode.USER_STATUS_ALREADY_EXISTS);
+        if(userStatusRepo.findByUser(user).isPresent())
+            throw new BusinessException(ErrorCode.USER_STATUS_ALREADY_EXISTS);
 
         UserStatus userStatus = new UserStatus(user, dto.lastActiveAt());
         userStatusRepo.save(userStatus);
@@ -65,15 +66,16 @@ public class BasicUserStatusService implements UserStatusService {
     }
 
     @Override
+    @Transactional
     public void update(UUID id, UserStatusUpdateRequest dto) {
         UserStatus userStatus = userStatusRepo.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_STATUS_NOT_FOUND));
 
         userStatus.update(dto.newLastActiveAt());
-        userStatusRepo.save(userStatus);
     }
 
     @Override
+    @Transactional
     public void updateByUserId(UUID id, UserStatusUpdateRequest dto) {
         User user = userRepo.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
@@ -82,17 +84,21 @@ public class BasicUserStatusService implements UserStatusService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_STATUS_NOT_FOUND));
 
         userStatus.update(dto.newLastActiveAt());
-        userStatusRepo.save(userStatus);
     }
 
     @Override
+    @Transactional
     public void delete(UUID id) {
-        userStatusRepo.findById(id)
+        UserStatus userStatus = userStatusRepo.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_STATUS_NOT_FOUND));
-        userStatusRepo.deleteById(id);
+        userStatusRepo.delete(userStatus);
     }
 
     private UserStatusDto toDto(UserStatus userStatus) {
-        return new UserStatusDto(userStatus.getId(), userStatus.getUser().getId(), userStatus.getLastActiveAt());
+        return new UserStatusDto(
+                userStatus.getId(),
+                userStatus.getUser().getId(),
+                userStatus.getLastActiveAt()
+        );
     }
 }

@@ -12,6 +12,6 @@ public record BinaryContentCreateRequest(
         String contentType,
 
         @NotNull
-        byte[] data
+        byte[] bytes
 ) {
 }
