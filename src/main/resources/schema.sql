@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS binary_contents (
     id           UUID PRIMARY KEY,
     created_at   TIMESTAMPTZ  NOT NULL,
-    file_name    VARCHAR(225) NOT NULL,
+    file_name    VARCHAR(255) NOT NULL,
     size         BIGINT       NOT NULL,
     content_type VARCHAR(100) NOT NULL,
     bytes        BYTEA        NOT NULL
@@ -31,9 +31,9 @@ CREATE TABLE IF NOT EXISTS channels (
     id          UUID PRIMARY KEY,
     created_at  TIMESTAMPTZ NOT NULL,
     updated_at  TIMESTAMPTZ,
+    type        VARCHAR(10) NOT NULL CHECK (type IN ('PUBLIC', 'PRIVATE')),
     name        VARCHAR(100),
-    description VARCHAR(500),
-    type        VARCHAR(10) NOT NULL CHECK (type IN ('PUBLIC', 'PRIVATE'))
+    description VARCHAR(500)
 );
 
 CREATE TABLE IF NOT EXISTS read_statuses (
