@@ -1,13 +1,14 @@
 package com.sprint.mission.discodeit.service.basic;
 
 import com.sprint.mission.discodeit.dto.request.UserCreateRequest;
-import com.sprint.mission.discodeit.dto.response.UserDto;
 import com.sprint.mission.discodeit.dto.request.UserUpdateRequest;
+import com.sprint.mission.discodeit.dto.response.UserDto;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.entity.UserStatus;
 import com.sprint.mission.discodeit.exception.BusinessException;
 import com.sprint.mission.discodeit.exception.ErrorCode;
+import com.sprint.mission.discodeit.mapper.UserMapper;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.repository.UserStatusRepository;
@@ -29,6 +30,7 @@ public class BasicUserService implements UserService {
     private final UserRepository userRepo;
     private final UserStatusRepository userStatusRepo;
     private final BinaryContentRepository binaryContentRepo;
+    private final UserMapper userMapper;
 
     @Override
     @Transactional
@@ -39,33 +41,23 @@ public class BasicUserService implements UserService {
         BinaryContent binaryContent = saveProfile(profile);
 
         User user = new User(dto.username(), dto.email(), dto.password(), binaryContent);
-        UserStatus userStatus = new UserStatus(user, Instant.now());
-
+        new UserStatus(user, Instant.now());
         userRepo.save(user);
 
-        return toDto(user, userStatus);
+        return userMapper.toDto(user);
     }
 
     @Override
     public UserDto findById(UUID id) {
         User user = userRepo.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-        UserStatus userStatus = userStatusRepo.findByUser(user)
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_STATUS_NOT_FOUND));
-
-        return toDto(user, userStatus);
+        return userMapper.toDto(user);
     }
 
     @Override
     public List<UserDto> findAll() {
-        // n+1 문제 해결 필요
         return userRepo.findAll().stream()
-                .map(user -> {
-                            UserStatus userStatus = userStatusRepo.findByUser(user)
-                                    .orElseThrow(() -> new BusinessException(ErrorCode.USER_STATUS_NOT_FOUND));
-                            return toDto(user, userStatus);
-                        }
-                )
+                .map(userMapper::toDto)
                 .toList();
     }
 
@@ -123,17 +115,5 @@ public class BasicUserService implements UserService {
         } catch (IOException e){
             throw new BusinessException(ErrorCode.FILE_SAVE_FAILED);
         }
-    }
-
-    private UserDto toDto(User user, UserStatus userStatus) {
-        return new UserDto(
-                user.getId(),
-                user.getCreatedAt(),
-                user.getUpdatedAt(),
-                user.getUsername(),
-                user.getEmail(),
-                user.getProfile() != null ? user.getProfile().getId() : null,
-                userStatus.passed()
-        );
     }
 }

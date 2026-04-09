@@ -2,7 +2,7 @@ package com.sprint.mission.discodeit.controller;
 
 import com.sprint.mission.discodeit.controller.api.AuthApi;
 import com.sprint.mission.discodeit.dto.request.LoginRequest;
-import com.sprint.mission.discodeit.dto.response.LoginResponse;
+import com.sprint.mission.discodeit.dto.response.UserDto;
 import com.sprint.mission.discodeit.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -20,10 +20,10 @@ public class AuthController implements AuthApi {
     private final AuthService authService;
 
     @PostMapping(value = "/login")
-    public ResponseEntity<LoginResponse> login(
+    public ResponseEntity<UserDto> login(
             @Valid @RequestBody LoginRequest dto
     ) {
-        LoginResponse result = authService.login(dto);
+        UserDto result = authService.login(dto);
         return ResponseEntity.ok(result);
     }
 

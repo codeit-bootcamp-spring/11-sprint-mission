@@ -2,12 +2,12 @@ package com.sprint.mission.discodeit.repository;
 
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.ChannelType;
+import com.sprint.mission.discodeit.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 public interface ChannelRepository extends JpaRepository<Channel, UUID> {
@@ -16,7 +16,7 @@ public interface ChannelRepository extends JpaRepository<Channel, UUID> {
     @Query("""
         select rs.channel
         from ReadStatus rs
-        where rs.user.id = :userId
+        where rs.user = :user
     """)
-    List<Channel> findPrivateChannelsByUserId(@Param("userId") UUID userId);
+    List<Channel> findChannelsByUser(@Param("user") User user);
 }

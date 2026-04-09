@@ -1,13 +1,14 @@
 package com.sprint.mission.discodeit.service.basic;
 
 import com.sprint.mission.discodeit.dto.request.ReadStatusCreateRequest;
-import com.sprint.mission.discodeit.dto.response.ReadStatusDto;
 import com.sprint.mission.discodeit.dto.request.ReadStatusUpdateRequest;
+import com.sprint.mission.discodeit.dto.response.ReadStatusDto;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.exception.BusinessException;
 import com.sprint.mission.discodeit.exception.ErrorCode;
+import com.sprint.mission.discodeit.mapper.ReadStatusMapper;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
@@ -26,6 +27,7 @@ public class BasicReadStatusService implements ReadStatusService {
     private final ChannelRepository channelRepo;
     private final UserRepository userRepo;
     private final ReadStatusRepository readStatusRepo;
+    private final ReadStatusMapper readStatusMapper;
 
     @Override
     @Transactional
@@ -36,13 +38,13 @@ public class BasicReadStatusService implements ReadStatusService {
         User user = userRepo.findById(dto.userId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-        if(readStatusRepo.findByUserIdAndChannelId(user.getId(), channel.getId()).isPresent())
+        if(readStatusRepo.findByUserAndChannel(user, channel).isPresent())
             throw new BusinessException(ErrorCode.READ_STATUS_ALREADY_EXISTS);
 
         ReadStatus readStatus = new ReadStatus(user, channel, dto.lastReadAt());
         readStatusRepo.save(readStatus);
 
-        return toDto(readStatus);
+        return readStatusMapper.toDto(readStatus);
     }
 
     @Override
@@ -50,7 +52,7 @@ public class BasicReadStatusService implements ReadStatusService {
         ReadStatus readStatus = readStatusRepo.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.READ_STATUS_NOT_FOUND));
 
-        return toDto(readStatus);
+        return readStatusMapper.toDto(readStatus);
     }
 
     @Override
@@ -59,7 +61,7 @@ public class BasicReadStatusService implements ReadStatusService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         return readStatusRepo.findAllByUser(user).stream()
-                .map(this::toDto)
+                .map(readStatusMapper::toDto)
                 .toList();
     }
 
@@ -78,16 +80,5 @@ public class BasicReadStatusService implements ReadStatusService {
         ReadStatus readStatus = readStatusRepo.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.READ_STATUS_NOT_FOUND));
         readStatusRepo.delete(readStatus);
-    }
-
-    private ReadStatusDto toDto(ReadStatus readStatus) {
-        return new ReadStatusDto(
-                readStatus.getId(),
-                readStatus.getCreatedAt(),
-                readStatus.getUpdatedAt(),
-                readStatus.getUser().getId(),
-                readStatus.getChannel().getId(),
-                readStatus.getLastReadAt()
-        );
     }
 }

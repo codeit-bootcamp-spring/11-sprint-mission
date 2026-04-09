@@ -5,13 +5,13 @@ import com.sprint.mission.discodeit.dto.response.BinaryContentDto;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.exception.BusinessException;
 import com.sprint.mission.discodeit.exception.ErrorCode;
+import com.sprint.mission.discodeit.mapper.BinaryContentMapper;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.service.BinaryContentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
 
@@ -20,13 +20,14 @@ import java.util.UUID;
 public class BasicBinaryContentService implements BinaryContentService {
 
     private final BinaryContentRepository binaryContentRepo;
+    private final BinaryContentMapper binaryContentMapper;
 
     @Override
     @Transactional
     public BinaryContentDto create(BinaryContentCreateRequest dto) {
         BinaryContent binaryContent = new BinaryContent(dto.fileName(), dto.contentType(), dto.bytes());
         binaryContentRepo.save(binaryContent);
-        return toDto(binaryContent);
+        return binaryContentMapper.toDto(binaryContent);
     }
 
     @Override
@@ -34,7 +35,7 @@ public class BasicBinaryContentService implements BinaryContentService {
         BinaryContent binaryContent = binaryContentRepo.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.BINARY_CONTENT_NOT_FOUND));
 
-        return toDto(binaryContent);
+        return binaryContentMapper.toDto(binaryContent);
     }
 
     @Override
@@ -47,7 +48,7 @@ public class BasicBinaryContentService implements BinaryContentService {
         }
 
         return binaryContents.stream()
-                .map(this::toDto)
+                .map(binaryContentMapper::toDto)
                 .toList();
     }
 
@@ -57,17 +58,5 @@ public class BasicBinaryContentService implements BinaryContentService {
         BinaryContent binaryContent = binaryContentRepo.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.BINARY_CONTENT_NOT_FOUND));
         binaryContentRepo.delete(binaryContent);
-    }
-
-    private BinaryContentDto toDto(BinaryContent binaryContent) {
-        String bytes = Base64.getEncoder().encodeToString(binaryContent.getBytes());
-
-        return new BinaryContentDto(
-                binaryContent.getId(),
-                binaryContent.getCreatedAt(),
-                binaryContent.getFileName(),
-                binaryContent.getBytes().length,
-                binaryContent.getContentType(),
-                bytes);
     }
 }

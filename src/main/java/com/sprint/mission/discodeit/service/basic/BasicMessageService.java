@@ -1,14 +1,15 @@
 package com.sprint.mission.discodeit.service.basic;
 
 import com.sprint.mission.discodeit.dto.request.MessageCreateRequest;
-import com.sprint.mission.discodeit.dto.response.MessageDto;
 import com.sprint.mission.discodeit.dto.request.MessageUpdateRequest;
+import com.sprint.mission.discodeit.dto.response.MessageDto;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.exception.BusinessException;
 import com.sprint.mission.discodeit.exception.ErrorCode;
+import com.sprint.mission.discodeit.mapper.MessageMapper;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
@@ -31,6 +32,7 @@ public class BasicMessageService implements MessageService {
     private final ChannelRepository channelRepo;
     private final UserRepository userRepo;
     private final BinaryContentRepository binaryContentRepo;
+    private final MessageMapper messageMapper;
 
     @Override
     @Transactional
@@ -46,14 +48,14 @@ public class BasicMessageService implements MessageService {
         Message message = new Message(dto.content(), channel, author, binaryContents);
         messageRepo.save(message);
 
-        return toDto(message);
+        return messageMapper.toDto(message);
     }
 
     @Override
     public MessageDto findById(UUID id) {
         Message message = messageRepo.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MESSAGE_NOT_FOUND));
-        return toDto(message);
+        return messageMapper.toDto(message);
     }
 
     @Override
@@ -63,7 +65,7 @@ public class BasicMessageService implements MessageService {
 
         // n+1 문제 해결 필요
         return messageRepo.findAllByChannel(channel).stream()
-                .map(this::toDto)
+                .map(messageMapper::toDto)
                 .toList();
     }
 
@@ -88,20 +90,6 @@ public class BasicMessageService implements MessageService {
         }
 
         messageRepo.delete(message);
-    }
-
-    private MessageDto toDto(Message message) {
-        return new MessageDto(
-                message.getId(),
-                message.getCreatedAt(),
-                message.getUpdatedAt(),
-                message.getContent(),
-                message.getAuthor().getId(),
-                message.getChannel().getId(),
-                message.getAttachments().stream()
-                        .map(BinaryContent::getId)
-                        .toList()
-        );
     }
 
     private List<BinaryContent> saveAttachments(List<MultipartFile> attachments) {

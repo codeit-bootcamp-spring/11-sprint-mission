@@ -12,6 +12,7 @@ import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.exception.BusinessException;
 import com.sprint.mission.discodeit.exception.ErrorCode;
+import com.sprint.mission.discodeit.mapper.ChannelMapper;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
@@ -36,13 +37,14 @@ public class BasicChannelService implements ChannelService {
     private final ReadStatusRepository readStatusRepo;
     private final BinaryContentRepository binaryContentRepo;
     private final UserRepository userRepo;
+    private final ChannelMapper channelMapper;
 
     @Override
     @Transactional
     public ChannelDto createPublicChannel(PublicChannelCreateRequest dto) {
         Channel channel = new Channel(ChannelType.PUBLIC, dto.name(), dto.description());
         channelRepo.save(channel);
-        return toDto(channel, null, List.of());
+        return channelMapper.toDto(channel);
     }
 
     @Override
@@ -57,7 +59,7 @@ public class BasicChannelService implements ChannelService {
             readStatusRepo.save(new ReadStatus(user, channel, Instant.now()));
         }
 
-        return toDto(channel, null, dto.participantIds());
+        return channelMapper.toDto(channel);
     }
 
     @Override
@@ -65,37 +67,27 @@ public class BasicChannelService implements ChannelService {
         Channel channel = channelRepo.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.CHANNEL_NOT_FOUND));
 
-        Instant lastMessageAt = messageRepo.findLastMessageAtByChannelId(channel.getId())
+        Instant lastMessageAt = messageRepo.findLastMessageAtByChannel(channel)
                 .orElse(null);
 
-        return switch(channel.getChannelType()) {
-            case PUBLIC -> toDto(channel, lastMessageAt, List.of());
-            case PRIVATE -> {
-                List<UUID> userIds = readStatusRepo.findUserIdsByChannelId(channel.getId());
-                yield toDto(channel, lastMessageAt, userIds);
-            }
-        };
+        return channelMapper.toDto(channel);
     }
 
     @Override
     public List<ChannelDto> findAllByUserId(UUID id) {
+        User user = userRepo.findById(id)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
         List<Channel> publicChannels = channelRepo.findAllByChannelType(ChannelType.PUBLIC);
-        List<Channel> privateChannels = channelRepo.findPrivateChannelsByUserId(id);
+        List<Channel> privateChannels = channelRepo.findChannelsByUser(user);
         List<ChannelDto> response = new ArrayList<>();
 
         // n+1 문제 해결 필요
         for(Channel channel : publicChannels) {
-            Instant lastMessageAt = messageRepo.findLastMessageAtByChannelId(channel.getId())
-                    .orElse(null);
-
-            response.add(toDto(channel, lastMessageAt, List.of()));
+            response.add(channelMapper.toDto(channel));
         }
         for(Channel channel : privateChannels) {
-            Instant lastMessageAt = messageRepo.findLastMessageAtByChannelId(channel.getId())
-                    .orElse(null);
-            List<UUID> userIds = readStatusRepo.findUserIdsByChannelId(channel.getId());
-
-            response.add(toDto(channel, lastMessageAt, userIds));
+            response.add(channelMapper.toDto(channel));
         }
 
         return response;
@@ -129,32 +121,5 @@ public class BasicChannelService implements ChannelService {
         }
 
         channelRepo.delete(channel);
-    }
-
-    private ChannelDto toDto(Channel channel, Instant lastMessageAt, List<UUID> userIds) {
-        ChannelType channelType = channel.getChannelType();
-
-        return switch (channelType) {
-            case PUBLIC -> new ChannelDto(
-                    channel.getId(),
-                    channel.getCreatedAt(),
-                    channel.getUpdatedAt(),
-                    channelType,
-                    channel.getName(),
-                    channel.getDescription(),
-                    lastMessageAt,
-                    List.of()
-            );
-            case PRIVATE -> new ChannelDto(
-                    channel.getId(),
-                    channel.getCreatedAt(),
-                    channel.getUpdatedAt(),
-                    channelType,
-                    null,
-                    null,
-                    lastMessageAt,
-                    userIds
-            );
-        };
     }
 }
