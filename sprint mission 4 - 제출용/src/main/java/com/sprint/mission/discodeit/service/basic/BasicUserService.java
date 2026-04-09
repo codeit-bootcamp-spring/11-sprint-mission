@@ -19,9 +19,11 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class BasicUserService implements UserService {
 
   private final UserRepository userRepository;
@@ -29,8 +31,9 @@ public class BasicUserService implements UserService {
   private final BinaryContentRepository binaryContentRepository;
 
   @Override
+  @Transactional
   public UserResponse create(UserCreateRequest request) {
-    if (userRepository.existsByUserName(request.getUsername())) {
+    if (userRepository.existsByUsername(request.getUsername())) {
       throw DiscodeitDuplicateException.user(request.getUsername());
     }
     if (userRepository.existsByEmail(request.getEmail())) {
@@ -38,63 +41,63 @@ public class BasicUserService implements UserService {
     }
 
     User user = new User(request.getUsername(), request.getEmail(), request.getPassword());
-    userRepository.create(user);
+    UserStatus userStatus = new UserStatus(user, Instant.now());
+    user.setStatus(userStatus);
+    User savedUser = userRepository.save(user);
 
-    UserStatus userStatus = new UserStatus(user.getId(), Instant.now());
-    userStatusRepository.create(userStatus);
-
-    BinaryContent profile = binaryContentRepository.readByUserId(user.getId());
+    BinaryContent profile = savedUser.getProfile();
     UUID profileId = profile == null ? null : profile.getId();
 
     return new UserResponse(
-        user.getId(),
-        user.getCreatedAt(),
-        user.getUpdatedAt(),
-        user.getUserName(),
-        user.getUserEmail(),
-        user.getUserPassword(),
+        savedUser.getId(),
+        savedUser.getCreatedAt(),
+        savedUser.getUpdatedAt(),
+        savedUser.getUsername(),
+        savedUser.getEmail(),
+        savedUser.getPassword(),
         profileId,
-        userStatus.isOnline()
+        savedUser.getStatus() != null && savedUser.getStatus().isOnline()
     );
   }
 
   @Override
-  public UserResponse read(UUID id) {
-    User user = userRepository.read(id);
-    if (user == null) {
-      throw DiscodeitNotFoundException.user(id);
-    }
+  @Transactional(readOnly = true)
+  public UserResponse find(UUID id) {
+    User user = userRepository.findById(id)
+        .orElseThrow(() -> DiscodeitNotFoundException.user(id));
 
-    UserStatus userStatus = userStatusRepository.readByUserId(id);
-    BinaryContent profile = binaryContentRepository.readByUserId(id);
+    UserStatus userStatus = user.getStatus();
+    BinaryContent profile = user.getProfile();
     UUID profileId = profile == null ? null : profile.getId();
 
     return new UserResponse(
         user.getId(),
         user.getCreatedAt(),
         user.getUpdatedAt(),
-        user.getUserName(),
-        user.getUserEmail(),
-        user.getUserPassword(),
+        user.getUsername(),
+        user.getEmail(),
+        user.getPassword(),
         profileId,
         userStatus != null && userStatus.isOnline()
     );
   }
 
   @Override
-  public List<UserResponse> readAll() {
-    return userRepository.readAll().stream()
+  @Transactional(readOnly = true)
+  public List<UserResponse> findAll() {
+    return userRepository.findAll().stream()
         .map(user -> {
-          UserStatus userStatus = userStatusRepository.readByUserId(user.getId());
-          BinaryContent profile = binaryContentRepository.readByUserId(user.getId());
+          UserStatus userStatus = user.getStatus();
+          BinaryContent profile = user.getProfile();
           UUID profileId = profile == null ? null : profile.getId();
+
           return new UserResponse(
               user.getId(),
               user.getCreatedAt(),
               user.getUpdatedAt(),
-              user.getUserName(),
-              user.getUserEmail(),
-              user.getUserPassword(),
+              user.getUsername(),
+              user.getEmail(),
+              user.getPassword(),
               profileId,
               userStatus != null && userStatus.isOnline()
           );
@@ -103,54 +106,53 @@ public class BasicUserService implements UserService {
   }
 
   @Override
+  @Transactional
   public void update(UserUpdateRequest request) {
-    User user = userRepository.read(request.getId());
-    if (user == null) {
-      throw DiscodeitNotFoundException.user(request.getId());
-    }
+    User user = userRepository.findById(request.getId())
+        .orElseThrow(() -> DiscodeitNotFoundException.user(request.getId()));
 
     String newUsername =
-        request.getNewUsername() != null ? request.getNewUsername() : user.getUserName();
-    String newEmail = request.getNewEmail() != null ? request.getNewEmail() : user.getUserEmail();
+        request.getNewUsername() != null ? request.getNewUsername() : user.getUsername();
+    String newEmail = request.getNewEmail() != null ? request.getNewEmail() : user.getEmail();
     String newPassword =
-        request.getNewPassword() != null ? request.getNewPassword() : user.getUserPassword();
+        request.getNewPassword() != null ? request.getNewPassword() : user.getPassword();
 
-    if (userRepository.existsByUserNameExcluding(newUsername, request.getId())) {
+    if (userRepository.existsByUsernameAndIdNot(newUsername, request.getId())) {
       throw DiscodeitDuplicateException.user(newUsername);
     }
-    if (userRepository.existsByEmailExcluding(newEmail, request.getId())) {
+    if (userRepository.existsByEmailAndIdNot(newEmail, request.getId())) {
       throw DiscodeitDuplicateException.email(newEmail);
     }
 
     user.updateUser(newUsername, newEmail, newPassword);
-    userRepository.update(user);
+    // 변경감지
   }
 
   @Override
+  @Transactional
   public void delete(UUID id) {
-    User user = userRepository.read(id);
-    if (user == null) {
-      throw DiscodeitNotFoundException.user(id);
-    }
-    binaryContentRepository.deleteByUserId(id);
-    userStatusRepository.delete(id);
-    userRepository.delete(id);
+    User user = userRepository.findById(id)
+        .orElseThrow(() -> DiscodeitNotFoundException.user(id));
+
+    // cascade delete - 일괄 삭제
+    userRepository.delete(user);
   }
 
   @Override
-  public List<UserDto> readAllDto() {
-    return userRepository.readAll().stream()
+  @Transactional(readOnly = true)
+  public List<UserDto> findAllDto() {
+    return userRepository.findAll().stream()
         .map(user -> {
-          UserStatus userStatus = userStatusRepository.readByUserId(user.getId());
-          BinaryContent profile = binaryContentRepository.readByUserId(user.getId());
+          UserStatus userStatus = user.getStatus();
+          BinaryContent profile = user.getProfile();
           UUID profileId = profile == null ? null : profile.getId();
 
           return new UserDto(
               user.getId(),
               user.getCreatedAt(),
               user.getUpdatedAt(),
-              user.getUserName(),
-              user.getUserEmail(),
+              user.getUsername(),
+              user.getEmail(),
               profileId,
               userStatus != null && userStatus.isOnline()
           );

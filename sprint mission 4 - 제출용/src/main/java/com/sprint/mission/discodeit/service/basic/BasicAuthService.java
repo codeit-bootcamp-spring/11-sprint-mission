@@ -17,10 +17,12 @@ public class BasicAuthService implements AuthService {
 
   @Override
   public LoginResponse login(LoginRequest request) {
-    User user = userRepository.findByUserName(request.getUsername());
-    if (user == null || !user.getUserPassword().equals(request.getPassword())) {
+    User user = userRepository.findByUsername(request.getUsername())
+        .orElseThrow((DiscodeitInvalidPasswordException::new));
+
+    if (!user.getPassword().equals(request.getPassword())) {
       throw new DiscodeitInvalidPasswordException();
     }
-    return new LoginResponse(user.getId(), user.getUserName(), user.getUserEmail(), true);
+    return new LoginResponse(user.getId(), user.getUsername(), user.getEmail(), true);
   }
 }

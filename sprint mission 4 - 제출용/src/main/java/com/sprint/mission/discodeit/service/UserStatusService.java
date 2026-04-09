@@ -11,9 +11,9 @@ public interface UserStatusService {
 
   UserStatus create(UserStatusCreateRequest request);
 
-  UserStatus read(UUID id);
+  UserStatus findByUserId(UUID id);
 
-  List<UserStatus> readAll();
+  List<UserStatus> findAll();
 
   // 유저 접속상태 변경
   void update(UserStatusUpdateRequest request);

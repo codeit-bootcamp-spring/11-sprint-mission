@@ -1,8 +1,10 @@
 package com.sprint.mission.discodeit.service.basic;
 
+import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.dto.readStatus.ReadStatusCreateRequest;
 import com.sprint.mission.discodeit.dto.readStatus.ReadStatusUpdateRequest;
+import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.exception.DiscodeitDuplicateException;
 import com.sprint.mission.discodeit.exception.DiscodeitNotFoundException;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
@@ -15,9 +17,11 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class BasicReadStatusService implements ReadStatusService {
 
   private final ReadStatusRepository readStatusRepository;
@@ -25,41 +29,41 @@ public class BasicReadStatusService implements ReadStatusService {
   private final ChannelRepository channelRepository;
 
   @Override
+  @Transactional
   public ReadStatus create(ReadStatusCreateRequest request) {
-    if (userRepository.read(request.getUserId()) == null) {
-      throw DiscodeitNotFoundException.user(request.getUserId());
-    }
+    User user = userRepository.findById(request.getUserId())
+        .orElseThrow(() -> DiscodeitNotFoundException.user(request.getUserId()));
 
-    if (channelRepository.read(request.getChannelId()) == null) {
-      throw DiscodeitNotFoundException.channel(request.getChannelId());
-    }
+    Channel channel = channelRepository.findById(request.getChannelId())
+        .orElseThrow(() -> DiscodeitNotFoundException.channel(request.getChannelId()));
 
-    if (readStatusRepository.readByUserIdAndChannelId(request.getUserId(), request.getChannelId())
-        != null) {
-      throw DiscodeitDuplicateException.readStatus(request.getUserId(), request.getChannelId());
+    if (readStatusRepository.findByUser_IdAndChannel_Id(
+        request.getUserId(), request.getChannelId()).isPresent()) {
+      throw DiscodeitDuplicateException.readStatus(
+          request.getUserId(), request.getChannelId());
     }
 
     Instant lastReadAt = request.getLastReadAt() != null ? request.getLastReadAt() : Instant.now();
-    ReadStatus readStatus = new ReadStatus(request.getUserId(), request.getChannelId(),
-        Instant.now());
-    return readStatusRepository.create(readStatus);
+    ReadStatus readStatus = new ReadStatus(user, channel, Instant.now());
+    return readStatusRepository.save(readStatus);
   }
 
   @Override
-  public ReadStatus read(UUID id) {
-    ReadStatus readStatus = readStatusRepository.read(id);
-    if (readStatus == null) {
-      throw new DiscodeitNotFoundException("존재하지 않는 ReadStatus입니다. id=" + id);
-    }
+  @Transactional(readOnly = true)
+  public ReadStatus find(UUID id) {
+    ReadStatus readStatus = readStatusRepository.findById(id)
+        .orElseThrow(() -> DiscodeitNotFoundException.readStatus(id));
     return readStatus;
   }
 
   @Override
-  public List<ReadStatus> readAllByUserId(UUID userId) {
+  @Transactional(readOnly = true)
+  public List<ReadStatus> findAllByUserId(UUID userId) {
     return readStatusRepository.readAllByUserId(userId);
   }
 
   @Override
+  @Transactional
   public void update(ReadStatusUpdateRequest request) {
     ReadStatus readStatus = readStatusRepository.read(request.getReadStatusId());
     if (readStatus == null) {
@@ -76,6 +80,7 @@ public class BasicReadStatusService implements ReadStatusService {
   }
 
   @Override
+  @Transactional
   public void delete(UUID id) {
     readStatusRepository.deleteByChannelId(id);
   }

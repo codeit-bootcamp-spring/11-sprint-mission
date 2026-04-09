@@ -12,13 +12,13 @@ public interface UserService {
 
   UserResponse create(UserCreateRequest request);
 
-  UserResponse read(UUID id);
+  UserResponse find(UUID id);
 
-  List<UserResponse> readAll();
+  List<UserResponse> findAll();
 
   void update(UserUpdateRequest request);
 
   void delete(UUID id);
 
-  List<UserDto> readAllDto();
+  List<UserDto> findAllDto();
 }

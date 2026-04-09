@@ -30,7 +30,7 @@ public class UserController {
   // GET /api/users
   @GetMapping
   public ResponseEntity<List<UserDto>> readAllDto() {
-    return ResponseEntity.ok(userService.readAllDto());
+    return ResponseEntity.ok(userService.findAllDto());
   }
 
   // POST /api/users
@@ -71,7 +71,7 @@ public class UserController {
         request.getNewEmail(),
         request.getNewPassword()
     ));
-    return ResponseEntity.ok(userService.read(userId));
+    return ResponseEntity.ok(userService.find(userId));
   }
 
   // PATCH /api/users/{userId} - 200 OK

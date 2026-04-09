@@ -11,10 +11,10 @@ public interface ReadStatusService {
 
   ReadStatus create(ReadStatusCreateRequest request);
 
-  ReadStatus read(UUID id);
+  ReadStatus find(UUID id);
 
   // User의 모든 채널 ReadStatus 조회
-  List<ReadStatus> readAllByUserId(UUID userId);
+  List<ReadStatus> findAllByUserId(UUID userId);
 
   void update(ReadStatusUpdateRequest request);
 
