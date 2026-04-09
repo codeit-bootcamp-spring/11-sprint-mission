@@ -1,28 +1,25 @@
-package com.sprint.mission.discodeit.dto;
+package com.sprint.mission.discodeit.dto.binarycontent;
 
 import com.sprint.mission.discodeit.entity.BinaryContent;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import java.time.Instant;
 import java.util.UUID;
 
-public record BinaryContentResponse(
+public record BinaryContentDto(
     UUID id,
     String fileName,
     String contentType,
     long size,
-    Instant createdAt,
     @Schema(type = "string", format = "byte")
-    String bytes
+    byte[] bytes
 ) {
 
-  public static BinaryContentResponse from(BinaryContent content) {
-    return new BinaryContentResponse(
+  public static BinaryContentDto from(BinaryContent content) {
+    return new BinaryContentDto(
         content.getId(),
         content.getFileName(),
         content.getContentType(),
         content.getSize(),
-        content.getCreatedAt(),
         content.getBytes()
     );
   }

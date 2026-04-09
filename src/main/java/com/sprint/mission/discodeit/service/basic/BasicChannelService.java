@@ -1,9 +1,10 @@
 package com.sprint.mission.discodeit.service.basic;
 
-import com.sprint.mission.discodeit.dto.ChannelResponse;
-import com.sprint.mission.discodeit.dto.ChannelUpdate;
-import com.sprint.mission.discodeit.dto.PrivateChannelRequest;
-import com.sprint.mission.discodeit.dto.PublicChannelRequest;
+import com.sprint.mission.discodeit.dto.channel.ChannelDto;
+import com.sprint.mission.discodeit.dto.channel.ChannelUpdateRequest;
+import com.sprint.mission.discodeit.dto.channel.PrivateChannelRequest;
+import com.sprint.mission.discodeit.dto.channel.PublicChannelRequest;
+import com.sprint.mission.discodeit.dto.user.UserDto;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.ChannelType;
 import com.sprint.mission.discodeit.entity.Message;
@@ -36,18 +37,20 @@ public class BasicChannelService implements ChannelService {
 
   @Override
   @Transactional
-  public Channel createPublicChannel(PublicChannelRequest request) {
+  public ChannelDto createPublicChannel(PublicChannelRequest request) {
     Channel channel = new Channel(
         request.name(),
         request.description(),
         ChannelType.PUBLIC
     );
-    return channelRepository.save(channel);
+    Channel savedChannel = channelRepository.save(channel);
+
+    return ChannelDto.from(savedChannel, savedChannel.getCreatedAt(), Collections.emptyList());
   }
 
   @Override
   @Transactional
-  public Channel createPrivateChannel(PrivateChannelRequest request) {
+  public ChannelDto createPrivateChannel(PrivateChannelRequest request) {
     Channel channel = new Channel(
         "Private Channel",
         "",
@@ -56,25 +59,29 @@ public class BasicChannelService implements ChannelService {
 
     Channel createdChannel = channelRepository.save(channel);
 
+    List<UserDto> participants = new ArrayList<>();
+
     request.participantIds().forEach(userId -> {
       User user = userRepository.findById(userId)
           .orElseThrow(() -> new BusinessLogicException(ExceptionCode.USER_NOT_FOUND));
-      ReadStatus readStatus = new ReadStatus(user, createdChannel, Instant.MIN);
+      ReadStatus readStatus = new ReadStatus(user, createdChannel, createdChannel.getCreatedAt());
       readStatusRepository.save(readStatus);
+
+      participants.add(UserDto.from(user, user.getStatus()));
     });
 
-    return createdChannel;
+    return ChannelDto.from(createdChannel, createdChannel.getCreatedAt(), participants);
   }
 
   @Override
-  public ChannelResponse readChannel(UUID id) {
+  public ChannelDto readChannel(UUID id) {
     Channel channel = channelRepository.findById(id)
         .orElseThrow(() -> new BusinessLogicException(ExceptionCode.CHANNEL_NOT_FOUND));
 
-    List<UUID> memberIds = null;
+    List<UserDto> participants = Collections.emptyList();
     if (channel.getType() == ChannelType.PRIVATE) {
-      memberIds = readStatusRepository.findAllByChannelId(channel.getId()).stream()
-          .map(rs -> rs.getUser().getId())
+      participants = readStatusRepository.findAllByChannelId(channel.getId()).stream()
+          .map(rs -> UserDto.from(rs.getUser(), rs.getUser().getStatus()))
           .toList();
     }
 
@@ -82,18 +89,11 @@ public class BasicChannelService implements ChannelService {
         .map(Message::getCreatedAt)
         .orElse(channel.getCreatedAt());
 
-    return new ChannelResponse(
-        channel.getId(),
-        channel.getName(),
-        channel.getType(),
-        channel.getDescription(),
-        lastMessageAt,
-        memberIds
-    );
+    return ChannelDto.from(channel, lastMessageAt, participants);
   }
 
   @Override
-  public List<ChannelResponse> findAllByUserId(UUID userId) {
+  public List<ChannelDto> findAllByUserId(UUID userId) {
     List<Channel> allChannels = channelRepository.findAll();
 
     Set<UUID> joinChannelIds = readStatusRepository.findAllByUserId(userId).stream()
@@ -103,26 +103,20 @@ public class BasicChannelService implements ChannelService {
     return allChannels.stream()
         .filter(c -> c.getType() == ChannelType.PUBLIC || joinChannelIds.contains(c.getId()))
         .map(channel -> {
+          // N + 1 발생가능 지점
           Instant lastMessageAt = messageRepository.findLatestMessage(channel.getId())
               .map(Message::getCreatedAt)
               .orElse(channel.getCreatedAt());
 
-          List<UUID> memberIds = Collections.emptyList();
+          List<UserDto> participants = Collections.emptyList();
           if (channel.getType() == ChannelType.PRIVATE) {
-            memberIds = readStatusRepository.findAllByChannelId(channel.getId()).stream()
-                .map(rs -> rs.getUser().getId())
+            participants = readStatusRepository.findAllByChannelId(channel.getId()).stream()
+                .map(rs -> UserDto.from(rs.getUser(), rs.getUser().getStatus()))
                 .toList();
           }
-          return new ChannelResponse(
-              channel.getId(),
-              channel.getName(),
-              channel.getType(),
-              channel.getDescription(),
-              lastMessageAt,
-              memberIds
-          );
+          return ChannelDto.from(channel, lastMessageAt, participants);
         })
-        .sorted(Comparator.comparing(ChannelResponse::lastMessageAt).reversed())
+        .sorted(Comparator.comparing(ChannelDto::lastMessageAt).reversed())
         .toList();
   }
 
@@ -137,7 +131,7 @@ public class BasicChannelService implements ChannelService {
 
   @Override
   @Transactional
-  public void updateChannel(UUID id, ChannelUpdate request) {
+  public ChannelDto updateChannel(UUID id, ChannelUpdateRequest request) {
     Channel channel = channelRepository.findById(id)
         .orElseThrow(() -> new BusinessLogicException(ExceptionCode.CHANNEL_NOT_FOUND));
 
@@ -150,5 +144,7 @@ public class BasicChannelService implements ChannelService {
         (request.description() != null) ? request.description() : channel.getDescription();
 
     channel.update(name, description);
+
+    return readChannel(channel.getId());
   }
 }

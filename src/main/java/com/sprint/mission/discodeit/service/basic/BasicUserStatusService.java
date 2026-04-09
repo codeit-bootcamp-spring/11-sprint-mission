@@ -1,7 +1,8 @@
 package com.sprint.mission.discodeit.service.basic;
 
-import com.sprint.mission.discodeit.dto.UserStatusCreateDto;
-import com.sprint.mission.discodeit.dto.UserStatusUpdateDto;
+import com.sprint.mission.discodeit.dto.userstatus.UserStatusCreateRequest;
+import com.sprint.mission.discodeit.dto.userstatus.UserStatusDto;
+import com.sprint.mission.discodeit.dto.userstatus.UserStatusUpdateDto;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.entity.UserStatus;
 import com.sprint.mission.discodeit.exception.BusinessLogicException;
@@ -26,7 +27,7 @@ public class BasicUserStatusService implements UserStatusService {
 
   @Override
   @Transactional
-  public UserStatus createUserStatus(UserStatusCreateDto statusCreateDto) {
+  public UserStatusDto createUserStatus(UserStatusCreateRequest statusCreateDto) {
     User user = userRepository.findById(statusCreateDto.userId())
         .orElseThrow(() -> new BusinessLogicException(ExceptionCode.USER_NOT_FOUND));
 
@@ -37,26 +38,28 @@ public class BasicUserStatusService implements UserStatusService {
 
     UserStatus userStatus = new UserStatus(user);
     userStatusRepository.save(userStatus);
-    return userStatus;
+    return UserStatusDto.from(userStatus);
   }
 
   @Override
-  public UserStatus findUserStatus(UUID id) {
-    return userStatusRepository.findByUserId(id)
+  public UserStatusDto findUserStatus(UUID userId) {
+    UserStatus status = userStatusRepository.findByUserId(userId)
         .orElseThrow(() -> new BusinessLogicException(ExceptionCode.USER_STATUS_NOT_FOUND));
+
+    return UserStatusDto.from(status);
   }
 
   @Override
-  public List<UserStatus> findAllUserStatus() {
-    List<UserStatus> allUserStatus = userStatusRepository.findAll();
-
-    return allUserStatus;
+  public List<UserStatusDto> findAllUserStatus() {
+    return userStatusRepository.findAll().stream()
+        .map(UserStatusDto::from)
+        .toList();
   }
 
   @Override
   @Transactional
-  public void deleteUserStatus(UUID id) {
-    UserStatus status = userStatusRepository.findByUserId(id)
+  public void deleteUserStatus(UUID userId) {
+    UserStatus status = userStatusRepository.findByUserId(userId)
         .orElseThrow(() -> new BusinessLogicException(ExceptionCode.USER_STATUS_NOT_FOUND));
 
     userStatusRepository.delete(status);
@@ -64,12 +67,14 @@ public class BasicUserStatusService implements UserStatusService {
 
   @Override
   @Transactional
-  public UserStatus updateUserIdStatus(UUID userId, UserStatusUpdateDto request) {
-    return userStatusRepository.findByUserId(userId)
+  public UserStatusDto updateUserIdStatus(UUID userId, UserStatusUpdateDto request) {
+    UserStatus userStatus = userStatusRepository.findByUserId(userId)
         .map(status -> {
           status.update(request.newLastActiveAt());
           return status;
         })
         .orElseThrow(() -> new BusinessLogicException(ExceptionCode.USER_STATUS_NOT_FOUND));
+
+    return UserStatusDto.from(userStatus);
   }
 }

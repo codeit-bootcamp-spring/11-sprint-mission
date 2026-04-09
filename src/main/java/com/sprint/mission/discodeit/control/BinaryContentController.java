@@ -1,6 +1,6 @@
 package com.sprint.mission.discodeit.control;
 
-import com.sprint.mission.discodeit.dto.BinaryContentResponse;
+import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentDto;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.service.BinaryContentService;
 import lombok.RequiredArgsConstructor;
@@ -18,14 +18,14 @@ public class BinaryContentController {
   private final BinaryContentService binaryContentService;
 
   @GetMapping("/{binaryContentId}")
-  public ResponseEntity<BinaryContentResponse> findBinaryContent(
+  public ResponseEntity<BinaryContentDto> findBinaryContent(
       @PathVariable UUID binaryContentId) {
-    BinaryContent content = binaryContentService.find(binaryContentId);
-    return ResponseEntity.ok(BinaryContentResponse.from(content));
+    BinaryContentDto content = binaryContentService.find(binaryContentId);
+    return ResponseEntity.ok(content);
   }
 
   @GetMapping
-  public ResponseEntity<List<BinaryContentResponse>> findMultipleBinaryContents(
+  public ResponseEntity<List<BinaryContentDto>> findMultipleBinaryContents(
       @RequestParam("binaryContentIds") List<UUID> binaryContentIds
   ) {
     return ResponseEntity.ok(binaryContentService.findAllByIdIn(binaryContentIds));

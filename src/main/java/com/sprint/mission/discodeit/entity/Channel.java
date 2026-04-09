@@ -10,13 +10,8 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.util.ArrayList;
 import java.util.List;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 
-import java.io.Serializable;
-import java.time.Instant;
-import java.util.UUID;
 import lombok.NoArgsConstructor;
 
 

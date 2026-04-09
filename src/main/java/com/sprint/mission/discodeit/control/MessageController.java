@@ -1,11 +1,12 @@
 package com.sprint.mission.discodeit.control;
 
-import com.sprint.mission.discodeit.dto.CreateMessageRequest;
-import com.sprint.mission.discodeit.dto.MessageResponseDto;
-import com.sprint.mission.discodeit.dto.MessageUpdate;
+import com.sprint.mission.discodeit.dto.message.CreateMessageRequest;
+import com.sprint.mission.discodeit.dto.message.MessageDto;
+import com.sprint.mission.discodeit.dto.message.MessageUpdate;
 import com.sprint.mission.discodeit.service.MessageService;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
+import jakarta.validation.Valid;
 import java.net.URI;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -25,23 +26,19 @@ public class MessageController {
   private final MessageService messageService;
 
   @PostMapping(consumes = "multipart/form-data")
-  @ResponseStatus(HttpStatus.CREATED)
-  public ResponseEntity<MessageResponseDto> createMessage(
+  public ResponseEntity<MessageDto> createMessage(
       @Parameter(content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE))
-      @RequestPart("messageCreateRequest") CreateMessageRequest request,
+      @Valid @RequestPart("messageCreateRequest") CreateMessageRequest request,
       @RequestPart(value = "attachments", required = false) List<MultipartFile> attachments) {
-    MessageResponseDto createdMessage = messageService.createMessage(request, attachments);
+    MessageDto createdMessage = messageService.createMessage(request, attachments);
     URI location = URI.create("/api/messages/" + createdMessage.id());
     return ResponseEntity.created(location).body(createdMessage);
   }
 
   @GetMapping(params = "channelId")
-  public ResponseEntity<List<MessageResponseDto>> readMessageByChannelId(
+  public ResponseEntity<List<MessageDto>> readMessageByChannelId(
       @RequestParam UUID channelId) {
-    List<MessageResponseDto> messages = messageService.readMessagesByChannel(channelId)
-        .stream()
-        .map(MessageResponseDto::from)
-        .toList();
+    List<MessageDto> messages = messageService.readMessagesByChannel(channelId);
     return ResponseEntity.ok(messages);
   }
 
@@ -53,9 +50,9 @@ public class MessageController {
   }
 
   @PatchMapping("/{messageId}")
-  public ResponseEntity<Void> updateMessage(@PathVariable UUID messageId,
+  public ResponseEntity<MessageDto> updateMessage(@PathVariable UUID messageId,
       @RequestBody MessageUpdate request) {
-    messageService.updateMessage(messageId, request);
-    return ResponseEntity.ok().build();
+    MessageDto updatedMessage = messageService.updateMessage(messageId, request);
+    return ResponseEntity.ok(updatedMessage);
   }
 }

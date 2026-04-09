@@ -1,7 +1,8 @@
 package com.sprint.mission.discodeit.service.basic;
 
-import com.sprint.mission.discodeit.dto.ReadStatusCreateDto;
-import com.sprint.mission.discodeit.dto.ReadStatusUpdateDto;
+import com.sprint.mission.discodeit.dto.readstatus.ReadStatusCreateRequest;
+import com.sprint.mission.discodeit.dto.readstatus.ReadStatusDto;
+import com.sprint.mission.discodeit.dto.readstatus.ReadStatusUpdateRequest;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.entity.User;
@@ -30,14 +31,14 @@ public class BasicReadStatusService implements ReadStatusService {
 
   @Override
   @Transactional
-  public ReadStatus createReadStatus(ReadStatusCreateDto statusCreateDto) {
-    User user = userRepository.findById(statusCreateDto.userId())
+  public ReadStatusDto createReadStatus(ReadStatusCreateRequest request) {
+    User user = userRepository.findById(request.userId())
         .orElseThrow(() -> new BusinessLogicException(ExceptionCode.MEMBER_NOT_FOUND));
-    Channel channel = channelRepository.findById(statusCreateDto.channelId())
+    Channel channel = channelRepository.findById(request.channelId())
         .orElseThrow(() -> new BusinessLogicException(ExceptionCode.CHANNEL_NOT_FOUND));
 
-    readStatusRepository.findByUserIdAndChannelId(statusCreateDto.userId(),
-            statusCreateDto.channelId())
+    readStatusRepository.findByUserIdAndChannelId(request.userId(),
+            request.channelId())
         .ifPresent(rs -> {
           throw new BusinessLogicException(ExceptionCode.READ_STATUS_EXISTS);
         });
@@ -46,35 +47,39 @@ public class BasicReadStatusService implements ReadStatusService {
 
     readStatusRepository.save(readStatus);
 
-    return readStatus;
+    return ReadStatusDto.from(readStatus);
   }
 
-  public ReadStatus findById(UUID id) {
-    return readStatusRepository.findById(id)
+  public ReadStatusDto findById(UUID id) {
+    ReadStatus status = readStatusRepository.findById(id)
         .orElseThrow(() -> new BusinessLogicException(ExceptionCode.READ_STATUS_NOT_FOUND));
+    return ReadStatusDto.from(status);
   }
 
   @Override
-  public List<ReadStatus> findAllByUserId(UUID authorId) {
-    return readStatusRepository.findAllByUserId(authorId);
+  public List<ReadStatusDto> findAllByUserId(UUID authorId) {
+    return readStatusRepository.findAllByUserId(authorId).stream()
+        .map(ReadStatusDto::from)
+        .toList();
   }
 
   @Override
   @Transactional
   public void deleteReadStatus(UUID id) {
-    ReadStatus status = findById(id);
+    ReadStatus status = readStatusRepository.findById(id)
+        .orElseThrow(() -> new BusinessLogicException(ExceptionCode.READ_STATUS_NOT_FOUND));
 
     readStatusRepository.delete(status);
   }
 
   @Override
   @Transactional
-  public ReadStatus updateStatus(UUID readStatusId, ReadStatusUpdateDto request) {
+  public ReadStatusDto updateStatus(UUID readStatusId, ReadStatusUpdateRequest request) {
     ReadStatus readStatus = readStatusRepository.findById(readStatusId)
         .orElseThrow(() -> new BusinessLogicException(ExceptionCode.READ_STATUS_NOT_FOUND));
 
     readStatus.update(request.newLastReadAt());
 
-    return readStatus;
+    return ReadStatusDto.from(readStatus);
   }
 }

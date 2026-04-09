@@ -1,8 +1,8 @@
 package com.sprint.mission.discodeit.service.basic;
 
-import com.sprint.mission.discodeit.dto.UserCreateRequest;
-import com.sprint.mission.discodeit.dto.UserDto;
-import com.sprint.mission.discodeit.dto.UserUpdateRequest;
+import com.sprint.mission.discodeit.dto.user.UserCreateRequest;
+import com.sprint.mission.discodeit.dto.user.UserDto;
+import com.sprint.mission.discodeit.dto.user.UserUpdateRequest;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.entity.UserStatus;
@@ -17,7 +17,6 @@ import java.io.IOException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.InputMismatchException;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -34,7 +33,7 @@ public class BasicUserService implements UserService {
 
   @Override
   @Transactional
-  public User createUser(UserCreateRequest request, MultipartFile profile) {
+  public UserDto createUser(UserCreateRequest request, MultipartFile profile) {
     String name = request.username().trim();
     String email = request.email().trim();
     String password = request.password().trim();
@@ -60,7 +59,9 @@ public class BasicUserService implements UserService {
     UserStatus newStatus = new UserStatus(newUser);
 
     newUser.initStatus(newStatus);
-    return userRepository.save(newUser);
+    userRepository.save(newUser);
+
+    return UserDto.from(newUser, newStatus);
   }
 
   @Override
@@ -95,7 +96,7 @@ public class BasicUserService implements UserService {
 
   @Override
   @Transactional
-  public void updateUser(UUID id, UserUpdateRequest request, MultipartFile profile) {
+  public UserDto updateUser(UUID id, UserUpdateRequest request, MultipartFile profile) {
     User user = userRepository.findById(id)
         .orElseThrow(() -> new BusinessLogicException(ExceptionCode.MEMBER_NOT_FOUND));
     String name = (request.newUsername() != null) ? request.newUsername() : user.getUsername();
@@ -133,5 +134,7 @@ public class BasicUserService implements UserService {
     }
 
     user.update(name, email, password, currentProfile);
+
+    return UserDto.from(user, user.getStatus());
   }
 }
