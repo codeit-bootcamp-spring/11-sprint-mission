@@ -12,8 +12,10 @@ import jakarta.persistence.Table;
 import lombok.Getter;
 
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Getter
+@Setter
 @Entity
 @Table(name = "users")
 @NoArgsConstructor
@@ -43,16 +45,16 @@ public class User extends BaseUpdatableEntity {
     this.profile = profile;
   }
 
-  public void setProfile(BinaryContent profile) {
-    this.profile = profile;
-  }
-
   // 필드를 수정하는 update 함수
   public void update(String name, String email, String password, BinaryContent profile) {
     this.username = name;
     this.email = email;
     this.password = password;
     this.profile = profile;
+  }
+
+  public void initStatus(UserStatus status) {
+    this.status = status;
   }
 
 

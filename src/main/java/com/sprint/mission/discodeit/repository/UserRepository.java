@@ -4,9 +4,11 @@ import com.sprint.mission.discodeit.entity.User;
 
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface UserRepository extends CrudRepository<User, UUID> {
-    Optional<User> findByEmail(String email);
-    Optional<User> findByUserName(String userName);
-    void delete(UUID id);
+public interface UserRepository extends JpaRepository<User, UUID> {
+
+  Optional<User> findByEmail(String email);
+
+  Optional<User> findByUsername(String userName);
 }

@@ -18,13 +18,10 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 public abstract class BaseEntity {
 
   @Id
+  @GeneratedValue(strategy = GenerationType.UUID)
   @Column(columnDefinition = "uuid", nullable = false, updatable = false)
   private UUID id;
 
   @CreatedDate
   private Instant createdAt;
-
-  protected BaseEntity() {
-    this.id = UUID.randomUUID();
-  }
 }

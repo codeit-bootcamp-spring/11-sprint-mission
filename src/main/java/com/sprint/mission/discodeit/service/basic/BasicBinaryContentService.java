@@ -11,52 +11,47 @@ import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.util.*;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class BasicBinaryContentService implements BinaryContentService {
-    private final BinaryContentRepository binaryContentRepository;
 
-    @Override
-    public BinaryContent createBinaryContent(BinaryContentCreateDto request) {
-        if(request.data() == null || request.data().length == 0) {
-            throw new BusinessLogicException(ExceptionCode.FILE_EMPTY);
-        }
+  private final BinaryContentRepository binaryContentRepository;
 
-        BinaryContent content = BinaryContent.builder()
-                .id(UUID.randomUUID())
-                .data(request.data())
-                .fileName(request.fileName())
-                .contentType(request.contentType())
-                .size(request.data().length)
-                .createdAt(Instant.now())
-                .build();
-
-        return binaryContentRepository.save(content);
+  @Override
+  @Transactional
+  public BinaryContent createBinaryContent(BinaryContentCreateDto request) {
+    if (request.data() == null || request.data().length == 0) {
+      throw new BusinessLogicException(ExceptionCode.FILE_EMPTY);
     }
 
-    @Override
-    public BinaryContent find(UUID id) {
-        return binaryContentRepository.findById(id)
-                .orElseThrow(() -> new BusinessLogicException(ExceptionCode.FILE_NOT_FOUND));
+    BinaryContent content = new BinaryContent(request.data(), request.fileName(), request.contentType());
+
+    return binaryContentRepository.save(content);
+  }
+
+  @Override
+  public BinaryContent find(UUID id) {
+    return binaryContentRepository.findById(id)
+        .orElseThrow(() -> new BusinessLogicException(ExceptionCode.FILE_NOT_FOUND));
+  }
+
+  @Override
+  public List<BinaryContent> findAllByIdIn(Collection<UUID> ids) {
+    if (ids == null) {
+      return Collections.emptyList();
     }
 
-    @Override
-    public List<BinaryContent> findAllByIdIn(Collection<UUID> ids) {
-        if(ids == null || ids.isEmpty()) {
-            System.out.println("❌목록이 비어있습니다");
-            return Collections.emptyList();
-        }
+    return binaryContentRepository.findAllById(ids);
+  }
 
-        return binaryContentRepository.findAllById(ids);
-    }
-
-    @Override
-    public void deleteBinaryContent(UUID id) {
-        binaryContentRepository.findById(id)
-                .ifPresent(content -> {
-                    binaryContentRepository.delete(id);
-                    System.out.println("✅ 바이너리 콘텐츠 삭제 완료");
-                });
-    }
+  @Override
+  @Transactional
+  public void deleteBinaryContent(UUID id) {
+    BinaryContent binaryContent = binaryContentRepository.findById(id)
+        .orElseThrow(() -> new BusinessLogicException(ExceptionCode.BINARY_CONTENT_NOT_EXISTS));
+    binaryContentRepository.delete(binaryContent);
+  }
 }

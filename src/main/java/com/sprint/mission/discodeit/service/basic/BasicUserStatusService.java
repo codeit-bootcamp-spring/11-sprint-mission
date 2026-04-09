@@ -2,6 +2,7 @@ package com.sprint.mission.discodeit.service.basic;
 
 import com.sprint.mission.discodeit.dto.UserStatusCreateDto;
 import com.sprint.mission.discodeit.dto.UserStatusUpdateDto;
+import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.entity.UserStatus;
 import com.sprint.mission.discodeit.exception.BusinessLogicException;
 import com.sprint.mission.discodeit.exception.ExceptionCode;
@@ -13,32 +14,30 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.UUID;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class BasicUserStatusService implements UserStatusService {
 
   private final UserRepository userRepository;
   private final UserStatusRepository userStatusRepository;
 
   @Override
+  @Transactional
   public UserStatus createUserStatus(UserStatusCreateDto statusCreateDto) {
-    userRepository.findById(statusCreateDto.userId())
+    User user = userRepository.findById(statusCreateDto.userId())
         .orElseThrow(() -> new BusinessLogicException(ExceptionCode.USER_NOT_FOUND));
 
-    return userStatusRepository.findByUserId(statusCreateDto.userId())
-        .map(existStatus -> {
-          System.out.println("상태 정보가 존재하여 기존 정보를 반환합니다.");
-          userStatusRepository.save(existStatus);
-          return existStatus;
-        })
-        .orElseGet(() -> {
-          UserStatus userStatus = new UserStatus(statusCreateDto.userId());
-          userStatusRepository.save(userStatus);
-          System.out.println("유저 상태 신규 생성완료");
-          userStatusRepository.save(userStatus);
-          return userStatus;
+    userStatusRepository.findByUserId(statusCreateDto.userId())
+        .ifPresent(existStatus -> {
+          throw new BusinessLogicException(ExceptionCode.USER_STATUS_EXISTS);
         });
+
+    UserStatus userStatus = new UserStatus(user);
+    userStatusRepository.save(userStatus);
+    return userStatus;
   }
 
   @Override
@@ -51,38 +50,24 @@ public class BasicUserStatusService implements UserStatusService {
   public List<UserStatus> findAllUserStatus() {
     List<UserStatus> allUserStatus = userStatusRepository.findAll();
 
-    System.out.println("전체 유저 상태 조회완료");
-
     return allUserStatus;
   }
 
   @Override
+  @Transactional
   public void deleteUserStatus(UUID id) {
     UserStatus status = userStatusRepository.findByUserId(id)
         .orElseThrow(() -> new BusinessLogicException(ExceptionCode.USER_STATUS_NOT_FOUND));
 
-    userStatusRepository.deleteByUserId(id);
-
-    System.out.println("✅ 유저 상태 삭제 완료");
+    userStatusRepository.delete(status);
   }
 
-//    @Override
-//    public UserStatus updateUserStatus(UserStatusUpdateDto request) {
-//        return userStatusRepository.findById(request.id())
-//                .map(status -> {
-//                    status.update();
-//                    userStatusRepository.save(status);
-//                    return status;
-//                })
-//                .orElseThrow(() -> new BusinessLogicException(ExceptionCode.USER_STATUS_NOT_FOUND));
-//    }
-
   @Override
+  @Transactional
   public UserStatus updateUserIdStatus(UUID userId, UserStatusUpdateDto request) {
     return userStatusRepository.findByUserId(userId)
         .map(status -> {
           status.update(request.newLastActiveAt());
-          userStatusRepository.save(status);
           return status;
         })
         .orElseThrow(() -> new BusinessLogicException(ExceptionCode.USER_STATUS_NOT_FOUND));

@@ -28,7 +28,7 @@ public class BinaryContent extends BaseEntity {
   private long size;
 
   @JsonIgnore
-  @Column(nullable = false)
+  @Column(nullable = false, columnDefinition = "bytea")
   private byte[] bytes;
 
   public BinaryContent(byte[] bytes, String fileName, String contentType) {

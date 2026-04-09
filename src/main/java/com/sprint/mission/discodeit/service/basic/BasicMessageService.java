@@ -5,7 +5,9 @@ import com.sprint.mission.discodeit.dto.CreateMessageRequest;
 import com.sprint.mission.discodeit.dto.MessageResponseDto;
 import com.sprint.mission.discodeit.dto.MessageUpdate;
 import com.sprint.mission.discodeit.entity.BinaryContent;
+import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.Message;
+import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.exception.BusinessLogicException;
 import com.sprint.mission.discodeit.exception.ExceptionCode;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
@@ -23,10 +25,12 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class BasicMessageService implements MessageService {
 
   private final MessageRepository messageRepository;
@@ -35,19 +39,18 @@ public class BasicMessageService implements MessageService {
   private final BinaryContentRepository binaryContentRepository;
 
   @Override
+  @Transactional
   public MessageResponseDto createMessage(CreateMessageRequest request,
       List<MultipartFile> attachments) {
     if (request.content() == null || request.content().isBlank()) {
       throw new BusinessLogicException(ExceptionCode.MESSAGE_CONTENT_EMPTY);
     }
-    Message message = Message.builder()
-        .id(UUID.randomUUID())
-        .channelId(request.channelId())
-        .authorId(request.authorId())
-        .message(request.content())
-        .attachmentIds(new ArrayList<>())
-        .createdAt(Instant.now())
-        .build();
+    Channel channel = channelRepository.findById(request.channelId())
+        .orElseThrow(() -> new BusinessLogicException(ExceptionCode.CHANNEL_NOT_FOUND));
+    User author = userRepository.findById(request.authorId())
+        .orElseThrow(() -> new BusinessLogicException(ExceptionCode.USER_NOT_FOUND));
+
+    Message message = new Message(channel, author, request.content());
 
     if (attachments != null && !attachments.isEmpty()) {
       for (MultipartFile file : attachments) {
@@ -58,7 +61,7 @@ public class BasicMessageService implements MessageService {
               file.getContentType()
           );
           binaryContentRepository.save(content);
-          message.getAttachmentIds().add(content.getId());
+          message.addAttachment(content);
         } catch (IOException e) {
           throw new BusinessLogicException(ExceptionCode.INTERNAL_SERVER_ERROR);
         }
@@ -78,8 +81,7 @@ public class BasicMessageService implements MessageService {
 
   @Override
   public List<Message> readMessagesByChannel(UUID channelId) {
-    return messageRepository.findAll().stream()
-        .filter(m -> m.getChannelId().equals(channelId))
+    return messageRepository.findByChannelId(channelId).stream()
         .sorted(Comparator.comparing(Message::getCreatedAt))
         .collect(Collectors.toList());
   }
@@ -88,30 +90,25 @@ public class BasicMessageService implements MessageService {
   public List<MessageResponseDto> findAllByChannelId(ChannelMessageList request) {
     return messageRepository.findByChannelId(request.channelId()).stream()
         .sorted(Comparator.comparing(Message::getCreatedAt))
-        .map(message -> new MessageResponseDto(
-            message.getId(),
-            message.getChannelId(),
-            message.getAuthorId(),
-            message.getMessage(),
-            message.getCreatedAt(),
-            message.getUpdatedAt(),
-            message.getAttachmentIds()
-        ))
+        .map(MessageResponseDto::from)
         .toList();
   }
 
   @Override
+  @Transactional
   public void deleteMessage(UUID id) {
-    Message mes = readMessage(id);
+    Message mes = messageRepository.findById(id)
+        .orElseThrow(() -> new BusinessLogicException(ExceptionCode.MESSAGE_NOT_FOUND));
 
-    if (mes.getAttachmentIds() != null && !mes.getAttachmentIds().isEmpty()) {
-      binaryContentRepository.deleteAllByAttachmentIds(mes.getAttachmentIds());
+    if (!mes.getAttachments().isEmpty()) {
+      binaryContentRepository.deleteAll(mes.getAttachments());
     }
 
     messageRepository.delete(mes);
   }
 
   @Override
+  @Transactional //여기 하는중!
   public void updateMessage(UUID id, MessageUpdate request) {
     if (request.newContent() == null || request.newContent().isBlank()) {
       throw new BusinessLogicException(ExceptionCode.MESSAGE_CONTENT_EMPTY);
@@ -119,12 +116,7 @@ public class BasicMessageService implements MessageService {
 
     Message mes = messageRepository.findById(id)
         .orElseThrow(() -> new BusinessLogicException(ExceptionCode.MESSAGE_NOT_FOUND));
-    if (mes.getMessage().equals(request.newContent())) {
-      System.out.println("변경사항이 없습니다.");
-      return;
-    }
 
     mes.update(request.newContent());
-    messageRepository.save(mes);
   }
 }

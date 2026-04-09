@@ -12,6 +12,7 @@ import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.repository.UserStatusRepository;
 import com.sprint.mission.discodeit.service.UserService;
+import org.springframework.transaction.annotation.Transactional;
 import java.io.IOException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -24,6 +25,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class BasicUserService implements UserService {
 
   private final UserRepository userRepository;
@@ -31,11 +33,12 @@ public class BasicUserService implements UserService {
   private final BinaryContentRepository binaryContentRepository;
 
   @Override
+  @Transactional
   public User createUser(UserCreateRequest request, MultipartFile profile) {
     String name = request.username().trim();
     String email = request.email().trim();
     String password = request.password().trim();
-    if (userRepository.findByUserName(name).isPresent()) {
+    if (userRepository.findByUsername(name).isPresent()) {
       throw new BusinessLogicException(ExceptionCode.MEMBER_EXISTS);
     }
     if (userRepository.findByEmail(email).isPresent()) {
@@ -45,7 +48,7 @@ public class BasicUserService implements UserService {
     BinaryContent profileEntity = null;
     if (profile != null && !profile.isEmpty()) {
       try {
-        profileEntity = new BinaryContent(profileEntity.getBytes(), profile.getOriginalFilename(),
+        profileEntity = new BinaryContent(profile.getBytes(), profile.getOriginalFilename(),
             profile.getContentType());
         binaryContentRepository.save(profileEntity);
       } catch (Exception e) {
@@ -55,92 +58,80 @@ public class BasicUserService implements UserService {
 
     User newUser = new User(name, email, password, profileEntity);
     UserStatus newStatus = new UserStatus(newUser);
-    try {
-      userRepository.save(newUser);
-      userStatusRepository.save(newStatus);
-    } catch (Exception e) {
-      throw new BusinessLogicException(ExceptionCode.INTERNAL_SERVER_ERROR);
-    }
 
-    return newUser;
+    newUser.initStatus(newStatus);
+    return userRepository.save(newUser);
   }
 
   @Override
   public UserDto readUser(UUID id) {
     User user = userRepository.findById(id)
         .orElseThrow(() -> new BusinessLogicException(ExceptionCode.USER_NOT_FOUND));
-    UserStatus status = userStatusRepository.findByUserId(user.getId())
-        .orElseThrow(() -> new BusinessLogicException(ExceptionCode.USER_STATUS_NOT_FOUND));
-
-    return UserDto.from(user, status);
+    return UserDto.from(user, user.getStatus());
   }
 
   @Override
   public List<UserDto> allReadUser() {
     List<User> users = userRepository.findAll();
     return users.stream()
-        .map(user -> {
-          UserStatus status = userStatusRepository.findByUserId(user.getId())
-              .orElseGet(() -> new UserStatus(user.getId()));
-          return UserDto.from(user, status);
-        })
+        .map(user -> UserDto.from(user, user.getStatus()))
         .collect(Collectors.toList());
   }
 
   @Override
+  @Transactional
   public void deleteUser(UUID id) {
     User user = userRepository.findById(id)
         .orElseThrow(() -> new BusinessLogicException(ExceptionCode.USER_NOT_FOUND));
 
-    if (user.getProfile() != null) {
-      binaryContentRepository.delete(user.getProfile());
+    BinaryContent profile = user.getProfile();
+    user.setProfile(null);
+    userRepository.save(user);
+    if (profile != null) {
+      binaryContentRepository.delete(profile);
     }
     userRepository.delete(user);
   }
 
   @Override
+  @Transactional
   public void updateUser(UUID id, UserUpdateRequest request, MultipartFile profile) {
     User user = userRepository.findById(id)
         .orElseThrow(() -> new BusinessLogicException(ExceptionCode.MEMBER_NOT_FOUND));
-    String name = user.getUsername();
-    if (request.newUsername() != null) {
-      userRepository.findByUserName(request.newUsername())
-          .filter(u -> !u.getId().equals(id))
+    String name = (request.newUsername() != null) ? request.newUsername() : user.getUsername();
+    if (request.newUsername() != null && !name.equals(user.getUsername())) {
+      userRepository.findByUsername(name)
           .ifPresent(u -> {
             throw new BusinessLogicException(ExceptionCode.MEMBER_EXISTS);
           });
-      name = request.newUsername();
     }
-    String email = user.getEmail();
-    if (request.newEmail() != null) {
-      userRepository.findByEmail(request.newEmail())
-          .filter(u -> !u.getId().equals(id))
+    String email = (request.newEmail() != null) ? request.newEmail() : user.getEmail();
+    if (request.newEmail() != null && !email.equals(user.getEmail())) {
+      userRepository.findByEmail(email)
           .ifPresent(u -> {
             throw new BusinessLogicException(ExceptionCode.EMAIL_EXISTS);
           });
-      email = request.newEmail();
     }
 
     String password = (request.newPassword() != null) ? request.newPassword() : user.getPassword();
 
+    BinaryContent currentProfile = user.getProfile();
     if (profile != null && !profile.isEmpty()) {
-      if (user.getProfileId() != null) {
-        binaryContentRepository.delete(user.getProfileId());
+      if (currentProfile != null) {
+        binaryContentRepository.delete(currentProfile);
       }
       try {
-        BinaryContent newProfile = new BinaryContent(
+        currentProfile = new BinaryContent(
             profile.getBytes(),
             profile.getOriginalFilename(),
             profile.getContentType()
         );
-        binaryContentRepository.save(newProfile);
-        user.setProfileId(newProfile.getId());
+        binaryContentRepository.save(currentProfile);
       } catch (IOException e) {
         throw new BusinessLogicException(ExceptionCode.INTERNAL_SERVER_ERROR);
       }
     }
 
-    user.update(name, email, password);
-    userRepository.save(user);
+    user.update(name, email, password, currentProfile);
   }
 }

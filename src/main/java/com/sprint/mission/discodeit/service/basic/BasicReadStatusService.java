@@ -2,7 +2,9 @@ package com.sprint.mission.discodeit.service.basic;
 
 import com.sprint.mission.discodeit.dto.ReadStatusCreateDto;
 import com.sprint.mission.discodeit.dto.ReadStatusUpdateDto;
+import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.ReadStatus;
+import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.exception.BusinessLogicException;
 import com.sprint.mission.discodeit.exception.ExceptionCode;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
@@ -15,9 +17,11 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class BasicReadStatusService implements ReadStatusService {
 
   private final ReadStatusRepository readStatusRepository;
@@ -25,10 +29,11 @@ public class BasicReadStatusService implements ReadStatusService {
   private final ChannelRepository channelRepository;
 
   @Override
+  @Transactional
   public ReadStatus createReadStatus(ReadStatusCreateDto statusCreateDto) {
-    userRepository.findById(statusCreateDto.userId())
+    User user = userRepository.findById(statusCreateDto.userId())
         .orElseThrow(() -> new BusinessLogicException(ExceptionCode.MEMBER_NOT_FOUND));
-    channelRepository.findById(statusCreateDto.channelId())
+    Channel channel = channelRepository.findById(statusCreateDto.channelId())
         .orElseThrow(() -> new BusinessLogicException(ExceptionCode.CHANNEL_NOT_FOUND));
 
     readStatusRepository.findByUserIdAndChannelId(statusCreateDto.userId(),
@@ -37,17 +42,9 @@ public class BasicReadStatusService implements ReadStatusService {
           throw new BusinessLogicException(ExceptionCode.READ_STATUS_EXISTS);
         });
 
-    ReadStatus readStatus = ReadStatus.builder()
-        .id(UUID.randomUUID())
-        .userId(statusCreateDto.userId())
-        .channelId(statusCreateDto.channelId())
-        .lastReadAt(Instant.now())
-        .build();
+    ReadStatus readStatus = new ReadStatus(user, channel, Instant.MIN);
 
     readStatusRepository.save(readStatus);
-
-    System.out.println("✅ 읽음 상태 기록 완료 : [유저 : " + statusCreateDto.userId() + ", 채널 : "
-        + statusCreateDto.channelId());
 
     return readStatus;
   }
@@ -63,21 +60,21 @@ public class BasicReadStatusService implements ReadStatusService {
   }
 
   @Override
+  @Transactional
   public void deleteReadStatus(UUID id) {
     ReadStatus status = findById(id);
 
-    readStatusRepository.deleteById(status.getId());
-
-    System.out.println("✅ 읽음 상태 삭제 완료 : [ID : " + id + "]");
+    readStatusRepository.delete(status);
   }
 
   @Override
+  @Transactional
   public ReadStatus updateStatus(UUID readStatusId, ReadStatusUpdateDto request) {
     ReadStatus readStatus = readStatusRepository.findById(readStatusId)
         .orElseThrow(() -> new BusinessLogicException(ExceptionCode.READ_STATUS_NOT_FOUND));
 
     readStatus.update(request.newLastReadAt());
 
-    return readStatusRepository.save(readStatus);
+    return readStatus;
   }
 }
