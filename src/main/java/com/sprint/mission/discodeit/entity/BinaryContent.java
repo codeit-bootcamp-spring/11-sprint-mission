@@ -2,20 +2,29 @@ package com.sprint.mission.discodeit.entity;
 
 import lombok.Getter;
 
+import java.io.Serializable;
+import java.time.Instant;
+import java.util.UUID;
+
 @Getter
-public class BinaryContent extends BaseEntity {
-    private String filename;
-    private Long size;
-    private String contentType;
-    private byte[] bytes;
+public class BinaryContent implements Serializable {
 
-    public BinaryContent(String filename, Long size, String contentType, byte[] bytes) {
-        super();
-        this.filename = filename;
-        this.size = size;
-        this.contentType = contentType;
-        this.bytes = bytes;
-    }
+  private static final long serialVersionUID = 1L;
+  private UUID id;
+  private Instant createdAt;
+  //
+  private String fileName;
+  private Long size;
+  private String contentType;
+  private byte[] bytes;
 
-    // setUpdateAt 호출하지 않음
+  public BinaryContent(String fileName, Long size, String contentType, byte[] bytes) {
+    this.id = UUID.randomUUID();
+    this.createdAt = Instant.now();
+    //
+    this.fileName = fileName;
+    this.size = size;
+    this.contentType = contentType;
+    this.bytes = bytes;
+  }
 }

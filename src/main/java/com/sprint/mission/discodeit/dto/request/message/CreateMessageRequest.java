@@ -1,6 +1,5 @@
 package com.sprint.mission.discodeit.dto.request.message;
 
-import com.sprint.mission.discodeit.dto.request.binaryContent.CreateBinaryContentRequest;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -13,5 +12,4 @@ public class CreateMessageRequest {
     private String content;
     private UUID channelId;
     private UUID userId;
-    List<CreateBinaryContentRequest> attachments;
 }

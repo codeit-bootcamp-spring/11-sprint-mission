@@ -2,26 +2,45 @@ package com.sprint.mission.discodeit.entity;
 
 import lombok.Getter;
 
+import java.io.Serializable;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
 
 @Getter
-public class UserStatus extends BaseEntity {
-    private UUID userId;
-    private Instant lastActiveAt;
+public class UserStatus implements Serializable {
 
-    public UserStatus(UUID userId) {
-        this.userId = userId;
-        this.lastActiveAt = Instant.now();
+  private static final long serialVersionUID = 1L;
+  private UUID id;
+  private Instant createdAt;
+  private Instant updatedAt;
+  //
+  private UUID userId;
+  private Instant lastActiveAt;
+
+  public UserStatus(UUID userId, Instant lastActiveAt) {
+    this.id = UUID.randomUUID();
+    this.createdAt = Instant.now();
+    //
+    this.userId = userId;
+    this.lastActiveAt = lastActiveAt;
+  }
+
+  public void update(Instant lastActiveAt) {
+    boolean anyValueUpdated = false;
+    if (lastActiveAt != null && !lastActiveAt.equals(this.lastActiveAt)) {
+      this.lastActiveAt = lastActiveAt;
+      anyValueUpdated = true;
     }
 
-    public boolean isOnline() {
-        return lastActiveAt.plusSeconds(300).isAfter(Instant.now());
+    if (anyValueUpdated) {
+      this.updatedAt = Instant.now();
     }
+  }
 
-    public void update(Instant lastActiveAt) {
-        this.lastActiveAt = lastActiveAt;
-        setUpdatedAt(Instant.now());
-    }
+  public Boolean isOnline() {
+    Instant instantFiveMinutesAgo = Instant.now().minus(Duration.ofMinutes(5));
 
+    return lastActiveAt.isAfter(instantFiveMinutesAgo);
+  }
 }

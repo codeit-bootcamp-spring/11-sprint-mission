@@ -7,39 +7,52 @@ import org.springframework.stereotype.Repository;
 
 import java.util.*;
 
+@ConditionalOnProperty(name = "discodeit.repository.type", havingValue = "jcf", matchIfMissing = true)
 @Repository
-@ConditionalOnProperty(
-        name = "discodeit.repository.type",
-        havingValue = "jcf",
-        matchIfMissing = true
-)
 public class JCFUserStatusRepository implements UserStatusRepository {
-    private final Map<UUID, UserStatus> data = new HashMap<>();
 
-    @Override
-    public void save(UserStatus userStatus) {
-        data.put(userStatus.getId(), userStatus);
-    }
+  private final Map<UUID, UserStatus> data;
 
-    @Override
-    public Optional<UserStatus> findById(UUID id) {
-        return Optional.ofNullable(data.get(id));
-    }
+  public JCFUserStatusRepository() {
+    this.data = new HashMap<>();
+  }
 
-    @Override
-    public Optional<UserStatus> findByUserId(UUID userId) {
-        return data.values().stream()
-                .filter(us -> us.getUserId().equals(userId))
-                .findFirst();
-    }
+  @Override
+  public UserStatus save(UserStatus userStatus) {
+    this.data.put(userStatus.getId(), userStatus);
+    return userStatus;
+  }
 
-    @Override
-    public List<UserStatus> findAll() {
-        return new ArrayList<>(data.values());
-    }
+  @Override
+  public Optional<UserStatus> findById(UUID id) {
+    return Optional.ofNullable(this.data.get(id));
+  }
 
-    @Override
-    public void deleteById(UUID id) {
-        data.remove(id);
-    }
+  @Override
+  public Optional<UserStatus> findByUserId(UUID userId) {
+    return this.findAll().stream()
+        .filter(userStatus -> userStatus.getUserId().equals(userId))
+        .findFirst();
+  }
+
+  @Override
+  public List<UserStatus> findAll() {
+    return this.data.values().stream().toList();
+  }
+
+  @Override
+  public boolean existsById(UUID id) {
+    return this.data.containsKey(id);
+  }
+
+  @Override
+  public void deleteById(UUID id) {
+    this.data.remove(id);
+  }
+
+  @Override
+  public void deleteByUserId(UUID userId) {
+    this.findByUserId(userId)
+        .ifPresent(userStatus -> this.deleteByUserId(userStatus.getId()));
+  }
 }
