@@ -48,10 +48,10 @@ public class BasicUserStatusService implements UserStatusService {
 
     @Override
     public UserStatusDto findByUserId(UUID id) {
-        userRepo.findById(id)
+        User user = userRepo.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-        UserStatus userStatus = userStatusRepo.findByUserId(id)
+        UserStatus userStatus = userStatusRepo.findByUser(user)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_STATUS_NOT_FOUND));
 
         return toDto(userStatus);
@@ -75,10 +75,10 @@ public class BasicUserStatusService implements UserStatusService {
 
     @Override
     public void updateByUserId(UUID id, UserStatusUpdateRequest dto) {
-        userRepo.findById(id)
+        User user = userRepo.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-        UserStatus userStatus = userStatusRepo.findByUserId(id)
+        UserStatus userStatus = userStatusRepo.findByUser(user)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_STATUS_NOT_FOUND));
 
         userStatus.update(dto.newLastActiveAt());

@@ -50,7 +50,7 @@ public class BasicChannelService implements ChannelService {
         channelRepo.save(channel);
 
         for(UUID userId : dto.participantIds()) {
-            if(readStatusRepo.findByUserIdAndChannelId(userId, channel.getId()).isPresent()) {
+            if(readStatusRepo.findByUser_IdAndChannel_Id(userId, channel.getId()).isPresent()) {
                 throw new BusinessException(ErrorCode.READ_STATUS_ALREADY_EXISTS);
             }
             User user = userRepo.findById(userId)

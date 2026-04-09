@@ -17,7 +17,7 @@ public class BasicAuthService implements AuthService {
     private final UserRepository userRepo;
 
     public LoginResponse login(LoginRequest dto) {
-        User user = userRepo.findByName(dto.username())
+        User user = userRepo.findByUsername(dto.username())
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         if(!user.getPassword().equals(dto.password())) {

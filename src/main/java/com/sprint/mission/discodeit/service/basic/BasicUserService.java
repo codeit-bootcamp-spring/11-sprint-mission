@@ -31,7 +31,7 @@ public class BasicUserService implements UserService {
 
     @Override
     public UserDto create(UserCreateRequest dto, MultipartFile profile) {
-        if(userRepo.findByName(dto.username()).isPresent()) throw new BusinessException(ErrorCode.DUPLICATE_NAME);
+        if(userRepo.findByUsername(dto.username()).isPresent()) throw new BusinessException(ErrorCode.DUPLICATE_NAME);
         if(userRepo.findByEmail(dto.email()).isPresent()) throw new BusinessException(ErrorCode.DUPLICATE_EMAIL);
 
         BinaryContent binaryContent = saveProfile(profile);
@@ -50,7 +50,7 @@ public class BasicUserService implements UserService {
     public UserDto findById(UUID id) {
         User user = userRepo.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-        UserStatus userStatus = userStatusRepo.findByUserId(id)
+        UserStatus userStatus = userStatusRepo.findByUser(user)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_STATUS_NOT_FOUND));
 
         return toDto(user, userStatus);
@@ -60,7 +60,7 @@ public class BasicUserService implements UserService {
     public List<UserDto> findAll() {
         return userRepo.findAll().stream()
                 .map(user -> {
-                            UserStatus userStatus = userStatusRepo.findByUserId(user.getId())
+                            UserStatus userStatus = userStatusRepo.findByUser(user)
                                     .orElseThrow(() -> new BusinessException(ErrorCode.USER_STATUS_NOT_FOUND));
                             return toDto(user, userStatus);
                         }
@@ -73,7 +73,7 @@ public class BasicUserService implements UserService {
         User user = userRepo.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-        if(!user.getUsername().equals(dto.newUsername()) && userRepo.findByName(dto.newUsername()).isPresent())
+        if(!user.getUsername().equals(dto.newUsername()) && userRepo.findByUsername(dto.newUsername()).isPresent())
             throw new BusinessException(ErrorCode.DUPLICATE_NAME);
         if(!user.getEmail().equals(dto.newEmail()) && userRepo.findByEmail(dto.newEmail()).isPresent())
             throw new BusinessException(ErrorCode.DUPLICATE_EMAIL);
@@ -94,7 +94,7 @@ public class BasicUserService implements UserService {
         User user = userRepo.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-        UserStatus userStatus = userStatusRepo.findByUserId(id)
+        UserStatus userStatus = userStatusRepo.findByUser(user)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_STATUS_NOT_FOUND));
         userStatusRepo.deleteById(userStatus.getId());
 

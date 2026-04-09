@@ -23,12 +23,6 @@ spring:
     init:
       mode: always
 
-discodeit:
-  repository:
-    type: file
-    file:
-      base-dir: data
-
 logging:
   file:
     name: logs/app.log
