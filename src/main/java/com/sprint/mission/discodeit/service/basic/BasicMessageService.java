@@ -1,9 +1,9 @@
 package com.sprint.mission.discodeit.service.basic;
 
-import com.sprint.mission.discodeit.dto.channel.ChannelMessageList;
 import com.sprint.mission.discodeit.dto.message.CreateMessageRequest;
 import com.sprint.mission.discodeit.dto.message.MessageDto;
 import com.sprint.mission.discodeit.dto.message.MessageUpdate;
+import com.sprint.mission.discodeit.dto.response.PageResponse;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.Message;
@@ -11,6 +11,7 @@ import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.exception.BusinessLogicException;
 import com.sprint.mission.discodeit.exception.ExceptionCode;
 import com.sprint.mission.discodeit.mapper.MessageMapper;
+import com.sprint.mission.discodeit.mapper.PageResponseMapper;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
@@ -19,9 +20,12 @@ import com.sprint.mission.discodeit.service.MessageService;
 import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import java.io.IOException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
-import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,6 +43,7 @@ public class BasicMessageService implements MessageService {
   private final BinaryContentStorage binaryContentStorage;
 
   private final MessageMapper messageMapper;
+  private final PageResponseMapper pageResponseMapper;
 
   @Override
   @Transactional
@@ -74,26 +79,14 @@ public class BasicMessageService implements MessageService {
   }
 
   @Override
-  public MessageDto readMessage(UUID id) {
-    Message message = messageRepository.findById(id)
-        .orElseThrow(() -> new BusinessLogicException(ExceptionCode.MESSAGE_NOT_FOUND));
-    return messageMapper.toDto(message);
-  }
+  public PageResponse<MessageDto> readMessagesByChannel(UUID channelId, int page) {
+    Pageable pageable = PageRequest.of(page, 50, Sort.by("createdAt").descending());
 
-  @Override
-  public List<MessageDto> readMessagesByChannel(UUID channelId) {
-    return messageRepository.findByChannelId(channelId).stream()
-        .sorted(Comparator.comparing(Message::getCreatedAt))
-        .map(messageMapper::toDto)
-        .toList();
-  }
+    Slice<Message> messageSlice = messageRepository.findByChannelId(channelId, pageable);
 
-  @Override
-  public List<MessageDto> findAllByChannelId(ChannelMessageList request) {
-    return messageRepository.findByChannelId(request.channelId()).stream()
-        .sorted(Comparator.comparing(Message::getCreatedAt))
-        .map(messageMapper::toDto)
-        .toList();
+    Slice<MessageDto> dtoSlice = messageSlice.map(messageMapper::toDto);
+
+    return pageResponseMapper.fromSlice(dtoSlice);
   }
 
   @Override

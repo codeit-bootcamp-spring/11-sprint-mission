@@ -3,6 +3,7 @@ package com.sprint.mission.discodeit.control;
 import com.sprint.mission.discodeit.dto.message.CreateMessageRequest;
 import com.sprint.mission.discodeit.dto.message.MessageDto;
 import com.sprint.mission.discodeit.dto.message.MessageUpdate;
+import com.sprint.mission.discodeit.dto.response.PageResponse;
 import com.sprint.mission.discodeit.service.MessageService;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -36,9 +37,10 @@ public class MessageController {
   }
 
   @GetMapping(params = "channelId")
-  public ResponseEntity<List<MessageDto>> readMessageByChannelId(
-      @RequestParam UUID channelId) {
-    List<MessageDto> messages = messageService.readMessagesByChannel(channelId);
+  public ResponseEntity<PageResponse<MessageDto>> readMessageByChannelId(
+      @RequestParam UUID channelId,
+      @RequestParam(defaultValue = "0") int page) {
+    PageResponse<MessageDto> messages = messageService.readMessagesByChannel(channelId, page);
     return ResponseEntity.ok(messages);
   }
 
