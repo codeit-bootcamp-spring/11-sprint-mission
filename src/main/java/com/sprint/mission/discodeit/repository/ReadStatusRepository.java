@@ -3,6 +3,7 @@ package com.sprint.mission.discodeit.repository;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.entity.User;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -28,5 +29,6 @@ public interface ReadStatusRepository extends JpaRepository<ReadStatus, UUID> {
     """)
     List<Object[]> findUsersByChannels(@Param("channels") List<Channel> channel);
 
-    List<ReadStatus> findAllByUser(User user);
+    @EntityGraph(attributePaths = {"user", "channel"})
+    List<ReadStatus> findAllWithUserAndChannelByUser(User user);
 }

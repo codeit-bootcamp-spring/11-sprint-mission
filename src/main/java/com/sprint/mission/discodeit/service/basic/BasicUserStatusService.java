@@ -63,7 +63,7 @@ public class BasicUserStatusService implements UserStatusService {
 
     @Override
     public List<UserStatusDto> findAll() {
-        return userStatusRepo.findAll().stream()
+        return userStatusRepo.findAllWithUser().stream()
                 .map(userStatusMapper::toDto)
                 .toList();
     }

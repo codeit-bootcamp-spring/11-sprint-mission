@@ -64,7 +64,7 @@ public class BasicReadStatusService implements ReadStatusService {
         User user = userRepo.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-        return readStatusRepo.findAllByUser(user).stream()
+        return readStatusRepo.findAllWithUserAndChannelByUser(user).stream()
                 .map(readStatusMapper::toDto)
                 .toList();
     }

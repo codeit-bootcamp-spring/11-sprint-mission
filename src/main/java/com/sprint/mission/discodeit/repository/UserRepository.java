@@ -15,6 +15,10 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     Optional<User> findByEmail(String email);
 
     @EntityGraph(attributePaths = {"status", "profile"})
+    @Query("""
+        select u
+        from User u
+    """)
     List<User> findAllWithStatusAndProfile();
 
     @EntityGraph(attributePaths = {"status", "profile"})
