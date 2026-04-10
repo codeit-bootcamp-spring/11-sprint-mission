@@ -40,8 +40,8 @@ public class BasicMessageService implements MessageService {
     private final UserRepository userRepo;
     private final BinaryContentRepository binaryContentRepo;
     private final MessageMapper messageMapper;
-    private final BinaryContentStorage binaryContentStorage;
     private final PageResponseMapper pageResponseMapper;
+    private final BinaryContentStorage binaryContentStorage;
 
     @Override
     @Transactional
@@ -64,7 +64,7 @@ public class BasicMessageService implements MessageService {
 
     @Override
     public MessageDto findById(UUID id) {
-        Message message = messageRepo.findById(id)
+        Message message = messageRepo.findWithDetailsById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MESSAGE_NOT_FOUND));
         return messageMapper.toDto(message);
     }
@@ -102,13 +102,13 @@ public class BasicMessageService implements MessageService {
     @Override
     @Transactional
     public void delete(UUID id) {
-        Message message = messageRepo.findById(id)
+        Message message = messageRepo.findWithDetailsById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MESSAGE_NOT_FOUND));
 
         for(BinaryContent attachment : message.getAttachments()) {
             binaryContentStorage.deleteById(attachment.getId());
-            binaryContentRepo.delete(attachment);
         }
+        binaryContentRepo.deleteAll(message.getAttachments());
 
         messageRepo.delete(message);
         log.info("Message deleted. messageId={}", message.getId());

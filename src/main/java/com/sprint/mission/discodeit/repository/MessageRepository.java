@@ -18,7 +18,7 @@ public interface MessageRepository extends JpaRepository<Message, UUID> {
         from Message m
         where m.channel = :channel
     """)
-    Optional<Instant> findLastMessageAtByChannel(@Param("channel")Channel channel);
+    Optional<Instant> findLastMessageAtByChannel(@Param("channel")Channel channels);
 
     @Query("""
         select m.channel.id, max(m.createdAt)
@@ -26,11 +26,36 @@ public interface MessageRepository extends JpaRepository<Message, UUID> {
         where m.channel in :channels
         group by m.channel.id
     """)
-    List<Object[]> findLastMessageAtByChannels(@Param("channels") List<Channel> channel);
+    List<Object[]> findLastMessageAtByChannels(@Param("channels") List<Channel> channels);
 
     @EntityGraph(attributePaths = "attachments")
     List<Message> findAllWithAttachmentsByChannel(Channel channel);
 
+    @EntityGraph(attributePaths = {
+            "channel",
+            "author",
+            "author.status",
+            "author.profile",
+            "attachments"
+    })
     List<Message> findTop51ByChannelOrderByCreatedAtDesc(Channel channel);
+
+    @EntityGraph(attributePaths = {
+            "channel",
+            "author",
+            "author.status",
+            "author.profile",
+            "attachments"
+    })
     List<Message> findTop51ByChannelAndCreatedAtLessThanOrderByCreatedAtDesc(Channel channel, Instant createdAt);
+
+    @EntityGraph(attributePaths = {
+            "channel",
+            "author",
+            "author.status",
+            "author.profile",
+            "attachments"
+    })
+    @Query("select m from Message m where m.id = :id")
+    Optional<Message> findWithDetailsById(@Param("id") UUID id);
 }

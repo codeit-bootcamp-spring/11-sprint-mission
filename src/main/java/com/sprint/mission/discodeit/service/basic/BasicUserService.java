@@ -53,14 +53,14 @@ public class BasicUserService implements UserService {
 
     @Override
     public UserDto findById(UUID id) {
-        User user = userRepo.findById(id)
+        User user = userRepo.findWithStatusAndProfileById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
         return userMapper.toDto(user);
     }
 
     @Override
     public List<UserDto> findAll() {
-        return userRepo.findAll().stream()
+        return userRepo.findAllWithStatusAndProfile().stream()
                 .map(userMapper::toDto)
                 .toList();
     }
@@ -121,7 +121,6 @@ public class BasicUserService implements UserService {
                     (long) bytes.length
             );
             binaryContentRepo.save(binaryContent);
-
             binaryContentStorage.put(binaryContent.getId(), bytes);
 
             return binaryContent;
