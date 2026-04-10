@@ -50,7 +50,7 @@ public class BasicChannelService implements ChannelService {
         .isBlank()) {
       throw new ApiException(CHANNEL_NAME_REQUIRED);
     }
-    if (this.channelRepository.existByName(publicChannelCreateRequest.name())) {
+    if (this.channelRepository.existsByName(publicChannelCreateRequest.name())) {
       throw new ApiException(CHANNEL_NAME_DUPLICATED);
     }
 
@@ -129,7 +129,7 @@ public class BasicChannelService implements ChannelService {
     if (publicChannelUpdateRequest.newName() != null && !publicChannelUpdateRequest.newName()
         .isBlank()) {
       if (!channel.getName().equals(publicChannelUpdateRequest.newName())
-          && this.channelRepository.existByName(publicChannelUpdateRequest.newName())) {
+          && this.channelRepository.existsByName(publicChannelUpdateRequest.newName())) {
         throw new ApiException(CHANNEL_NAME_DUPLICATED);
       }
       channel.updateName(publicChannelUpdateRequest.newName());
