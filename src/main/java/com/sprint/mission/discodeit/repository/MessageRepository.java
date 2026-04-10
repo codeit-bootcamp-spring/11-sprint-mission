@@ -9,6 +9,8 @@ import java.util.UUID;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface MessageRepository extends JpaRepository<Message, UUID> {
 
@@ -18,5 +20,7 @@ public interface MessageRepository extends JpaRepository<Message, UUID> {
 
   void deleteAllByChannel(Channel channel);
 
-  Optional<Instant> findTopCreatedAtByChannelOrderByCreatedAtDesc(Channel channel);
+  @Query("SELECT m.createdAt FROM Message m WHERE m.channel = :channel ORDER BY m.createdAt DESC LIMIT 1")
+  Optional<Instant> findTopCreatedAtByChannelOrderByCreatedAtDesc(
+      @Param("channel") Channel channel);
 }
