@@ -20,6 +20,7 @@ import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.ChannelService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,6 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -45,6 +47,7 @@ public class BasicChannelService implements ChannelService {
     public ChannelDto createPublicChannel(PublicChannelCreateRequest dto) {
         Channel channel = new Channel(ChannelType.PUBLIC, dto.name(), dto.description());
         channelRepo.save(channel);
+        log.info("Public channel created. channelId={}, name={}", channel.getId(), channel.getName());
         return channelMapper.toDto(channel);
     }
 
@@ -53,6 +56,7 @@ public class BasicChannelService implements ChannelService {
     public ChannelDto createPrivateChannel(PrivateChannelCreateRequest dto) {
         Channel channel = new Channel(ChannelType.PRIVATE, null, null);
         channelRepo.save(channel);
+        log.info("Private channel created. channelId={}, participantCount={}", channel.getId(), dto.participantIds().size());
 
         for(UUID userId : dto.participantIds()) {
             User user = userRepo.findById(userId)
@@ -104,6 +108,7 @@ public class BasicChannelService implements ChannelService {
             throw new BusinessException(ErrorCode.PRIVATE_CHANNEL_UPDATE_NOT_ALLOWED);
 
         channel.update(dto.newName(), dto.newDescription());
+        log.info("Channel updated. channelId={}", channel.getId());
     }
 
     @Override
@@ -118,9 +123,11 @@ public class BasicChannelService implements ChannelService {
         for(Message message : messages) {
             for(BinaryContent binaryContent : message.getAttachments()) {
                 binaryContentRepo.delete(binaryContent);
+                log.info("BinaryContent deleted. binaryContentId={}", binaryContent.getId());
             }
         }
 
         channelRepo.delete(channel);
+        log.info("Channel deleted. channelId={}", channel.getId());
     }
 }

@@ -36,4 +36,5 @@ logging:
   level:
     root: WARN
     com.sprint.mission.discodeit: INFO
-    org.hibernate.SQL: DEBUG
+    org.hibernate.SQL: OFF
+    org.hibernate.orm.jdbc.bind: OFF

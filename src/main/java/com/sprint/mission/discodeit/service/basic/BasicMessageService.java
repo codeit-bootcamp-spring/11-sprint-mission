@@ -19,6 +19,7 @@ import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.MessageService;
 import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -30,6 +31,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -56,6 +58,8 @@ public class BasicMessageService implements MessageService {
 
         Message message = new Message(dto.content(), channel, author, binaryContents);
         messageRepo.save(message);
+        log.info("Message created. messageId={}, channelId={}, authorId={}",
+                message.getId(), channel.getId(), author.getId());
 
         return messageMapper.toDto(message);
     }
@@ -94,6 +98,7 @@ public class BasicMessageService implements MessageService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.MESSAGE_NOT_FOUND));
 
         message.update(dto.newContent());
+        log.info("Message updated. messageId={}", message.getId());
     }
 
     @Override
@@ -106,9 +111,11 @@ public class BasicMessageService implements MessageService {
         for(BinaryContent attachment : message.getAttachments()) {
             binaryContentStorage.deleteById(attachment.getId());
             binaryContentRepo.delete(attachment);
+            log.info("BinaryContent deleted. binaryContentId={}", attachment.getId());
         }
 
         messageRepo.delete(message);
+        log.info("Message deleted. messageId={}", message.getId());
     }
 
     private List<BinaryContent> saveAttachments(List<MultipartFile> attachments) {
@@ -130,6 +137,8 @@ public class BasicMessageService implements MessageService {
                     (long) bytes.length
             );
             binaryContentRepo.save(binaryContent);
+            log.info("BinaryContent created. binaryContentId={}, fileName={}, size={}",
+                    binaryContent.getId(), binaryContent.getFileName(), binaryContent.getSize());
             binaryContentStorage.put(binaryContent.getId(), bytes);
 
             return binaryContent;

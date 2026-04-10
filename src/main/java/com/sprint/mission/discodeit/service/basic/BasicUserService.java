@@ -14,6 +14,7 @@ import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.UserService;
 import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -23,6 +24,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -44,6 +46,7 @@ public class BasicUserService implements UserService {
         User user = new User(dto.username(), dto.email(), dto.password(), binaryContent);
         new UserStatus(user, Instant.now());
         userRepo.save(user);
+        log.info("User created. userId={}, name={}", user.getId(), user.getUsername());
 
         return userMapper.toDto(user);
     }
@@ -80,10 +83,12 @@ public class BasicUserService implements UserService {
         BinaryContent updateProfile = newProfile != null ? newProfile : oldProfile;
 
         user.update(dto.newUsername(), dto.newEmail(), dto.newPassword(), updateProfile);
+        log.info("User updated. userId={}", user.getId());
 
         if(newProfile != null && oldProfile != null) {
             binaryContentStorage.deleteById(oldProfile.getId());
             binaryContentRepo.delete(oldProfile);
+            log.info("BinaryContent deleted. binaryContentId={}", oldProfile.getId());
         }
     }
 
@@ -97,9 +102,11 @@ public class BasicUserService implements UserService {
         if(profile != null) {
             binaryContentStorage.deleteById(profile.getId());
             binaryContentRepo.delete(profile);
+            log.info("BinaryContent deleted. binaryContentId={}", profile.getId());
         }
 
         userRepo.delete(user);
+        log.info("User deleted. userId={}", user.getId());
     }
 
     private BinaryContent saveProfile(MultipartFile file) {
@@ -116,6 +123,9 @@ public class BasicUserService implements UserService {
                     (long) bytes.length
             );
             binaryContentRepo.save(binaryContent);
+            log.info("BinaryContent created. binaryContentId={}, fileName={}, size={}",
+                    binaryContent.getId(), binaryContent.getFileName(), binaryContent.getSize());
+
             binaryContentStorage.put(binaryContent.getId(), bytes);
 
             return binaryContent;

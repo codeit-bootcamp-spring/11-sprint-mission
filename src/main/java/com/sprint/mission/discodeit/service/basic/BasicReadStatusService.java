@@ -14,12 +14,14 @@ import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.ReadStatusService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -44,6 +46,7 @@ public class BasicReadStatusService implements ReadStatusService {
 
         ReadStatus readStatus = new ReadStatus(user, channel, dto.lastReadAt());
         readStatusRepo.save(readStatus);
+        log.info("ReadStatus created. userId={}, channelId={}", user.getId(), channel.getId());
 
         return readStatusMapper.toDto(readStatus);
     }
@@ -81,5 +84,7 @@ public class BasicReadStatusService implements ReadStatusService {
         ReadStatus readStatus = readStatusRepo.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.READ_STATUS_NOT_FOUND));
         readStatusRepo.delete(readStatus);
+        log.info("ReadStatus deleted. userId={}, channelId={}",
+                readStatus.getUser().getId(), readStatus.getChannel().getId());
     }
 }
