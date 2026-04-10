@@ -35,6 +35,7 @@ logging:
     org.hibernate.orm.jdbc.bind: trace
 
 discodeit:
-  repository:
-    type: file   # jcf | file
-    file-directory: .discodeit
+  storage:
+    type: local
+    local:
+      root-path: .discodeit-storage

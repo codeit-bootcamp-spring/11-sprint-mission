@@ -12,6 +12,7 @@ import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.repository.UserStatusRepository;
 import com.sprint.mission.discodeit.service.UserService;
+import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -29,6 +30,7 @@ public class BasicUserService implements UserService {
   private final BinaryContentRepository binaryContentRepository;
   private final UserStatusRepository userStatusRepository;
   private final UserMapper userMapper;
+  private final BinaryContentStorage binaryContentStorage;
 
   @Override
   public UserDto create(UserCreateRequest userCreateRequest,
@@ -45,12 +47,15 @@ public class BasicUserService implements UserService {
 
     BinaryContent nullableProfile = optionalProfileCreateRequest
             .map(profileRequest -> {
+              byte[] bytes = profileRequest.bytes();  // bytes 변수 선언 추가
               BinaryContent binaryContent = new BinaryContent(
                       profileRequest.fileName(),
-                      (long) profileRequest.bytes().length,
+                      (long) bytes.length,
                       profileRequest.contentType()
               );
-              return binaryContentRepository.save(binaryContent);
+              BinaryContent saved = binaryContentRepository.save(binaryContent);
+              binaryContentStorage.put(saved.getId(), bytes);  // 정상
+              return saved;
             })
             .orElse(null);
 
@@ -98,13 +103,16 @@ public class BasicUserService implements UserService {
 
     BinaryContent nullableProfile = optionalProfileCreateRequest
             .map(profileRequest -> {
+              byte[] bytes = profileRequest.bytes();  // bytes 선언
               Optional.ofNullable(user.getProfile())
                       .ifPresent(profile -> binaryContentRepository.deleteById(profile.getId()));
-              return binaryContentRepository.save(new BinaryContent(
+              BinaryContent saved = binaryContentRepository.save(new BinaryContent(
                       profileRequest.fileName(),
-                      (long) profileRequest.bytes().length,
+                      (long) bytes.length,
                       profileRequest.contentType()
               ));
+              binaryContentStorage.put(saved.getId(), bytes);  // 여기서 저장
+              return saved;
             })
             .orElse(null);
 

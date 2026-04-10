@@ -13,7 +13,9 @@ import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
+import com.sprint.mission.discodeit.service.BinaryContentService;
 import com.sprint.mission.discodeit.service.MessageService;
+import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -30,6 +32,7 @@ public class BasicMessageService implements MessageService {
   private final UserRepository userRepository;
   private final BinaryContentRepository binaryContentRepository;
   private final MessageMapper messageMapper;
+  private final BinaryContentStorage binaryContentStorage;
 
   @Override
   public MessageDto create(MessageCreateRequest messageCreateRequest,
@@ -43,9 +46,14 @@ public class BasicMessageService implements MessageService {
             .orElseThrow(() -> new NoSuchElementException("Author with id " + authorId + " does not exist"));
 
     List<BinaryContent> attachments = binaryContentCreateRequests.stream()
-            .map(req -> binaryContentRepository.save(
-                    new BinaryContent(req.fileName(), (long) req.bytes().length, req.contentType())
-            ))
+            .map(req -> {
+              byte[] bytes = req.bytes();
+              BinaryContent saved = binaryContentRepository.save(
+                      new BinaryContent(req.fileName(), (long) bytes.length, req.contentType())
+              );
+              binaryContentStorage.put(saved.getId(), bytes);  // 추가
+              return saved;
+            })
             .toList();
 
     Message message = new Message(messageCreateRequest.content(), channel, author, attachments);
