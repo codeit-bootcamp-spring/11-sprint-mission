@@ -5,11 +5,11 @@ import static com.sprint.mission.discodeit.exception.ApiException.ERROR.AUTH_PAS
 import static com.sprint.mission.discodeit.exception.ApiException.ERROR.AUTH_USERNAME_REQUIRED;
 import static com.sprint.mission.discodeit.exception.ApiException.ERROR.USER_NOT_FOUND;
 
-import com.sprint.mission.discodeit.dto.auth.AuthLoginRequest;
+import com.sprint.mission.discodeit.dto.auth.LoginRequest;
 import com.sprint.mission.discodeit.dto.user.UserResponse;
-import com.sprint.mission.discodeit.dto.userstatus.UserStatusResponse;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.exception.ApiException;
+import com.sprint.mission.discodeit.mapper.UserMapper;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.AuthService;
 import java.time.Instant;
@@ -25,40 +25,28 @@ import org.springframework.transaction.annotation.Transactional;
 public class BasicAuthService implements AuthService {
 
   private final UserRepository userRepository;
+  private final UserMapper mapper;
 
   @Transactional
   @Override
-  public UserResponse login(AuthLoginRequest authLoginRequest) {
-    if (authLoginRequest.username() == null || authLoginRequest.username().isBlank()) {
+  public UserResponse login(LoginRequest loginRequest) {
+    if (loginRequest.username() == null || loginRequest.username().isBlank()) {
       throw new ApiException(AUTH_USERNAME_REQUIRED);
     }
 
-    if (authLoginRequest.password() == null || authLoginRequest.password().isBlank()) {
+    if (loginRequest.password() == null || loginRequest.password().isBlank()) {
       throw new ApiException(AUTH_PASSWORD_REQUIRED);
     }
 
-    User user = this.userRepository.findByUsername(authLoginRequest.username())
+    User user = this.userRepository.findByUsername(loginRequest.username())
         .orElseThrow(() -> new ApiException(USER_NOT_FOUND));
 
-    if (!authLoginRequest.password().equals(user.getPassword())) {
+    if (!loginRequest.password().equals(user.getPassword())) {
       throw new ApiException(AUTH_INVALID_CREDENTIALS);
     }
 
     user.getStatus().updateLastActiveAt(Instant.now());
 
-    return this.toResponse(user);
-  }
-
-  private UserResponse toResponse(User user) {
-    return new UserResponse(
-        user.getId(),
-        user.getUsername(),
-        user.getEmail(),
-        user.getProfile() == null ? null : user.getProfile().getId(),
-        new UserStatusResponse(
-            user.getStatus().getLastActiveAt(),
-            user.getStatus().getLastActiveAt().isAfter(Instant.now().minusSeconds(5 * 60))
-        )
-    );
+    return this.mapper.toResponse(user);
   }
 }

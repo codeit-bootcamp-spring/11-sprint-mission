@@ -15,6 +15,7 @@ import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.exception.ApiException;
+import com.sprint.mission.discodeit.mapper.MessageMapper;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
@@ -38,6 +39,7 @@ public class BasicMessageService implements MessageService {
   private final UserRepository userRepository;
   private final ChannelRepository channelRepository;
   private final ReadStatusRepository readStatusRepository;
+  private final MessageMapper mapper;
 
   @Transactional
   @Override
@@ -47,7 +49,7 @@ public class BasicMessageService implements MessageService {
       throw new ApiException(MESSAGE_CONTENT_REQUIRED);
     }
 
-    User author = this.userRepository.findById(messageCreateRequest.senderId())
+    User author = this.userRepository.findById(messageCreateRequest.authorId())
         .orElseThrow(() -> new ApiException(USER_NOT_FOUND));
     Channel channel = this.channelRepository.findById(messageCreateRequest.channelId())
         .orElseThrow(() -> new ApiException(CHANNEL_NOT_FOUND));
@@ -60,7 +62,7 @@ public class BasicMessageService implements MessageService {
     if (binaryContentCreateRequests != null && !binaryContentCreateRequests.isEmpty()) {
       attachments = binaryContentCreateRequests.stream()
           .map(req -> new BinaryContent(req.fileName(), req.size(),
-              req.contentType(), req.data()))
+              req.contentType(), req.bytes()))
           .toList();
     }
 
@@ -75,13 +77,13 @@ public class BasicMessageService implements MessageService {
     log.info("Message has been created successfully. ✅ [ID: {}]", message.getId());
     log.info("-> {channel: {}, sender: {}, content: {}}",
         channel.isPrivate() ? '-' : channel.getName(), author.getUsername(), message.getContent());
-    return this.toResponse(message);
+    return this.mapper.toResponse(message);
   }
 
   @Override
   public List<MessageResponse> findAllByChannelId(UUID channelId) {
     return this.messageRepository.findAllByChannelId(channelId).stream()
-        .map(this::toResponse)
+        .map(this.mapper::toResponse)
         .toList();
   }
 
@@ -93,8 +95,9 @@ public class BasicMessageService implements MessageService {
         .orElseThrow(() -> new ApiException(MESSAGE_NOT_FOUND));
 
     if (messageUpdateRequest != null) {
-      if (messageUpdateRequest.content() != null && !messageUpdateRequest.content().isBlank()) {
-        message.updateContent(messageUpdateRequest.content());
+      if (messageUpdateRequest.newContent() != null && !messageUpdateRequest.newContent()
+          .isBlank()) {
+        message.updateContent(messageUpdateRequest.newContent());
       }
     }
 
@@ -102,7 +105,7 @@ public class BasicMessageService implements MessageService {
     if (binaryContentCreateRequests != null && !binaryContentCreateRequests.isEmpty()) {
       newAttachments = binaryContentCreateRequests.stream()
           .map(req -> new BinaryContent(req.fileName(), req.size(),
-              req.contentType(), req.data()))
+              req.contentType(), req.bytes()))
           .toList();
     }
     if (!newAttachments.isEmpty()) {
@@ -110,7 +113,7 @@ public class BasicMessageService implements MessageService {
     }
 
     log.info("Message has been updated successfully. ✅ [ID: {}]", id);
-    return this.toResponse(message);
+    return this.mapper.toResponse(message);
   }
 
   @Transactional
@@ -122,19 +125,5 @@ public class BasicMessageService implements MessageService {
     this.messageRepository.delete(message);
 
     log.info("Message has been deleted successfully. ✅ [ID: {}]", id);
-  }
-
-  private MessageResponse toResponse(Message message) {
-    return new MessageResponse(
-        message.getId(),
-        message.getCreatedAt(),
-        message.getUpdatedAt(),
-        message.getContent(),
-        message.getAuthor().getId(),
-        message.getChannel().getId(),
-        message.getAttachments().stream()
-            .map(BinaryContent::getId)
-            .toList()
-    );
   }
 }

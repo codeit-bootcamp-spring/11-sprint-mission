@@ -6,13 +6,14 @@ import static com.sprint.mission.discodeit.exception.ApiException.ERROR.USER_STA
 
 import com.sprint.mission.discodeit.dto.userstatus.UserStatusCreateRequest;
 import com.sprint.mission.discodeit.dto.userstatus.UserStatusResponse;
+import com.sprint.mission.discodeit.dto.userstatus.UserStatusUpdateRequest;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.entity.UserStatus;
 import com.sprint.mission.discodeit.exception.ApiException;
+import com.sprint.mission.discodeit.mapper.UserStatusMapper;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.repository.UserStatusRepository;
 import com.sprint.mission.discodeit.service.UserStatusService;
-import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +29,7 @@ public class BasicUserStatusService implements UserStatusService {
 
   private final UserStatusRepository userStatusRepository;
   private final UserRepository userRepository;
+  private final UserStatusMapper mapper;
 
   @Transactional
   @Override
@@ -44,33 +46,34 @@ public class BasicUserStatusService implements UserStatusService {
 
     log.info("user status has been created successfully. ✅ [ID: {}]", userStatus.getId());
     log.info("-> {user: {}}", user.getId());
-    return this.toResponse(userStatus);
+    return this.mapper.toResponse(userStatus);
   }
 
   @Override
   public UserStatusResponse findById(UUID id) {
-    return this.toResponse(this.userStatusRepository.findById(id)
+    return this.mapper.toResponse(this.userStatusRepository.findById(id)
         .orElseThrow(() -> new ApiException(USER_STATUS_NOT_FOUND)));
   }
 
   @Override
   public List<UserStatusResponse> findAll() {
     return this.userStatusRepository.findAll().stream()
-        .map(this::toResponse)
+        .map(this.mapper::toResponse)
         .toList();
   }
 
   @Transactional
   @Override
-  public UserStatusResponse updateUserStatusByUserId(UUID userId) {
+  public UserStatusResponse updateUserStatusByUserId(UUID userId,
+      UserStatusUpdateRequest userStatusUpdateRequest) {
     UserStatus userStatus = this.userStatusRepository.findByUserId(userId)
         .orElseThrow(() -> new ApiException(USER_STATUS_NOT_FOUND));
 
-    userStatus.updateLastActiveAt(Instant.now());
+    userStatus.updateLastActiveAt(userStatusUpdateRequest.newLastActiveAt());
 
     log.info("UserStatus has been updated successfully. ✅ [ID: {}]", userStatus.getId());
     log.info("-> {user: {}}", userId);
-    return this.toResponse(userStatus);
+    return this.mapper.toResponse(userStatus);
   }
 
   @Transactional
@@ -82,12 +85,5 @@ public class BasicUserStatusService implements UserStatusService {
     this.userStatusRepository.delete(userStatus);
 
     log.info("UserStatus has been deleted successfully. ✅ [ID: {}]", userStatus.getId());
-  }
-
-  private UserStatusResponse toResponse(UserStatus userStatus) {
-    return new UserStatusResponse(
-        userStatus.getUpdatedAt(),
-        userStatus.getUpdatedAt().isAfter(Instant.now().minusSeconds(5 * 60))
-    );
   }
 }

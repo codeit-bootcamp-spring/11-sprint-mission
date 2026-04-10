@@ -13,11 +13,11 @@ import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentCreateRequest
 import com.sprint.mission.discodeit.dto.user.UserCreateRequest;
 import com.sprint.mission.discodeit.dto.user.UserResponse;
 import com.sprint.mission.discodeit.dto.user.UserUpdateRequest;
-import com.sprint.mission.discodeit.dto.userstatus.UserStatusResponse;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.entity.UserStatus;
 import com.sprint.mission.discodeit.exception.ApiException;
+import com.sprint.mission.discodeit.mapper.UserMapper;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.UserService;
@@ -38,6 +38,7 @@ public class BasicUserService implements UserService {
 
   private final UserRepository userRepository;
   private final ReadStatusRepository readStatusRepository;
+  private final UserMapper mapper;
   private static final String EMAIL_REGEX = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$";
 
   @Transactional
@@ -71,7 +72,7 @@ public class BasicUserService implements UserService {
     BinaryContent profile = null;
     if (binaryContentCreateRequest.isPresent()) {
       BinaryContentCreateRequest req = binaryContentCreateRequest.get();
-      profile = new BinaryContent(req.fileName(), req.size(), req.contentType(), req.data());
+      profile = new BinaryContent(req.fileName(), req.size(), req.contentType(), req.bytes());
     }
 
     User user = new User(
@@ -87,19 +88,19 @@ public class BasicUserService implements UserService {
     this.userRepository.save(user);
 
     log.info("{} has been created successfully. ✅ [ID: {}]", user.getUsername(), user.getId());
-    return this.toResponse(user);
+    return this.mapper.toResponse(user);
   }
 
   @Override
   public UserResponse findById(UUID id) {
-    return this.toResponse(this.userRepository.findById(id)
+    return this.mapper.toResponse(this.userRepository.findById(id)
         .orElseThrow(() -> new ApiException(USER_NOT_FOUND)));
   }
 
   @Override
   public List<UserResponse> findAll() {
     return this.userRepository.findAll().stream()
-        .map(this::toResponse)
+        .map(this.mapper::toResponse)
         .toList();
   }
 
@@ -111,45 +112,46 @@ public class BasicUserService implements UserService {
         .orElseThrow(() -> new ApiException(USER_NOT_FOUND));
 
     String username = user.getUsername();
-    if (userUpdateRequest.username() != null && !userUpdateRequest.username().isBlank()) {
-      if (!user.getUsername().equals(userUpdateRequest.username())
-          && this.userRepository.existsByUsername(userUpdateRequest.username())) {
+    if (userUpdateRequest.newUsername() != null && !userUpdateRequest.newUsername().isBlank()) {
+      if (!user.getUsername().equals(userUpdateRequest.newUsername())
+          && this.userRepository.existsByUsername(userUpdateRequest.newUsername())) {
         throw new ApiException(USER_USERNAME_DUPLICATED);
       }
-      username = userUpdateRequest.username();
+      username = userUpdateRequest.newUsername();
     }
 
     String email = user.getEmail();
-    if (userUpdateRequest.email() != null && !userUpdateRequest.email().isBlank()) {
-      if (!userUpdateRequest.email().matches(EMAIL_REGEX)) {
+    if (userUpdateRequest.newEmail() != null && !userUpdateRequest.newEmail().isBlank()) {
+      if (!userUpdateRequest.newEmail().matches(EMAIL_REGEX)) {
         throw new ApiException(USER_INVALID_EMAIL_FORMAT);
       }
-      if (!user.getEmail().equals(userUpdateRequest.email()) && this.userRepository.existsByEmail(
-          userUpdateRequest.email())) {
+      if (!user.getEmail().equals(userUpdateRequest.newEmail())
+          && this.userRepository.existsByEmail(
+          userUpdateRequest.newEmail())) {
         throw new ApiException(USER_EMAIL_DUPLICATED);
       }
-      email = userUpdateRequest.email();
+      email = userUpdateRequest.newEmail();
     }
 
     String password = user.getPassword();
-    if (userUpdateRequest.password() != null && !userUpdateRequest.password().isBlank()) {
-      if (userUpdateRequest.password().length() < 8) {
+    if (userUpdateRequest.newPassword() != null && !userUpdateRequest.newPassword().isBlank()) {
+      if (userUpdateRequest.newPassword().length() < 8) {
         throw new ApiException(USER_INVALID_PASSWORD_LENGTH);
       }
-      password = userUpdateRequest.password();
+      password = userUpdateRequest.newPassword();
     }
 
     BinaryContent profile = user.getProfile();
     if (binaryContentCreateRequest.isPresent()) {
       BinaryContentCreateRequest req = binaryContentCreateRequest.get();
-      profile = new BinaryContent(req.fileName(), req.size(), req.contentType(), req.data());
+      profile = new BinaryContent(req.fileName(), req.size(), req.contentType(), req.bytes());
     }
 
     user.update(username, email, password, profile);
     user.getStatus().updateLastActiveAt(Instant.now());
 
     log.info("{} has been updated successfully. ✅ [ID: {}]", user.getUsername(), id);
-    return this.toResponse(user);
+    return this.mapper.toResponse(user);
   }
 
   @Transactional
@@ -163,17 +165,5 @@ public class BasicUserService implements UserService {
     this.userRepository.delete(user);
 
     log.info("{} has been deleted successfully. ✅ [ID: {}]", user.getUsername(), id);
-  }
-
-  private UserResponse toResponse(User user) {
-    return new UserResponse(
-        user.getId(),
-        user.getUsername(),
-        user.getEmail(),
-        new UserStatusResponse(
-            user.getStatus().getUpdatedAt(),
-            user.getStatus().getUpdatedAt().isAfter(Instant.now().minusSeconds(5 * 60))
-        )
-    );
   }
 }

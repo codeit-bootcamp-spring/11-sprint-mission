@@ -8,23 +8,20 @@ import static com.sprint.mission.discodeit.exception.ApiException.ERROR.CHANNEL_
 import static com.sprint.mission.discodeit.exception.ApiException.ERROR.CHANNEL_PRIVATE_UPDATE_FORBIDDEN;
 
 import com.sprint.mission.discodeit.dto.channel.ChannelResponse;
-import com.sprint.mission.discodeit.dto.channel.ChannelUpdateRequest;
 import com.sprint.mission.discodeit.dto.channel.PrivateChannelCreateRequest;
 import com.sprint.mission.discodeit.dto.channel.PublicChannelCreateRequest;
+import com.sprint.mission.discodeit.dto.channel.PublicChannelUpdateRequest;
 import com.sprint.mission.discodeit.entity.Channel;
-import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.exception.ApiException;
+import com.sprint.mission.discodeit.mapper.ChannelMapper;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.ChannelService;
-import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -43,6 +40,7 @@ public class BasicChannelService implements ChannelService {
   private final UserRepository userRepository;
   private final ReadStatusRepository readStatusRepository;
   private final MessageRepository messageRepository;
+  private final ChannelMapper mapper;
 
   @Transactional
   @Override
@@ -62,22 +60,22 @@ public class BasicChannelService implements ChannelService {
 
     log.info("{} channel has been created successfully. ✅ [ID: {}]", channel.getName(),
         channel.getId());
-    return this.toResponse(channel, null, new ArrayList<>());
+    return this.mapper.toResponse(channel);
   }
 
   @Transactional
   @Override
   public ChannelResponse createPrivateChannel(
       PrivateChannelCreateRequest privateChannelCreateRequest) {
-    if (privateChannelCreateRequest.participants() == null
-        || privateChannelCreateRequest.participants().isEmpty()) {
+    if (privateChannelCreateRequest.participantIds() == null
+        || privateChannelCreateRequest.participantIds().isEmpty()) {
       throw new ApiException(CHANNEL_PARTICIPANTS_REQUIRED);
     }
 
     Channel channel = new Channel();
     this.channelRepository.save(channel);
 
-    List<UUID> requestedIds = privateChannelCreateRequest.participants().stream()
+    List<UUID> requestedIds = privateChannelCreateRequest.participantIds().stream()
         .distinct()
         .toList();
 
@@ -95,22 +93,14 @@ public class BasicChannelService implements ChannelService {
     this.readStatusRepository.saveAll(readStatuses);
 
     log.info("private channel has been created successfully. ✅ [ID: {}]", channel.getId());
-    return this.toResponse(channel, null, participants);
+    return this.mapper.toResponse(channel);
   }
 
   @Override
   public ChannelResponse findById(UUID id) {
-    Channel channel = this.channelRepository.findById(id)
-        .orElseThrow(() -> new ApiException(CHANNEL_NOT_FOUND));
-
-    Instant lastMessageAt = this.messageRepository.findTopCreatedAtByChannelOrderByCreatedAtDesc(
-            channel)
-        .orElse(null);
-    List<User> participants = this.readStatusRepository.findAllByChannel(channel).stream()
-        .map(ReadStatus::getUser)
-        .toList();
-
-    return this.toResponse(channel, lastMessageAt, participants);
+    return this.mapper.toResponse(this.channelRepository.findById(id)
+        .orElseThrow(() -> new ApiException(CHANNEL_NOT_FOUND))
+    );
   }
 
   @Override
@@ -120,68 +110,38 @@ public class BasicChannelService implements ChannelService {
         .map(ReadStatus::getChannel)
         .collect(Collectors.toSet());
 
-    List<Channel> channels = this.channelRepository.findAll().stream()
-        .filter(
-            channel -> !channel.isPrivate() || joinedPrivateChannels.contains(
-                channel))
-        .toList();
-
-    // TODO: 메시지 많아질 경우 단일 쿼리(Projection)로 최적화 고려
-    Map<UUID, Instant> lastMessageAtByChannel =
-        this.messageRepository.findAllByChannelIn(channels).stream()
-            .collect(Collectors.toMap(
-                message -> message.getChannel().getId(),
-                Message::getCreatedAt,
-                (a, b) -> a.isAfter(b) ? a : b
-            ));
-
-    Map<UUID, List<User>> participantsByChannel = this.readStatusRepository.findAllByChannelIn(
-            channels).stream()
-        .collect(Collectors.groupingBy(
-            readStatus -> readStatus.getChannel().getId(),
-            Collectors.mapping(ReadStatus::getUser, Collectors.toList())
-        ));
-
-    return channels.stream()
-        .map(channel -> this.toResponse(
-            channel,
-            lastMessageAtByChannel.getOrDefault(channel.getId(), null),
-            participantsByChannel.getOrDefault(channel.getId(), new ArrayList<>())
-        ))
+    return this.channelRepository.findAll().stream()
+        .filter(channel ->
+            !channel.isPrivate() || joinedPrivateChannels.contains(channel))
+        .map(this.mapper::toResponse)
         .toList();
   }
 
   @Transactional
   @Override
-  public ChannelResponse updateChannel(UUID id, ChannelUpdateRequest channelUpdateRequest) {
+  public ChannelResponse updateChannel(UUID id,
+      PublicChannelUpdateRequest publicChannelUpdateRequest) {
     Channel channel = this.channelRepository.findById(id)
         .orElseThrow(() -> new ApiException(CHANNEL_NOT_FOUND));
     if (channel.isPrivate()) {
       throw new ApiException(CHANNEL_PRIVATE_UPDATE_FORBIDDEN);
     }
-    if (channelUpdateRequest.name() != null && !channelUpdateRequest.name().isBlank()) {
-      if (!channel.getName().equals(channelUpdateRequest.name())
-          && this.channelRepository.existByName(channelUpdateRequest.name())) {
+    if (publicChannelUpdateRequest.newName() != null && !publicChannelUpdateRequest.newName()
+        .isBlank()) {
+      if (!channel.getName().equals(publicChannelUpdateRequest.newName())
+          && this.channelRepository.existByName(publicChannelUpdateRequest.newName())) {
         throw new ApiException(CHANNEL_NAME_DUPLICATED);
       }
-      channel.updateName(channelUpdateRequest.name());
+      channel.updateName(publicChannelUpdateRequest.newName());
     }
 
-    if (channelUpdateRequest.description() != null) {
-      channel.updateDescription(channelUpdateRequest.description());
+    if (publicChannelUpdateRequest.newDescription() != null) {
+      channel.updateDescription(publicChannelUpdateRequest.newDescription());
     }
-
-    Instant lastMessageAt = this.messageRepository.findTopCreatedAtByChannelOrderByCreatedAtDesc(
-            channel)
-        .orElse(null);
-    List<User> participants = this.readStatusRepository.findAllByChannel(channel)
-        .stream()
-        .map(ReadStatus::getUser)
-        .toList();
 
     log.info("{} channel has been updated successfully. ✅ [ID: {}]", channel.getName(),
         channel.getId());
-    return this.toResponse(channel, lastMessageAt, participants);
+    return this.mapper.toResponse(channel);
   }
 
   @Transactional
@@ -197,20 +157,5 @@ public class BasicChannelService implements ChannelService {
     this.channelRepository.delete(channel);
 
     log.info("{} channel has been deleted successfully. ✅ [ID: {}]", channel.getName(), id);
-  }
-
-  private ChannelResponse toResponse(Channel channel, Instant lastMessageAt,
-      List<User> participants) {
-    return new ChannelResponse(
-        channel.getId(),
-        channel.getName(),
-        channel.getDescription(),
-        channel.getType(),
-        lastMessageAt,
-        !channel.isPrivate() ? null :
-            participants.stream()
-            .map(User::getId)
-            .toList()
-    );
   }
 }
