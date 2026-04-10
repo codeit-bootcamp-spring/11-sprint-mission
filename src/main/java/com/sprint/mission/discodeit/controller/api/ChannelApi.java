@@ -2,10 +2,9 @@ package com.sprint.mission.discodeit.controller.api;
 
 import com.sprint.mission.discodeit.controller.api.examples.ChannelExamples;
 import com.sprint.mission.discodeit.dto.channel.ChannelResponse;
-import com.sprint.mission.discodeit.dto.channel.ChannelUpdateRequest;
+import com.sprint.mission.discodeit.dto.channel.PublicChannelUpdateRequest;
 import com.sprint.mission.discodeit.dto.channel.PrivateChannelCreateRequest;
 import com.sprint.mission.discodeit.dto.channel.PublicChannelCreateRequest;
-import com.sprint.mission.discodeit.dto.common.RestResponse;
 import com.sprint.mission.discodeit.exception.ErrorResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -51,7 +50,7 @@ public interface ChannelApi {
               examples = @ExampleObject(name = "CHANNEL_002", value = ChannelExamples.ERROR_409_CHANNEL_002))
       )
   })
-  ResponseEntity<RestResponse<ChannelResponse>> create(
+  ResponseEntity<ChannelResponse> create(
       @RequestBody(description = "Public channel creation request", required = true) PublicChannelCreateRequest publicChannelCreateRequest
   );
 
@@ -75,7 +74,7 @@ public interface ChannelApi {
               })
       )
   })
-  ResponseEntity<RestResponse<ChannelResponse>> create(
+  ResponseEntity<ChannelResponse> create(
       @RequestBody(description = "Private channel creation request", required = true) PrivateChannelCreateRequest privateChannelCreateRequest
   );
 
@@ -110,9 +109,9 @@ public interface ChannelApi {
               examples = @ExampleObject(name = "CHANNEL_006", value = ChannelExamples.ERROR_422_CHANNEL_006))
       )
   })
-  ResponseEntity<RestResponse<ChannelResponse>> update(
+  ResponseEntity<ChannelResponse> update(
       @Parameter(description = "Channel ID") @PathVariable UUID channelId,
-      @RequestBody ChannelUpdateRequest channelUpdateRequest
+      @RequestBody PublicChannelUpdateRequest publicChannelUpdateRequest
   );
 
   @Operation(summary = "Delete channel")
@@ -140,7 +139,7 @@ public interface ChannelApi {
               examples = @ExampleObject(value = ChannelExamples.FIND_ALL_200))
       )
   })
-  ResponseEntity<RestResponse<List<ChannelResponse>>> findAllByUserId(
+  ResponseEntity<List<ChannelResponse>> findAllByUserId(
       @Parameter(description = "User ID") @RequestParam UUID userId
   );
 }

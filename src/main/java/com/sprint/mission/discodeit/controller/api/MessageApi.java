@@ -4,7 +4,6 @@ import com.sprint.mission.discodeit.controller.api.examples.ChannelExamples;
 import com.sprint.mission.discodeit.controller.api.examples.MessageExamples;
 import com.sprint.mission.discodeit.controller.api.examples.UserExamples;
 import com.sprint.mission.discodeit.dto.common.PageResponse;
-import com.sprint.mission.discodeit.dto.common.RestResponse;
 import com.sprint.mission.discodeit.dto.message.MessageCreateRequest;
 import com.sprint.mission.discodeit.dto.message.MessageResponse;
 import com.sprint.mission.discodeit.dto.message.MessageUpdateRequest;
@@ -63,7 +62,7 @@ public interface MessageApi {
               examples = @ExampleObject(name = "MESSAGE_002", value = MessageExamples.ERROR_422_MESSAGE_002))
       )
   })
-  ResponseEntity<RestResponse<MessageResponse>> create(
+  ResponseEntity<MessageResponse> create(
       @RequestPart MessageCreateRequest messageCreateRequest,
       @RequestPart(required = false) List<MultipartFile> attachments
   );
@@ -85,7 +84,7 @@ public interface MessageApi {
               examples = @ExampleObject(name = "MESSAGE_003", value = MessageExamples.ERROR_404_MESSAGE_003))
       )
   })
-  ResponseEntity<RestResponse<MessageResponse>> update(
+  ResponseEntity<MessageResponse> update(
       @Parameter(description = "Message ID") @PathVariable UUID messageId,
       @RequestPart(required = false) MessageUpdateRequest messageUpdateRequest,
       @RequestPart(required = false) List<MultipartFile> attachments
@@ -116,7 +115,7 @@ public interface MessageApi {
               examples = @ExampleObject(value = MessageExamples.FIND_ALL_200))
       )
   })
-  ResponseEntity<RestResponse<PageResponse<MessageResponse>>> findAllByChannelId(
+  ResponseEntity<PageResponse<MessageResponse>> findAllByChannelId(
       @Parameter(description = "Channel ID") @RequestParam UUID channelId,
       Pageable pageable
   );

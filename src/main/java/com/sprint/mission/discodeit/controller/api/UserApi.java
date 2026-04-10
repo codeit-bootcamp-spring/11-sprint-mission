@@ -1,11 +1,11 @@
 package com.sprint.mission.discodeit.controller.api;
 
 import com.sprint.mission.discodeit.controller.api.examples.UserExamples;
-import com.sprint.mission.discodeit.dto.common.RestResponse;
 import com.sprint.mission.discodeit.dto.user.UserCreateRequest;
 import com.sprint.mission.discodeit.dto.user.UserResponse;
 import com.sprint.mission.discodeit.dto.user.UserUpdateRequest;
 import com.sprint.mission.discodeit.dto.userstatus.UserStatusResponse;
+import com.sprint.mission.discodeit.dto.userstatus.UserStatusUpdateRequest;
 import com.sprint.mission.discodeit.exception.ErrorResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.UUID;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -61,7 +62,7 @@ public interface UserApi {
               })
       )
   })
-  ResponseEntity<RestResponse<UserResponse>> create(
+  ResponseEntity<UserResponse> create(
       @RequestPart UserCreateRequest userCreateRequest,
       @RequestPart(required = false) MultipartFile profile
   );
@@ -104,7 +105,7 @@ public interface UserApi {
               })
       )
   })
-  ResponseEntity<RestResponse<UserResponse>> update(
+  ResponseEntity<UserResponse> update(
       @Parameter(description = "User ID") @PathVariable UUID userId,
       @RequestPart(required = false) UserUpdateRequest userUpdateRequest,
       @RequestPart(required = false) MultipartFile profile
@@ -135,7 +136,7 @@ public interface UserApi {
               examples = @ExampleObject(value = UserExamples.FIND_ALL_200))
       )
   })
-  ResponseEntity<RestResponse<List<UserResponse>>> findAll();
+  ResponseEntity<List<UserResponse>> findAll();
 
   @Operation(summary = "Update user online status")
   @ApiResponses({
@@ -154,7 +155,8 @@ public interface UserApi {
               examples = @ExampleObject(name = "USER_011", value = UserExamples.ERROR_404_USER_011))
       )
   })
-  ResponseEntity<RestResponse<UserStatusResponse>> updateUserStatus(
-      @Parameter(description = "User ID") @PathVariable UUID userId
+  ResponseEntity<UserStatusResponse> updateUserStatus(
+      @Parameter(description = "User ID") @PathVariable UUID userId,
+      @RequestBody UserStatusUpdateRequest userStatusUpdateRequest
   );
 }

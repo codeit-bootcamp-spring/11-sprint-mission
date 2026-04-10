@@ -2,7 +2,6 @@ package com.sprint.mission.discodeit.controller;
 
 import com.sprint.mission.discodeit.controller.api.BinaryContentApi;
 import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentResponse;
-import com.sprint.mission.discodeit.dto.common.RestResponse;
 import com.sprint.mission.discodeit.service.BinaryContentService;
 import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import java.util.List;
@@ -28,24 +27,24 @@ public class BinaryContentController implements BinaryContentApi {
   private final BinaryContentStorage binaryContentStorage;
 
   @GetMapping(path = "{binaryContentId}")
-  public ResponseEntity<RestResponse<BinaryContentResponse>> findById(
+  public ResponseEntity<BinaryContentResponse> findById(
       @PathVariable UUID binaryContentId) {
     BinaryContentResponse binaryContent = this.binaryContentService.findById(binaryContentId);
 
     return ResponseEntity
         .status(HttpStatus.OK)
-        .body(RestResponse.ok(binaryContent));
+        .body(binaryContent);
   }
 
   @GetMapping
-  public ResponseEntity<RestResponse<List<BinaryContentResponse>>> findAllByIdIn(
+  public ResponseEntity<List<BinaryContentResponse>> findAllByIdIn(
       @RequestParam("binaryContentIds") List<UUID> binaryContentIds) {
     List<BinaryContentResponse> binaryContents = this.binaryContentService.findAllByIdIn(
         binaryContentIds);
 
     return ResponseEntity
         .status(HttpStatus.OK)
-        .body(RestResponse.ok(binaryContents));
+        .body(binaryContents);
   }
 
   @GetMapping(path = "{binaryContentId}/download")

@@ -37,7 +37,7 @@ public class MessageController implements MessageApi {
   private final MessageService messageService;
 
   @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-  public ResponseEntity<RestResponse<MessageResponse>> create(
+  public ResponseEntity<MessageResponse> create(
       @RequestPart(value = "messageCreateRequest") MessageCreateRequest messageCreateRequest,
       @RequestPart(value = "attachments", required = false) List<MultipartFile> attachments
   ) {
@@ -49,11 +49,11 @@ public class MessageController implements MessageApi {
 
     return ResponseEntity
         .status(HttpStatus.CREATED)
-        .body(RestResponse.ok(createdMessage));
+        .body(createdMessage);
   }
 
   @PatchMapping(path = "{messageId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-  public ResponseEntity<RestResponse<MessageResponse>> update(
+  public ResponseEntity<MessageResponse> update(
       @PathVariable UUID messageId,
       @RequestPart(value = "messageUpdateRequest", required = false) MessageUpdateRequest messageUpdateRequest,
       @RequestPart(value = "attachments", required = false) List<MultipartFile> attachments
@@ -66,7 +66,7 @@ public class MessageController implements MessageApi {
 
     return ResponseEntity
         .status(HttpStatus.OK)
-        .body(RestResponse.ok(updatedMessage));
+        .body(updatedMessage);
   }
 
   @DeleteMapping(path = "{messageId}")
@@ -79,7 +79,7 @@ public class MessageController implements MessageApi {
   }
 
   @GetMapping
-  public ResponseEntity<RestResponse<PageResponse<MessageResponse>>> findAllByChannelId(
+  public ResponseEntity<PageResponse<MessageResponse>> findAllByChannelId(
       @RequestParam(value = "channelId") UUID channelId,
       Pageable pageable
   ) {
@@ -88,6 +88,6 @@ public class MessageController implements MessageApi {
 
     return ResponseEntity
         .status(HttpStatus.OK)
-        .body(RestResponse.ok(messages));
+        .body(messages);
   }
 }

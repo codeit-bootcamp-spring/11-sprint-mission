@@ -2,11 +2,11 @@ package com.sprint.mission.discodeit.controller;
 
 import com.sprint.mission.discodeit.controller.api.UserApi;
 import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentCreateRequest;
-import com.sprint.mission.discodeit.dto.common.RestResponse;
 import com.sprint.mission.discodeit.dto.user.UserCreateRequest;
 import com.sprint.mission.discodeit.dto.user.UserResponse;
 import com.sprint.mission.discodeit.dto.user.UserUpdateRequest;
 import com.sprint.mission.discodeit.dto.userstatus.UserStatusResponse;
+import com.sprint.mission.discodeit.dto.userstatus.UserStatusUpdateRequest;
 import com.sprint.mission.discodeit.service.UserService;
 import com.sprint.mission.discodeit.service.UserStatusService;
 import com.sprint.mission.discodeit.util.MultipartFileUtil;
@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
@@ -38,7 +39,7 @@ public class UserController implements UserApi {
   private final UserStatusService userStatusService;
 
   @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-  public ResponseEntity<RestResponse<UserResponse>> create(
+  public ResponseEntity<UserResponse> create(
       @RequestPart(value = "userCreateRequest") UserCreateRequest userCreateRequest,
       @RequestPart(value = "profile", required = false) MultipartFile profile
   ) {
@@ -49,11 +50,11 @@ public class UserController implements UserApi {
 
     return ResponseEntity
         .status(HttpStatus.CREATED)
-        .body(RestResponse.ok(createdUser));
+        .body(createdUser);
   }
 
   @PatchMapping(path = "{userId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-  public ResponseEntity<RestResponse<UserResponse>> update(
+  public ResponseEntity<UserResponse> update(
       @PathVariable UUID userId,
       @RequestPart(value = "userUpdateRequest", required = false) UserUpdateRequest userUpdateRequest,
       @RequestPart(value = "profile", required = false) MultipartFile profile
@@ -66,7 +67,7 @@ public class UserController implements UserApi {
 
     return ResponseEntity
         .status(HttpStatus.OK)
-        .body(RestResponse.ok(updatedUser));
+        .body(updatedUser);
   }
 
   @DeleteMapping(path = "{userId}")
@@ -79,21 +80,24 @@ public class UserController implements UserApi {
   }
 
   @GetMapping
-  public ResponseEntity<RestResponse<List<UserResponse>>> findAll() {
+  public ResponseEntity<List<UserResponse>> findAll() {
     List<UserResponse> users = this.userService.findAll();
 
     return ResponseEntity
         .status(HttpStatus.OK)
-        .body(RestResponse.ok(users));
+        .body(users);
   }
 
   @PatchMapping(path = "{userId}/user-status")
-  public ResponseEntity<RestResponse<UserStatusResponse>> updateUserStatus(
-      @PathVariable UUID userId) {
-    UserStatusResponse updatedUserStatus = this.userStatusService.updateUserStatusByUserId(userId);
+  public ResponseEntity<UserStatusResponse> updateUserStatus(
+      @PathVariable UUID userId,
+      @RequestBody UserStatusUpdateRequest userStatusUpdateRequest
+  ) {
+    UserStatusResponse updatedUserStatus = this.userStatusService.updateUserStatusByUserId(userId,
+        userStatusUpdateRequest);
 
     return ResponseEntity
         .status(HttpStatus.OK)
-        .body(RestResponse.ok(updatedUserStatus));
+        .body(updatedUserStatus);
   }
 }

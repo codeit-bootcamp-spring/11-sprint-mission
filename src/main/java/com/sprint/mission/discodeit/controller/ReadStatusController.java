@@ -1,9 +1,9 @@
 package com.sprint.mission.discodeit.controller;
 
 import com.sprint.mission.discodeit.controller.api.ReadStatusApi;
-import com.sprint.mission.discodeit.dto.common.RestResponse;
 import com.sprint.mission.discodeit.dto.readstatus.ReadStatusCreateRequest;
 import com.sprint.mission.discodeit.dto.readstatus.ReadStatusResponse;
+import com.sprint.mission.discodeit.dto.readstatus.ReadStatusUpdateRequest;
 import com.sprint.mission.discodeit.service.ReadStatusService;
 import java.util.List;
 import java.util.UUID;
@@ -29,33 +29,36 @@ public class ReadStatusController implements ReadStatusApi {
   private final ReadStatusService readStatusService;
 
   @PostMapping
-  public ResponseEntity<RestResponse<ReadStatusResponse>> create(
+  public ResponseEntity<ReadStatusResponse> create(
       @RequestBody ReadStatusCreateRequest readStatusCreateRequest) {
     ReadStatusResponse createdReadStatusResponse = this.readStatusService.createReadStatus(
         readStatusCreateRequest);
 
     return ResponseEntity
         .status(HttpStatus.CREATED)
-        .body(RestResponse.ok(createdReadStatusResponse));
+        .body(createdReadStatusResponse);
   }
 
   @PatchMapping(path = "{readStatusId}")
-  public ResponseEntity<RestResponse<ReadStatusResponse>> update(@PathVariable UUID readStatusId) {
+  public ResponseEntity<ReadStatusResponse> update(
+      @PathVariable UUID readStatusId,
+      @RequestBody ReadStatusUpdateRequest readStatusUpdateRequest
+  ) {
     ReadStatusResponse updatedReadStatusResponse = this.readStatusService.updateReadStatus(
-        readStatusId);
+        readStatusId, readStatusUpdateRequest);
 
     return ResponseEntity
         .status(HttpStatus.OK)
-        .body(RestResponse.ok(updatedReadStatusResponse));
+        .body(updatedReadStatusResponse);
   }
 
   @GetMapping
-  public ResponseEntity<RestResponse<List<ReadStatusResponse>>> findAllByUserId(
+  public ResponseEntity<List<ReadStatusResponse>> findAllByUserId(
       @RequestParam UUID userId) {
     List<ReadStatusResponse> readStatusResponses = this.readStatusService.findAllByUserId(userId);
 
     return ResponseEntity
         .status(HttpStatus.OK)
-        .body(RestResponse.ok(readStatusResponses));
+        .body(readStatusResponses);
   }
 }

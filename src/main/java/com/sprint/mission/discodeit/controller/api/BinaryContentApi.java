@@ -2,7 +2,6 @@ package com.sprint.mission.discodeit.controller.api;
 
 import com.sprint.mission.discodeit.controller.api.examples.BinaryContentExamples;
 import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentResponse;
-import com.sprint.mission.discodeit.dto.common.RestResponse;
 import com.sprint.mission.discodeit.exception.ErrorResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -38,7 +37,7 @@ public interface BinaryContentApi {
               examples = @ExampleObject(name = "BINARY_CONTENT_001", value = BinaryContentExamples.ERROR_404_BINARY_CONTENT_001))
       )
   })
-  ResponseEntity<RestResponse<BinaryContentResponse>> findById(
+  ResponseEntity<BinaryContentResponse> findById(
       @Parameter(description = "Binary content ID") @PathVariable UUID binaryContentId
   );
 
@@ -52,7 +51,7 @@ public interface BinaryContentApi {
               examples = @ExampleObject(value = BinaryContentExamples.FIND_ALL_BY_IDS_200))
       )
   })
-  ResponseEntity<RestResponse<List<BinaryContentResponse>>> findAllByIdIn(
+  ResponseEntity<List<BinaryContentResponse>> findAllByIdIn(
       @Parameter(description = "Binary content IDs") @RequestParam List<UUID> binaryContentIds
   );
 }
