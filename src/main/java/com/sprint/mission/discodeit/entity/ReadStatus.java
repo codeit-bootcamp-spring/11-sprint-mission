@@ -13,8 +13,8 @@ import lombok.NoArgsConstructor;
 
 @NoArgsConstructor
 @Getter
-@Entity(name = "read_statuses")
-@Table(uniqueConstraints = {
+@Entity
+@Table(name = "read_statuses", uniqueConstraints = {
     @UniqueConstraint(columnNames = {"user_id", "channel_id"})
 })
 public class ReadStatus extends BaseUpdatableEntity {
@@ -33,6 +33,10 @@ public class ReadStatus extends BaseUpdatableEntity {
   public ReadStatus(User user, Channel channel, Instant lastReadAt) {
     this.user = user;
     this.channel = channel;
+    this.lastReadAt = lastReadAt;
+  }
+
+  public void updateLastReadAt(Instant lastReadAt) {
     this.lastReadAt = lastReadAt;
   }
 }

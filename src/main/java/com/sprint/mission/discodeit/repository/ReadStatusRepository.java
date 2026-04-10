@@ -9,7 +9,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface ReadStatusRepository extends JpaRepository<ReadStatus, UUID> {
 
-  List<ReadStatus> findAllByUser(User user);
+  List<ReadStatus> findAllByUserId(UUID userId);
 
   List<ReadStatus> findAllByChannel(Channel channel);
 
@@ -17,7 +17,7 @@ public interface ReadStatusRepository extends JpaRepository<ReadStatus, UUID> {
 
   boolean existsByUserAndChannel(User user, Channel channel);
 
-  void deleteAllByUser(User user);
-
   void deleteAllByChannel(Channel channel);
+
+  void deleteAllByUser(User user);
 }

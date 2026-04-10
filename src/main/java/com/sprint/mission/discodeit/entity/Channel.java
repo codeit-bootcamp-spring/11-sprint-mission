@@ -4,12 +4,14 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @NoArgsConstructor
 @Getter
-@Entity(name = "channels")
+@Entity
+@Table(name = "channels")
 public class Channel extends BaseUpdatableEntity {
 
   @Enumerated(EnumType.STRING)
@@ -31,6 +33,10 @@ public class Channel extends BaseUpdatableEntity {
     this.name = name;
     this.description = description;
     this.type = ChannelType.PUBLIC;
+  }
+
+  public boolean isPrivate() {
+    return this.type == ChannelType.PRIVATE;
   }
 
   public void updateName(String name) {

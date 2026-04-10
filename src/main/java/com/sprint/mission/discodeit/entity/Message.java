@@ -8,6 +8,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.Getter;
@@ -15,7 +16,8 @@ import lombok.NoArgsConstructor;
 
 @NoArgsConstructor
 @Getter
-@Entity(name = "messages")
+@Entity
+@Table(name = "messages")
 public class Message extends BaseUpdatableEntity {
 
   @Column(columnDefinition = "text")
@@ -41,7 +43,7 @@ public class Message extends BaseUpdatableEntity {
     this.content = content;
     this.channel = channel;
     this.author = author;
-    this.attachments = attachments;
+    this.attachments = new ArrayList<>(attachments);
   }
 
   public void updateContent(String content) {

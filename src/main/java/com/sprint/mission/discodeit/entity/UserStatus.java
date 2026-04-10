@@ -5,13 +5,15 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
 import java.time.Instant;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @NoArgsConstructor
 @Getter
-@Entity(name = "user_statuses")
+@Entity
+@Table(name = "user_statuses")
 public class UserStatus extends BaseUpdatableEntity {
 
   @OneToOne(fetch = FetchType.LAZY)

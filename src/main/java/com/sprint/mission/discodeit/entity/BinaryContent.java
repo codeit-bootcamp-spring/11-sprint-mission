@@ -2,12 +2,14 @@ package com.sprint.mission.discodeit.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @NoArgsConstructor
 @Getter
-@Entity(name = "binary_contents")
+@Entity
+@Table(name = "binary_contents")
 public class BinaryContent extends BaseEntity {
 
   @Column(nullable = false, updatable = false)
