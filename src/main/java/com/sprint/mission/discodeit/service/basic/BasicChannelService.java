@@ -21,6 +21,7 @@ import com.sprint.mission.discodeit.repository.MessageRepository;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.ChannelService;
+import java.time.Instant;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -87,7 +88,7 @@ public class BasicChannelService implements ChannelService {
     }
 
     List<ReadStatus> readStatuses = participants.stream()
-        .map(user -> new ReadStatus(user, channel, channel.getCreatedAt()))
+        .map(user -> new ReadStatus(user, channel, Instant.now()))
         .toList();
 
     this.readStatusRepository.saveAll(readStatuses);
