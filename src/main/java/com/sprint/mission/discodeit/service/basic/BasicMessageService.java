@@ -21,6 +21,7 @@ import com.sprint.mission.discodeit.repository.MessageRepository;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.MessageService;
+import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -40,6 +41,7 @@ public class BasicMessageService implements MessageService {
   private final ChannelRepository channelRepository;
   private final ReadStatusRepository readStatusRepository;
   private final MessageMapper mapper;
+  private final BinaryContentStorage binaryContentStorage;
 
   @Transactional
   @Override
@@ -61,8 +63,12 @@ public class BasicMessageService implements MessageService {
     List<BinaryContent> attachments = new ArrayList<>();
     if (binaryContentCreateRequests != null && !binaryContentCreateRequests.isEmpty()) {
       attachments = binaryContentCreateRequests.stream()
-          .map(req -> new BinaryContent(req.fileName(), req.size(),
-              req.contentType(), req.bytes()))
+          .map(req -> {
+            BinaryContent attachment = new BinaryContent(req.fileName(), req.size(),
+                req.contentType());
+            this.binaryContentStorage.put(attachment.getId(), req.bytes());
+            return attachment;
+          })
           .toList();
     }
 
@@ -104,8 +110,12 @@ public class BasicMessageService implements MessageService {
     List<BinaryContent> newAttachments = new ArrayList<>();
     if (binaryContentCreateRequests != null && !binaryContentCreateRequests.isEmpty()) {
       newAttachments = binaryContentCreateRequests.stream()
-          .map(req -> new BinaryContent(req.fileName(), req.size(),
-              req.contentType(), req.bytes()))
+          .map(req -> {
+            BinaryContent attachment = new BinaryContent(req.fileName(), req.size(),
+                req.contentType());
+            this.binaryContentStorage.put(attachment.getId(), req.bytes());
+            return attachment;
+          })
           .toList();
     }
     if (!newAttachments.isEmpty()) {

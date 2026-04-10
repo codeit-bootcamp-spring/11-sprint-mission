@@ -9,6 +9,7 @@ import com.sprint.mission.discodeit.exception.ApiException;
 import com.sprint.mission.discodeit.mapper.BinaryContentMapper;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.service.BinaryContentService;
+import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -24,13 +25,15 @@ public class BasicBinaryContentService implements BinaryContentService {
 
   private final BinaryContentRepository binaryContentRepository;
   private final BinaryContentMapper mapper;
+  private final BinaryContentStorage binaryContentStorage;
 
   @Transactional
   @Override
   public BinaryContentResponse createBinaryContent(BinaryContentCreateRequest req) {
-    BinaryContent binaryContent = new BinaryContent(req.fileName(), req.size(), req.contentType(),
-        req.bytes());
+    BinaryContent binaryContent = new BinaryContent(req.fileName(), req.size(), req.contentType());
     this.binaryContentRepository.save(binaryContent);
+
+    this.binaryContentStorage.put(binaryContent.getId(), req.bytes());
 
     log.info("binary content has been created successfully. ✅ [ID: {}]", binaryContent.getId());
     return this.mapper.toResponse(binaryContent);

@@ -21,6 +21,7 @@ import com.sprint.mission.discodeit.mapper.UserMapper;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.UserService;
+import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -39,6 +40,7 @@ public class BasicUserService implements UserService {
   private final UserRepository userRepository;
   private final ReadStatusRepository readStatusRepository;
   private final UserMapper mapper;
+  private final BinaryContentStorage binaryContentStorage;
   private static final String EMAIL_REGEX = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$";
 
   @Transactional
@@ -72,7 +74,8 @@ public class BasicUserService implements UserService {
     BinaryContent profile = null;
     if (binaryContentCreateRequest.isPresent()) {
       BinaryContentCreateRequest req = binaryContentCreateRequest.get();
-      profile = new BinaryContent(req.fileName(), req.size(), req.contentType(), req.bytes());
+      profile = new BinaryContent(req.fileName(), req.size(), req.contentType());
+      this.binaryContentStorage.put(profile.getId(), req.bytes());
     }
 
     User user = new User(
@@ -144,7 +147,8 @@ public class BasicUserService implements UserService {
     BinaryContent profile = user.getProfile();
     if (binaryContentCreateRequest.isPresent()) {
       BinaryContentCreateRequest req = binaryContentCreateRequest.get();
-      profile = new BinaryContent(req.fileName(), req.size(), req.contentType(), req.bytes());
+      profile = new BinaryContent(req.fileName(), req.size(), req.contentType());
+      this.binaryContentStorage.put(profile.getId(), req.bytes());
     }
 
     user.update(username, email, password, profile);
