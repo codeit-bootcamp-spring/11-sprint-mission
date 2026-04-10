@@ -13,6 +13,7 @@ import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.repository.UserStatusRepository;
 import com.sprint.mission.discodeit.service.UserService;
+import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import org.springframework.transaction.annotation.Transactional;
 import java.io.IOException;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +32,7 @@ public class BasicUserService implements UserService {
   private final UserRepository userRepository;
   private final UserStatusRepository userStatusRepository;
   private final BinaryContentRepository binaryContentRepository;
+  private final BinaryContentStorage binaryContentStorage;
 
   private final UserMapper userMapper;
 
@@ -50,9 +52,10 @@ public class BasicUserService implements UserService {
     BinaryContent profileEntity = null;
     if (profile != null && !profile.isEmpty()) {
       try {
-        profileEntity = new BinaryContent(profile.getBytes(), profile.getOriginalFilename(),
-            profile.getContentType());
-        binaryContentRepository.save(profileEntity);
+        profileEntity = new BinaryContent(profile.getOriginalFilename(), profile.getContentType(),
+            profile.getSize());
+        BinaryContent savedProfile = binaryContentRepository.save(profileEntity);
+        binaryContentStorage.put(savedProfile.getId(), profile.getBytes());
       } catch (Exception e) {
         throw new BusinessLogicException(ExceptionCode.INTERNAL_SERVER_ERROR);
       }
@@ -126,11 +129,12 @@ public class BasicUserService implements UserService {
       }
       try {
         currentProfile = new BinaryContent(
-            profile.getBytes(),
             profile.getOriginalFilename(),
-            profile.getContentType()
+            profile.getContentType(),
+            profile.getSize()
         );
-        binaryContentRepository.save(currentProfile);
+        BinaryContent savedProfile = binaryContentRepository.save(currentProfile);
+        binaryContentStorage.put(savedProfile.getId(), profile.getBytes());
       } catch (IOException e) {
         throw new BusinessLogicException(ExceptionCode.INTERNAL_SERVER_ERROR);
       }

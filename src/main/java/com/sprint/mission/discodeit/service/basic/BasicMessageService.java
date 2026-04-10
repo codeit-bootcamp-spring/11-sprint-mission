@@ -16,6 +16,7 @@ import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.MessageService;
+import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import java.io.IOException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -35,6 +36,7 @@ public class BasicMessageService implements MessageService {
   private final UserRepository userRepository;
   private final ChannelRepository channelRepository;
   private final BinaryContentRepository binaryContentRepository;
+  private final BinaryContentStorage binaryContentStorage;
 
   private final MessageMapper messageMapper;
 
@@ -53,12 +55,13 @@ public class BasicMessageService implements MessageService {
       for (MultipartFile file : attachments) {
         try {
           BinaryContent content = new BinaryContent(
-              file.getBytes(),
               file.getOriginalFilename(),
-              file.getContentType()
+              file.getContentType(),
+              file.getSize()
           );
-          binaryContentRepository.save(content);
-          message.addAttachment(content);
+          BinaryContent savedContent = binaryContentRepository.save(content);
+          binaryContentStorage.put(savedContent.getId(), file.getBytes());
+          message.addAttachment(savedContent);
         } catch (IOException e) {
           throw new BusinessLogicException(ExceptionCode.INTERNAL_SERVER_ERROR);
         }

@@ -1,6 +1,5 @@
 package com.sprint.mission.discodeit.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.sprint.mission.discodeit.entity.base.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -23,14 +22,9 @@ public class BinaryContent extends BaseEntity {
   @Column(nullable = false)
   private long size;
 
-  @JsonIgnore
-  @Column(nullable = false, columnDefinition = "bytea")
-  private byte[] bytes;
-
-  public BinaryContent(byte[] bytes, String fileName, String contentType) {
-    this.bytes = bytes;
+  public BinaryContent(String fileName, String contentType, long size) {
     this.fileName = fileName;
     this.contentType = contentType;
-    this.size = bytes != null ? bytes.length : 0;
+    this.size = size;
   }
 }
