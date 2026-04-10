@@ -1,10 +1,12 @@
 package com.sprint.mission.discodeit.dto.userstatus;
 
 import java.time.Instant;
+import java.util.UUID;
 
 public record UserStatusResponse(
-    Instant lastLoginDate,
-    boolean isOnline
+    UUID id,
+    UUID userId,
+    Instant lastActiveAt
 ) {
 
 }

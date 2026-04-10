@@ -1,7 +1,7 @@
 package com.sprint.mission.discodeit.service;
 
 import com.sprint.mission.discodeit.dto.channel.ChannelResponse;
-import com.sprint.mission.discodeit.dto.channel.ChannelUpdateRequest;
+import com.sprint.mission.discodeit.dto.channel.PublicChannelUpdateRequest;
 import com.sprint.mission.discodeit.dto.channel.PrivateChannelCreateRequest;
 import com.sprint.mission.discodeit.dto.channel.PublicChannelCreateRequest;
 
@@ -18,7 +18,7 @@ public interface ChannelService {
 
   List<ChannelResponse> findAllByUserId(UUID userId);
 
-  ChannelResponse updateChannel(UUID id, ChannelUpdateRequest channelUpdateRequest);
+  ChannelResponse updateChannel(UUID id, PublicChannelUpdateRequest publicChannelUpdateRequest);
 
   void deleteChannel(UUID id);
 }
