@@ -13,18 +13,21 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
+@Transactional(readOnly = true)
 @RequiredArgsConstructor
 @Service
 public class BasicBinaryContentService implements BinaryContentService {
 
   private final BinaryContentRepository binaryContentRepository;
 
+  @Transactional
   @Override
   public BinaryContentResponse createBinaryContent(BinaryContentCreateRequest req) {
-    BinaryContent binaryContent = new BinaryContent(req.data(), req.fileName(), req.contentType(),
-        req.size());
+    BinaryContent binaryContent = new BinaryContent(req.fileName(), req.size(), req.contentType(),
+        req.data());
     this.binaryContentRepository.save(binaryContent);
 
     log.info("binary content has been created successfully. ✅ [ID: {}]", binaryContent.getId());
@@ -44,6 +47,7 @@ public class BasicBinaryContentService implements BinaryContentService {
         .toList();
   }
 
+  @Transactional
   @Override
   public void deleteBinaryContent(UUID id) {
     BinaryContent binaryContent = this.binaryContentRepository.findById(id)
@@ -56,7 +60,7 @@ public class BasicBinaryContentService implements BinaryContentService {
 
   private BinaryContentResponse toResponse(BinaryContent binaryContent) {
     return new BinaryContentResponse(
-        binaryContent.getData(),
+        binaryContent.getBytes(),
         binaryContent.getFileName(),
         binaryContent.getContentType(),
         binaryContent.getSize()

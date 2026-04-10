@@ -1,16 +1,11 @@
 package com.sprint.mission.discodeit.service.basic;
 
-import static com.sprint.mission.discodeit.exception.ApiException.ERROR.BINARY_CONTENT_NOT_FOUND;
 import static com.sprint.mission.discodeit.exception.ApiException.ERROR.USER_EMAIL_DUPLICATED;
 import static com.sprint.mission.discodeit.exception.ApiException.ERROR.USER_EMAIL_REQUIRED;
 import static com.sprint.mission.discodeit.exception.ApiException.ERROR.USER_INVALID_EMAIL_FORMAT;
 import static com.sprint.mission.discodeit.exception.ApiException.ERROR.USER_INVALID_PASSWORD_LENGTH;
-import static com.sprint.mission.discodeit.exception.ApiException.ERROR.USER_INVALID_PHONE_NUMBER_FORMAT;
-import static com.sprint.mission.discodeit.exception.ApiException.ERROR.USER_NICKNAME_REQUIRED;
 import static com.sprint.mission.discodeit.exception.ApiException.ERROR.USER_NOT_FOUND;
 import static com.sprint.mission.discodeit.exception.ApiException.ERROR.USER_PASSWORD_REQUIRED;
-import static com.sprint.mission.discodeit.exception.ApiException.ERROR.USER_PHONE_NUMBER_REQUIRED;
-import static com.sprint.mission.discodeit.exception.ApiException.ERROR.USER_STATUS_NOT_FOUND;
 import static com.sprint.mission.discodeit.exception.ApiException.ERROR.USER_USERNAME_DUPLICATED;
 import static com.sprint.mission.discodeit.exception.ApiException.ERROR.USER_USERNAME_REQUIRED;
 
@@ -23,10 +18,8 @@ import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.entity.UserStatus;
 import com.sprint.mission.discodeit.exception.ApiException;
-import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
-import com.sprint.mission.discodeit.repository.UserStatusRepository;
 import com.sprint.mission.discodeit.service.UserService;
 import java.time.Instant;
 import java.util.List;
@@ -35,30 +28,26 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
+@Transactional(readOnly = true)
 @RequiredArgsConstructor
 @Service
 public class BasicUserService implements UserService {
 
   private final UserRepository userRepository;
-  private final BinaryContentRepository binaryContentRepository;
-  private final UserStatusRepository userStatusRepository;
   private final ReadStatusRepository readStatusRepository;
   private static final String EMAIL_REGEX = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$";
-  private static final String PHONE_REGEX = "^\\d{3}-\\d{3,4}-\\d{4}$";
 
+  @Transactional
   @Override
   public UserResponse createUser(UserCreateRequest userCreateRequest,
       Optional<BinaryContentCreateRequest> binaryContentCreateRequest) {
-    if (userCreateRequest.nickname() == null || userCreateRequest.nickname().isBlank()) {
-      throw new ApiException(USER_NICKNAME_REQUIRED);
-    }
-
     if (userCreateRequest.username() == null || userCreateRequest.username().isBlank()) {
       throw new ApiException(USER_USERNAME_REQUIRED);
     }
-    if (this.userRepository.existByUsername(userCreateRequest.username())) {
+    if (this.userRepository.existsByUsername(userCreateRequest.username())) {
       throw new ApiException(USER_USERNAME_DUPLICATED);
     }
 
@@ -68,7 +57,7 @@ public class BasicUserService implements UserService {
     if (!userCreateRequest.email().matches(EMAIL_REGEX)) {
       throw new ApiException(USER_INVALID_EMAIL_FORMAT);
     }
-    if (this.userRepository.existByEmail(userCreateRequest.email())) {
+    if (this.userRepository.existsByEmail(userCreateRequest.email())) {
       throw new ApiException(USER_EMAIL_DUPLICATED);
     }
 
@@ -79,73 +68,52 @@ public class BasicUserService implements UserService {
       throw new ApiException(USER_INVALID_PASSWORD_LENGTH);
     }
 
-    if (userCreateRequest.phoneNumber() == null || userCreateRequest.phoneNumber().isBlank()) {
-      throw new ApiException(USER_PHONE_NUMBER_REQUIRED);
-    }
-    if (!userCreateRequest.phoneNumber().matches(PHONE_REGEX)) {
-      throw new ApiException(USER_INVALID_PHONE_NUMBER_FORMAT);
-    }
-
     BinaryContent profile = null;
     if (binaryContentCreateRequest.isPresent()) {
       BinaryContentCreateRequest req = binaryContentCreateRequest.get();
-      profile = new BinaryContent(req.data(), req.fileName(), req.contentType(), req.size());
-      this.binaryContentRepository.save(profile);
+      profile = new BinaryContent(req.fileName(), req.size(), req.contentType(), req.data());
     }
 
     User user = new User(
-        userCreateRequest.nickname(),
         userCreateRequest.username(),
         userCreateRequest.email(),
         userCreateRequest.password(),
-        userCreateRequest.phoneNumber(),
-        profile != null ? profile.getId() : null
+        profile
     );
+
+    UserStatus status = new UserStatus(user);
+    user.initStatus(status);
+
     this.userRepository.save(user);
 
-    UserStatus status = new UserStatus(user.getId());
-    this.userStatusRepository.save(status);
-
-    log.info("{} has been created successfully. ✅ [ID: {}]", user.getNickname(), user.getId());
-    return this.toResponse(user, status);
+    log.info("{} has been created successfully. ✅ [ID: {}]", user.getUsername(), user.getId());
+    return this.toResponse(user);
   }
 
   @Override
   public UserResponse findById(UUID id) {
-    User user = this.userRepository.findById(id)
-        .orElseThrow(() -> new ApiException(USER_NOT_FOUND));
-
-    UserStatus status = this.userStatusRepository.findByUserId(user.getId())
-        .orElseThrow(() -> new ApiException(USER_STATUS_NOT_FOUND));
-
-    return this.toResponse(user, status);
+    return this.toResponse(this.userRepository.findById(id)
+        .orElseThrow(() -> new ApiException(USER_NOT_FOUND)));
   }
 
   @Override
   public List<UserResponse> findAll() {
     return this.userRepository.findAll().stream()
-        .map(user -> {
-          UserStatus status = this.userStatusRepository.findByUserId(user.getId())
-              .orElseThrow(() -> new ApiException(USER_STATUS_NOT_FOUND));
-          return this.toResponse(user, status);
-        })
+        .map(this::toResponse)
         .toList();
   }
 
+  @Transactional
   @Override
   public UserResponse updateUser(UUID id, UserUpdateRequest userUpdateRequest,
       Optional<BinaryContentCreateRequest> binaryContentCreateRequest) {
     User user = this.userRepository.findById(id)
         .orElseThrow(() -> new ApiException(USER_NOT_FOUND));
 
-    String nickname = Optional.ofNullable(userUpdateRequest.nickname())
-        .filter(s -> !s.isBlank())
-        .orElse(user.getNickname());
-
     String username = user.getUsername();
     if (userUpdateRequest.username() != null && !userUpdateRequest.username().isBlank()) {
       if (!user.getUsername().equals(userUpdateRequest.username())
-          && this.userRepository.existByUsername(userUpdateRequest.username())) {
+          && this.userRepository.existsByUsername(userUpdateRequest.username())) {
         throw new ApiException(USER_USERNAME_DUPLICATED);
       }
       username = userUpdateRequest.username();
@@ -156,7 +124,7 @@ public class BasicUserService implements UserService {
       if (!userUpdateRequest.email().matches(EMAIL_REGEX)) {
         throw new ApiException(USER_INVALID_EMAIL_FORMAT);
       }
-      if (!user.getEmail().equals(userUpdateRequest.email()) && this.userRepository.existByEmail(
+      if (!user.getEmail().equals(userUpdateRequest.email()) && this.userRepository.existsByEmail(
           userUpdateRequest.email())) {
         throw new ApiException(USER_EMAIL_DUPLICATED);
       }
@@ -171,76 +139,40 @@ public class BasicUserService implements UserService {
       password = userUpdateRequest.password();
     }
 
-    String phoneNumber = user.getPhoneNumber();
-    if (userUpdateRequest.phoneNumber() != null && !userUpdateRequest.phoneNumber().isBlank()) {
-      if (!userUpdateRequest.phoneNumber().matches(PHONE_REGEX)) {
-        throw new ApiException(USER_INVALID_PHONE_NUMBER_FORMAT);
-      }
-      phoneNumber = userUpdateRequest.phoneNumber();
-    }
-
-    BinaryContent profile = user.getProfileId() != null
-        ? this.binaryContentRepository.findById(user.getProfileId())
-          .orElseThrow(() -> new ApiException(BINARY_CONTENT_NOT_FOUND))
-        : null;
+    BinaryContent profile = user.getProfile();
     if (binaryContentCreateRequest.isPresent()) {
-      if (profile != null) {
-        this.binaryContentRepository.delete(profile);
-      }
       BinaryContentCreateRequest req = binaryContentCreateRequest.get();
-      profile = new BinaryContent(req.data(), req.fileName(), req.contentType(), req.size());
-      this.binaryContentRepository.save(profile);
+      profile = new BinaryContent(req.fileName(), req.size(), req.contentType(), req.data());
     }
 
-    user.update(nickname, username, email, password, phoneNumber,
-        profile != null ? profile.getId() : null
-    );
-    this.userRepository.save(user);
+    user.update(username, email, password, profile);
+    user.getStatus().updateLastActiveAt(Instant.now());
 
-    UserStatus status = this.userStatusRepository.findByUserId(user.getId())
-        .orElseThrow(() -> new ApiException(USER_STATUS_NOT_FOUND));
-
-    status.setUpdatedAt();
-    this.userStatusRepository.save(status);
-
-    log.info("{} has been updated successfully. ✅ [ID: {}]", user.getNickname(), id);
-    return this.toResponse(user, status);
+    log.info("{} has been updated successfully. ✅ [ID: {}]", user.getUsername(), id);
+    return this.toResponse(user);
   }
 
+  @Transactional
   @Override
   public void deleteUser(UUID id) {
     User user = this.userRepository.findById(id)
         .orElseThrow(() -> new ApiException(USER_NOT_FOUND));
 
-    if (user.getProfileId() != null) {
-      BinaryContent profile = this.binaryContentRepository.findById(user.getProfileId())
-          .orElseThrow(() -> new ApiException(BINARY_CONTENT_NOT_FOUND));
-      this.binaryContentRepository.delete(profile);
-    }
-
-    UserStatus status = this.userStatusRepository.findByUserId(user.getId())
-        .orElseThrow(() -> new ApiException(USER_STATUS_NOT_FOUND));
-
-    this.userStatusRepository.delete(status);
-
-    this.readStatusRepository.deleteAllByUserId(user.getId());
+    this.readStatusRepository.deleteAllByUser(user);
 
     this.userRepository.delete(user);
 
-    log.info("{} has been deleted successfully. ✅ [ID: {}]", user.getNickname(), id);
+    log.info("{} has been deleted successfully. ✅ [ID: {}]", user.getUsername(), id);
   }
 
-  private UserResponse toResponse(User user, UserStatus status) {
+  private UserResponse toResponse(User user) {
     return new UserResponse(
         user.getId(),
-        user.getNickname(),
         user.getUsername(),
         user.getEmail(),
-        user.getPhoneNumber(),
-        user.getProfileId(),
         new UserStatusResponse(
-            status.getUpdatedAt(),
-            status.getUpdatedAt().isAfter(Instant.now().minusSeconds(5 * 60))
+            user.getStatus().getUpdatedAt(),
+            user.getStatus().getUpdatedAt().isAfter(Instant.now().minusSeconds(5 * 60))
         )
     );
   }

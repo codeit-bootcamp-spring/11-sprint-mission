@@ -6,7 +6,6 @@ import static com.sprint.mission.discodeit.exception.ApiException.ERROR.USER_STA
 
 import com.sprint.mission.discodeit.dto.userstatus.UserStatusCreateRequest;
 import com.sprint.mission.discodeit.dto.userstatus.UserStatusResponse;
-import com.sprint.mission.discodeit.dto.userstatus.UserStatusUpdateRequest;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.entity.UserStatus;
 import com.sprint.mission.discodeit.exception.ApiException;
@@ -19,8 +18,10 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
+@Transactional(readOnly = true)
 @RequiredArgsConstructor
 @Service
 public class BasicUserStatusService implements UserStatusService {
@@ -28,16 +29,17 @@ public class BasicUserStatusService implements UserStatusService {
   private final UserStatusRepository userStatusRepository;
   private final UserRepository userRepository;
 
+  @Transactional
   @Override
   public UserStatusResponse createUserStatus(UserStatusCreateRequest userStatusCreateRequest) {
     User user = this.userRepository.findById(userStatusCreateRequest.userId())
         .orElseThrow(() -> new ApiException(USER_NOT_FOUND));
 
-    if (this.userStatusRepository.existByUserId(user.getId())) {
+    if (this.userStatusRepository.existsByUser(user)) {
       throw new ApiException(USER_STATUS_DUPLICATED);
     }
 
-    UserStatus userStatus = new UserStatus(user.getId());
+    UserStatus userStatus = new UserStatus(user);
     this.userStatusRepository.save(userStatus);
 
     log.info("user status has been created successfully. ✅ [ID: {}]", userStatus.getId());
@@ -58,31 +60,20 @@ public class BasicUserStatusService implements UserStatusService {
         .toList();
   }
 
-  @Override
-  public UserStatusResponse updateUserStatus(UserStatusUpdateRequest userStatusUpdateRequest) {
-    UserStatus userStatus = this.userStatusRepository.findById(userStatusUpdateRequest.id())
-        .orElseThrow(() -> new ApiException(USER_STATUS_NOT_FOUND));
-
-    userStatus.setUpdatedAt();
-    this.userStatusRepository.save(userStatus);
-
-    log.info("UserStatus has been updated successfully. ✅ [ID: {}]", userStatus.getId());
-    return this.toResponse(userStatus);
-  }
-
+  @Transactional
   @Override
   public UserStatusResponse updateUserStatusByUserId(UUID userId) {
     UserStatus userStatus = this.userStatusRepository.findByUserId(userId)
         .orElseThrow(() -> new ApiException(USER_STATUS_NOT_FOUND));
 
-    userStatus.setUpdatedAt();
-    this.userStatusRepository.save(userStatus);
+    userStatus.updateLastActiveAt(Instant.now());
 
     log.info("UserStatus has been updated successfully. ✅ [ID: {}]", userStatus.getId());
     log.info("-> {user: {}}", userId);
     return this.toResponse(userStatus);
   }
 
+  @Transactional
   @Override
   public void deleteUserStatus(UUID id) {
     UserStatus userStatus = this.userStatusRepository.findById(id)

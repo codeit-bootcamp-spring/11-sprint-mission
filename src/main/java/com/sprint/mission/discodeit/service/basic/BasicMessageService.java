@@ -15,7 +15,6 @@ import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.exception.ApiException;
-import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
@@ -27,8 +26,10 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
+@Transactional(readOnly = true)
 @RequiredArgsConstructor
 @Service
 public class BasicMessageService implements MessageService {
@@ -37,8 +38,8 @@ public class BasicMessageService implements MessageService {
   private final UserRepository userRepository;
   private final ChannelRepository channelRepository;
   private final ReadStatusRepository readStatusRepository;
-  private final BinaryContentRepository binaryContentRepository;
 
+  @Transactional
   @Override
   public MessageResponse createMessage(MessageCreateRequest messageCreateRequest,
       List<BinaryContentCreateRequest> binaryContentCreateRequests) {
@@ -46,42 +47,34 @@ public class BasicMessageService implements MessageService {
       throw new ApiException(MESSAGE_CONTENT_REQUIRED);
     }
 
-    User sender = this.userRepository.findById(messageCreateRequest.senderId())
+    User author = this.userRepository.findById(messageCreateRequest.senderId())
         .orElseThrow(() -> new ApiException(USER_NOT_FOUND));
     Channel channel = this.channelRepository.findById(messageCreateRequest.channelId())
         .orElseThrow(() -> new ApiException(CHANNEL_NOT_FOUND));
 
-    if (channel.isPrivate() && !this.readStatusRepository.existByUserIdAndChannelId(
-        sender.getId(),
-        channel.getId())) {
+    if (channel.isPrivate() && !this.readStatusRepository.existsByUserAndChannel(author, channel)) {
       throw new ApiException(MESSAGE_CHANNEL_ACCESS_REQUIRED);
     }
 
     List<BinaryContent> attachments = new ArrayList<>();
     if (binaryContentCreateRequests != null && !binaryContentCreateRequests.isEmpty()) {
       attachments = binaryContentCreateRequests.stream()
-          .map(req -> {
-            BinaryContent attachment = new BinaryContent(req.data(), req.fileName(),
-                req.contentType(), req.size());
-            this.binaryContentRepository.save(attachment);
-            return attachment;
-          })
+          .map(req -> new BinaryContent(req.fileName(), req.size(),
+              req.contentType(), req.data()))
           .toList();
     }
 
     Message message = new Message(
         messageCreateRequest.content(),
-        sender.getId(),
-        channel.getId(),
-        attachments.stream()
-            .map(BinaryContent::getId)
-            .toList()
+        channel,
+        author,
+        attachments
     );
     this.messageRepository.save(message);
 
     log.info("Message has been created successfully. ✅ [ID: {}]", message.getId());
     log.info("-> {channel: {}, sender: {}, content: {}}",
-        channel.isPrivate() ? '-' : channel.getName(), sender.getNickname(), message.getContent());
+        channel.isPrivate() ? '-' : channel.getName(), author.getUsername(), message.getContent());
     return this.toResponse(message);
   }
 
@@ -92,6 +85,7 @@ public class BasicMessageService implements MessageService {
         .toList();
   }
 
+  @Transactional
   @Override
   public MessageResponse updateMessage(UUID id, MessageUpdateRequest messageUpdateRequest,
       List<BinaryContentCreateRequest> binaryContentCreateRequests) {
@@ -106,32 +100,25 @@ public class BasicMessageService implements MessageService {
 
     List<BinaryContent> newAttachments = new ArrayList<>();
     if (binaryContentCreateRequests != null && !binaryContentCreateRequests.isEmpty()) {
-      this.binaryContentRepository.deleteAllByIdIn(message.getAttachmentIds());
       newAttachments = binaryContentCreateRequests.stream()
-          .map(req -> {
-            BinaryContent attachment = new BinaryContent(req.data(), req.fileName(),
-                req.contentType(), req.size());
-            this.binaryContentRepository.save(attachment);
-            return attachment;
-          })
+          .map(req -> new BinaryContent(req.fileName(), req.size(),
+              req.contentType(), req.data()))
           .toList();
     }
     if (!newAttachments.isEmpty()) {
       message.replaceAttachments(newAttachments);
     }
 
-    this.messageRepository.save(message);
-
     log.info("Message has been updated successfully. ✅ [ID: {}]", id);
     return this.toResponse(message);
   }
 
+  @Transactional
   @Override
   public void deleteMessage(UUID id) {
     Message message = this.messageRepository.findById(id)
         .orElseThrow(() -> new ApiException(MESSAGE_NOT_FOUND));
 
-    this.binaryContentRepository.deleteAllByIdIn(message.getAttachmentIds());
     this.messageRepository.delete(message);
 
     log.info("Message has been deleted successfully. ✅ [ID: {}]", id);
@@ -143,9 +130,11 @@ public class BasicMessageService implements MessageService {
         message.getCreatedAt(),
         message.getUpdatedAt(),
         message.getContent(),
-        message.getSenderId(),
-        message.getChannelId(),
-        message.getAttachmentIds()
+        message.getAuthor().getId(),
+        message.getChannel().getId(),
+        message.getAttachments().stream()
+            .map(BinaryContent::getId)
+            .toList()
     );
   }
 }
