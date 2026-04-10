@@ -50,7 +50,9 @@ public interface ChannelApi {
             @ApiResponse(responseCode = "204", description = "Channel이 성공적으로 삭제됨"),
             @ApiResponse(responseCode = "404", description = "Channel을 찾을 수 없음")
     })
-    ResponseEntity<Void> delete(@PathVariable UUID channelId);
+    ResponseEntity<Void> delete(
+            @Parameter(description = "삭제할 Channel ID") @PathVariable UUID channelId
+    );
 
     @Operation(summary = "User가 참여 중인 Channel 목록 조회", operationId = "findAll_1")
     @ApiResponses({

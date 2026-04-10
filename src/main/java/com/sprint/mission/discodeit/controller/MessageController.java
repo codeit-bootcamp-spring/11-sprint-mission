@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -62,9 +63,9 @@ public class MessageController implements MessageApi {
     @GetMapping
     public ResponseEntity<PageResponse<MessageDto>> findAllByChannelId(
             @RequestParam UUID channelId,
-            @RequestParam(defaultValue = "0") int page
-    ) {
-        PageResponse<MessageDto> result = messageService.findAllByChannelId(channelId, page);
+            @RequestParam(required = false) Instant cursor
+            ) {
+        PageResponse<MessageDto> result = messageService.findAllByChannelId(channelId, cursor);
         return ResponseEntity.ok(result);
     }
 

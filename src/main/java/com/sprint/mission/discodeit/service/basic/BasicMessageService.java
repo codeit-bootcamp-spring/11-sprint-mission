@@ -26,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -67,14 +68,23 @@ public class BasicMessageService implements MessageService {
     }
 
     @Override
-    public PageResponse<MessageDto> findAllByChannelId(UUID id, int page) {
+    public PageResponse<MessageDto> findAllByChannelId(UUID id, Instant cursor) {
         Channel channel = channelRepo.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.CHANNEL_NOT_FOUND));
 
-        Pageable pageable = PageRequest.of(page, 50);
-        var slice = messageRepo.findAllByChannelOrderByCreatedAtDesc(channel, pageable);
-        // n+1 문제 해결 필요
-        return pageResponseMapper.toDto(slice, messageMapper::toDto);
+        List<Message> messages;
+        if(cursor == null) {
+            messages = messageRepo.findTop51ByChannelOrderByCreatedAtDesc(channel);
+        } else {
+            messages = messageRepo.findTop51ByChannelAndCreatedAtLessThanOrderByCreatedAtDesc(channel, cursor);
+        }
+
+        return pageResponseMapper.toCursorDto(
+                messages,
+                50,
+                messageMapper::toDto,
+                Message::getCreatedAt
+        );
     }
 
     @Override

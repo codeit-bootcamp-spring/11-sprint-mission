@@ -22,5 +22,7 @@ public interface MessageRepository extends JpaRepository<Message, UUID> {
     Optional<Instant> findLastMessageAtByChannel(@Param("channel")Channel channel);
 
     List<Message> findAllByChannel(Channel channel);
-    Slice<Message> findAllByChannelOrderByCreatedAtDesc(Channel channel, Pageable pageable);
+
+    List<Message> findTop51ByChannelOrderByCreatedAtDesc(Channel channel);
+    List<Message> findTop51ByChannelAndCreatedAtLessThanOrderByCreatedAtDesc(Channel channel, Instant createdAt);
 }

@@ -8,7 +8,7 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring", uses = BinaryContentMapper.class)
 public interface UserMapper {
 
-    @Mapping(target = "online", expression = "java(user.getStatus()!=null && user.getStatus.passed())")
+    @Mapping(target = "online", expression = "java(user.getStatus()!=null && user.getStatus().passed())")
     UserDto toDto(User user);
 
 }

@@ -34,5 +34,6 @@ logging:
   file:
     name: logs/app.log
   level:
-    org.hibernate.SQL: debug
-    org.hibernate.orm.jdbc.bind: trace
+    root: WARN
+    com.sprint.mission.discodeit: INFO
+    org.hibernate.SQL: DEBUG
