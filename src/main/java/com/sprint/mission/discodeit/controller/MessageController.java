@@ -2,6 +2,7 @@ package com.sprint.mission.discodeit.controller;
 
 import com.sprint.mission.discodeit.controller.api.MessageApi;
 import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentCreateRequest;
+import com.sprint.mission.discodeit.dto.common.PageResponse;
 import com.sprint.mission.discodeit.dto.common.RestResponse;
 import com.sprint.mission.discodeit.dto.message.MessageCreateRequest;
 import com.sprint.mission.discodeit.dto.message.MessageResponse;
@@ -12,6 +13,7 @@ import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -77,9 +79,12 @@ public class MessageController implements MessageApi {
   }
 
   @GetMapping
-  public ResponseEntity<RestResponse<List<MessageResponse>>> findAllByChannelId(
-      @RequestParam(value = "channelId") UUID channelId) {
-    List<MessageResponse> messages = this.messageService.findAllByChannelId(channelId);
+  public ResponseEntity<RestResponse<PageResponse<MessageResponse>>> findAllByChannelId(
+      @RequestParam(value = "channelId") UUID channelId,
+      Pageable pageable
+  ) {
+    PageResponse<MessageResponse> messages = this.messageService.findAllByChannelId(channelId,
+        pageable);
 
     return ResponseEntity
         .status(HttpStatus.OK)

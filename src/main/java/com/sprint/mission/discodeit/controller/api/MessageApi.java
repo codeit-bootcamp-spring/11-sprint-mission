@@ -3,6 +3,7 @@ package com.sprint.mission.discodeit.controller.api;
 import com.sprint.mission.discodeit.controller.api.examples.ChannelExamples;
 import com.sprint.mission.discodeit.controller.api.examples.MessageExamples;
 import com.sprint.mission.discodeit.controller.api.examples.UserExamples;
+import com.sprint.mission.discodeit.dto.common.PageResponse;
 import com.sprint.mission.discodeit.dto.common.RestResponse;
 import com.sprint.mission.discodeit.dto.message.MessageCreateRequest;
 import com.sprint.mission.discodeit.dto.message.MessageResponse;
@@ -18,6 +19,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -114,7 +116,8 @@ public interface MessageApi {
               examples = @ExampleObject(value = MessageExamples.FIND_ALL_200))
       )
   })
-  ResponseEntity<RestResponse<List<MessageResponse>>> findAllByChannelId(
-      @Parameter(description = "Channel ID") @RequestParam UUID channelId
+  ResponseEntity<RestResponse<PageResponse<MessageResponse>>> findAllByChannelId(
+      @Parameter(description = "Channel ID") @RequestParam UUID channelId,
+      Pageable pageable
   );
 }

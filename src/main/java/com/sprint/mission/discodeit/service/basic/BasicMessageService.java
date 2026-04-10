@@ -7,6 +7,7 @@ import static com.sprint.mission.discodeit.exception.ApiException.ERROR.MESSAGE_
 import static com.sprint.mission.discodeit.exception.ApiException.ERROR.USER_NOT_FOUND;
 
 import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentCreateRequest;
+import com.sprint.mission.discodeit.dto.common.PageResponse;
 import com.sprint.mission.discodeit.dto.message.MessageCreateRequest;
 import com.sprint.mission.discodeit.dto.message.MessageResponse;
 import com.sprint.mission.discodeit.dto.message.MessageUpdateRequest;
@@ -16,6 +17,7 @@ import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.exception.ApiException;
 import com.sprint.mission.discodeit.mapper.MessageMapper;
+import com.sprint.mission.discodeit.mapper.PageMapper;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
@@ -27,6 +29,8 @@ import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,6 +45,7 @@ public class BasicMessageService implements MessageService {
   private final ChannelRepository channelRepository;
   private final ReadStatusRepository readStatusRepository;
   private final MessageMapper mapper;
+  private final PageMapper pageMapper;
   private final BinaryContentStorage binaryContentStorage;
 
   @Transactional
@@ -87,10 +92,15 @@ public class BasicMessageService implements MessageService {
   }
 
   @Override
-  public List<MessageResponse> findAllByChannelId(UUID channelId) {
-    return this.messageRepository.findAllByChannelId(channelId).stream()
-        .map(this.mapper::toResponse)
-        .toList();
+  public PageResponse<MessageResponse> findAllByChannelId(UUID channelId, Pageable pageable) {
+    if (!this.channelRepository.existsById(channelId)) {
+      throw new ApiException(CHANNEL_NOT_FOUND);
+    }
+
+    Slice<MessageResponse> slice = this.messageRepository.findAllByChannelIdOrderByCreatedAtDesc(
+            channelId, pageable)
+        .map(this.mapper::toResponse);
+    return this.pageMapper.fromSlice(slice);
   }
 
   @Transactional
