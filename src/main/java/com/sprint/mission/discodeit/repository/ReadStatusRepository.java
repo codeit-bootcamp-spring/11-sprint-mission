@@ -21,5 +21,12 @@ public interface ReadStatusRepository extends JpaRepository<ReadStatus, UUID> {
     """)
     List<User> findUsersByChannel(@Param("channel") Channel channel);
 
+    @Query("""
+        select rs.channel.id, rs.user
+        from ReadStatus rs
+        where rs.channel in :channels
+    """)
+    List<Object[]> findUsersByChannels(@Param("channels") List<Channel> channel);
+
     List<ReadStatus> findAllByUser(User user);
 }

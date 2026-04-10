@@ -20,8 +20,6 @@ import com.sprint.mission.discodeit.service.MessageService;
 import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -107,11 +105,9 @@ public class BasicMessageService implements MessageService {
         Message message = messageRepo.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MESSAGE_NOT_FOUND));
 
-        // n+1 문제 해결 필요
         for(BinaryContent attachment : message.getAttachments()) {
             binaryContentStorage.deleteById(attachment.getId());
             binaryContentRepo.delete(attachment);
-            log.info("BinaryContent deleted. binaryContentId={}", attachment.getId());
         }
 
         messageRepo.delete(message);
@@ -137,8 +133,6 @@ public class BasicMessageService implements MessageService {
                     (long) bytes.length
             );
             binaryContentRepo.save(binaryContent);
-            log.info("BinaryContent created. binaryContentId={}, fileName={}, size={}",
-                    binaryContent.getId(), binaryContent.getFileName(), binaryContent.getSize());
             binaryContentStorage.put(binaryContent.getId(), bytes);
 
             return binaryContent;

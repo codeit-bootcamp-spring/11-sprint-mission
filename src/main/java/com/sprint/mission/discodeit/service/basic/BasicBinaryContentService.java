@@ -36,8 +36,6 @@ public class BasicBinaryContentService implements BinaryContentService {
                 (long) dto.bytes().length
         );
         binaryContentRepo.save(binaryContent);
-        log.info("BinaryContent created. binaryContentId={}, fileName={}, size={}",
-                binaryContent.getId(), binaryContent.getFileName(), binaryContent.getSize());
         binaryContentStorage.put(binaryContent.getId(), dto.bytes());
 
         return binaryContentMapper.toDto(binaryContent);
@@ -73,6 +71,5 @@ public class BasicBinaryContentService implements BinaryContentService {
 
         binaryContentStorage.deleteById(binaryContent.getId());
         binaryContentRepo.delete(binaryContent);
-        log.info("BinaryContent deleted. binaryContentId={}", binaryContent.getId());
     }
 }

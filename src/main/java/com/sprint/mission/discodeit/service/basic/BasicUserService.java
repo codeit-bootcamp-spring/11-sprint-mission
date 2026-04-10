@@ -88,7 +88,6 @@ public class BasicUserService implements UserService {
         if(newProfile != null && oldProfile != null) {
             binaryContentStorage.deleteById(oldProfile.getId());
             binaryContentRepo.delete(oldProfile);
-            log.info("BinaryContent deleted. binaryContentId={}", oldProfile.getId());
         }
     }
 
@@ -102,7 +101,6 @@ public class BasicUserService implements UserService {
         if(profile != null) {
             binaryContentStorage.deleteById(profile.getId());
             binaryContentRepo.delete(profile);
-            log.info("BinaryContent deleted. binaryContentId={}", profile.getId());
         }
 
         userRepo.delete(user);
@@ -123,8 +121,6 @@ public class BasicUserService implements UserService {
                     (long) bytes.length
             );
             binaryContentRepo.save(binaryContent);
-            log.info("BinaryContent created. binaryContentId={}, fileName={}, size={}",
-                    binaryContent.getId(), binaryContent.getFileName(), binaryContent.getSize());
 
             binaryContentStorage.put(binaryContent.getId(), bytes);
 
