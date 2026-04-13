@@ -90,7 +90,7 @@ public class BasicChannelService implements ChannelService {
           .toList();
     }
 
-    Instant lastMessageAt = messageRepository.findLatestMessage(id)
+    Instant lastMessageAt = messageRepository.findTopByChannelIdOrderByCreatedAtDesc(id)
         .map(Message::getCreatedAt)
         .orElse(channel.getCreatedAt());
 
@@ -109,7 +109,8 @@ public class BasicChannelService implements ChannelService {
         .filter(c -> c.getType() == ChannelType.PUBLIC || joinChannelIds.contains(c.getId()))
         .map(channel -> {
           // N + 1 발생가능 지점
-          Instant lastMessageAt = messageRepository.findLatestMessage(channel.getId())
+          Instant lastMessageAt = messageRepository.findTopByChannelIdOrderByCreatedAtDesc(
+                  channel.getId())
               .map(Message::getCreatedAt)
               .orElse(channel.getCreatedAt());
 
@@ -144,9 +145,9 @@ public class BasicChannelService implements ChannelService {
       throw new BusinessLogicException(ExceptionCode.CHANNEL_MODIFY_PRIVATE);
     }
 
-    String name = (request.name() != null) ? request.name() : channel.getName();
+    String name = (request.newName() != null) ? request.newName() : channel.getName();
     String description =
-        (request.description() != null) ? request.description() : channel.getDescription();
+        (request.newDescription() != null) ? request.newDescription() : channel.getDescription();
 
     channel.update(name, description);
 

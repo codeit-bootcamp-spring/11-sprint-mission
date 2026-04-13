@@ -2,7 +2,7 @@ package com.sprint.mission.discodeit.control;
 
 import com.sprint.mission.discodeit.dto.message.CreateMessageRequest;
 import com.sprint.mission.discodeit.dto.message.MessageDto;
-import com.sprint.mission.discodeit.dto.message.MessageUpdate;
+import com.sprint.mission.discodeit.dto.message.MessageUpdateRequest;
 import com.sprint.mission.discodeit.dto.response.PageResponse;
 import com.sprint.mission.discodeit.service.MessageService;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import jakarta.validation.Valid;
 import java.net.URI;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -27,6 +28,7 @@ public class MessageController {
   private final MessageService messageService;
 
   @PostMapping(consumes = "multipart/form-data")
+  @ResponseStatus(HttpStatus.CREATED)
   public ResponseEntity<MessageDto> createMessage(
       @Parameter(content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE))
       @Valid @RequestPart("messageCreateRequest") CreateMessageRequest request,
@@ -39,8 +41,9 @@ public class MessageController {
   @GetMapping(params = "channelId")
   public ResponseEntity<PageResponse<MessageDto>> readMessageByChannelId(
       @RequestParam UUID channelId,
-      @RequestParam(defaultValue = "0") int page) {
-    PageResponse<MessageDto> messages = messageService.readMessagesByChannel(channelId, page);
+      Pageable pageable) {
+    PageResponse<MessageDto> messages = messageService.readMessagesByChannel(channelId,
+        pageable);
     return ResponseEntity.ok(messages);
   }
 
@@ -53,7 +56,7 @@ public class MessageController {
 
   @PatchMapping("/{messageId}")
   public ResponseEntity<MessageDto> updateMessage(@PathVariable UUID messageId,
-      @RequestBody MessageUpdate request) {
+      @RequestBody MessageUpdateRequest request) {
     MessageDto updatedMessage = messageService.updateMessage(messageId, request);
     return ResponseEntity.ok(updatedMessage);
   }

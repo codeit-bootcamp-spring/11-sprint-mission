@@ -5,6 +5,7 @@ import jakarta.annotation.PostConstruct;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -16,6 +17,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.web.util.UriUtils;
 
 @Component
 @ConditionalOnProperty(name = "discodeit.storage.type", havingValue = "local")
@@ -63,8 +65,9 @@ public class LocalBinaryContentStorage implements BinaryContentStorage {
   @Override
   public ResponseEntity<Resource> download(BinaryContentDto dto) {
     Resource resource = new InputStreamResource(get(dto.id()));
+    String encodedFileName = UriUtils.encode(dto.fileName(), StandardCharsets.UTF_8);
     return ResponseEntity.ok()
-        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename= \"" + dto.fileName() + "\"")
+        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename*=UTF-8''" + encodedFileName)
         .header(HttpHeaders.CONTENT_TYPE, dto.contentType())
         .header(HttpHeaders.CONTENT_LENGTH, String.valueOf(dto.size()))
         .body(resource);

@@ -46,7 +46,7 @@ public class BasicReadStatusService implements ReadStatusService {
           throw new BusinessLogicException(ExceptionCode.READ_STATUS_EXISTS);
         });
 
-    ReadStatus readStatus = new ReadStatus(user, channel, Instant.MIN);
+    ReadStatus readStatus = new ReadStatus(user, channel, Instant.now());
 
     readStatusRepository.save(readStatus);
 

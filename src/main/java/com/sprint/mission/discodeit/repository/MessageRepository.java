@@ -10,7 +10,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface MessageRepository extends JpaRepository<Message, UUID> {
 
-  Optional<Message> findLatestMessage(UUID channelId);
+  Optional<Message> findTopByChannelIdOrderByCreatedAtDesc(UUID channelId);
 
   Slice<Message> findByChannelId(UUID channelId, Pageable pageable);
 }

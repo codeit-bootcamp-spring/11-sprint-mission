@@ -2,7 +2,7 @@ package com.sprint.mission.discodeit.service.basic;
 
 import com.sprint.mission.discodeit.dto.message.CreateMessageRequest;
 import com.sprint.mission.discodeit.dto.message.MessageDto;
-import com.sprint.mission.discodeit.dto.message.MessageUpdate;
+import com.sprint.mission.discodeit.dto.message.MessageUpdateRequest;
 import com.sprint.mission.discodeit.dto.response.PageResponse;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.Channel;
@@ -79,10 +79,11 @@ public class BasicMessageService implements MessageService {
   }
 
   @Override
-  public PageResponse<MessageDto> readMessagesByChannel(UUID channelId, int page) {
-    Pageable pageable = PageRequest.of(page, 50, Sort.by("createdAt").descending());
+  public PageResponse<MessageDto> readMessagesByChannel(UUID channelId, Pageable pageable) {
+    pageable = PageRequest.of(pageable.getPageNumber(), 50, Sort.by("createdAt").descending());
 
-    Slice<Message> messageSlice = messageRepository.findByChannelId(channelId, pageable);
+    Slice<Message> messageSlice = messageRepository.findByChannelId(
+        channelId, pageable);
 
     Slice<MessageDto> dtoSlice = messageSlice.map(messageMapper::toDto);
 
@@ -104,7 +105,7 @@ public class BasicMessageService implements MessageService {
 
   @Override
   @Transactional
-  public MessageDto updateMessage(UUID id, MessageUpdate request) {
+  public MessageDto updateMessage(UUID id, MessageUpdateRequest request) {
     Message mes = messageRepository.findById(id)
         .orElseThrow(() -> new BusinessLogicException(ExceptionCode.MESSAGE_NOT_FOUND));
 

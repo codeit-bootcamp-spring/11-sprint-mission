@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import jakarta.validation.Valid;
 import java.net.URI;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -30,6 +31,7 @@ public class UserController {
   private final UserStatusService userStatusService;
 
   @PostMapping(consumes = "multipart/form-data")
+  @ResponseStatus(HttpStatus.CREATED)
   public ResponseEntity<UserDto> createUser(
       @Valid @RequestPart("userCreateRequest") UserCreateRequest request,
       @RequestPart(value = "profile", required = false) MultipartFile profile) {
@@ -45,6 +47,7 @@ public class UserController {
   }
 
   @DeleteMapping("/{id}")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
   public ResponseEntity<Void> deleteUser(@PathVariable UUID id) {
     userService.deleteUser(id);
     return ResponseEntity.noContent().build();

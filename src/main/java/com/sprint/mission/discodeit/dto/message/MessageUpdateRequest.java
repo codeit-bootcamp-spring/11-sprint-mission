@@ -1,6 +1,6 @@
 package com.sprint.mission.discodeit.dto.message;
 
-public record MessageUpdate(
+public record MessageUpdateRequest(
     String newContent
 ) {
 

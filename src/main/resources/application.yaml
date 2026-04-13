@@ -26,7 +26,7 @@ logging:
 
 discodeit:
   repository:
-    type: file
+    type: jpa
     file-directory: .discodeit
   storage:
     type: local
