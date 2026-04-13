@@ -105,21 +105,40 @@ public class BasicChannelService implements ChannelService {
         .map(rs -> rs.getChannel().getId())
         .collect(Collectors.toSet());
 
-    return allChannels.stream()
+    List<Channel> targetChannels = allChannels.stream()
         .filter(c -> c.getType() == ChannelType.PUBLIC || joinChannelIds.contains(c.getId()))
-        .map(channel -> {
-          // N + 1 발생가능 지점
-          Instant lastMessageAt = messageRepository.findTopByChannelIdOrderByCreatedAtDesc(
-                  channel.getId())
-              .map(Message::getCreatedAt)
-              .orElse(channel.getCreatedAt());
+        .toList();
 
-          List<UserDto> participants = Collections.emptyList();
-          if (channel.getType() == ChannelType.PRIVATE) {
-            participants = readStatusRepository.findAllByChannelId(channel.getId()).stream()
-                .map(rs -> userMapper.toDto(rs.getUser(), rs.getUser().getStatus()))
-                .toList();
-          }
+    List<UUID> targetChannelIds = targetChannels.stream()
+        .map(Channel::getId)
+        .toList();
+
+    List<Message> latestMessages = messageRepository.findLatestMessagesByChannelIds(
+        targetChannelIds);
+    Map<UUID, Instant> lastestMessageMap = latestMessages.stream()
+        .collect(Collectors.toMap(m -> m.getChannel().getId(), Message::getCreatedAt,
+            (existing, replacement) -> existing));
+
+    List<UUID> privateChannelIds = targetChannels.stream()
+        .filter(c -> c.getType() == ChannelType.PRIVATE)
+        .map(Channel::getId)
+        .toList();
+    Map<UUID, List<UserDto>> participantMap = readStatusRepository.findAllByChannelIdIn(
+            privateChannelIds).stream()
+        .collect(Collectors.groupingBy((ReadStatus rs) -> rs.getChannel().getId(),
+            Collectors.mapping(
+                (ReadStatus rs) -> userMapper.toDto(rs.getUser(), rs.getUser().getStatus()),
+                Collectors.toList()
+            )
+        ));
+
+    return targetChannels.stream()
+        .map(channel -> {
+          Instant lastMessageAt = lastestMessageMap.getOrDefault(channel.getId(),
+              channel.getCreatedAt());
+          List<UserDto> participants = participantMap.getOrDefault(channel.getId(),
+              Collections.emptyList());
+
           return channelMapper.toDto(channel, lastMessageAt, participants);
         })
         .sorted(Comparator.comparing(ChannelDto::lastMessageAt).reversed())
