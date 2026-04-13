@@ -25,29 +25,24 @@ public class BinaryContent extends BaseEntity {
   @Column(name = "content_type", nullable = false, length = 100)
   private String contentType;
 
-  @Column(name = "bytes", nullable = false)
-  private byte[] bytes;
-
-  public BinaryContent(String fileName, Long size, String contentType, byte[] bytes) {
+  public BinaryContent(String fileName, Long size, String contentType) {
     this.fileName = fileName;
     this.size = size;
     this.contentType = contentType;
-    this.bytes = bytes;
   }
 
   public void updateBinaryContent(String fileName, Long size, String contentType, byte[] bytes) {
     this.fileName = fileName;
     this.size = size;
     this.contentType = contentType;
-    this.bytes = bytes;
   }
 
   public void validateService() {
     if (this.fileName == null || this.fileName.isBlank()) {
       throw DiscodeitInvalidInputException.blankField("fileName");
     }
-    if (this.bytes == null || this.bytes.length == 0) {
-      throw DiscodeitInvalidInputException.blankField("bytes");
+    if (this.size == null || this.size <= 0) {
+      throw DiscodeitInvalidInputException.blankField("size");
     }
     if (this.contentType == null || this.contentType.isBlank()) {
       throw DiscodeitInvalidInputException.blankField("contentType");

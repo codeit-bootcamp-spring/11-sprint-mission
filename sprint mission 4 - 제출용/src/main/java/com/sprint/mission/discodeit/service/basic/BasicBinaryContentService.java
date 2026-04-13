@@ -10,6 +10,7 @@ import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.BinaryContentService;
+import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import java.util.ArrayList;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -26,6 +27,7 @@ public class BasicBinaryContentService implements BinaryContentService {
   private final BinaryContentRepository binaryContentRepository;
   private final UserRepository userRepository;
   private final MessageRepository messageRepository;
+  private final BinaryContentStorage binaryContentStorage;
 
   @Override
   @Transactional
@@ -38,18 +40,23 @@ public class BasicBinaryContentService implements BinaryContentService {
       throw new DiscodeitInvalidInputException("userId와 messageId는 동시에 가질 수 없습니다.");
     }
 
+    if (request.getContent() == null || request.getContent().length == 0) {
+      throw DiscodeitInvalidInputException.blankField("content");
+    }
+
     byte[] bytes = request.getContent();
     Long size = (long) bytes.length;
 
     BinaryContent binaryContent = new BinaryContent(
         request.getFileName(),
         size,
-        request.getContentType(),
-        bytes
+        request.getContentType()
     );
 
     binaryContent.validateService();
     BinaryContent savedBinaryContent = binaryContentRepository.save(binaryContent);
+
+    binaryContentStorage.put(savedBinaryContent.getId(), bytes);
 
     if (request.getUserId() != null) {
       User user = userRepository.findById(request.getUserId())
