@@ -1,6 +1,8 @@
 package com.sprint.mission.discodeit.mapper;
 
 import com.sprint.mission.discodeit.dto.response.PageResponse;
+import java.util.List;
+import java.util.function.Function;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Component;
@@ -8,20 +10,34 @@ import org.springframework.stereotype.Component;
 @Component
 public class PageResponseMapper {
 
-  public <T> PageResponse<T> fromSlice(Slice<T> slice) {
+  public <T> PageResponse<T> fromSlice(Slice<T> slice, Function<T, Object> cursor) {
+    List<T> content = slice.getContent();
+    Object nextCursor = null;
+
+    if (slice.hasNext() && !content.isEmpty()) {
+      T lastItem = content.get(content.size() - 1);
+      nextCursor = cursor.apply(lastItem);
+    }
     return new PageResponse<>(
         slice.getContent(),
-        slice.getNumber(),
+        nextCursor,
         slice.getSize(),
         slice.hasNext(),
         null
     );
   }
 
-  public <T> PageResponse<T> fromPage(Page<T> page) {
+  public <T> PageResponse<T> fromPage(Page<T> page, Function<T, Object> cursor) {
+    List<T> content = page.getContent();
+    Object nextCursor = null;
+
+    if (page.hasNext() && !content.isEmpty()) {
+      T lastItem = content.get(content.size() - 1);
+      nextCursor = cursor.apply(lastItem);
+    }
     return new PageResponse<>(
         page.getContent(),
-        page.getNumber(),
+        nextCursor,
         page.getSize(),
         page.hasNext(),
         page.getTotalElements()

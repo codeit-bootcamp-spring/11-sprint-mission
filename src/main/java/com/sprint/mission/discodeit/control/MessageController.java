@@ -9,8 +9,8 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import jakarta.validation.Valid;
 import java.net.URI;
+import java.time.Instant;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -41,9 +41,10 @@ public class MessageController {
   @GetMapping(params = "channelId")
   public ResponseEntity<PageResponse<MessageDto>> readMessageByChannelId(
       @RequestParam UUID channelId,
-      Pageable pageable) {
-    PageResponse<MessageDto> messages = messageService.readMessagesByChannel(channelId,
-        pageable);
+      @RequestParam(required = false) Instant cursor,
+      @RequestParam(defaultValue = "50") int size) {
+    PageResponse<MessageDto> messages = messageService.readMessagesByChannel(channelId, cursor,
+        size);
     return ResponseEntity.ok(messages);
   }
 

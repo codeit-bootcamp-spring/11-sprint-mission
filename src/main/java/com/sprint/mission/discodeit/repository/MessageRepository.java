@@ -2,6 +2,7 @@ package com.sprint.mission.discodeit.repository;
 
 import com.sprint.mission.discodeit.entity.Message;
 
+import java.time.Instant;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -30,4 +31,8 @@ public interface MessageRepository extends JpaRepository<Message, UUID> {
 
   @EntityGraph(attributePaths = {"author", "author.status", "author.profile"})
   Slice<Message> findByChannelId(UUID channelId, Pageable pageable);
+
+  @EntityGraph(attributePaths = {"author", "author.status", "author.profile"})
+  Slice<Message> findByChannelIdAndCreatedAtBefore(UUID channelId, Instant cursor,
+      Pageable pageable);
 }
