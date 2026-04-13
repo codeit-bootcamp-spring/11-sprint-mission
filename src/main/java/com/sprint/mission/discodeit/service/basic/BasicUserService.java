@@ -18,10 +18,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
@@ -79,15 +77,25 @@ public class BasicUserService implements UserService {
     return userMapper.toDto(user, userStatus);
   }
 
-  @Override
-  public List<UserDto> findAll() {
-    return userRepository.findAll().stream()
-            .map(user -> {
-              UserStatus userStatus = userStatusRepository.findByUserId(user.getId()).orElse(null);
-              return userMapper.toDto(user, userStatus);
-            })
-            .toList();
-  }
+    @Override
+    public List<UserDto> findAll() {
+        List<User> users = userRepository.findAll();  // 추가
+
+        List<UUID> userIds = users.stream()
+                .map(User::getId)
+                .toList();
+
+        Map<UUID, UserStatus> userStatusMap = userStatusRepository.findAllByUserIdIn(userIds)
+                .stream()
+                .collect(Collectors.toMap(
+                        us -> us.getUser().getId(),
+                        us -> us
+                ));
+
+        return users.stream()
+                .map(user -> userMapper.toDto(user, userStatusMap.get(user.getId())))
+                .toList();
+    }
 
   @Transactional
   @Override
