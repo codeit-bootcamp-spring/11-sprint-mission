@@ -13,12 +13,14 @@ import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.ReadStatusService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
 
+@Transactional(readOnly = true)
 @RequiredArgsConstructor
 @Service
 public class BasicReadStatusService implements ReadStatusService {
@@ -28,6 +30,7 @@ public class BasicReadStatusService implements ReadStatusService {
   private final ChannelRepository channelRepository;
   private final ReadStatusMapper readStatusMapper;
 
+  @Transactional
   @Override
   public ReadStatusDto create(ReadStatusCreateRequest request) {
     UUID userId = request.userId();
@@ -68,6 +71,7 @@ public class BasicReadStatusService implements ReadStatusService {
         .toList();
   }
 
+  @Transactional
   @Override
   public ReadStatusDto update(UUID readStatusId, ReadStatusUpdateRequest request) {
     Instant newLastReadAt = request.newLastReadAt();
@@ -79,6 +83,7 @@ public class BasicReadStatusService implements ReadStatusService {
     return readStatusMapper.toDto(updatedReadStatus);
   }
 
+  @Transactional
   @Override
   public void delete(UUID readStatusId) {
     if (!readStatusRepository.existsById(readStatusId)) {

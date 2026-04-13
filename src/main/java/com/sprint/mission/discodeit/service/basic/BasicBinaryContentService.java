@@ -9,11 +9,13 @@ import com.sprint.mission.discodeit.service.BinaryContentService;
 import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
 
+@Transactional(readOnly = true)
 @RequiredArgsConstructor
 @Service
 public class BasicBinaryContentService implements BinaryContentService {
@@ -22,6 +24,7 @@ public class BasicBinaryContentService implements BinaryContentService {
   private final BinaryContentMapper binaryContentMapper;
   private final BinaryContentStorage binaryContentStorage;
 
+  @Transactional
   @Override
   public BinaryContentDto create(BinaryContentCreateRequest request) {
     String fileName = request.fileName();
@@ -52,6 +55,7 @@ public class BasicBinaryContentService implements BinaryContentService {
         .toList();
   }
 
+  @Transactional
   @Override
   public void delete(UUID binaryContentId) {
     if (!binaryContentRepository.existsById(binaryContentId)) {

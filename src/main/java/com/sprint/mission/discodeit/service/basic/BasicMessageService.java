@@ -21,11 +21,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
 
+@Transactional(readOnly = true)
 @RequiredArgsConstructor
 @Service
 public class BasicMessageService implements MessageService {
@@ -38,6 +40,7 @@ public class BasicMessageService implements MessageService {
   private final BinaryContentStorage binaryContentStorage;
   private final PageMapper pageMapper;
 
+  @Transactional
   @Override
   public MessageDto create(MessageCreateRequest messageCreateRequest,
                         List<BinaryContentCreateRequest> binaryContentCreateRequests) {
@@ -55,7 +58,7 @@ public class BasicMessageService implements MessageService {
               BinaryContent saved = binaryContentRepository.save(
                       new BinaryContent(req.fileName(), (long) bytes.length, req.contentType())
               );
-              binaryContentStorage.put(saved.getId(), bytes);  // 추가
+              binaryContentStorage.put(saved.getId(), bytes);
               return saved;
             })
             .toList();
@@ -79,6 +82,7 @@ public class BasicMessageService implements MessageService {
     return pageMapper.toResponse(slice, messageMapper::toDto);
   }
 
+  @Transactional
   @Override
   public MessageDto update(UUID messageId, MessageUpdateRequest request) {
     Message message = messageRepository.findById(messageId)
@@ -88,6 +92,7 @@ public class BasicMessageService implements MessageService {
     return messageMapper.toDto(updatedMessage);
   }
 
+  @Transactional
   @Override
   public void delete(UUID messageId) {
     Message message = messageRepository.findById(messageId)

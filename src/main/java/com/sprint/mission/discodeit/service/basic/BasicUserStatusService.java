@@ -11,12 +11,14 @@ import com.sprint.mission.discodeit.repository.UserStatusRepository;
 import com.sprint.mission.discodeit.service.UserStatusService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
 
+@Transactional(readOnly = true)
 @RequiredArgsConstructor
 @Service
 public class BasicUserStatusService implements UserStatusService {
@@ -25,6 +27,7 @@ public class BasicUserStatusService implements UserStatusService {
   private final UserRepository userRepository;
   private final UserStatusMapper userStatusMapper;
 
+  @Transactional
   @Override
   public UserStatusDto create(UserStatusCreateRequest request) {
     UUID userId = request.userId();
@@ -56,6 +59,7 @@ public class BasicUserStatusService implements UserStatusService {
         .toList();
   }
 
+  @Transactional
   @Override
   public UserStatusDto update(UUID userStatusId, UserStatusUpdateRequest request) {
     Instant newLastActiveAt = request.newLastActiveAt();
@@ -82,6 +86,7 @@ public class BasicUserStatusService implements UserStatusService {
     return userStatusMapper.toDto(updatedUserStatus);
   }
 
+  @Transactional
   @Override
   public void delete(UUID userStatusId) {
     if (!userStatusRepository.existsById(userStatusId)) {

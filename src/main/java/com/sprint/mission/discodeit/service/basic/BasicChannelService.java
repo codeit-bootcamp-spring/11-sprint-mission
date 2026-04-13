@@ -15,9 +15,11 @@ import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.ChannelService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 
+@Transactional(readOnly = true)
 @RequiredArgsConstructor
 @Service
 public class BasicChannelService implements ChannelService {
@@ -28,6 +30,7 @@ public class BasicChannelService implements ChannelService {
   private final UserRepository userRepository;
   private final ChannelMapper channelMapper;
 
+  @Transactional
   @Override
   public ChannelDto create(PublicChannelCreateRequest request) {
     Channel channel = new Channel(ChannelType.PUBLIC, request.name(), request.description());
@@ -35,6 +38,7 @@ public class BasicChannelService implements ChannelService {
     return channelMapper.toDto(createdChannel);
   }
 
+  @Transactional
   @Override
   public ChannelDto create(PrivateChannelCreateRequest request) {
     Channel channel = new Channel(ChannelType.PRIVATE, null, null);
@@ -72,6 +76,7 @@ public class BasicChannelService implements ChannelService {
             .toList();
   }
 
+  @Transactional
   @Override
   public ChannelDto update(UUID channelId, PublicChannelUpdateRequest request) {
     Channel channel = channelRepository.findById(channelId)
@@ -85,6 +90,7 @@ public class BasicChannelService implements ChannelService {
     return channelMapper.toDto(updatedChannel);
   }
 
+  @Transactional
   @Override
   public void delete(UUID channelId) {
     Channel channel = channelRepository.findById(channelId)

@@ -15,6 +15,7 @@ import com.sprint.mission.discodeit.service.UserService;
 import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.List;
@@ -22,6 +23,7 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.UUID;
 
+@Transactional(readOnly = true)
 @RequiredArgsConstructor
 @Service
 public class BasicUserService implements UserService {
@@ -32,6 +34,7 @@ public class BasicUserService implements UserService {
   private final UserMapper userMapper;
   private final BinaryContentStorage binaryContentStorage;
 
+  @Transactional
   @Override
   public UserDto create(UserCreateRequest userCreateRequest,
                         Optional<BinaryContentCreateRequest> optionalProfileCreateRequest) {
@@ -86,6 +89,7 @@ public class BasicUserService implements UserService {
             .toList();
   }
 
+  @Transactional
   @Override
   public UserDto update(UUID userId, UserUpdateRequest userUpdateRequest,
                         Optional<BinaryContentCreateRequest> optionalProfileCreateRequest) {
@@ -123,6 +127,7 @@ public class BasicUserService implements UserService {
     return userMapper.toDto(updatedUser, userStatus);
   }
 
+  @Transactional
   @Override
   public void delete(UUID userId) {
     User user = userRepository.findById(userId)
