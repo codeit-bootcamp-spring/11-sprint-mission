@@ -11,6 +11,7 @@ import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.repository.UserStatusRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 
 @Service
@@ -22,6 +23,7 @@ public class AuthService {
 
   private final UserMapper userMapper;
 
+  @Transactional(readOnly = true)
   public UserDto login(LoginRequest loginRequest) {
     String name = loginRequest.username();
     String password = loginRequest.password();

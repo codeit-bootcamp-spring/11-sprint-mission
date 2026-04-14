@@ -81,7 +81,7 @@ public class BasicMessageService implements MessageService {
 
   @Override
   public PageResponse<MessageDto> readMessagesByChannel(UUID channelId, Instant cursor, int size) {
-    Pageable pageable = PageRequest.of(0, size, Sort.by("created").descending());
+    Pageable pageable = PageRequest.of(0, size, Sort.by("createdAt").descending());
 
     Slice<Message> messageSlice = (cursor == null)
         ? messageRepository.findByChannelId(channelId, pageable)
