@@ -21,6 +21,7 @@ import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import java.io.IOException;
 import java.time.Instant;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Limit;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -81,14 +82,28 @@ public class BasicMessageService implements MessageService {
 
   @Override
   public PageResponse<MessageDto> readMessagesByChannel(UUID channelId, Instant cursor, int size) {
-    Pageable pageable = PageRequest.of(0, size, Sort.by("createdAt").descending());
+    Limit limit = Limit.of(size + 1);
 
-    Slice<Message> messageSlice = (cursor == null)
-        ? messageRepository.findByChannelId(channelId, pageable)
-        : messageRepository.findByChannelIdAndCreatedAtBefore(channelId, cursor, pageable);
+    List<Message> messages = (cursor == null)
+        ? messageRepository.findByChannelIdOrderByCreatedAtDesc(channelId, limit)
+        : messageRepository.findByChannelIdAndCreatedAtBeforeOrderByCreatedAtDesc(channelId, cursor,
+            limit);
 
-    return pageResponseMapper.fromSlice(messageSlice.map(messageMapper::toDto),
-        MessageDto::createdAt);
+    boolean hasNext = messages.size() > size;
+
+    List<MessageDto> messageDtoS = messages.stream()
+        .map(messageMapper::toDto)
+        .toList();
+
+    Instant nextCursor = hasNext ? messages.get(messages.size() - 1).getCreatedAt() : null;
+
+    return new PageResponse<>(
+        messageDtoS,
+        nextCursor,
+        size,
+        hasNext,
+        null
+    );
   }
 
   @Override

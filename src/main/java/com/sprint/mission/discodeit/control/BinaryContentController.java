@@ -4,6 +4,7 @@ import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentDto;
 import com.sprint.mission.discodeit.service.BinaryContentService;
 import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -33,7 +34,7 @@ public class BinaryContentController {
   }
 
   @GetMapping("/{binaryContentId}/download")
-  public ResponseEntity<?> downloadFile(@PathVariable UUID binaryContentId) {
+  public ResponseEntity<Resource> downloadFile(@PathVariable UUID binaryContentId) {
     BinaryContentDto dto = binaryContentService.find(binaryContentId);
 
     return binaryContentStorage.download(dto);

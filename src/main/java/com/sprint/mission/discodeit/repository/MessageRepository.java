@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.domain.Limit;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -30,9 +31,10 @@ public interface MessageRepository extends JpaRepository<Message, UUID> {
   Optional<Message> findTopByChannelIdOrderByCreatedAtDesc(UUID channelId);
 
   @EntityGraph(attributePaths = {"author", "author.status", "author.profile"})
-  Slice<Message> findByChannelId(UUID channelId, Pageable pageable);
+  List<Message> findByChannelIdOrderByCreatedAtDesc(UUID channelId, Limit limit);
 
   @EntityGraph(attributePaths = {"author", "author.status", "author.profile"})
-  Slice<Message> findByChannelIdAndCreatedAtBefore(UUID channelId, Instant cursor,
-      Pageable pageable);
+  List<Message> findByChannelIdAndCreatedAtBeforeOrderByCreatedAtDesc(UUID channelId,
+      Instant cursor,
+      Limit limit);
 }
