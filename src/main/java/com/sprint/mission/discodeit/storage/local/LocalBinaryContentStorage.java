@@ -16,10 +16,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
-import org.springframework.http.ContentDisposition;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
 @ConditionalOnProperty(name = "discodeit.storage.type", havingValue = "local")
@@ -70,19 +66,10 @@ public class LocalBinaryContentStorage implements BinaryContentStorage {
   }
 
   @Override
-  public ResponseEntity<Resource> download(BinaryContentResponse binaryContentResponse) {
+  public Resource download(BinaryContentResponse binaryContentResponse) {
     InputStream inputStream = this.get(binaryContentResponse.id());
     Resource resource = new InputStreamResource(inputStream);
-
-    return ResponseEntity.ok()
-        .header(HttpHeaders.CONTENT_DISPOSITION,
-            ContentDisposition.attachment()
-                .filename(binaryContentResponse.fileName())
-                .build()
-                .toString())
-        .contentType(MediaType.parseMediaType(binaryContentResponse.contentType()))
-        .contentLength(binaryContentResponse.size())
-        .body(resource);
+    return resource;
   }
 
   private Path resolvePath(UUID id) {

@@ -9,7 +9,10 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.Resource;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -52,6 +55,16 @@ public class BinaryContentController implements BinaryContentApi {
       @PathVariable UUID binaryContentId) {
     BinaryContentResponse binaryContent = this.binaryContentService.findById(binaryContentId);
 
-    return this.binaryContentStorage.download(binaryContent);
+    Resource resource = this.binaryContentStorage.download(binaryContent);
+
+    return ResponseEntity.ok()
+        .header(HttpHeaders.CONTENT_DISPOSITION,
+            ContentDisposition.attachment()
+                .filename(binaryContent.fileName())
+                .build()
+                .toString())
+        .contentType(MediaType.parseMediaType(binaryContent.contentType()))
+        .contentLength(binaryContent.size())
+        .body(resource);
   }
 }
