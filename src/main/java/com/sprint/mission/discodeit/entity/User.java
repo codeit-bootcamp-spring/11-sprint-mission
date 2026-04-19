@@ -7,6 +7,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import java.time.Instant;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -48,5 +49,9 @@ public class User extends BaseUpdatableEntity {
 
   public void initStatus(UserStatus status) {
     this.status = status;
+  }
+
+  public boolean isOnline() {
+    return this.status.getLastActiveAt().isAfter(Instant.now().minusSeconds(5 * 60));
   }
 }

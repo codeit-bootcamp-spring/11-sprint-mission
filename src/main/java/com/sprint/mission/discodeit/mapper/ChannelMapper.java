@@ -5,26 +5,14 @@ import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.User;
 import java.time.Instant;
 import java.util.List;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 
-@RequiredArgsConstructor
-@Component
-public class ChannelMapper {
+@Mapper(componentModel = "spring", uses = {UserMapper.class})
+public interface ChannelMapper {
 
-  private final UserMapper userMapper;
-
-  public ChannelResponse toResponse(Channel channel, List<User> participants,
-      Instant lastMessageAt) {
-    return new ChannelResponse(
-        channel.getId(),
-        channel.getType(),
-        channel.getName(),
-        channel.getDescription(),
-        participants.stream()
-            .map(this.userMapper::toResponse)
-            .toList(),
-        lastMessageAt
-    );
-  }
+  @Mapping(target = "participants", source = "participants")
+  @Mapping(target = "lastMessageAt", source = "lastMessageAt")
+  ChannelResponse toResponse(Channel channel, List<User> participants,
+      Instant lastMessageAt);
 }
