@@ -1,9 +1,12 @@
 HELP.md
+CLAUDE.md
+.claude
 .gradle
 build/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
 !**/src/test/**/build/
+src/main/generated/
 
 ### STS ###
 .apt_generated
@@ -23,6 +26,7 @@ bin/
 *.iml
 *.ipr
 out/
+
 !**/src/main/**/out/
 !**/src/test/**/out/
 
@@ -47,3 +51,6 @@ src/main/resources/logback.xml
 
 ### application.yaml ###
 application.yaml
+
+### docs ###
+docs/
