@@ -3,8 +3,8 @@ package com.sprint.mission.discodeit.service;
 import com.sprint.mission.discodeit.dto.message.MessageDto;
 import com.sprint.mission.discodeit.dto.message.MessageCreateRequest;
 import com.sprint.mission.discodeit.dto.message.MessageUpdateRequest;
+import com.sprint.mission.discodeit.dto.response.PageResponse;
 
-import java.util.List;
 import java.util.UUID;
 
 public interface MessageService {
@@ -13,7 +13,7 @@ public interface MessageService {
 
   MessageDto find(UUID id);
 
-  List<MessageDto> findAllByChannelId(UUID channelId);
+  PageResponse<MessageDto> findAllByChannelId(UUID channelId, int page);
 
   void update(MessageUpdateRequest request);
 

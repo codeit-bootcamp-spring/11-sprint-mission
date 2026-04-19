@@ -1,5 +1,6 @@
 package com.sprint.mission.discodeit.service;
 
+import com.sprint.mission.discodeit.dto.readStatus.ReadStatusDto;
 import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.dto.readStatus.ReadStatusCreateRequest;
 import com.sprint.mission.discodeit.dto.readStatus.ReadStatusUpdateRequest;
@@ -9,12 +10,11 @@ import java.util.UUID;
 
 public interface ReadStatusService {
 
-  ReadStatus create(ReadStatusCreateRequest request);
+  ReadStatusDto create(ReadStatusCreateRequest request);
 
-  ReadStatus find(UUID id);
+  ReadStatusDto find(UUID id);
 
-  // User의 모든 채널 ReadStatus 조회
-  List<ReadStatus> findAllByUserId(UUID userId);
+  List<ReadStatusDto> findAllByUserId(UUID userId);
 
   void update(ReadStatusUpdateRequest request);
 

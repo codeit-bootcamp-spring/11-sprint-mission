@@ -1,17 +1,14 @@
 package com.sprint.mission.discodeit.service.basic;
 
 import com.sprint.mission.discodeit.dto.user.UserDto;
-import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.entity.UserStatus;
 import com.sprint.mission.discodeit.dto.user.UserCreateRequest;
-import com.sprint.mission.discodeit.dto.user.UserResponse;
 import com.sprint.mission.discodeit.dto.user.UserUpdateRequest;
 import com.sprint.mission.discodeit.exception.DiscodeitDuplicateException;
 import com.sprint.mission.discodeit.exception.DiscodeitNotFoundException;
-import com.sprint.mission.discodeit.repository.BinaryContentRepository;
+import com.sprint.mission.discodeit.mapper.UserMapper;
 import com.sprint.mission.discodeit.repository.UserRepository;
-import com.sprint.mission.discodeit.repository.UserStatusRepository;
 import com.sprint.mission.discodeit.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -27,12 +24,11 @@ import org.springframework.transaction.annotation.Transactional;
 public class BasicUserService implements UserService {
 
   private final UserRepository userRepository;
-  private final UserStatusRepository userStatusRepository;
-  private final BinaryContentRepository binaryContentRepository;
+  private final UserMapper userMapper;
 
   @Override
   @Transactional
-  public UserResponse create(UserCreateRequest request) {
+  public UserDto create(UserCreateRequest request) {
     if (userRepository.existsByUsername(request.getUsername())) {
       throw DiscodeitDuplicateException.user(request.getUsername());
     }
@@ -40,68 +36,33 @@ public class BasicUserService implements UserService {
       throw DiscodeitDuplicateException.email(request.getEmail());
     }
 
-    User user = new User(request.getUsername(), request.getEmail(), request.getPassword());
+    User user = new User(
+        request.getUsername(),
+        request.getEmail(),
+        request.getPassword()
+    );
+
     UserStatus userStatus = new UserStatus(user, Instant.now());
     user.setStatus(userStatus);
+
     User savedUser = userRepository.save(user);
-
-    BinaryContent profile = savedUser.getProfile();
-    UUID profileId = profile == null ? null : profile.getId();
-
-    return new UserResponse(
-        savedUser.getId(),
-        savedUser.getCreatedAt(),
-        savedUser.getUpdatedAt(),
-        savedUser.getUsername(),
-        savedUser.getEmail(),
-        savedUser.getPassword(),
-        profileId,
-        savedUser.getStatus() != null && savedUser.getStatus().isOnline()
-    );
+    return userMapper.toDto(savedUser);
   }
 
   @Override
   @Transactional(readOnly = true)
-  public UserResponse find(UUID id) {
+  public UserDto find(UUID id) {
     User user = userRepository.findById(id)
         .orElseThrow(() -> DiscodeitNotFoundException.user(id));
 
-    UserStatus userStatus = user.getStatus();
-    BinaryContent profile = user.getProfile();
-    UUID profileId = profile == null ? null : profile.getId();
-
-    return new UserResponse(
-        user.getId(),
-        user.getCreatedAt(),
-        user.getUpdatedAt(),
-        user.getUsername(),
-        user.getEmail(),
-        user.getPassword(),
-        profileId,
-        userStatus != null && userStatus.isOnline()
-    );
+    return userMapper.toDto(user);
   }
 
   @Override
   @Transactional(readOnly = true)
-  public List<UserResponse> findAll() {
+  public List<UserDto> findAll() {
     return userRepository.findAll().stream()
-        .map(user -> {
-          UserStatus userStatus = user.getStatus();
-          BinaryContent profile = user.getProfile();
-          UUID profileId = profile == null ? null : profile.getId();
-
-          return new UserResponse(
-              user.getId(),
-              user.getCreatedAt(),
-              user.getUpdatedAt(),
-              user.getUsername(),
-              user.getEmail(),
-              user.getPassword(),
-              profileId,
-              userStatus != null && userStatus.isOnline()
-          );
-        })
+        .map(userMapper::toDto)
         .toList();
   }
 
@@ -111,11 +72,19 @@ public class BasicUserService implements UserService {
     User user = userRepository.findById(request.getId())
         .orElseThrow(() -> DiscodeitNotFoundException.user(request.getId()));
 
-    String newUsername =
-        request.getNewUsername() != null ? request.getNewUsername() : user.getUsername();
-    String newEmail = request.getNewEmail() != null ? request.getNewEmail() : user.getEmail();
-    String newPassword =
-        request.getNewPassword() != null ? request.getNewPassword() : user.getPassword();
+    String newUsername = request.getNewUsername();
+    String newEmail = request.getNewEmail();
+    String newPassword = request.getNewPassword();
+
+    if (newUsername == null || newUsername.isBlank()) {
+      newUsername = user.getUsername();
+    }
+    if (newEmail == null || newEmail.isBlank()) {
+      newEmail = user.getEmail();
+    }
+    if (newPassword == null || newPassword.isBlank()) {
+      newPassword = user.getPassword();
+    }
 
     if (userRepository.existsByUsernameAndIdNot(newUsername, request.getId())) {
       throw DiscodeitDuplicateException.user(newUsername);
@@ -136,27 +105,5 @@ public class BasicUserService implements UserService {
 
     // cascade delete - 일괄 삭제
     userRepository.delete(user);
-  }
-
-  @Override
-  @Transactional(readOnly = true)
-  public List<UserDto> findAllDto() {
-    return userRepository.findAll().stream()
-        .map(user -> {
-          UserStatus userStatus = user.getStatus();
-          BinaryContent profile = user.getProfile();
-          UUID profileId = profile == null ? null : profile.getId();
-
-          return new UserDto(
-              user.getId(),
-              user.getCreatedAt(),
-              user.getUpdatedAt(),
-              user.getUsername(),
-              user.getEmail(),
-              profileId,
-              userStatus != null && userStatus.isOnline()
-          );
-        })
-        .toList();
   }
 }

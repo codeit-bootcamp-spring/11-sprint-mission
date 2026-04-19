@@ -5,9 +5,11 @@ import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.dto.message.MessageCreateRequest;
 import com.sprint.mission.discodeit.dto.message.MessageUpdateRequest;
+import com.sprint.mission.discodeit.dto.response.PageResponse;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.exception.DiscodeitNotFoundException;
-import com.sprint.mission.discodeit.repository.BinaryContentRepository;
+import com.sprint.mission.discodeit.mapper.MessageMapper;
+import com.sprint.mission.discodeit.mapper.PageResponseMapper;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
@@ -15,8 +17,11 @@ import com.sprint.mission.discodeit.service.MessageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.UUID;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.Sort;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
@@ -24,10 +29,14 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class BasicMessageService implements MessageService {
 
+  private static final int MESSAGE_PAGE_SIZE = 50;
+
   private final MessageRepository messageRepository;
   private final ChannelRepository channelRepository;
   private final UserRepository userRepository;
-  private final BinaryContentRepository binaryContentRepository;
+  private final MessageMapper messageMapper;
+  private final PageResponseMapper pageResponseMapper;
+
 
   @Override
   @Transactional
@@ -41,12 +50,7 @@ public class BasicMessageService implements MessageService {
     Message message = new Message(request.getContent(), channel, author);
     Message savedMessage = messageRepository.save(message);
 
-    return new MessageDto(
-        savedMessage.getId(),
-        savedMessage.getContent(),
-        savedMessage.getChannel().getId(),
-        savedMessage.getAuthor().getId()
-    );
+    return messageMapper.toDto(savedMessage);
   }
 
   @Override
@@ -55,28 +59,25 @@ public class BasicMessageService implements MessageService {
     Message message = messageRepository.findById(id)
         .orElseThrow(() -> DiscodeitNotFoundException.message(id));
 
-    return new MessageDto(
-        message.getId(),
-        message.getContent(),
-        message.getChannel().getId(),
-        message.getAuthor().getId()
-    );
+    return messageMapper.toDto(message);
   }
 
   @Override
   @Transactional(readOnly = true)
-  public List<MessageDto> findAllByChannelId(UUID channelId) {
+  public PageResponse<MessageDto> findAllByChannelId(UUID channelId, int page) {
     channelRepository.findById(channelId)
         .orElseThrow(() -> DiscodeitNotFoundException.channel(channelId));
 
-    return messageRepository.findAllByChannel_Id(channelId).stream()
-        .map(message -> new MessageDto(
-            message.getId(),
-            message.getContent(),
-            message.getChannel().getId(),
-            message.getAuthor().getId()
-        ))
-        .toList();
+    Pageable pageable = PageRequest.of(
+        page,
+        MESSAGE_PAGE_SIZE,
+        Sort.by(Sort.Direction.DESC, "createdAt")
+    );
+
+    Slice<Message> messageSlice =
+        messageRepository.findAllByChannel_IdOrderByCreatedAtDesc(channelId, pageable);
+
+    return pageResponseMapper.fromSlice(messageSlice.map(messageMapper::toDto));
   }
 
   @Override

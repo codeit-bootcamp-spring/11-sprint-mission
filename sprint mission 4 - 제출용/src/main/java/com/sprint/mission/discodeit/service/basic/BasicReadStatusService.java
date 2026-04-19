@@ -1,5 +1,6 @@
 package com.sprint.mission.discodeit.service.basic;
 
+import com.sprint.mission.discodeit.dto.readStatus.ReadStatusDto;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.dto.readStatus.ReadStatusCreateRequest;
@@ -7,6 +8,7 @@ import com.sprint.mission.discodeit.dto.readStatus.ReadStatusUpdateRequest;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.exception.DiscodeitDuplicateException;
 import com.sprint.mission.discodeit.exception.DiscodeitNotFoundException;
+import com.sprint.mission.discodeit.mapper.ReadStatusMapper;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
@@ -27,10 +29,11 @@ public class BasicReadStatusService implements ReadStatusService {
   private final ReadStatusRepository readStatusRepository;
   private final UserRepository userRepository;
   private final ChannelRepository channelRepository;
+  private final ReadStatusMapper readStatusMapper;
 
   @Override
   @Transactional
-  public ReadStatus create(ReadStatusCreateRequest request) {
+  public ReadStatusDto create(ReadStatusCreateRequest request) {
     User user = userRepository.findById(request.getUserId())
         .orElseThrow(() -> DiscodeitNotFoundException.user(request.getUserId()));
 
@@ -43,45 +46,51 @@ public class BasicReadStatusService implements ReadStatusService {
           request.getUserId(), request.getChannelId());
     }
 
-    Instant lastReadAt = request.getLastReadAt() != null ? request.getLastReadAt() : Instant.now();
-    ReadStatus readStatus = new ReadStatus(user, channel, Instant.now());
-    return readStatusRepository.save(readStatus);
+    Instant lastReadAt = request.getLastReadAt() != null
+        ? request.getLastReadAt()
+        : Instant.now();
+
+    ReadStatus readStatus = new ReadStatus(user, channel, lastReadAt);
+    ReadStatus savedReadStatus = readStatusRepository.save(readStatus);
+
+    return readStatusMapper.toDto(savedReadStatus);
   }
 
   @Override
   @Transactional(readOnly = true)
-  public ReadStatus find(UUID id) {
+  public ReadStatusDto find(UUID id) {
     ReadStatus readStatus = readStatusRepository.findById(id)
         .orElseThrow(() -> DiscodeitNotFoundException.readStatus(id));
-    return readStatus;
+
+    return readStatusMapper.toDto(readStatus);
   }
 
   @Override
   @Transactional(readOnly = true)
-  public List<ReadStatus> findAllByUserId(UUID userId) {
-    return readStatusRepository.readAllByUserId(userId);
+  public List<ReadStatusDto> findAllByUserId(UUID userId) {
+    userRepository.findById(userId)
+        .orElseThrow(() -> DiscodeitNotFoundException.user(userId));
+
+    return readStatusRepository.findAllByUser_Id(userId).stream()
+        .map(readStatusMapper::toDto)
+        .toList();
   }
 
   @Override
   @Transactional
   public void update(ReadStatusUpdateRequest request) {
-    ReadStatus readStatus = readStatusRepository.read(request.getReadStatusId());
-    if (readStatus == null) {
-      throw new DiscodeitNotFoundException(
-          "존재하지 않는 ReadStatus입니다. id=" + request.getReadStatusId());
-    }
+    ReadStatus readStatus = readStatusRepository.findById(request.getReadStatusId())
+        .orElseThrow(() -> DiscodeitNotFoundException.readStatus(request.getReadStatusId()));
 
-    readStatus.updateLastMessageReadAt(request.getNewLastReadAt());
-    readStatusRepository.update(
-        readStatus.getUserId(),
-        readStatus.getChannelId(),
-        request.getNewLastReadAt()
-    );
+    readStatus.updateReadStatus(request.getNewLastReadAt());
   }
 
   @Override
   @Transactional
   public void delete(UUID id) {
-    readStatusRepository.deleteByChannelId(id);
+    ReadStatus readStatus = readStatusRepository.findById(id)
+        .orElseThrow(() -> DiscodeitNotFoundException.readStatus(id));
+
+    readStatusRepository.delete(readStatus);
   }
 }

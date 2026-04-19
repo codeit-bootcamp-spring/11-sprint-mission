@@ -97,6 +97,7 @@ public class BasicBinaryContentService implements BinaryContentService {
     BinaryContent binaryContent = binaryContentRepository.findById(id)
         .orElseThrow(() -> DiscodeitNotFoundException.binaryContent(id));
 
+    binaryContentStorage.delete(id);
     binaryContentRepository.delete(binaryContent);
   }
 }

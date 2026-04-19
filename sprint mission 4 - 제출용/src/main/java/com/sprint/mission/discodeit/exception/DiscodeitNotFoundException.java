@@ -20,9 +20,9 @@ public class DiscodeitNotFoundException extends DiscodeitException {
     return new DiscodeitNotFoundException("존재하지 않는 메세지입니다. id=" + id);
   }
 
-  public static DiscodeitNotFoundException readStatus(UUID userId, UUID channelId) {
+  public static DiscodeitNotFoundException readStatus(UUID id) {
     return new DiscodeitNotFoundException(
-        "존재하지 않는 ReadStatus입니다. userId=" + userId + " channelId=" + channelId);
+        "존재하지 않는 ReadStatus입니다.");
   }
 
   public static DiscodeitNotFoundException userStatus(UUID userId) {

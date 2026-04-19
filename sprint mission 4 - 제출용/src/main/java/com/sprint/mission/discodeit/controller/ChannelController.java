@@ -42,14 +42,14 @@ public class ChannelController {
 
   // GET /api/channels/{channelId} - 200 OK
   @GetMapping("/{channelId}")
-  public ResponseEntity<ChannelDto> read(@PathVariable UUID channelId) {
-    return ResponseEntity.ok(channelService.read(channelId));
+  public ResponseEntity<ChannelDto> find(@PathVariable UUID channelId) {
+    return ResponseEntity.ok(channelService.find(channelId));
   }
 
   // GET /api/channels?userId=123 - 200 OK
   @GetMapping
-  public ResponseEntity<List<ChannelDto>> readAllByUserId(@RequestParam UUID userId) {
-    return ResponseEntity.ok(channelService.readAllByUserId(userId));
+  public ResponseEntity<List<ChannelDto>> findAllByUserId(@RequestParam UUID userId) {
+    return ResponseEntity.ok(channelService.findAllByUserId(userId));
   }
 
   // PATCH /api/channels/{channelId} - 200 OK
@@ -63,7 +63,7 @@ public class ChannelController {
         request.getNewName(),
         request.getNewDescription()
     ));
-    return ResponseEntity.ok(channelService.read(channelId));
+    return ResponseEntity.ok(channelService.find(channelId));
   }
 
   // DELETE /api/channels/{channelId} - 204 No Content
