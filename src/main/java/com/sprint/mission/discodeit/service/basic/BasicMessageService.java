@@ -24,6 +24,7 @@ import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.MessageService;
 import com.sprint.mission.discodeit.storage.BinaryContentStorage;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -92,15 +93,19 @@ public class BasicMessageService implements MessageService {
   }
 
   @Override
-  public PageResponse<MessageResponse> findAllByChannelId(UUID channelId, Pageable pageable) {
+  public PageResponse<MessageResponse> findAllByChannelId(UUID channelId, Instant cursor,
+      Pageable pageable) {
     if (!this.channelRepository.existsById(channelId)) {
       throw new ApiException(CHANNEL_NOT_FOUND);
     }
 
-    Slice<MessageResponse> slice = this.messageRepository.findAllByChannelIdOrderByCreatedAtDesc(
-            channelId, pageable)
+    Slice<MessageResponse> slice = (cursor == null
+        ? this.messageRepository.findAllByChannelIdOrderByCreatedAtDesc(
+        channelId, pageable)
+        : this.messageRepository.findAllByChannelIdAndCreatedAtBeforeOrderByCreatedAtDesc(channelId,
+            cursor, pageable))
         .map(this.mapper::toResponse);
-    return this.pageMapper.fromSlice(slice);
+    return this.pageMapper.fromSlice(slice, MessageResponse::createdAt);
   }
 
   @Transactional

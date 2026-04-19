@@ -19,7 +19,10 @@ public interface MessageRepository extends JpaRepository<Message, UUID> {
   @EntityGraph(attributePaths = {"author", "author.profile", "author.status"})
   Slice<Message> findAllByChannelIdOrderByCreatedAtDesc(UUID channelId, Pageable pageable);
 
-  List<Message> findAllByChannelIn(List<Channel> channels);
+  @EntityGraph(attributePaths = {"author", "author.profile", "author.status"})
+  Slice<Message> findAllByChannelIdAndCreatedAtBeforeOrderByCreatedAtDesc(UUID channelId,
+      Instant cursor,
+      Pageable pageable);
 
   void deleteAllByChannel(Channel channel);
 

@@ -3,12 +3,12 @@ package com.sprint.mission.discodeit.controller;
 import com.sprint.mission.discodeit.controller.api.MessageApi;
 import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentCreateRequest;
 import com.sprint.mission.discodeit.dto.common.PageResponse;
-import com.sprint.mission.discodeit.dto.common.RestResponse;
 import com.sprint.mission.discodeit.dto.message.MessageCreateRequest;
 import com.sprint.mission.discodeit.dto.message.MessageResponse;
 import com.sprint.mission.discodeit.dto.message.MessageUpdateRequest;
 import com.sprint.mission.discodeit.service.MessageService;
 import com.sprint.mission.discodeit.util.MultipartFileUtil;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -81,10 +81,11 @@ public class MessageController implements MessageApi {
   @GetMapping
   public ResponseEntity<PageResponse<MessageResponse>> findAllByChannelId(
       @RequestParam(value = "channelId") UUID channelId,
+      @RequestParam(value = "cursor", required = false) Instant cursor,
       Pageable pageable
   ) {
     PageResponse<MessageResponse> messages = this.messageService.findAllByChannelId(channelId,
-        pageable);
+        cursor, pageable);
 
     return ResponseEntity
         .status(HttpStatus.OK)
