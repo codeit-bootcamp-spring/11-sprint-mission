@@ -18,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -40,7 +41,7 @@ public class UserController implements UserApi {
 
   @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<UserResponse> create(
-      @RequestPart(value = "userCreateRequest") UserCreateRequest userCreateRequest,
+      @Valid @RequestPart(value = "userCreateRequest") UserCreateRequest userCreateRequest,
       @RequestPart(value = "profile", required = false) MultipartFile profile
   ) {
     Optional<BinaryContentCreateRequest> profileRequest = MultipartFileUtil.toCreateRequest(
@@ -56,7 +57,7 @@ public class UserController implements UserApi {
   @PatchMapping(path = "{userId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<UserResponse> update(
       @PathVariable UUID userId,
-      @RequestPart(value = "userUpdateRequest", required = false) UserUpdateRequest userUpdateRequest,
+      @Valid @RequestPart(value = "userUpdateRequest", required = false) UserUpdateRequest userUpdateRequest,
       @RequestPart(value = "profile", required = false) MultipartFile profile
   ) {
     Optional<BinaryContentCreateRequest> profileRequest = MultipartFileUtil.toCreateRequest(
@@ -91,7 +92,7 @@ public class UserController implements UserApi {
   @PatchMapping(path = "{userId}/user-status")
   public ResponseEntity<UserStatusResponse> updateUserStatus(
       @PathVariable UUID userId,
-      @RequestBody UserStatusUpdateRequest userStatusUpdateRequest
+      @Valid @RequestBody UserStatusUpdateRequest userStatusUpdateRequest
   ) {
     UserStatusResponse updatedUserStatus = this.userStatusService.updateUserStatusByUserId(userId,
         userStatusUpdateRequest);

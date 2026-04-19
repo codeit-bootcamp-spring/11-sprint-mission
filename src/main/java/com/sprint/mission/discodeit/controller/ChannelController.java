@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -32,7 +33,7 @@ public class ChannelController implements ChannelApi {
 
   @PostMapping(path = "public")
   public ResponseEntity<ChannelResponse> create(
-      @RequestBody PublicChannelCreateRequest publicChannelCreateRequest) {
+      @Valid @RequestBody PublicChannelCreateRequest publicChannelCreateRequest) {
     ChannelResponse createdChannel = this.channelService.createPublicChannel(
         publicChannelCreateRequest);
 
@@ -43,7 +44,7 @@ public class ChannelController implements ChannelApi {
 
   @PostMapping(path = "private")
   public ResponseEntity<ChannelResponse> create(
-      @RequestBody PrivateChannelCreateRequest privateChannelCreateRequest) {
+      @Valid @RequestBody PrivateChannelCreateRequest privateChannelCreateRequest) {
     ChannelResponse createdChannel = this.channelService.createPrivateChannel(
         privateChannelCreateRequest);
 

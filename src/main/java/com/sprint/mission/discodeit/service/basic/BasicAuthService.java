@@ -1,8 +1,6 @@
 package com.sprint.mission.discodeit.service.basic;
 
 import static com.sprint.mission.discodeit.exception.ApiException.ERROR.AUTH_INVALID_CREDENTIALS;
-import static com.sprint.mission.discodeit.exception.ApiException.ERROR.AUTH_PASSWORD_REQUIRED;
-import static com.sprint.mission.discodeit.exception.ApiException.ERROR.AUTH_USERNAME_REQUIRED;
 import static com.sprint.mission.discodeit.exception.ApiException.ERROR.USER_NOT_FOUND;
 
 import com.sprint.mission.discodeit.dto.auth.LoginRequest;
@@ -30,14 +28,6 @@ public class BasicAuthService implements AuthService {
   @Transactional
   @Override
   public UserResponse login(LoginRequest loginRequest) {
-    if (loginRequest.username() == null || loginRequest.username().isBlank()) {
-      throw new ApiException(AUTH_USERNAME_REQUIRED);
-    }
-
-    if (loginRequest.password() == null || loginRequest.password().isBlank()) {
-      throw new ApiException(AUTH_PASSWORD_REQUIRED);
-    }
-
     User user = this.userRepository.findByUsername(loginRequest.username())
         .orElseThrow(() -> new ApiException(USER_NOT_FOUND));
 

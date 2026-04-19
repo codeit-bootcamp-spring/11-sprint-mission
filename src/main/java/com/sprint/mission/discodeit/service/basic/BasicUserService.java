@@ -1,13 +1,8 @@
 package com.sprint.mission.discodeit.service.basic;
 
 import static com.sprint.mission.discodeit.exception.ApiException.ERROR.USER_EMAIL_DUPLICATED;
-import static com.sprint.mission.discodeit.exception.ApiException.ERROR.USER_EMAIL_REQUIRED;
-import static com.sprint.mission.discodeit.exception.ApiException.ERROR.USER_INVALID_EMAIL_FORMAT;
-import static com.sprint.mission.discodeit.exception.ApiException.ERROR.USER_INVALID_PASSWORD_LENGTH;
 import static com.sprint.mission.discodeit.exception.ApiException.ERROR.USER_NOT_FOUND;
-import static com.sprint.mission.discodeit.exception.ApiException.ERROR.USER_PASSWORD_REQUIRED;
 import static com.sprint.mission.discodeit.exception.ApiException.ERROR.USER_USERNAME_DUPLICATED;
-import static com.sprint.mission.discodeit.exception.ApiException.ERROR.USER_USERNAME_REQUIRED;
 
 import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentCreateRequest;
 import com.sprint.mission.discodeit.dto.user.UserCreateRequest;
@@ -41,34 +36,15 @@ public class BasicUserService implements UserService {
   private final ReadStatusRepository readStatusRepository;
   private final UserMapper mapper;
   private final BinaryContentStorage binaryContentStorage;
-  private static final String EMAIL_REGEX = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$";
-
   @Transactional
   @Override
   public UserResponse createUser(UserCreateRequest userCreateRequest,
       Optional<BinaryContentCreateRequest> binaryContentCreateRequest) {
-    if (userCreateRequest.username() == null || userCreateRequest.username().isBlank()) {
-      throw new ApiException(USER_USERNAME_REQUIRED);
-    }
     if (this.userRepository.existsByUsername(userCreateRequest.username())) {
       throw new ApiException(USER_USERNAME_DUPLICATED);
     }
-
-    if (userCreateRequest.email() == null || userCreateRequest.email().isBlank()) {
-      throw new ApiException(USER_EMAIL_REQUIRED);
-    }
-    if (!userCreateRequest.email().matches(EMAIL_REGEX)) {
-      throw new ApiException(USER_INVALID_EMAIL_FORMAT);
-    }
     if (this.userRepository.existsByEmail(userCreateRequest.email())) {
       throw new ApiException(USER_EMAIL_DUPLICATED);
-    }
-
-    if (userCreateRequest.password() == null || userCreateRequest.password().isBlank()) {
-      throw new ApiException(USER_PASSWORD_REQUIRED);
-    }
-    if (userCreateRequest.password().length() < 8) {
-      throw new ApiException(USER_INVALID_PASSWORD_LENGTH);
     }
 
     BinaryContent profile = null;
@@ -125,12 +101,8 @@ public class BasicUserService implements UserService {
 
     String email = user.getEmail();
     if (userUpdateRequest.newEmail() != null && !userUpdateRequest.newEmail().isBlank()) {
-      if (!userUpdateRequest.newEmail().matches(EMAIL_REGEX)) {
-        throw new ApiException(USER_INVALID_EMAIL_FORMAT);
-      }
       if (!user.getEmail().equals(userUpdateRequest.newEmail())
-          && this.userRepository.existsByEmail(
-          userUpdateRequest.newEmail())) {
+          && this.userRepository.existsByEmail(userUpdateRequest.newEmail())) {
         throw new ApiException(USER_EMAIL_DUPLICATED);
       }
       email = userUpdateRequest.newEmail();
@@ -138,9 +110,6 @@ public class BasicUserService implements UserService {
 
     String password = user.getPassword();
     if (userUpdateRequest.newPassword() != null && !userUpdateRequest.newPassword().isBlank()) {
-      if (userUpdateRequest.newPassword().length() < 8) {
-        throw new ApiException(USER_INVALID_PASSWORD_LENGTH);
-      }
       password = userUpdateRequest.newPassword();
     }
 

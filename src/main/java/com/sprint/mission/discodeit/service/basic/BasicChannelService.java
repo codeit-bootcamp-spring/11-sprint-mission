@@ -1,10 +1,8 @@
 package com.sprint.mission.discodeit.service.basic;
 
 import static com.sprint.mission.discodeit.exception.ApiException.ERROR.CHANNEL_NAME_DUPLICATED;
-import static com.sprint.mission.discodeit.exception.ApiException.ERROR.CHANNEL_NAME_REQUIRED;
 import static com.sprint.mission.discodeit.exception.ApiException.ERROR.CHANNEL_NOT_FOUND;
 import static com.sprint.mission.discodeit.exception.ApiException.ERROR.CHANNEL_NO_VALID_PARTICIPANTS;
-import static com.sprint.mission.discodeit.exception.ApiException.ERROR.CHANNEL_PARTICIPANTS_REQUIRED;
 import static com.sprint.mission.discodeit.exception.ApiException.ERROR.CHANNEL_PRIVATE_UPDATE_FORBIDDEN;
 
 import com.sprint.mission.discodeit.dto.channel.ChannelResponse;
@@ -47,10 +45,6 @@ public class BasicChannelService implements ChannelService {
   @Override
   public ChannelResponse createPublicChannel(
       PublicChannelCreateRequest publicChannelCreateRequest) {
-    if (publicChannelCreateRequest.name() == null || publicChannelCreateRequest.name()
-        .isBlank()) {
-      throw new ApiException(CHANNEL_NAME_REQUIRED);
-    }
     if (this.channelRepository.existsByName(publicChannelCreateRequest.name())) {
       throw new ApiException(CHANNEL_NAME_DUPLICATED);
     }
@@ -68,14 +62,6 @@ public class BasicChannelService implements ChannelService {
   @Override
   public ChannelResponse createPrivateChannel(
       PrivateChannelCreateRequest privateChannelCreateRequest) {
-    if (privateChannelCreateRequest.participantIds() == null
-        || privateChannelCreateRequest.participantIds().isEmpty()) {
-      throw new ApiException(CHANNEL_PARTICIPANTS_REQUIRED);
-    }
-
-    Channel channel = new Channel();
-    this.channelRepository.save(channel);
-
     List<UUID> requestedIds = privateChannelCreateRequest.participantIds().stream()
         .distinct()
         .toList();
@@ -86,6 +72,9 @@ public class BasicChannelService implements ChannelService {
     if (participants.isEmpty()) {
       throw new ApiException(CHANNEL_NO_VALID_PARTICIPANTS);
     }
+
+    Channel channel = new Channel();
+    this.channelRepository.save(channel);
 
     List<ReadStatus> readStatuses = participants.stream()
         .map(user -> new ReadStatus(user, channel, Instant.now()))

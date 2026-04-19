@@ -2,7 +2,6 @@ package com.sprint.mission.discodeit.service.basic;
 
 import static com.sprint.mission.discodeit.exception.ApiException.ERROR.CHANNEL_NOT_FOUND;
 import static com.sprint.mission.discodeit.exception.ApiException.ERROR.MESSAGE_CHANNEL_ACCESS_REQUIRED;
-import static com.sprint.mission.discodeit.exception.ApiException.ERROR.MESSAGE_CONTENT_REQUIRED;
 import static com.sprint.mission.discodeit.exception.ApiException.ERROR.MESSAGE_NOT_FOUND;
 import static com.sprint.mission.discodeit.exception.ApiException.ERROR.USER_NOT_FOUND;
 
@@ -53,10 +52,6 @@ public class BasicMessageService implements MessageService {
   @Override
   public MessageResponse createMessage(MessageCreateRequest messageCreateRequest,
       List<BinaryContentCreateRequest> binaryContentCreateRequests) {
-    if (messageCreateRequest.content() == null || messageCreateRequest.content().isBlank()) {
-      throw new ApiException(MESSAGE_CONTENT_REQUIRED);
-    }
-
     User author = this.userRepository.findById(messageCreateRequest.authorId())
         .orElseThrow(() -> new ApiException(USER_NOT_FOUND));
     Channel channel = this.channelRepository.findById(messageCreateRequest.channelId())
