@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.BatchSize;
 
 @NoArgsConstructor
 @Getter
@@ -37,6 +38,7 @@ public class Message extends BaseUpdatableEntity {
       joinColumns = @JoinColumn(name = "message_id"),
       inverseJoinColumns = @JoinColumn(name = "attachment_id")
   )
+  @BatchSize(size = 100)
   private List<BinaryContent> attachments;
 
   public Message(String content, Channel channel, User author, List<BinaryContent> attachments) {

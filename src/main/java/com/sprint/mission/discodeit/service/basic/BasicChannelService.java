@@ -23,7 +23,7 @@ import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.ChannelService;
 import java.time.Instant;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -61,7 +61,7 @@ public class BasicChannelService implements ChannelService {
 
     log.info("{} channel has been created successfully. ✅ [ID: {}]", channel.getName(),
         channel.getId());
-    return this.mapper.toResponse(channel);
+    return this.mapper.toResponse(channel, List.of(), Instant.now());
   }
 
   @Transactional
@@ -94,27 +94,48 @@ public class BasicChannelService implements ChannelService {
     this.readStatusRepository.saveAll(readStatuses);
 
     log.info("private channel has been created successfully. ✅ [ID: {}]", channel.getId());
-    return this.mapper.toResponse(channel);
+    return this.mapper.toResponse(channel, participants, null);
   }
 
   @Override
   public ChannelResponse findById(UUID id) {
-    return this.mapper.toResponse(this.channelRepository.findById(id)
-        .orElseThrow(() -> new ApiException(CHANNEL_NOT_FOUND))
-    );
+    Channel channel = this.channelRepository.findById(id)
+        .orElseThrow(() -> new ApiException(CHANNEL_NOT_FOUND));
+    List<User> participants = this.readStatusRepository.findAllByChannel(channel).stream()
+        .map(ReadStatus::getUser)
+        .toList();
+    Instant lastMessageAt = this.messageRepository
+        .findTopCreatedAtByChannelOrderByCreatedAtDesc(channel).orElse(null);
+    return this.mapper.toResponse(channel, participants, lastMessageAt);
   }
 
   @Override
   public List<ChannelResponse> findAllByUserId(UUID userId) {
-    Set<Channel> joinedPrivateChannels = this.readStatusRepository.findAllByUserId(userId)
-        .stream()
-        .map(ReadStatus::getChannel)
-        .collect(Collectors.toSet());
+    List<Channel> channels = this.channelRepository.findAllByUserId(userId);
 
-    return this.channelRepository.findAll().stream()
-        .filter(channel ->
-            !channel.isPrivate() || joinedPrivateChannels.contains(channel))
-        .map(this.mapper::toResponse)
+    List<UUID> channelIds = channels.stream().map(Channel::getId).toList();
+
+    Map<UUID, List<User>> participantsMap = this.readStatusRepository.findAllByChannelIn(channels)
+        .stream()
+        .collect(Collectors.groupingBy(
+            rs -> rs.getChannel().getId(),
+            Collectors.mapping(ReadStatus::getUser, Collectors.toList())
+        ));
+
+    Map<UUID, Instant> lastMessageAtMap = this.messageRepository
+        .findLastMessageAtByChannelIds(channelIds)
+        .stream()
+        .collect(Collectors.toMap(
+            ChannelResponse.LastMessageAt::getChannelId,
+            ChannelResponse.LastMessageAt::getLastMessageAt
+        ));
+
+    return channels.stream()
+        .map(channel -> this.mapper.toResponse(
+            channel,
+            participantsMap.getOrDefault(channel.getId(), List.of()),
+            lastMessageAtMap.get(channel.getId())
+        ))
         .toList();
   }
 
@@ -142,7 +163,12 @@ public class BasicChannelService implements ChannelService {
 
     log.info("{} channel has been updated successfully. ✅ [ID: {}]", channel.getName(),
         channel.getId());
-    return this.mapper.toResponse(channel);
+    List<User> participants = this.readStatusRepository.findAllByChannel(channel).stream()
+        .map(ReadStatus::getUser)
+        .toList();
+    Instant lastMessageAt = this.messageRepository
+        .findTopCreatedAtByChannelOrderByCreatedAtDesc(channel).orElse(null);
+    return this.mapper.toResponse(channel, participants, lastMessageAt);
   }
 
   @Transactional

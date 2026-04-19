@@ -2,9 +2,9 @@ package com.sprint.mission.discodeit.mapper;
 
 import com.sprint.mission.discodeit.dto.channel.ChannelResponse;
 import com.sprint.mission.discodeit.entity.Channel;
-import com.sprint.mission.discodeit.entity.ReadStatus;
-import com.sprint.mission.discodeit.repository.MessageRepository;
-import com.sprint.mission.discodeit.repository.ReadStatusRepository;
+import com.sprint.mission.discodeit.entity.User;
+import java.time.Instant;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -12,23 +12,19 @@ import org.springframework.stereotype.Component;
 @Component
 public class ChannelMapper {
 
-  private final ReadStatusRepository readStatusRepository;
-  private final MessageRepository messageRepository;
   private final UserMapper userMapper;
 
-  public ChannelResponse toResponse(Channel channel) {
+  public ChannelResponse toResponse(Channel channel, List<User> participants,
+      Instant lastMessageAt) {
     return new ChannelResponse(
         channel.getId(),
         channel.getType(),
         channel.getName(),
         channel.getDescription(),
-        this.readStatusRepository.findAllByChannel(channel).stream()
-            .map(ReadStatus::getUser)
+        participants.stream()
             .map(this.userMapper::toResponse)
             .toList(),
-        this.messageRepository.findTopCreatedAtByChannelOrderByCreatedAtDesc(channel)
-            .orElse(null)
+        lastMessageAt
     );
   }
-
 }

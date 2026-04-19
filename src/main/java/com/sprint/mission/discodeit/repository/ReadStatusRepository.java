@@ -5,14 +5,18 @@ import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.entity.User;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface ReadStatusRepository extends JpaRepository<ReadStatus, UUID> {
 
+  @EntityGraph(attributePaths = {"channel"})
   List<ReadStatus> findAllByUserId(UUID userId);
 
+  @EntityGraph(attributePaths = {"user", "user.profile", "user.status"})
   List<ReadStatus> findAllByChannel(Channel channel);
 
+  @EntityGraph(attributePaths = {"user", "user.profile", "user.status"})
   List<ReadStatus> findAllByChannelIn(List<Channel> channels);
 
   boolean existsByUserAndChannel(User user, Channel channel);
