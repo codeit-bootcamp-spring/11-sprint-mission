@@ -9,6 +9,7 @@ import com.sprint.mission.discodeit.dto.userstatus.UserStatusUpdateRequest;
 import com.sprint.mission.discodeit.exception.ErrorResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -32,33 +33,23 @@ public interface UserApi {
           responseCode = "201",
           description = "User created successfully",
           content = @Content(mediaType = "application/json",
-              schema = @Schema(implementation = UserResponse.class),
-              examples = @ExampleObject(value = UserExamples.CREATE_201))
+              schema = @Schema(implementation = UserResponse.class))
       ),
       @ApiResponse(
           responseCode = "400",
-          description = "Validation error",
+          description = "Validation error (fields contain details)",
           content = @Content(mediaType = "application/json",
               schema = @Schema(implementation = ErrorResponse.class),
-              examples = {
-                  @ExampleObject(name = "USER_001", description = "Missing nickname", value = UserExamples.ERROR_400_USER_001),
-                  @ExampleObject(name = "USER_002", description = "Missing username", value = UserExamples.ERROR_400_USER_002),
-                  @ExampleObject(name = "USER_004", description = "Missing email", value = UserExamples.ERROR_400_USER_004),
-                  @ExampleObject(name = "USER_005", description = "Invalid email format", value = UserExamples.ERROR_400_USER_005),
-                  @ExampleObject(name = "USER_007", description = "Missing password", value = UserExamples.ERROR_400_USER_007),
-                  @ExampleObject(name = "USER_008", description = "Password too short", value = UserExamples.ERROR_400_USER_008),
-                  @ExampleObject(name = "USER_009", description = "Missing phone number", value = UserExamples.ERROR_400_USER_009),
-                  @ExampleObject(name = "USER_010", description = "Invalid phone number format", value = UserExamples.ERROR_400_USER_010)
-              })
+              examples = @ExampleObject(value = UserExamples.ERROR_400))
       ),
       @ApiResponse(
           responseCode = "409",
-          description = "Duplicate resource",
+          description = "Duplicate username or email",
           content = @Content(mediaType = "application/json",
               schema = @Schema(implementation = ErrorResponse.class),
               examples = {
-                  @ExampleObject(name = "USER_003", description = "Duplicate username", value = UserExamples.ERROR_409_USER_003),
-                  @ExampleObject(name = "USER_006", description = "Duplicate email", value = UserExamples.ERROR_409_USER_006)
+                  @ExampleObject(name = "USER_001", description = "Duplicate username", value = UserExamples.ERROR_409_USER_001),
+                  @ExampleObject(name = "USER_002", description = "Duplicate email", value = UserExamples.ERROR_409_USER_002)
               })
       )
   })
@@ -73,35 +64,30 @@ public interface UserApi {
           responseCode = "200",
           description = "User updated successfully",
           content = @Content(mediaType = "application/json",
-              schema = @Schema(implementation = UserResponse.class),
-              examples = @ExampleObject(value = UserExamples.UPDATE_200))
+              schema = @Schema(implementation = UserResponse.class))
       ),
       @ApiResponse(
           responseCode = "400",
-          description = "Validation error",
+          description = "Validation error (fields contain details)",
           content = @Content(mediaType = "application/json",
               schema = @Schema(implementation = ErrorResponse.class),
-              examples = {
-                  @ExampleObject(name = "USER_005", description = "Invalid email format", value = UserExamples.ERROR_400_USER_005),
-                  @ExampleObject(name = "USER_008", description = "Password too short", value = UserExamples.ERROR_400_USER_008),
-                  @ExampleObject(name = "USER_010", description = "Invalid phone number format", value = UserExamples.ERROR_400_USER_010)
-              })
+              examples = @ExampleObject(value = UserExamples.ERROR_400))
       ),
       @ApiResponse(
           responseCode = "404",
           description = "User not found",
           content = @Content(mediaType = "application/json",
               schema = @Schema(implementation = ErrorResponse.class),
-              examples = @ExampleObject(name = "USER_011", value = UserExamples.ERROR_404_USER_011))
+              examples = @ExampleObject(value = UserExamples.ERROR_404_USER_003))
       ),
       @ApiResponse(
           responseCode = "409",
-          description = "Duplicate resource",
+          description = "Duplicate username or email",
           content = @Content(mediaType = "application/json",
               schema = @Schema(implementation = ErrorResponse.class),
               examples = {
-                  @ExampleObject(name = "USER_003", description = "Duplicate username", value = UserExamples.ERROR_409_USER_003),
-                  @ExampleObject(name = "USER_006", description = "Duplicate email", value = UserExamples.ERROR_409_USER_006)
+                  @ExampleObject(name = "USER_001", description = "Duplicate username", value = UserExamples.ERROR_409_USER_001),
+                  @ExampleObject(name = "USER_002", description = "Duplicate email", value = UserExamples.ERROR_409_USER_002)
               })
       )
   })
@@ -119,7 +105,7 @@ public interface UserApi {
           description = "User not found",
           content = @Content(mediaType = "application/json",
               schema = @Schema(implementation = ErrorResponse.class),
-              examples = @ExampleObject(name = "USER_011", value = UserExamples.ERROR_404_USER_011))
+              examples = @ExampleObject(value = UserExamples.ERROR_404_USER_003))
       )
   })
   ResponseEntity<Void> delete(
@@ -132,8 +118,7 @@ public interface UserApi {
           responseCode = "200",
           description = "Users retrieved successfully",
           content = @Content(mediaType = "application/json",
-              schema = @Schema(implementation = UserResponse.class),
-              examples = @ExampleObject(value = UserExamples.FIND_ALL_200))
+              array = @ArraySchema(schema = @Schema(implementation = UserResponse.class)))
       )
   })
   ResponseEntity<List<UserResponse>> findAll();
@@ -144,15 +129,14 @@ public interface UserApi {
           responseCode = "200",
           description = "User status updated successfully",
           content = @Content(mediaType = "application/json",
-              schema = @Schema(implementation = UserStatusResponse.class),
-              examples = @ExampleObject(value = UserExamples.UPDATE_STATUS_200))
+              schema = @Schema(implementation = UserStatusResponse.class))
       ),
       @ApiResponse(
           responseCode = "404",
           description = "User or status not found",
           content = @Content(mediaType = "application/json",
               schema = @Schema(implementation = ErrorResponse.class),
-              examples = @ExampleObject(name = "USER_011", value = UserExamples.ERROR_404_USER_011))
+              examples = @ExampleObject(value = UserExamples.ERROR_404_USER_003))
       )
   })
   ResponseEntity<UserStatusResponse> updateUserStatus(

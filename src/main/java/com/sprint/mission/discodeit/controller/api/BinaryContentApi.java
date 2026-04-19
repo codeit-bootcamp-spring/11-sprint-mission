@@ -5,6 +5,7 @@ import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentResponse;
 import com.sprint.mission.discodeit.exception.ErrorResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -26,15 +27,14 @@ public interface BinaryContentApi {
           responseCode = "200",
           description = "Binary content retrieved successfully",
           content = @Content(mediaType = "application/json",
-              schema = @Schema(implementation = BinaryContentResponse.class),
-              examples = @ExampleObject(value = BinaryContentExamples.FIND_BY_ID_200))
+              schema = @Schema(implementation = BinaryContentResponse.class))
       ),
       @ApiResponse(
           responseCode = "404",
           description = "Binary content not found",
           content = @Content(mediaType = "application/json",
               schema = @Schema(implementation = ErrorResponse.class),
-              examples = @ExampleObject(name = "BINARY_CONTENT_001", value = BinaryContentExamples.ERROR_404_BINARY_CONTENT_001))
+              examples = @ExampleObject(value = BinaryContentExamples.ERROR_404_BINARY_CONTENT_001))
       )
   })
   ResponseEntity<BinaryContentResponse> findById(
@@ -47,8 +47,7 @@ public interface BinaryContentApi {
           responseCode = "200",
           description = "Binary contents retrieved successfully",
           content = @Content(mediaType = "application/json",
-              schema = @Schema(implementation = BinaryContentResponse.class),
-              examples = @ExampleObject(value = BinaryContentExamples.FIND_ALL_BY_IDS_200))
+              array = @ArraySchema(schema = @Schema(implementation = BinaryContentResponse.class)))
       )
   })
   ResponseEntity<List<BinaryContentResponse>> findAllByIdIn(

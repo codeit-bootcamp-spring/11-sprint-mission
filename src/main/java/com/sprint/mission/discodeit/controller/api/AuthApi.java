@@ -22,41 +22,29 @@ public interface AuthApi {
       @ApiResponse(
           responseCode = "200",
           description = "Login successful",
-          content = @Content(
-              mediaType = "application/json",
-              schema = @Schema(implementation = UserResponse.class),
-              examples = @ExampleObject(value = AuthExamples.LOGIN_200)
-          )
+          content = @Content(mediaType = "application/json",
+              schema = @Schema(implementation = UserResponse.class))
       ),
       @ApiResponse(
           responseCode = "400",
-          description = "Missing required fields",
-          content = @Content(
-              mediaType = "application/json",
+          description = "Validation error (fields contain details)",
+          content = @Content(mediaType = "application/json",
               schema = @Schema(implementation = ErrorResponse.class),
-              examples = {
-                  @ExampleObject(name = "AUTH_001", description = "Missing username", value = AuthExamples.ERROR_400_AUTH_001),
-                  @ExampleObject(name = "AUTH_002", description = "Missing password", value = AuthExamples.ERROR_400_AUTH_002)
-              }
-          )
+              examples = @ExampleObject(value = AuthExamples.ERROR_400))
       ),
       @ApiResponse(
           responseCode = "401",
           description = "Invalid credentials",
-          content = @Content(
-              mediaType = "application/json",
+          content = @Content(mediaType = "application/json",
               schema = @Schema(implementation = ErrorResponse.class),
-              examples = @ExampleObject(name = "AUTH_003", value = AuthExamples.ERROR_401_AUTH_003)
-          )
+              examples = @ExampleObject(value = AuthExamples.ERROR_401_AUTH_001))
       ),
       @ApiResponse(
           responseCode = "404",
           description = "User not found",
-          content = @Content(
-              mediaType = "application/json",
+          content = @Content(mediaType = "application/json",
               schema = @Schema(implementation = ErrorResponse.class),
-              examples = @ExampleObject(name = "USER_011", value = AuthExamples.ERROR_404_USER_011)
-          )
+              examples = @ExampleObject(value = AuthExamples.ERROR_404_USER_003))
       )
   })
   ResponseEntity<UserResponse> login(

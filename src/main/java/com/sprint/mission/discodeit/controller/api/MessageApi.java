@@ -1,8 +1,6 @@
 package com.sprint.mission.discodeit.controller.api;
 
-import com.sprint.mission.discodeit.controller.api.examples.ChannelExamples;
 import com.sprint.mission.discodeit.controller.api.examples.MessageExamples;
-import com.sprint.mission.discodeit.controller.api.examples.UserExamples;
 import com.sprint.mission.discodeit.dto.common.PageResponse;
 import com.sprint.mission.discodeit.dto.message.MessageCreateRequest;
 import com.sprint.mission.discodeit.dto.message.MessageResponse;
@@ -35,15 +33,14 @@ public interface MessageApi {
           responseCode = "201",
           description = "Message created successfully",
           content = @Content(mediaType = "application/json",
-              schema = @Schema(implementation = MessageResponse.class),
-              examples = @ExampleObject(value = MessageExamples.CREATE_201))
+              schema = @Schema(implementation = MessageResponse.class))
       ),
       @ApiResponse(
           responseCode = "400",
-          description = "Missing content",
+          description = "Validation error (fields contain details)",
           content = @Content(mediaType = "application/json",
               schema = @Schema(implementation = ErrorResponse.class),
-              examples = @ExampleObject(name = "MESSAGE_001", value = MessageExamples.ERROR_400_MESSAGE_001))
+              examples = @ExampleObject(value = MessageExamples.ERROR_400))
       ),
       @ApiResponse(
           responseCode = "404",
@@ -51,8 +48,8 @@ public interface MessageApi {
           content = @Content(mediaType = "application/json",
               schema = @Schema(implementation = ErrorResponse.class),
               examples = {
-                  @ExampleObject(name = "USER_011", description = "User not found", value = UserExamples.ERROR_404_USER_011),
-                  @ExampleObject(name = "CHANNEL_005", description = "Channel not found", value = ChannelExamples.ERROR_404_CHANNEL_005)
+                  @ExampleObject(name = "USER_003", description = "User not found", value = MessageExamples.ERROR_404_USER_003),
+                  @ExampleObject(name = "CHANNEL_003", description = "Channel not found", value = MessageExamples.ERROR_404_CHANNEL_003)
               })
       ),
       @ApiResponse(
@@ -60,7 +57,7 @@ public interface MessageApi {
           description = "Sender is not a channel participant",
           content = @Content(mediaType = "application/json",
               schema = @Schema(implementation = ErrorResponse.class),
-              examples = @ExampleObject(name = "MESSAGE_002", value = MessageExamples.ERROR_422_MESSAGE_002))
+              examples = @ExampleObject(value = MessageExamples.ERROR_422_MESSAGE_001))
       )
   })
   ResponseEntity<MessageResponse> create(
@@ -74,15 +71,14 @@ public interface MessageApi {
           responseCode = "200",
           description = "Message updated successfully",
           content = @Content(mediaType = "application/json",
-              schema = @Schema(implementation = MessageResponse.class),
-              examples = @ExampleObject(value = MessageExamples.UPDATE_200))
+              schema = @Schema(implementation = MessageResponse.class))
       ),
       @ApiResponse(
           responseCode = "404",
           description = "Message not found",
           content = @Content(mediaType = "application/json",
               schema = @Schema(implementation = ErrorResponse.class),
-              examples = @ExampleObject(name = "MESSAGE_003", value = MessageExamples.ERROR_404_MESSAGE_003))
+              examples = @ExampleObject(value = MessageExamples.ERROR_404_MESSAGE_002))
       )
   })
   ResponseEntity<MessageResponse> update(
@@ -99,7 +95,7 @@ public interface MessageApi {
           description = "Message not found",
           content = @Content(mediaType = "application/json",
               schema = @Schema(implementation = ErrorResponse.class),
-              examples = @ExampleObject(name = "MESSAGE_003", value = MessageExamples.ERROR_404_MESSAGE_003))
+              examples = @ExampleObject(value = MessageExamples.ERROR_404_MESSAGE_002))
       )
   })
   ResponseEntity<Void> delete(
@@ -112,13 +108,13 @@ public interface MessageApi {
           responseCode = "200",
           description = "Messages retrieved successfully",
           content = @Content(mediaType = "application/json",
-              schema = @Schema(implementation = MessageResponse.class),
+              schema = @Schema(implementation = PageResponse.class),
               examples = @ExampleObject(value = MessageExamples.FIND_ALL_200))
       )
   })
   ResponseEntity<PageResponse<MessageResponse>> findAllByChannelId(
       @Parameter(description = "Channel ID") @RequestParam UUID channelId,
-      @Parameter(description = "페이징 커서 정보") @RequestParam(required = false) Instant cursor,
+      @Parameter(description = "Cursor for pagination") @RequestParam(required = false) Instant cursor,
       Pageable pageable
   );
 }

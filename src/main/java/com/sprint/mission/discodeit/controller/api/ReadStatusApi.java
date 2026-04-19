@@ -1,14 +1,13 @@
 package com.sprint.mission.discodeit.controller.api;
 
-import com.sprint.mission.discodeit.controller.api.examples.ChannelExamples;
 import com.sprint.mission.discodeit.controller.api.examples.ReadStatusExamples;
-import com.sprint.mission.discodeit.controller.api.examples.UserExamples;
 import com.sprint.mission.discodeit.dto.readstatus.ReadStatusCreateRequest;
 import com.sprint.mission.discodeit.dto.readstatus.ReadStatusResponse;
 import com.sprint.mission.discodeit.dto.readstatus.ReadStatusUpdateRequest;
 import com.sprint.mission.discodeit.exception.ErrorResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -31,8 +30,14 @@ public interface ReadStatusApi {
           responseCode = "201",
           description = "Read status created successfully",
           content = @Content(mediaType = "application/json",
-              schema = @Schema(implementation = ReadStatusResponse.class),
-              examples = @ExampleObject(value = ReadStatusExamples.CREATE_201))
+              schema = @Schema(implementation = ReadStatusResponse.class))
+      ),
+      @ApiResponse(
+          responseCode = "400",
+          description = "Validation error (fields contain details)",
+          content = @Content(mediaType = "application/json",
+              schema = @Schema(implementation = ErrorResponse.class),
+              examples = @ExampleObject(value = ReadStatusExamples.ERROR_400))
       ),
       @ApiResponse(
           responseCode = "404",
@@ -40,8 +45,8 @@ public interface ReadStatusApi {
           content = @Content(mediaType = "application/json",
               schema = @Schema(implementation = ErrorResponse.class),
               examples = {
-                  @ExampleObject(name = "USER_011", description = "User not found", value = UserExamples.ERROR_404_USER_011),
-                  @ExampleObject(name = "CHANNEL_005", description = "Channel not found", value = ChannelExamples.ERROR_404_CHANNEL_005)
+                  @ExampleObject(name = "USER_003", description = "User not found", value = ReadStatusExamples.ERROR_404_USER_003),
+                  @ExampleObject(name = "CHANNEL_003", description = "Channel not found", value = ReadStatusExamples.ERROR_404_CHANNEL_003)
               })
       ),
       @ApiResponse(
@@ -49,7 +54,7 @@ public interface ReadStatusApi {
           description = "Read status already exists",
           content = @Content(mediaType = "application/json",
               schema = @Schema(implementation = ErrorResponse.class),
-              examples = @ExampleObject(name = "READ_STATUS_001", value = ReadStatusExamples.ERROR_409_READ_STATUS_001))
+              examples = @ExampleObject(value = ReadStatusExamples.ERROR_409_READ_STATUS_001))
       )
   })
   ResponseEntity<ReadStatusResponse> create(
@@ -63,15 +68,21 @@ public interface ReadStatusApi {
           responseCode = "200",
           description = "Read status updated successfully",
           content = @Content(mediaType = "application/json",
-              schema = @Schema(implementation = ReadStatusResponse.class),
-              examples = @ExampleObject(value = ReadStatusExamples.UPDATE_200))
+              schema = @Schema(implementation = ReadStatusResponse.class))
+      ),
+      @ApiResponse(
+          responseCode = "400",
+          description = "Validation error (fields contain details)",
+          content = @Content(mediaType = "application/json",
+              schema = @Schema(implementation = ErrorResponse.class),
+              examples = @ExampleObject(value = ReadStatusExamples.ERROR_400))
       ),
       @ApiResponse(
           responseCode = "404",
           description = "Read status not found",
           content = @Content(mediaType = "application/json",
               schema = @Schema(implementation = ErrorResponse.class),
-              examples = @ExampleObject(name = "READ_STATUS_002", value = ReadStatusExamples.ERROR_404_READ_STATUS_002))
+              examples = @ExampleObject(value = ReadStatusExamples.ERROR_404_READ_STATUS_002))
       )
   })
   ResponseEntity<ReadStatusResponse> update(
@@ -86,8 +97,7 @@ public interface ReadStatusApi {
           responseCode = "200",
           description = "Read statuses retrieved successfully",
           content = @Content(mediaType = "application/json",
-              schema = @Schema(implementation = ReadStatusResponse.class),
-              examples = @ExampleObject(value = ReadStatusExamples.FIND_ALL_200))
+              array = @ArraySchema(schema = @Schema(implementation = ReadStatusResponse.class)))
       )
   })
   ResponseEntity<List<ReadStatusResponse>> findAllByUserId(
