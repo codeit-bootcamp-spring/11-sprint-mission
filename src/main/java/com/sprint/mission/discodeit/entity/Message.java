@@ -1,66 +1,84 @@
 package com.sprint.mission.discodeit.entity;
 
-import lombok.Getter;
-
-import java.io.Serializable;
-import java.time.Instant;
+import com.sprint.mission.discodeit.entity.base.BaseUpdatableEntity;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import org.hibernate.annotations.BatchSize;
 
 @Getter
-public class Message implements Serializable {
+@Entity
+@Table(name = "messages")
+@NoArgsConstructor
+public class Message extends BaseUpdatableEntity {
 
-    // 객체 직렬화
-    private static final long serialVersionUID = 1L;
+  // 필드
+  // content text
+  @Column(name = "content", columnDefinition = "text")
+  private String content; // 메시지 내용
 
-    // 필수
-    private final UUID id;
-    private final Instant createdAt;
-    private Instant updatedAt;
+  // 연관 관계 필드
+  // 채널이 삭제될 때 메시지도 삭제되어야 한다.
+  // channel_id uuid not null references channels (id) on delete cascade
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "channel_id", nullable = false)
+  private Channel channel;
 
-    // 어떤 채널의 멤버가 메시지를 작성하였는가
-    private String content; // 메시지 내용
+  //author_id uuid references users (id) on delete set null
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "author_id")
+  private User author;
 
-    // 연관 관계 필드
-    private final UUID channelId; // 어떤 채널에 들어가는 메시지인지, Channel과 연결됨 / Channel의 UUID id
-    private final UUID authorId; // 어떤 유저가 작성한 메시지인지, User과 연결됨 / User의 UUID id
-    private List<UUID> attachmentIds; // BinaryContent의 UUID id
+  // N:M 관계(messages:binary_contents)
+  // 중계 테이블 message_attachments / 중계 엔티티 Message
+  // 의 message_id를 현재 엔티티의 외래키
+  // 의 attachment_id는 반대쪽 엔티티(BinaryContent)의 외래키
+  // (관계가 양방향일 경우 반대쪽 엔티티에도 @ManyToMany 필요)
+  @ManyToMany(fetch = FetchType.LAZY)
+  @JoinTable(name = "message_attachments",
+      joinColumns = @JoinColumn(name = "message_id"),
+      inverseJoinColumns = @JoinColumn(name = "attachment_id"))
+  @BatchSize(size = 50)
+  private List<BinaryContent> attachments;
 
-    // 정적 팩토리 메서드
-    private Message(String content, UUID channelId, UUID authorId) {
-        this.id = UUID.randomUUID();
-        this.createdAt = Instant.now();;
-        this.updatedAt = this.createdAt;
-        this.content = content;
-        this.channelId = channelId;
-        this.authorId = authorId;
-        this.attachmentIds = new ArrayList<>(); // 삽입/삭제보다 조회가 더 많이 일어나기 때문에 LinkedList가 아닌 ArrayList 사용
-    }
+  private Message(String content, Channel channel, User author) {
+    this.content = content;
+    this.channel = channel;
+    this.author = author;
+    this.attachments = new ArrayList<>(); // 삽입/삭제보다 조회가 더 많이 일어나기 때문에 LinkedList가 아닌 ArrayList 사용
+  }
 
-    // 정적 팩토리 메서드
-    public static Message create(String content, UUID channelId, UUID authorId) {
-        return new Message(content, channelId, authorId);
-    }
 
-    // getter(Lombok의 @Getter로 대체)
+  // 정적 팩토리 메서드
+  public static Message create(String content, Channel channel, User author) {
+    return new Message(content, channel, author);
+  }
 
-    // update
-    private void update() {
-        this.updatedAt = Instant.now();;
-    }
-    public void updateContent(String content) {
-        this.content = content;
-        update();
-    }
+  // add Attachment(캡슐화)
+  public void addAttachment(BinaryContent attachment) {
+    this.attachments.add(attachment);
+  }
 
-    @Override
-    public String toString() {
-        return "메시지 UUID : " + id
-                + "\n 메시지 생성 시간 : " + createdAt
-                + ", 메시지 수정 시간 : " + updatedAt
-                + "\n 메시지 내용 : " + content
-                + "\n 메시지가 작성된 채널 ID : " + channelId
-                + ", 메시지 작성자 ID : " + authorId;
-    }
+  // getter(Lombok의 @Getter로 대체)
+
+  // update
+  public void updateContent(String content) {
+    this.content = content;
+  }
+
+  @Override
+  public String toString() {
+    return " 메시지 내용 : " + content
+        + "\n 메시지가 작성된 채널 : " + channel.getName()
+        + ", 메시지 작성자 ID : " + author.getUsername();
+  }
 }

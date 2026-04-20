@@ -1,10 +1,10 @@
 package com.sprint.mission.discodeit.controller;
 
 import com.sprint.mission.discodeit.constant.EndPoints;
-import com.sprint.mission.discodeit.dto.ChannelCreatePrivateRequest;
-import com.sprint.mission.discodeit.dto.ChannelCreatePublicRequest;
-import com.sprint.mission.discodeit.dto.ChannelReadDto;
-import com.sprint.mission.discodeit.dto.ChannelUpdateRequest;
+import com.sprint.mission.discodeit.dto.request.ChannelCreatePrivateRequest;
+import com.sprint.mission.discodeit.dto.request.ChannelCreatePublicRequest;
+import com.sprint.mission.discodeit.dto.request.ChannelUpdateRequest;
+import com.sprint.mission.discodeit.dto.response.ChannelDto;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.service.ChannelService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -87,7 +87,7 @@ public class ChannelController {
   @Operation(summary = "User가 참여 중인 Channel 목록 조회")
   @ApiResponse(responseCode = "200", description = "Channel 목록 조회 성공")
   @RequestMapping(method = RequestMethod.GET)
-  public ResponseEntity<List<ChannelReadDto>> readAllByUser(
+  public ResponseEntity<List<ChannelDto>> readAllByUser(
       @Parameter(description = "조회할 User ID")
       @RequestParam("userId") UUID userId) {
     return ResponseEntity.ok(channelService.findAllByUserId(userId));

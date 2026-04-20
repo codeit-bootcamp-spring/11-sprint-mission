@@ -1,19 +1,37 @@
 package com.sprint.mission.discodeit.repository;
 
 import com.sprint.mission.discodeit.entity.Message;
-
+import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
-public interface MessageRepository {
-    void insert(Message message);
+public interface MessageRepository extends JpaRepository<Message, UUID> {
 
-    Message findById(UUID id);
-    List<Message> findAllByChannelId(UUID channelId); // 채널을 찾으면 해당 채널의 모든 메시지를 조회한다.
+  // Pageable, 몇 번째 페이지(page)의 몇 개의 데이터(size)로 나타낼 지 ?(오프셋 방식)
+  @EntityGraph(attributePaths = {"author"})
+  Slice<Message> findByChannelIdOrderByCreatedAtDesc(UUID channelId, Pageable pageable);
 
-    void update(Message message);
+  @EntityGraph(attributePaths = {"author"})
+  @Query("""
+      SELECT m 
+      FROM Message m 
+      WHERE m.channel.id = :channelId 
+      AND (m.createdAt < :cursor OR :cursor IS NULL)
+      ORDER BY m.createdAt DESC
+      """)
+  Slice<Message> findMessages(@Param("channelId") UUID channelId, @Param("cursor") Instant cursor,
+      @Param("pageable") Pageable pageable);
 
-    void delete(UUID id);
-    void deleteAllByChannelId(UUID channelId); // 채널이 삭제되면 채널 내 메시지도 삭제된다
+  Optional<Message> findTopByChannelIdOrderByCreatedAtDesc(UUID channelId);
 
+  List<Message> findAllByChannelId(UUID id);
+
+  void deleteAllByChannelId(UUID id);
 }

@@ -1,8 +1,9 @@
 package com.sprint.mission.discodeit.controller;
 
 import com.sprint.mission.discodeit.constant.EndPoints;
-import com.sprint.mission.discodeit.dto.ReadStatusCreateRequest;
-import com.sprint.mission.discodeit.dto.ReadStatusUpdateRequest;
+import com.sprint.mission.discodeit.dto.request.ReadStatusCreateRequest;
+import com.sprint.mission.discodeit.dto.request.ReadStatusUpdateRequest;
+import com.sprint.mission.discodeit.dto.response.ReadStatusDto;
 import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.service.ReadStatusService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -63,9 +64,9 @@ public class ReadStatusController {
   @Operation(summary = "User의 Message 읽음 상태 목록 조회")
   @ApiResponse(responseCode = "200", description = "Message 읽음 상태 목록 조회 성공")
   @RequestMapping(method = RequestMethod.GET)
-  public ResponseEntity<List<ReadStatus>> readMessageByUserId(
+  public ResponseEntity<List<ReadStatusDto>> readMessageByUserId(
       @Parameter(description = "조회할 User ID")
-      @RequestParam("userId") UUID userId) {
-    return ResponseEntity.ok(readStatusService.findAllByUserId(userId));
+      @RequestParam("userId") List<UUID> userIds) {
+    return ResponseEntity.ok(readStatusService.findAllByUserId(userIds));
   }
 }

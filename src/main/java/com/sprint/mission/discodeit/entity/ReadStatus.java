@@ -1,44 +1,48 @@
 package com.sprint.mission.discodeit.entity;
 
-import lombok.Getter;
-
-import java.io.Serializable;
+import com.sprint.mission.discodeit.entity.base.BaseUpdatableEntity;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import java.time.Instant;
-import java.util.UUID;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Getter
-public class ReadStatus implements Serializable {
+@Entity
+@Table(name = "read_statuses")
+@NoArgsConstructor
+public class ReadStatus extends BaseUpdatableEntity {
 
-    // 객체 직렬화
-    private static final long serialVersionUID = 1L;
+  // 연관관계 필드
+  // user_id uuid not null references users (id) on delete cascade
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "user_id", nullable = false)
+  private User user;
 
-    // 필드
-    private final UUID id;
-    private final Instant createdAt;
-    private Instant updatedAt;
-    private Instant lastReadAt;
+  // channel_id uuid not null references channels (id) on delete cascade
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "channel_id", nullable = false)
+  private Channel channel;
 
-    // 연관관계 필드
-    private final UUID userId; // User의 UUID id
-    private final UUID channelId; // Channel의 UUID id
+  // last_read_at timestamptz,
+  @Column(name = "last_read_at")
+  private Instant lastReadAt;
+
 //    private final UUID messageId; // 특정 메시지를 읽은 시간이 아닌 채널 별 마지막으로 읽은 시간이기 때문에 X
 
-    // 생성자
-    public ReadStatus(UUID userId, UUID channelId, Instant lastReadAt) {
-        this.id = UUID.randomUUID();
-        this.createdAt = Instant.now();
-        this.updatedAt = this.createdAt;
-        this.lastReadAt = lastReadAt;
-        this.userId = userId;
-        this.channelId = channelId;
-    }
+  // 생성자
+  public ReadStatus(User user, Channel channel, Instant lastReadAt) {
+    this.user = user;
+    this.channel = channel;
+    this.lastReadAt = lastReadAt;
+  }
 
-    // update
-    private void update() {
-        this.updatedAt = Instant.now();
-    }
-    public void updateLastReadAt() {
-        this.lastReadAt = Instant.now();
-        update();
-    }
+  // update
+  public void updateLastReadAt(Instant lastReadAt) {
+    this.lastReadAt = Instant.now();
+  }
 }
