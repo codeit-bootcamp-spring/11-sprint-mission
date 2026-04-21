@@ -1,100 +1,99 @@
 package com.sprint.mission.discodeit.service.basic;
 
-import com.sprint.mission.discodeit.dto.userstatus.UserStatusCreateRequest;
-import com.sprint.mission.discodeit.dto.userstatus.UserStatusDto;
-import com.sprint.mission.discodeit.dto.userstatus.UserStatusUpdateRequest;
+import com.sprint.mission.discodeit.dto.request.UserStatusCreateRequest;
+import com.sprint.mission.discodeit.dto.request.UserStatusUpdateRequest;
+import com.sprint.mission.discodeit.dto.response.UserStatusDto;
+import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.entity.UserStatus;
-import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
-import com.sprint.mission.discodeit.exception.userstatus.UserStatusAlreadyExistsException;
-import com.sprint.mission.discodeit.exception.userstatus.UserStatusNotFoundException;
-import com.sprint.mission.discodeit.exception.userstatus.UserStatusOfUserNotFoundException;
+import com.sprint.mission.discodeit.exception.BusinessException;
+import com.sprint.mission.discodeit.exception.ErrorCode;
+import com.sprint.mission.discodeit.mapper.UserStatusMapper;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.repository.UserStatusRepository;
 import com.sprint.mission.discodeit.service.UserStatusService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class BasicUserStatusService implements UserStatusService {
 
     private final UserStatusRepository userStatusRepo;
     private final UserRepository userRepo;
+    private final UserStatusMapper userStatusMapper;
 
     @Override
+    @Transactional
     public UserStatusDto create(UserStatusCreateRequest dto) {
-        userRepo.findById(dto.userId())
-                .orElseThrow(() -> new UserNotFoundException(dto.userId()));
+        User user = userRepo.findById(dto.userId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-        boolean exists = userStatusRepo.findAll().stream()
-                .anyMatch(p -> p.getUserId().equals(dto.userId()));
-        if(exists) throw new UserStatusAlreadyExistsException(dto.userId());
+        if(userStatusRepo.findByUser(user).isPresent())
+            throw new BusinessException(ErrorCode.USER_STATUS_ALREADY_EXISTS);
 
-        UserStatus userStatus = new UserStatus(dto.userId(), dto.lastActiveAt());
+        UserStatus userStatus = new UserStatus(user, dto.lastActiveAt());
         userStatusRepo.save(userStatus);
-        return toDto(userStatus);
+
+        return userStatusMapper.toDto(userStatus);
     }
 
     @Override
     public UserStatusDto find(UUID id) {
         UserStatus userStatus = userStatusRepo.findById(id)
-                .orElseThrow(() -> new UserStatusNotFoundException(id));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_STATUS_NOT_FOUND));
 
-        return toDto(userStatus);
+        return userStatusMapper.toDto(userStatus);
     }
 
     @Override
     public UserStatusDto findByUserId(UUID id) {
-        userRepo.findById(id)
-                .orElseThrow(() -> new UserNotFoundException(id));
+        User user = userRepo.findById(id)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-        UserStatus userStatus = userStatusRepo.findByUserId(id)
-                .orElseThrow(() -> new UserStatusOfUserNotFoundException(id));
+        UserStatus userStatus = userStatusRepo.findByUser(user)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_STATUS_NOT_FOUND));
 
-        return toDto(userStatus);
+        return userStatusMapper.toDto(userStatus);
     }
 
     @Override
     public List<UserStatusDto> findAll() {
-        return userStatusRepo.findAll().stream()
-                .map(this::toDto)
+        return userStatusRepo.findAllWithUser().stream()
+                .map(userStatusMapper::toDto)
                 .toList();
     }
 
     @Override
+    @Transactional
     public void update(UUID id, UserStatusUpdateRequest dto) {
         UserStatus userStatus = userStatusRepo.findById(id)
-                .orElseThrow(() -> new UserStatusNotFoundException(id));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_STATUS_NOT_FOUND));
 
-        userStatus.setLastActiveAt(dto.newLastActiveAt());
-        userStatus.update();
-        userStatusRepo.save(userStatus);
+        userStatus.update(dto.newLastActiveAt());
     }
 
     @Override
+    @Transactional
     public void updateByUserId(UUID id, UserStatusUpdateRequest dto) {
-        userRepo.findById(id)
-                .orElseThrow(() -> new UserNotFoundException(id));
+        User user = userRepo.findById(id)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-        UserStatus userStatus = userStatusRepo.findByUserId(id)
-                .orElseThrow(() -> new UserStatusOfUserNotFoundException(id));
+        UserStatus userStatus = userStatusRepo.findByUser(user)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_STATUS_NOT_FOUND));
 
-        userStatus.setLastActiveAt(dto.newLastActiveAt());
-        userStatus.update();
-        userStatusRepo.save(userStatus);
+        userStatus.update(dto.newLastActiveAt());
     }
 
     @Override
+    @Transactional
     public void delete(UUID id) {
-        if(!userStatusRepo.deleteById(id)) {
-            throw new UserStatusNotFoundException(id);
-        }
-    }
-
-    private UserStatusDto toDto(UserStatus userStatus) {
-        return new UserStatusDto(userStatus.getId(), userStatus.getUserId(), userStatus.getLastActiveAt());
+        UserStatus userStatus = userStatusRepo.findById(id)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_STATUS_NOT_FOUND));
+        userStatusRepo.delete(userStatus);
     }
 }

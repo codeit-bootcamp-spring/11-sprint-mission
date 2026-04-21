@@ -1,64 +1,75 @@
 package com.sprint.mission.discodeit.service.basic;
 
-import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentCreateRequest;
-import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentDto;
+import com.sprint.mission.discodeit.dto.request.BinaryContentCreateRequest;
+import com.sprint.mission.discodeit.dto.response.BinaryContentDto;
 import com.sprint.mission.discodeit.entity.BinaryContent;
-import com.sprint.mission.discodeit.exception.binarycontent.BinaryContentNotFoundException;
+import com.sprint.mission.discodeit.exception.BusinessException;
+import com.sprint.mission.discodeit.exception.ErrorCode;
+import com.sprint.mission.discodeit.mapper.BinaryContentMapper;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.service.BinaryContentService;
+import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class BasicBinaryContentService implements BinaryContentService {
 
     private final BinaryContentRepository binaryContentRepo;
+    private final BinaryContentMapper binaryContentMapper;
+    private final BinaryContentStorage binaryContentStorage;
 
     @Override
+    @Transactional
     public BinaryContentDto create(BinaryContentCreateRequest dto) {
-        BinaryContent binaryContent = new BinaryContent(dto.fileName(), dto.contentType(), dto.data());
+        BinaryContent binaryContent = new BinaryContent(
+                dto.fileName(),
+                dto.contentType(),
+                (long) dto.bytes().length
+        );
         binaryContentRepo.save(binaryContent);
-        return toDto(binaryContent);
+        binaryContentStorage.put(binaryContent.getId(), dto.bytes());
+
+        return binaryContentMapper.toDto(binaryContent);
     }
 
     @Override
     public BinaryContentDto find(UUID id) {
         BinaryContent binaryContent = binaryContentRepo.findById(id)
-                .orElseThrow(() -> new BinaryContentNotFoundException(id));
+                .orElseThrow(() -> new BusinessException(ErrorCode.BINARY_CONTENT_NOT_FOUND));
 
-        return toDto(binaryContent);
+        return binaryContentMapper.toDto(binaryContent);
     }
 
     @Override
     public List<BinaryContentDto> findAllByIdIn(List<UUID> idList) {
-        return idList.stream()
-                .map(id -> binaryContentRepo.findById(id)
-                        .orElseThrow(() -> new BinaryContentNotFoundException(id)))
-                .map(this::toDto)
+
+        List<BinaryContent> binaryContents = binaryContentRepo.findAllById(idList);
+
+        if(binaryContents.size() != idList.size()) {
+            throw new BusinessException(ErrorCode.BINARY_CONTENT_NOT_FOUND);
+        }
+
+        return binaryContents.stream()
+                .map(binaryContentMapper::toDto)
                 .toList();
     }
 
     @Override
+    @Transactional
     public void delete(UUID id) {
-        if(!binaryContentRepo.deleteById(id)) {
-            throw new BinaryContentNotFoundException(id);
-        }
-    }
+        BinaryContent binaryContent = binaryContentRepo.findById(id)
+                .orElseThrow(() -> new BusinessException(ErrorCode.BINARY_CONTENT_NOT_FOUND));
 
-    private BinaryContentDto toDto(BinaryContent binaryContent) {
-        String bytes = Base64.getEncoder().encodeToString(binaryContent.getData());
-
-        return new BinaryContentDto(
-                binaryContent.getId(),
-                binaryContent.getCreatedAt(),
-                binaryContent.getFileName(),
-                (long) binaryContent.getData().length,
-                binaryContent.getContentType(),
-                bytes);
+        binaryContentStorage.deleteById(binaryContent.getId());
+        binaryContentRepo.delete(binaryContent);
     }
 }

@@ -1,49 +1,54 @@
 package com.sprint.mission.discodeit.entity;
 
-import com.sprint.mission.discodeit.entity.baseentity.UpdatableEntity;
+import com.sprint.mission.discodeit.entity.base.BaseUpdatableEntity;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 @Getter
-public class Message extends UpdatableEntity {
-    private String contents;
-    private UUID userId;
-    private UUID channelId;
-    private List<UUID> attachmentIds;
+@Entity
+@Table(name = "messages")
+@NoArgsConstructor
+public class Message extends BaseUpdatableEntity {
 
-    public Message(String contents, UUID userId, UUID channelId) {
+    @Column(columnDefinition = "TEXT")
+    private String content;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "channel_id", nullable = false)
+    private Channel channel;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "author_id")
+    private User author;
+
+    @ManyToMany
+    @JoinTable(
+            name = "message_attachments",
+            joinColumns = @JoinColumn(name = "message_id"),
+            inverseJoinColumns = @JoinColumn(name = "attachment_id")
+    )
+    private List<BinaryContent> attachments = new ArrayList<>();
+
+    public Message(String content, Channel channel, User author, List<BinaryContent> attachments) {
         super();
-        this.contents = contents;
-        this.userId = userId;
-        this.channelId = channelId;
-        this.attachmentIds = new ArrayList<>();
+        this.content = content;
+        this.channel = channel;
+        this.author = author;
+        this.attachments = attachments == null ? new ArrayList<>() : new ArrayList<>(attachments);
     }
 
-    public Message(String contents, UUID userId, UUID channelId, List<UUID> attachmentIds) {
-        super();
-        this.contents = contents;
-        this.userId = userId;
-        this.channelId = channelId;
-        this.attachmentIds = new ArrayList<>(attachmentIds);
-    }
-
-    public void setContents(String contents) {
-        this.contents = contents;
-    }
-
-    public void setAttachmentIds(List<UUID> attachmentIds) {
-        this.attachmentIds = new ArrayList<>(attachmentIds);
-    }
-
-    @Override
-    public String toString() {
-        return "Message{" +
-                "contents='" + contents + '\'' +
-                ", userId=" + userId +
-                ", channelId=" + channelId +
-                '}';
+    public void update(String content) {
+        this.content = content;
     }
 }
