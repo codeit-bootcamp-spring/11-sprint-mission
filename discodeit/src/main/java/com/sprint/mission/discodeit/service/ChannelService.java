@@ -4,42 +4,48 @@ import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.ChannelType;
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.entity.ReadStatus;
+import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.exception.DiscodeitException;
 import com.sprint.mission.discodeit.exception.ErrorCode;
-import com.sprint.mission.discodeit.repository.BinaryContentRepository;
+import com.sprint.mission.discodeit.mapper.ChannelMapper;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
-import com.sprint.mission.discodeit.service.dto.channel.ChannelResponse;
+import com.sprint.mission.discodeit.service.dto.channel.ChannelDto;
 import com.sprint.mission.discodeit.service.dto.channel.CreatePrivateChannelRequest;
 import com.sprint.mission.discodeit.service.dto.channel.CreatePublicChannelRequest;
 import com.sprint.mission.discodeit.service.dto.channel.UpdateChannelRequest;
-import java.time.Instant;
-import java.util.Comparator;
+
 import java.util.List;
 import java.util.UUID;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class ChannelService {
+
     private final ChannelRepository channelRepository;
     private final UserRepository userRepository;
     private final MessageRepository messageRepository;
     private final ReadStatusRepository readStatusRepository;
-    private final BinaryContentRepository binaryContentRepository;
+    private final ChannelMapper channelMapper;
 
-    public ChannelResponse createPublicChannel(CreatePublicChannelRequest request) {
+    @Transactional
+    public ChannelDto createPublicChannel(CreatePublicChannelRequest request) {
         validatePublicChannelRequest(request);
         Channel savedChannel = channelRepository.save(
                 Channel.publicChannel(request.name(), request.description())
         );
-        return toResponse(savedChannel);
+        return toDto(savedChannel);
     }
 
-    public ChannelResponse createPrivateChannel(CreatePrivateChannelRequest request) {
+    @Transactional
+    public ChannelDto createPrivateChannel(CreatePrivateChannelRequest request) {
         validatePrivateChannelRequest(request);
 
         Channel savedChannel = channelRepository.save(Channel.privateChannel());
@@ -47,93 +53,74 @@ public class ChannelService {
         request.participantIds().stream()
                 .distinct()
                 .forEach(participantId -> {
-                    userRepository.findById(participantId)
+                    User user = userRepository.findById(participantId)
                             .orElseThrow(() -> new DiscodeitException(ErrorCode.USER_NOT_FOUND));
-                    readStatusRepository.save(new ReadStatus(participantId, savedChannel.getId()));
+                    readStatusRepository.save(
+                            new ReadStatus(user, savedChannel, savedChannel.getCreatedAt())
+                    );
                 });
 
-        return toResponse(savedChannel);
+        return toDto(savedChannel);
     }
 
-    public ChannelResponse find(UUID id) {
-        return toResponse(getChannel(id));
+    public ChannelDto find(UUID id) {
+        return toDto(getChannel(id));
     }
 
-    public List<ChannelResponse> findAllByUserId(UUID userId) {
+    public List<ChannelDto> findAllByUserId(UUID userId) {
         if (userId == null) {
             throw new DiscodeitException(ErrorCode.USER_ID_REQUIRED);
         }
         userRepository.findById(userId)
                 .orElseThrow(() -> new DiscodeitException(ErrorCode.USER_NOT_FOUND));
 
-        List<UUID> visiblePrivateChannelIds = readStatusRepository.findByUserId(userId).stream()
-                .map(ReadStatus::getChannelId)
+        List<UUID> visiblePrivateChannelIds = readStatusRepository.findAllByUserId(userId).stream()
+                .map(readStatus -> readStatus.getChannel().getId())
                 .distinct()
                 .toList();
 
         return channelRepository.findAll().stream()
                 .filter(channel -> isVisibleChannel(channel, visiblePrivateChannelIds))
-                .map(this::toResponse)
+                .map(this::toDto)
                 .toList();
     }
 
-    public ChannelResponse update(UpdateChannelRequest request) {
+    @Transactional
+    public ChannelDto update(UpdateChannelRequest request) {
         validateUpdateChannelRequest(request);
 
         Channel channel = getChannel(request.channelId());
-        if (channel.getChannelType() == ChannelType.PRIVATE) {
+        if (channel.getType() == ChannelType.PRIVATE) {
             throw new DiscodeitException(ErrorCode.PRIVATE_CHANNEL_UPDATE_NOT_ALLOWED);
         }
 
         channel.update(request.name(), request.description());
-        Channel savedChannel = channelRepository.save(channel);
-        return toResponse(savedChannel);
+        return toDto(channel);
     }
 
+    @Transactional
     public void delete(UUID id) {
-        getChannel(id); // 해당 채널이 있음을 확인한다.
+        Channel channel = getChannel(id);
 
-        messageRepository.findAllByChannelId(id).stream()
-                .flatMap(message -> message.getAttachmentIds().stream())
-                .toList()
-                .forEach(binaryContentRepository::deleteById);
+        // 채널 연관 메시지 삭제: Message 엔티티의 attachments는 CascadeType.ALL + orphanRemoval이므로
+        // 엔티티를 로드하여 삭제하면 첨부파일까지 자동 삭제됨
+        List<Message> messages = messageRepository.findAllByChannelId(id);
+        messageRepository.deleteAll(messages);
 
-        messageRepository.deleteByChannelId(id);
-
-        readStatusRepository.deleteByChannelId(id);
-        channelRepository.deleteById(id);
+        readStatusRepository.deleteAllByChannelId(id);
+        channelRepository.delete(channel);
     }
 
     private Channel getChannel(UUID id) {
         if (id == null) {
             throw new DiscodeitException(ErrorCode.CHANNEL_ID_REQUIRED);
         }
-        return channelRepository.findById(id);
+        return channelRepository.findById(id)
+                .orElseThrow(() -> new DiscodeitException(ErrorCode.CHANNEL_NOT_FOUND));
     }
 
-    private ChannelResponse toResponse(Channel channel) {
-        Instant lastMessageAt = messageRepository.findAllByChannelId(channel.getId()).stream()
-                .map(Message::getCreatedAt)
-                .max(Comparator.naturalOrder())
-                .orElse(null);
-
-        List<UUID> participantIds = channel.getChannelType() == ChannelType.PRIVATE
-                ? readStatusRepository.findByChannelId(channel.getId()).stream()
-                .map(ReadStatus::getUserId)
-                .distinct()
-                .toList()
-                : null;
-
-        return ChannelResponse.builder()
-                .id(channel.getId())
-                .name(channel.getName())
-                .description(channel.getDescription())
-                .type(channel.getChannelType())
-                .lastMessageAt(lastMessageAt)
-                .participantIds(participantIds)
-                .createdAt(channel.getCreatedAt())
-                .updatedAt(channel.getUpdatedAt())
-                .build();
+    private ChannelDto toDto(Channel channel) {
+        return channelMapper.toDto(channel);
     }
 
     private void validatePublicChannelRequest(CreatePublicChannelRequest request) {
@@ -167,7 +154,7 @@ public class ChannelService {
     }
 
     private boolean isVisibleChannel(Channel channel, List<UUID> visiblePrivateChannelIds) {
-        if (channel.getChannelType() == ChannelType.PUBLIC) {
+        if (channel.getType() == ChannelType.PUBLIC) {
             return true;
         }
         return visiblePrivateChannelIds.contains(channel.getId());

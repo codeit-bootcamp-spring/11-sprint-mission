@@ -1,35 +1,50 @@
 package com.sprint.mission.discodeit.entity;
 
+import com.sprint.mission.discodeit.entity.base.BaseUpdatableEntity;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.UUID;
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Getter
-public class UserStatus extends BaseEntity {
+@Entity
+@Table(name = "user_statuses")
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class UserStatus extends BaseUpdatableEntity {
+
     private static final Duration ONLINE_THRESHOLD = Duration.ofMinutes(5);
 
-    private final UUID userId;
-    private Instant lastConnectedAt;
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
-    public UserStatus(UUID userId) {
+    @Column
+    private Instant lastActiveAt;
+
+    public UserStatus(User user) {
         super();
-        this.userId = userId;
-        this.lastConnectedAt = Instant.now();
+        this.user = user;
+        this.lastActiveAt = Instant.now();
     }
 
-    public void updateLastConnectedAt() {
-        this.lastConnectedAt = Instant.now();
-        touchUpdatedAt();
+
+    public void updateLastActiveAt() {
+        this.lastActiveAt = Instant.now();
     }
 
-    public void updateLastConnectedAt(Instant lastConnectedAt) {
-        this.lastConnectedAt = lastConnectedAt;
-        touchUpdatedAt();
+    public void updateLastActiveAt(Instant lastActiveAt) {
+        this.lastActiveAt = lastActiveAt;
     }
 
     public boolean isOnline() {
         Instant onlineCutoff = Instant.now().minus(ONLINE_THRESHOLD);
-        return !lastConnectedAt.isBefore(onlineCutoff);
+        return !lastActiveAt.isBefore(onlineCutoff);
     }
 }

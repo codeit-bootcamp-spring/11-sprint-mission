@@ -2,10 +2,8 @@ package com.sprint.mission.discodeit.controller;
 
 import com.sprint.mission.discodeit.controller.dto.ReadStatusUpdateApiRequest;
 import com.sprint.mission.discodeit.service.ReadStatusService;
-import com.sprint.mission.discodeit.service.dto.readstatus.CreateReadStatusByChannelRequest;
 import com.sprint.mission.discodeit.service.dto.readstatus.CreateReadStatusRequest;
-import com.sprint.mission.discodeit.service.dto.readstatus.ReadStatusResponse;
-import com.sprint.mission.discodeit.service.dto.readstatus.UpdateReadStatusByChannelRequest;
+import com.sprint.mission.discodeit.service.dto.readstatus.ReadStatusDto;
 import com.sprint.mission.discodeit.service.dto.readstatus.UpdateReadStatusRequest;
 import java.util.List;
 import java.util.UUID;
@@ -25,41 +23,19 @@ import org.springframework.web.bind.annotation.RestController;
 public class ReadStatusController {
     private final ReadStatusService readStatusService;
 
-    @RequestMapping(value = "/channels/{channelId}", method = RequestMethod.POST)
-    public ReadStatusResponse createByChannel(
-            @PathVariable UUID channelId,
-            @RequestBody CreateReadStatusByChannelRequest request
-    ) {
-        return readStatusService.createByChannel(channelId, request.userId());
-    }
-
-    @RequestMapping(value = "/{readStatusId}/channels/{channelId}", method = RequestMethod.PUT)
-    public ReadStatusResponse updateByChannel(
-            @PathVariable UUID channelId,
-            @PathVariable UUID readStatusId,
-            @RequestBody UpdateReadStatusByChannelRequest request
-    ) {
-        return readStatusService.updateByChannel(channelId, readStatusId, request.lastReadAt());
-    }
-
     @RequestMapping(method = RequestMethod.GET)
-    public List<ReadStatusResponse> findAllByUser(@RequestParam UUID userId) {
+    public List<ReadStatusDto> findAllByUser(@RequestParam UUID userId) {
         return readStatusService.findAllByUserId(userId);
     }
 
-    @RequestMapping(value = "/{id}", method = RequestMethod.GET)
-    public ReadStatusResponse find(@PathVariable UUID id) {
-        return readStatusService.find(id);
-    }
-
-    @RequestMapping(method = RequestMethod.POST)
     @ResponseStatus(HttpStatus.CREATED)
-    public ReadStatusResponse create(@RequestBody CreateReadStatusRequest request) {
+    @RequestMapping(method = RequestMethod.POST)
+    public ReadStatusDto create(@RequestBody CreateReadStatusRequest request) {
         return readStatusService.create(request);
     }
 
     @RequestMapping(value = "/{readStatusId}", method = RequestMethod.PATCH)
-    public ReadStatusResponse update(
+    public ReadStatusDto update(
             @PathVariable UUID readStatusId,
             @RequestBody ReadStatusUpdateApiRequest request
     ) {
@@ -67,11 +43,5 @@ public class ReadStatusController {
                 readStatusId,
                 request.newLastReadAt()
         ));
-    }
-
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    @RequestMapping(value = "/{readStatusId}", method = RequestMethod.DELETE)
-    public void delete(@PathVariable UUID readStatusId) {
-        readStatusService.delete(readStatusId);
     }
 }

@@ -1,72 +1,62 @@
 package com.sprint.mission.discodeit.service;
 
-import com.sprint.mission.discodeit.controller.dto.UserDto;
 import com.sprint.mission.discodeit.controller.dto.UserUpdateApiRequest;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.entity.UserStatus;
 import com.sprint.mission.discodeit.exception.DiscodeitException;
 import com.sprint.mission.discodeit.exception.ErrorCode;
-import com.sprint.mission.discodeit.repository.BinaryContentRepository;
+import com.sprint.mission.discodeit.mapper.UserMapper;
 import com.sprint.mission.discodeit.repository.UserRepository;
-import com.sprint.mission.discodeit.repository.UserStatusRepository;
 import com.sprint.mission.discodeit.service.dto.user.CreateUserRequest;
 import com.sprint.mission.discodeit.service.dto.user.UpdateUserRequest;
+import com.sprint.mission.discodeit.service.dto.user.UserDto;
 import com.sprint.mission.discodeit.service.dto.user.UserProfileRequest;
-import com.sprint.mission.discodeit.service.dto.user.UserResponse;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
+import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.UUID;
+
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class UserService {
+
     private final UserRepository userRepository;
-    private final BinaryContentRepository binaryContentRepository;
-    private final UserStatusRepository userStatusRepository;
+    private final UserMapper userMapper;
+    private final BinaryContentStorage binaryContentStorage;
 
-    public UserResponse find(UUID id) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new DiscodeitException(ErrorCode.USER_NOT_FOUND));
-        return toResponse(user);
-    }
-
-    public void delete(UUID id) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new DiscodeitException(ErrorCode.USER_NOT_FOUND));
-        if (user.getProfileId() != null) {
-            binaryContentRepository.deleteById(user.getProfileId());
-        }
-        userStatusRepository.deleteByUserId(id);
-        userRepository.deleteById(id);
-    }
-
-    public UserResponse create(CreateUserRequest request) {
+    @Transactional
+    public UserDto create(CreateUserRequest request) {
         validateCreateRequest(request);
         validateUniqueUsername(request.username());
         validateUniqueEmail(request.email());
 
-        UUID profileId = saveProfileIfPresent(request.profile());
+        // 프로필 BinaryContent는 User의 cascade 설정으로 함께 저장됨
+        BinaryContent profile = toBinaryContentFromProfile(request.profile());
         User user = User.builder()
                 .username(request.username())
                 .email(request.email())
                 .password(request.password())
-                .profileId(profileId)
+                .profile(profile)
                 .build();
+
+        // UserStatus는 User의 cascade 설정으로 함께 저장됨
+        UserStatus userStatus = new UserStatus(user);
+        user.assignStatus(userStatus);
+
         User savedUser = userRepository.save(user);
-        userStatusRepository.save(new UserStatus(savedUser.getId()));
-        return toResponse(savedUser);
+        return toDto(savedUser);
     }
 
-    public UserResponse create(CreateUserRequest request, MultipartFile profile) {
+    @Transactional
+    public UserDto create(CreateUserRequest request, MultipartFile profile) {
         CreateUserRequest mergedRequest = new CreateUserRequest(
                 request.username(),
                 request.email(),
@@ -76,21 +66,20 @@ public class UserService {
         return create(mergedRequest);
     }
 
-    public List<UserResponse> findAll() {
-        List<User> users = userRepository.findAll();
-        Map<UUID, UserStatus> statusByUserId = loadStatusMap(users);
-        return users.stream()
-                .map(user -> toResponse(user, statusByUserId))
+    public UserDto find(UUID id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new DiscodeitException(ErrorCode.USER_NOT_FOUND));
+        return toDto(user);
+    }
+
+    public List<UserDto> findAll() {
+        return userRepository.findAll().stream()
+                .map(this::toDto)
                 .toList();
     }
 
-    public List<UserDto> findAllUserDtos() {
-        return findAll().stream()
-                .map(this::toUserDto)
-                .toList();
-    }
-
-    public UserResponse update(UpdateUserRequest request) {
+    @Transactional
+    public UserDto update(UpdateUserRequest request) {
         if (request == null || request.userId() == null) {
             throw new DiscodeitException(ErrorCode.USER_ID_REQUIRED);
         }
@@ -104,11 +93,12 @@ public class UserService {
 
         user.update(updatedUsername, updatedEmail, updatedPassword);
         replaceProfileIfPresent(user, request.replacementProfile());
-        User savedUser = userRepository.save(user);
-        return toResponse(savedUser);
+
+        return toDto(user);
     }
 
-    public UserResponse update(UUID userId, UpdateUserRequest request, MultipartFile profile) {
+    @Transactional
+    public UserDto update(UUID userId, UpdateUserRequest request, MultipartFile profile) {
         UpdateUserRequest mergedRequest = new UpdateUserRequest(
                 userId,
                 request.username(),
@@ -119,7 +109,8 @@ public class UserService {
         return update(mergedRequest);
     }
 
-    public UserResponse update(UUID userId, UserUpdateApiRequest request, MultipartFile profile) {
+    @Transactional
+    public UserDto update(UUID userId, UserUpdateApiRequest request, MultipartFile profile) {
         UpdateUserRequest convertedRequest = new UpdateUserRequest(
                 userId,
                 request.newUsername(),
@@ -128,6 +119,14 @@ public class UserService {
                 null
         );
         return update(userId, convertedRequest, profile);
+    }
+
+    @Transactional
+    public void delete(UUID id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new DiscodeitException(ErrorCode.USER_NOT_FOUND));
+        // User의 cascade 설정으로 profile, userStatus가 함께 삭제됨
+        userRepository.delete(user);
     }
 
     private void validateCreateRequest(CreateUserRequest request) {
@@ -145,38 +144,33 @@ public class UserService {
         }
     }
 
-    private UUID saveProfileIfPresent(UserProfileRequest profile) {
+    private BinaryContent toBinaryContentFromProfile(UserProfileRequest profile) {
         if (profile == null) {
             return null;
         }
-
         BinaryContent binaryContent = new BinaryContent(
                 profile.data(),
                 profile.fileName(),
                 profile.contentType()
         );
-        BinaryContent saved = binaryContentRepository.save(binaryContent);
-        return saved.getId();
+        // User cascade 저장 전에 bytes를 스토리지에 저장 (ID는 생성자에서 이미 할당됨)
+        binaryContentStorage.put(binaryContent.getId(), profile.data());
+        return binaryContent;
     }
 
     private void replaceProfileIfPresent(User user, UserProfileRequest profile) {
         if (profile == null) {
             return;
         }
-
-        if (user.getProfileId() != null) {
-            binaryContentRepository.deleteById(user.getProfileId());
-        }
-        UUID newProfileId = saveProfileIfPresent(profile);
-        user.replaceProfile(newProfileId);
+        BinaryContent newProfile = toBinaryContentFromProfile(profile);
+        user.replaceProfile(newProfile);
     }
 
     private void validateUniqueUsername(UUID userId, String username) {
         if (isBlank(username)) {
             throw new DiscodeitException(ErrorCode.USERNAME_REQUIRED);
         }
-
-        userRepository.findByUserName(username)
+        userRepository.findByUsername(username)
                 .filter(foundUser -> !foundUser.getId().equals(userId))
                 .ifPresent(user -> {
                     throw new DiscodeitException(ErrorCode.DUPLICATE_USERNAME);
@@ -187,18 +181,16 @@ public class UserService {
         if (isBlank(username)) {
             throw new DiscodeitException(ErrorCode.USERNAME_REQUIRED);
         }
-
-        userRepository.findByUserName(username)
-                .ifPresent(user -> {
-                    throw new DiscodeitException(ErrorCode.DUPLICATE_USERNAME);
-                });
+        if (userRepository.existsByUsername(username)) {
+            throw new DiscodeitException(ErrorCode.DUPLICATE_USERNAME);
+        }
     }
 
     private void validateUniqueEmail(String email) {
         if (isBlank(email)) {
             throw new DiscodeitException(ErrorCode.EMAIL_REQUIRED);
         }
-        if (userRepository.findByEmail(email).isPresent()) {
+        if (userRepository.existsByEmail(email)) {
             throw new DiscodeitException(ErrorCode.DUPLICATE_EMAIL);
         }
     }
@@ -207,7 +199,6 @@ public class UserService {
         if (isBlank(email)) {
             throw new DiscodeitException(ErrorCode.EMAIL_REQUIRED);
         }
-
         userRepository.findByEmail(email)
                 .filter(foundUser -> !foundUser.getId().equals(userId))
                 .ifPresent(user -> {
@@ -238,51 +229,8 @@ public class UserService {
         return request.password();
     }
 
-    private Map<UUID, UserStatus> loadStatusMap(List<User> users) {
-        List<UUID> userIds = users.stream()
-                .map(User::getId)
-                .toList();
-
-        return userStatusRepository.findByUserIdIn(userIds).stream()
-                .collect(Collectors.toMap(UserStatus::getUserId, Function.identity()));
-    }
-
-    private UserResponse toResponse(User user) {
-        boolean online = userStatusRepository.findByUserId(user.getId())
-                .map(UserStatus::isOnline)
-                .orElse(false);
-        return toResponse(user, online);
-    }
-
-    private UserResponse toResponse(User user, Map<UUID, UserStatus> statusByUserId) {
-        boolean online = Optional.ofNullable(statusByUserId.get(user.getId()))
-                .map(UserStatus::isOnline)
-                .orElse(false);
-        return toResponse(user, online);
-    }
-
-    private UserResponse toResponse(User user, boolean online) {
-        return UserResponse.builder()
-                .id(user.getId())
-                .username(user.getUsername())
-                .email(user.getEmail())
-                .profileId(user.getProfileId())
-                .online(online)
-                .createdAt(user.getCreatedAt())
-                .updatedAt(user.getUpdatedAt())
-                .build();
-    }
-
-    private UserDto toUserDto(UserResponse userResponse) {
-        return new UserDto(
-                userResponse.id(),
-                userResponse.createdAt(),
-                userResponse.updatedAt(),
-                userResponse.username(),
-                userResponse.email(),
-                userResponse.profileId(),
-                userResponse.online()
-        );
+    private UserDto toDto(User user) {
+        return userMapper.toDto(user);
     }
 
     private boolean isBlank(String value) {

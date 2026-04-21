@@ -5,12 +5,9 @@ import java.util.UUID;
 import lombok.Builder;
 
 @Builder
-public record UserStatusResponse(
+public record UserStatusDto(
         UUID id,
         UUID userId,
-        Instant lastConnectedAt,
-        boolean online,
-        Instant createdAt,
-        Instant updatedAt
+        Instant lastActiveAt
 ) {
 }

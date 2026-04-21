@@ -2,9 +2,11 @@ package com.sprint.mission.discodeit.controller;
 
 import com.sprint.mission.discodeit.controller.dto.MessageUpdateApiRequest;
 import com.sprint.mission.discodeit.service.MessageService;
+import com.sprint.mission.discodeit.dto.response.PageResponse;
 import com.sprint.mission.discodeit.service.dto.message.CreateMessageRequest;
-import com.sprint.mission.discodeit.service.dto.message.MessageResponse;
+import com.sprint.mission.discodeit.service.dto.message.MessageDto;
 import com.sprint.mission.discodeit.service.dto.message.UpdateMessageRequest;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -24,21 +26,21 @@ import org.springframework.web.multipart.MultipartFile;
 @RequiredArgsConstructor
 @RequestMapping("/api/messages")
 public class MessageController {
+
     private final MessageService messageService;
 
-    @RequestMapping(value = "/{id}", method = RequestMethod.GET)
-    public MessageResponse find(@PathVariable UUID id) {
-        return messageService.find(id);
-    }
-
     @RequestMapping(method = RequestMethod.GET)
-    public List<MessageResponse> findAllByChannelId(@RequestParam UUID channelId) {
-        return messageService.findAllByChannelId(channelId);
+    public PageResponse<MessageDto> findAllByChannelId(
+            @RequestParam UUID channelId,
+            @RequestParam(required = false) Instant cursor,
+            @RequestParam(defaultValue = "50") int size
+    ) {
+        return messageService.findAllByChannelId(channelId, cursor, size);
     }
 
     @ResponseStatus(HttpStatus.CREATED)
     @RequestMapping(method = RequestMethod.POST, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public MessageResponse create(
+    public MessageDto create(
             @RequestPart("messageCreateRequest") CreateMessageRequest messageCreateRequest,
             @RequestPart(value = "attachments", required = false) List<MultipartFile> attachments
     ) {
@@ -46,7 +48,7 @@ public class MessageController {
     }
 
     @RequestMapping(value = "/{messageId}", method = RequestMethod.PATCH)
-    public MessageResponse update(
+    public MessageDto update(
             @PathVariable UUID messageId,
             @RequestBody MessageUpdateApiRequest request
     ) {

@@ -5,8 +5,8 @@ import com.sprint.mission.discodeit.controller.dto.UserUpdateApiRequest;
 import com.sprint.mission.discodeit.service.UserService;
 import com.sprint.mission.discodeit.service.UserStatusService;
 import com.sprint.mission.discodeit.service.dto.user.CreateUserRequest;
-import com.sprint.mission.discodeit.service.dto.user.UserResponse;
-import com.sprint.mission.discodeit.service.dto.userstatus.UserStatusResponse;
+import com.sprint.mission.discodeit.service.dto.user.UserDto;
+import com.sprint.mission.discodeit.service.dto.userstatus.UserStatusDto;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -28,19 +28,14 @@ public class UserController {
     private final UserService userService;
     private final UserStatusService userStatusService;
 
-    @RequestMapping(value = "/{id}", method = RequestMethod.GET)
-    public UserResponse find(@PathVariable UUID id) {
-        return userService.find(id);
-    }
-
     @RequestMapping(method = RequestMethod.GET)
-    public List<UserResponse> findAll() {
+    public List<UserDto> findAll() {
         return userService.findAll();
     }
 
     @ResponseStatus(HttpStatus.CREATED)
     @RequestMapping(method = RequestMethod.POST, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public UserResponse create(
+    public UserDto create(
             @RequestPart("userCreateRequest") CreateUserRequest userCreateRequest,
             @RequestPart(value = "profile", required = false) MultipartFile profile
     ) {
@@ -48,7 +43,7 @@ public class UserController {
     }
 
     @RequestMapping(value = "/{userId}", method = RequestMethod.PATCH, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public UserResponse update(
+    public UserDto update(
             @PathVariable UUID userId,
             @RequestPart("userUpdateRequest") UserUpdateApiRequest userUpdateRequest,
             @RequestPart(value = "profile", required = false) MultipartFile profile
@@ -57,7 +52,7 @@ public class UserController {
     }
 
     @RequestMapping(value = "/{userId}/userStatus", method = RequestMethod.PATCH)
-    public UserStatusResponse updateOnlineStatus(
+    public UserStatusDto updateOnlineStatus(
             @PathVariable UUID userId,
             @RequestBody UserStatusUpdateApiRequest request
     ) {

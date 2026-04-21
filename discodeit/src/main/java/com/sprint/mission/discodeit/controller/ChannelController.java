@@ -2,7 +2,7 @@ package com.sprint.mission.discodeit.controller;
 
 import com.sprint.mission.discodeit.controller.dto.ChannelUpdateApiRequest;
 import com.sprint.mission.discodeit.service.ChannelService;
-import com.sprint.mission.discodeit.service.dto.channel.ChannelResponse;
+import com.sprint.mission.discodeit.service.dto.channel.ChannelDto;
 import com.sprint.mission.discodeit.service.dto.channel.CreatePrivateChannelRequest;
 import com.sprint.mission.discodeit.service.dto.channel.CreatePublicChannelRequest;
 import com.sprint.mission.discodeit.service.dto.channel.UpdateChannelRequest;
@@ -24,30 +24,25 @@ import org.springframework.web.bind.annotation.RestController;
 public class ChannelController {
     private final ChannelService channelService;
 
-    @RequestMapping(value = "/{id}", method = RequestMethod.GET)
-    public ChannelResponse find(@PathVariable UUID id) {
-        return channelService.find(id);
-    }
-
     @RequestMapping(method = RequestMethod.GET)
-    public List<ChannelResponse> findAllByUserId(@RequestParam UUID userId) {
+    public List<ChannelDto> findAllByUserId(@RequestParam UUID userId) {
         return channelService.findAllByUserId(userId);
     }
 
     @ResponseStatus(HttpStatus.CREATED)
     @RequestMapping(value = "/public", method = RequestMethod.POST)
-    public ChannelResponse createPublic(@RequestBody CreatePublicChannelRequest request) {
+    public ChannelDto createPublic(@RequestBody CreatePublicChannelRequest request) {
         return channelService.createPublicChannel(request);
     }
 
     @ResponseStatus(HttpStatus.CREATED)
     @RequestMapping(value = "/private", method = RequestMethod.POST)
-    public ChannelResponse createPrivate(@RequestBody CreatePrivateChannelRequest request) {
+    public ChannelDto createPrivate(@RequestBody CreatePrivateChannelRequest request) {
         return channelService.createPrivateChannel(request);
     }
 
     @RequestMapping(value = "/{channelId}", method = RequestMethod.PATCH)
-    public ChannelResponse update(
+    public ChannelDto update(
             @PathVariable UUID channelId,
             @RequestBody ChannelUpdateApiRequest request
     ) {

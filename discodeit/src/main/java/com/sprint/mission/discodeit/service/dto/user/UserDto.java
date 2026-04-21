@@ -1,17 +1,15 @@
 package com.sprint.mission.discodeit.service.dto.user;
 
-import java.time.Instant;
+import com.sprint.mission.discodeit.service.dto.binarycontent.BinaryContentDto;
 import java.util.UUID;
 import lombok.Builder;
 
 @Builder
-public record UserResponse(
+public record UserDto(
         UUID id,
         String username,
         String email,
-        UUID profileId,
-        boolean online,
-        Instant createdAt,
-        Instant updatedAt
+        BinaryContentDto profile,
+        Boolean online
 ) {
 }

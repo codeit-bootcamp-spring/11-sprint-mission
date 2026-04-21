@@ -1,37 +1,64 @@
 package com.sprint.mission.discodeit.entity;
 
-import java.io.Serializable;
+import com.sprint.mission.discodeit.entity.base.BaseUpdatableEntity;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
+import org.hibernate.annotations.BatchSize;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Getter
-public class Message extends BaseEntity implements Serializable {
-    private static final long serialVersionUID = 1L;
+@Entity
+@Table(name = "messages")
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class Message extends BaseUpdatableEntity {
 
-    private final UUID authorId;
-    private final UUID channelId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "author_id", nullable = false)
+    private User author;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "channel_id", nullable = false)
+    private Channel channel;
+
+    @Column(nullable = false)
     private String content;
-    private final List<UUID> attachmentIds = new ArrayList<>();
 
-    public Message(UUID authorId, UUID channelId, String content) {
+    @BatchSize(size = 100)
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinTable(
+            name = "message_attachments",
+            joinColumns = @JoinColumn(name = "message_id"),
+            inverseJoinColumns = @JoinColumn(name = "attachment_id")
+    )
+    private List<BinaryContent> attachments = new ArrayList<>();
+
+    public Message(User author, Channel channel, String content) {
         super();
-        this.authorId = authorId;
-        this.channelId = channelId;
+        this.author = author;
+        this.channel = channel;
         this.content = content;
     }
 
-    public Message(UUID authorId, UUID channelId, String content, List<UUID> attachmentIds) {
-        this(authorId, channelId, content);
-        if (attachmentIds != null) {
-            this.attachmentIds.addAll(attachmentIds);
+    public Message(User author, Channel channel, String content, List<BinaryContent> attachments) {
+        this(author, channel, content);
+        if (attachments != null) {
+            this.attachments.addAll(attachments);
         }
     }
 
+
     public void update(String content) {
         this.content = content;
-        touchUpdatedAt();
     }
 }

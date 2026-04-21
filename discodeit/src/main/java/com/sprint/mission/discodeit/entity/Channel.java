@@ -1,39 +1,49 @@
 package com.sprint.mission.discodeit.entity;
 
-import java.io.Serializable;
-
+import com.sprint.mission.discodeit.entity.base.BaseUpdatableEntity;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Table;
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Getter
-public class Channel extends BaseEntity implements Serializable {
-    private static final long serialVersionUID = 1L;
+@Entity
+@Table(name = "channels")
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class Channel extends BaseUpdatableEntity {
 
+    @Column
     private String name;
+
+    @Column
     private String description;
-    private ChannelType channelType;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private ChannelType type;
 
-    public Channel(String name, String description, ChannelType channelType) {
+    public Channel(String name, String description, ChannelType type) {
         super();
         this.name = name;
         this.description = description;
-        this.channelType = channelType;
+        this.type = type;
     }
+
 
     public void update(String name, String description) {
         this.name = name;
         this.description = description;
-        touchUpdatedAt();
     }
-
 
     public static Channel publicChannel(String name, String description) {
         return new Channel(name, description, ChannelType.PUBLIC);
-
     }
 
     public static Channel privateChannel() {
-        return new Channel(null,null,ChannelType.PRIVATE);
+        return new Channel(null, null, ChannelType.PRIVATE);
     }
 }
-    

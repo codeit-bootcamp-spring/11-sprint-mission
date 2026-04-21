@@ -5,12 +5,10 @@ import java.util.UUID;
 import lombok.Builder;
 
 @Builder
-public record ReadStatusResponse(
+public record ReadStatusDto(
         UUID id,
         UUID userId,
         UUID channelId,
-        Instant lastReadAt,
-        Instant createdAt,
-        Instant updatedAt
+        Instant lastReadAt
 ) {
 }

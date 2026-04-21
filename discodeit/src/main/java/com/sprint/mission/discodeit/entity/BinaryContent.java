@@ -1,33 +1,34 @@
 package com.sprint.mission.discodeit.entity;
 
-import java.io.Serializable;
-import java.time.Instant;
-import java.util.UUID;
+import com.sprint.mission.discodeit.entity.base.BaseEntity;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Getter
-public class BinaryContent implements Serializable {
-    private static final long serialVersionUID = 1L;
+@Entity
+@Table(name = "binary_contents")
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class BinaryContent extends BaseEntity {
 
-    private final UUID id;
-    private final Instant createdAt;
-    private final byte[] data;
-    private final String fileName;
-    private final String contentType;
+    @Column(nullable = false)
+    private String fileName;
 
-    public BinaryContent() {
-        this.id = UUID.randomUUID();
-        this.createdAt = Instant.now();
-        this.data = new byte[0];
-        this.fileName = "";
-        this.contentType = "";
-    }
+    @Column(nullable = false)
+    private long size;
 
-    public BinaryContent(byte[] data, String fileName, String contentType) {
-        this.id = UUID.randomUUID();
-        this.createdAt = Instant.now();
-        this.data = data == null ? new byte[0] : data;
+    @Column(nullable = false)
+    private String contentType;
+
+    public BinaryContent(byte[] bytes, String fileName, String contentType) {
+        super();
+        this.size = bytes == null ? 0 : bytes.length;
         this.fileName = fileName == null ? "" : fileName;
         this.contentType = contentType == null ? "" : contentType;
     }
+
+
 }

@@ -4,40 +4,39 @@ import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.entity.UserStatus;
 import com.sprint.mission.discodeit.exception.DiscodeitException;
 import com.sprint.mission.discodeit.exception.ErrorCode;
+import com.sprint.mission.discodeit.mapper.UserMapper;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.repository.UserStatusRepository;
+import com.sprint.mission.discodeit.service.dto.user.UserDto;
 import com.sprint.mission.discodeit.service.dto.user.UserLoginRequest;
-import com.sprint.mission.discodeit.service.dto.user.UserResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class AuthService {
+
     private final UserRepository userRepository;
     private final UserStatusRepository userStatusRepository;
+    private final UserMapper userMapper;
 
-    public UserResponse login(UserLoginRequest request) {
+    @Transactional
+    public UserDto login(UserLoginRequest request) {
         validateLoginRequest(request);
-        User user = userRepository.findByUserName(request.username()).orElseThrow(
-                () -> new DiscodeitException(ErrorCode.LOGIN_USER_NOT_FOUND));
+        User user = userRepository.findByUsername(request.username())
+                .orElseThrow(() -> new DiscodeitException(ErrorCode.LOGIN_USER_NOT_FOUND));
         if (!user.getPassword().equals(request.password())) {
             throw new DiscodeitException(ErrorCode.INVALID_CREDENTIALS);
         }
-        UserStatus userStatus = userStatusRepository.findByUserId(user.getId())
-                .orElseGet(() -> new UserStatus(user.getId()));
-        userStatus.updateLastConnectedAt();
-        userStatusRepository.save(userStatus);
 
-        return UserResponse.builder()
-                .id(user.getId())
-                .username(user.getUsername())
-                .email(user.getEmail())
-                .profileId(user.getProfileId())
-                .online(userStatus.isOnline())
-                .createdAt(user.getCreatedAt())
-                .updatedAt(user.getUpdatedAt())
-                .build();
+        // 기존 UserStatus가 있으면 변경 감지로 업데이트, 없으면 새로 생성
+        UserStatus userStatus = userStatusRepository.findByUserId(user.getId())
+                .orElseGet(() -> userStatusRepository.save(new UserStatus(user)));
+        userStatus.updateLastActiveAt();
+
+        return userMapper.toDto(user);
     }
 
     private void validateLoginRequest(UserLoginRequest request) {
