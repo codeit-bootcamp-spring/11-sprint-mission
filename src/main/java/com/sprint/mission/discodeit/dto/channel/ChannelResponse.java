@@ -1,16 +1,22 @@
 package com.sprint.mission.discodeit.dto.channel;
 
+import com.sprint.mission.discodeit.dto.user.UserResponse;
+import com.sprint.mission.discodeit.entity.Channel.ChannelType;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
 public record ChannelResponse(
     UUID id,
+    ChannelType type,
     String name,
     String description,
-    boolean isPrivate,
-    Instant lastMessageAt,
-    List<UUID> participants
+    List<UserResponse> participants,
+    Instant lastMessageAt
 ) {
 
+  public interface LastMessageAt {
+    UUID getChannelId();
+    Instant getLastMessageAt();
+  }
 }

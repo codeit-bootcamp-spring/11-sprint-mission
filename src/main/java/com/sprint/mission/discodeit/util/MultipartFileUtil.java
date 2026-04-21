@@ -15,10 +15,10 @@ public class MultipartFileUtil {
     }
     try {
       return Optional.of(new BinaryContentCreateRequest(
-          file.getBytes(),
           file.getOriginalFilename(),
+          file.getSize(),
           file.getContentType(),
-          file.getSize()
+          file.getBytes()
       ));
     } catch (IOException e) {
       throw new RuntimeException(e);

@@ -2,10 +2,10 @@ package com.sprint.mission.discodeit.controller.api;
 
 import com.sprint.mission.discodeit.controller.api.examples.BinaryContentExamples;
 import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentResponse;
-import com.sprint.mission.discodeit.dto.common.RestResponse;
 import com.sprint.mission.discodeit.exception.ErrorResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -27,18 +27,17 @@ public interface BinaryContentApi {
           responseCode = "200",
           description = "Binary content retrieved successfully",
           content = @Content(mediaType = "application/json",
-              schema = @Schema(implementation = BinaryContentResponse.class),
-              examples = @ExampleObject(value = BinaryContentExamples.FIND_BY_ID_200))
+              schema = @Schema(implementation = BinaryContentResponse.class))
       ),
       @ApiResponse(
           responseCode = "404",
           description = "Binary content not found",
           content = @Content(mediaType = "application/json",
               schema = @Schema(implementation = ErrorResponse.class),
-              examples = @ExampleObject(name = "BINARY_CONTENT_001", value = BinaryContentExamples.ERROR_404_BINARY_CONTENT_001))
+              examples = @ExampleObject(value = BinaryContentExamples.ERROR_404_BINARY_CONTENT_001))
       )
   })
-  ResponseEntity<RestResponse<BinaryContentResponse>> findById(
+  ResponseEntity<BinaryContentResponse> findById(
       @Parameter(description = "Binary content ID") @PathVariable UUID binaryContentId
   );
 
@@ -48,11 +47,10 @@ public interface BinaryContentApi {
           responseCode = "200",
           description = "Binary contents retrieved successfully",
           content = @Content(mediaType = "application/json",
-              schema = @Schema(implementation = BinaryContentResponse.class),
-              examples = @ExampleObject(value = BinaryContentExamples.FIND_ALL_BY_IDS_200))
+              array = @ArraySchema(schema = @Schema(implementation = BinaryContentResponse.class)))
       )
   })
-  ResponseEntity<RestResponse<List<BinaryContentResponse>>> findAllByIdIn(
+  ResponseEntity<List<BinaryContentResponse>> findAllByIdIn(
       @Parameter(description = "Binary content IDs") @RequestParam List<UUID> binaryContentIds
   );
 }

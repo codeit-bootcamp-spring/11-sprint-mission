@@ -1,36 +1,58 @@
 package com.sprint.mission.discodeit.entity;
 
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import org.hibernate.annotations.BatchSize;
 
+@NoArgsConstructor
 @Getter
-public class Message extends BaseEntity {
+@Entity
+@Table(name = "messages")
+public class Message extends BaseUpdatableEntity {
 
+  @Column(columnDefinition = "text")
   private String content;
-  private final UUID senderId;
-  private final UUID channelId;
-  private List<UUID> attachmentIds;
 
-  public Message(String content, UUID senderId, UUID channelId, List<UUID> attachmentIds) {
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "channel_id", nullable = false, updatable = false)
+  private Channel channel;
+
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "author_id")
+  private User author;
+
+  @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+  @JoinTable(
+      name = "message_attachments",
+      joinColumns = @JoinColumn(name = "message_id"),
+      inverseJoinColumns = @JoinColumn(name = "attachment_id")
+  )
+  @BatchSize(size = 100)
+  private List<BinaryContent> attachments;
+
+  public Message(String content, Channel channel, User author, List<BinaryContent> attachments) {
     this.content = content;
-    this.senderId = senderId;
-    this.channelId = channelId;
-    this.attachmentIds = new ArrayList<>(attachmentIds);
+    this.channel = channel;
+    this.author = author;
+    this.attachments = new ArrayList<>(attachments);
   }
 
   public void updateContent(String content) {
     this.content = content;
-    this.setUpdatedAt();
   }
 
   public void replaceAttachments(List<BinaryContent> attachments) {
-    this.attachmentIds = new ArrayList<>(
-        attachments.stream()
-            .map(BinaryContent::getId)
-            .toList()
-    );
-    this.setUpdatedAt();
+    this.attachments = new ArrayList<>(attachments);
   }
 }

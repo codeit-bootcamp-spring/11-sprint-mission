@@ -7,10 +7,12 @@ import static com.sprint.mission.discodeit.exception.ApiException.ERROR.USER_NOT
 
 import com.sprint.mission.discodeit.dto.readstatus.ReadStatusCreateRequest;
 import com.sprint.mission.discodeit.dto.readstatus.ReadStatusResponse;
+import com.sprint.mission.discodeit.dto.readstatus.ReadStatusUpdateRequest;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.exception.ApiException;
+import com.sprint.mission.discodeit.mapper.ReadStatusMapper;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
@@ -20,8 +22,10 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
+@Transactional(readOnly = true)
 @RequiredArgsConstructor
 @Service
 public class BasicReadStatusService implements ReadStatusService {
@@ -29,7 +33,9 @@ public class BasicReadStatusService implements ReadStatusService {
   private final ReadStatusRepository readStatusRepository;
   private final UserRepository userRepository;
   private final ChannelRepository channelRepository;
+  private final ReadStatusMapper mapper;
 
+  @Transactional
   @Override
   public ReadStatusResponse createReadStatus(ReadStatusCreateRequest readStatusCreateRequest) {
     User user = this.userRepository.findById(readStatusCreateRequest.userId())
@@ -37,43 +43,45 @@ public class BasicReadStatusService implements ReadStatusService {
     Channel channel = this.channelRepository.findById(readStatusCreateRequest.channelId())
         .orElseThrow(() -> new ApiException(CHANNEL_NOT_FOUND));
 
-    if (this.readStatusRepository.existByUserIdAndChannelId(user.getId(), channel.getId())) {
+    if (this.readStatusRepository.existsByUserAndChannel(user, channel)) {
       throw new ApiException(READ_STATUS_DUPLICATED);
     }
 
-    ReadStatus readStatus = new ReadStatus(user.getId(), channel.getId());
+    ReadStatus readStatus = new ReadStatus(user, channel, readStatusCreateRequest.lastReadAt());
     this.readStatusRepository.save(readStatus);
 
     log.info("read status has been created successfully. ✅ [ID: {}]", readStatus.getId());
     log.info("-> {user: {}, channel: {}}", user.getId(), channel.getId());
-    return this.toResponse(readStatus);
+    return this.mapper.toResponse(readStatus);
   }
 
   @Override
   public ReadStatusResponse findById(UUID id) {
-    return this.toResponse(this.readStatusRepository.findById(id)
+    return this.mapper.toResponse(this.readStatusRepository.findById(id)
         .orElseThrow(() -> new ApiException(READ_STATUS_NOT_FOUND)));
   }
 
   @Override
   public List<ReadStatusResponse> findAllByUserId(UUID userId) {
     return this.readStatusRepository.findAllByUserId(userId).stream()
-        .map(this::toResponse)
+        .map(this.mapper::toResponse)
         .toList();
   }
 
+  @Transactional
   @Override
-  public ReadStatusResponse updateReadStatus(UUID id) {
+  public ReadStatusResponse updateReadStatus(UUID id,
+      ReadStatusUpdateRequest readStatusUpdateRequest) {
     ReadStatus readStatus = this.readStatusRepository.findById(id)
         .orElseThrow(() -> new ApiException(READ_STATUS_NOT_FOUND));
 
-    readStatus.setUpdatedAt();
-    this.readStatusRepository.save(readStatus);
+    readStatus.updateLastReadAt(readStatusUpdateRequest.newLastReadAt());
 
     log.info("read status has been updated successfully. ✅ [ID: {}]", readStatus.getId());
-    return this.toResponse(readStatus);
+    return this.mapper.toResponse(readStatus);
   }
 
+  @Transactional
   @Override
   public void deleteReadStatus(UUID id) {
     ReadStatus readStatus = this.readStatusRepository.findById(id)
@@ -82,14 +90,5 @@ public class BasicReadStatusService implements ReadStatusService {
     this.readStatusRepository.delete(readStatus);
 
     log.info("read status has been deleted successfully. ✅ [ID: {}]", readStatus.getId());
-  }
-
-  private ReadStatusResponse toResponse(ReadStatus readStatus) {
-    return new ReadStatusResponse(
-        readStatus.getId(),
-        readStatus.getUserId(),
-        readStatus.getChannelId(),
-        readStatus.getUpdatedAt()
-    );
   }
 }

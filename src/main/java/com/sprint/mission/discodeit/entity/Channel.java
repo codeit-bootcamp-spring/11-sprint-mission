@@ -1,31 +1,49 @@
 package com.sprint.mission.discodeit.entity;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Table;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
+@NoArgsConstructor
 @Getter
-public class Channel extends BaseEntity {
+@Entity
+@Table(name = "channels")
+public class Channel extends BaseUpdatableEntity {
 
+  @Enumerated(EnumType.STRING)
+  @Column(length = 10, nullable = false, updatable = false)
+  private ChannelType type = ChannelType.PRIVATE;
+
+  public enum ChannelType {
+    PUBLIC,
+    PRIVATE
+  }
+
+  @Column(length = 100)
   private String name;
+
+  @Column(length = 500)
   private String description;
-  private final boolean isPrivate;
 
   public Channel(String name, String description) {
     this.name = name;
     this.description = description;
-    this.isPrivate = false;
+    this.type = ChannelType.PUBLIC;
   }
 
-  public Channel() {
-    this.isPrivate = true;
+  public boolean isPrivate() {
+    return this.type == ChannelType.PRIVATE;
   }
 
   public void updateName(String name) {
     this.name = name;
-    this.setUpdatedAt();
   }
 
   public void updateDescription(String description) {
     this.description = description;
-    this.setUpdatedAt();
   }
 }

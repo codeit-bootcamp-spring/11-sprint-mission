@@ -1,8 +1,7 @@
 package com.sprint.mission.discodeit.controller.api;
 
 import com.sprint.mission.discodeit.controller.api.examples.AuthExamples;
-import com.sprint.mission.discodeit.dto.auth.AuthLoginRequest;
-import com.sprint.mission.discodeit.dto.common.RestResponse;
+import com.sprint.mission.discodeit.dto.auth.LoginRequest;
 import com.sprint.mission.discodeit.dto.user.UserResponse;
 import com.sprint.mission.discodeit.exception.ErrorResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -23,44 +22,32 @@ public interface AuthApi {
       @ApiResponse(
           responseCode = "200",
           description = "Login successful",
-          content = @Content(
-              mediaType = "application/json",
-              schema = @Schema(implementation = UserResponse.class),
-              examples = @ExampleObject(value = AuthExamples.LOGIN_200)
-          )
+          content = @Content(mediaType = "application/json",
+              schema = @Schema(implementation = UserResponse.class))
       ),
       @ApiResponse(
           responseCode = "400",
-          description = "Missing required fields",
-          content = @Content(
-              mediaType = "application/json",
+          description = "Validation error (fields contain details)",
+          content = @Content(mediaType = "application/json",
               schema = @Schema(implementation = ErrorResponse.class),
-              examples = {
-                  @ExampleObject(name = "AUTH_001", description = "Missing username", value = AuthExamples.ERROR_400_AUTH_001),
-                  @ExampleObject(name = "AUTH_002", description = "Missing password", value = AuthExamples.ERROR_400_AUTH_002)
-              }
-          )
+              examples = @ExampleObject(value = AuthExamples.ERROR_400))
       ),
       @ApiResponse(
           responseCode = "401",
           description = "Invalid credentials",
-          content = @Content(
-              mediaType = "application/json",
+          content = @Content(mediaType = "application/json",
               schema = @Schema(implementation = ErrorResponse.class),
-              examples = @ExampleObject(name = "AUTH_003", value = AuthExamples.ERROR_401_AUTH_003)
-          )
+              examples = @ExampleObject(value = AuthExamples.ERROR_401_AUTH_001))
       ),
       @ApiResponse(
           responseCode = "404",
           description = "User not found",
-          content = @Content(
-              mediaType = "application/json",
+          content = @Content(mediaType = "application/json",
               schema = @Schema(implementation = ErrorResponse.class),
-              examples = @ExampleObject(name = "USER_011", value = AuthExamples.ERROR_404_USER_011)
-          )
+              examples = @ExampleObject(value = AuthExamples.ERROR_404_USER_003))
       )
   })
-  ResponseEntity<RestResponse<UserResponse>> login(
-      @RequestBody(description = "Login request body", required = true) AuthLoginRequest authLoginRequest
+  ResponseEntity<UserResponse> login(
+      @RequestBody(description = "Login request body", required = true) LoginRequest loginRequest
   );
 }

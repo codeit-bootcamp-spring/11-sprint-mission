@@ -6,44 +6,53 @@ import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentCreateRequest
 import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentResponse;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.exception.ApiException;
+import com.sprint.mission.discodeit.mapper.BinaryContentMapper;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.service.BinaryContentService;
+import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
+@Transactional(readOnly = true)
 @RequiredArgsConstructor
 @Service
 public class BasicBinaryContentService implements BinaryContentService {
 
   private final BinaryContentRepository binaryContentRepository;
+  private final BinaryContentMapper mapper;
+  private final BinaryContentStorage binaryContentStorage;
 
+  @Transactional
   @Override
   public BinaryContentResponse createBinaryContent(BinaryContentCreateRequest req) {
-    BinaryContent binaryContent = new BinaryContent(req.data(), req.fileName(), req.contentType(),
-        req.size());
+    BinaryContent binaryContent = new BinaryContent(req.fileName(), req.size(), req.contentType());
     this.binaryContentRepository.save(binaryContent);
 
+    this.binaryContentStorage.put(binaryContent.getId(), req.bytes());
+
     log.info("binary content has been created successfully. ✅ [ID: {}]", binaryContent.getId());
-    return this.toResponse(binaryContent);
+    return this.mapper.toResponse(binaryContent);
   }
 
   @Override
   public BinaryContentResponse findById(UUID id) {
-    return this.toResponse(this.binaryContentRepository.findById(id)
+    return this.mapper.toResponse(this.binaryContentRepository.findById(id)
         .orElseThrow(() -> new ApiException(BINARY_CONTENT_NOT_FOUND)));
   }
 
   @Override
   public List<BinaryContentResponse> findAllByIdIn(List<UUID> ids) {
     return this.binaryContentRepository.findAllByIdIn(ids).stream()
-        .map(this::toResponse)
+        .map(this.mapper::toResponse)
         .toList();
   }
 
+  @Transactional
   @Override
   public void deleteBinaryContent(UUID id) {
     BinaryContent binaryContent = this.binaryContentRepository.findById(id)
@@ -52,14 +61,5 @@ public class BasicBinaryContentService implements BinaryContentService {
     this.binaryContentRepository.delete(binaryContent);
 
     log.info("binary content has been deleted successfully. ✅ [ID: {}]", binaryContent.getId());
-  }
-
-  private BinaryContentResponse toResponse(BinaryContent binaryContent) {
-    return new BinaryContentResponse(
-        binaryContent.getData(),
-        binaryContent.getFileName(),
-        binaryContent.getContentType(),
-        binaryContent.getSize()
-    );
   }
 }

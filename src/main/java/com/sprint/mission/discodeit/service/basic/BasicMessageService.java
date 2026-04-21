@@ -2,11 +2,11 @@ package com.sprint.mission.discodeit.service.basic;
 
 import static com.sprint.mission.discodeit.exception.ApiException.ERROR.CHANNEL_NOT_FOUND;
 import static com.sprint.mission.discodeit.exception.ApiException.ERROR.MESSAGE_CHANNEL_ACCESS_REQUIRED;
-import static com.sprint.mission.discodeit.exception.ApiException.ERROR.MESSAGE_CONTENT_REQUIRED;
 import static com.sprint.mission.discodeit.exception.ApiException.ERROR.MESSAGE_NOT_FOUND;
 import static com.sprint.mission.discodeit.exception.ApiException.ERROR.USER_NOT_FOUND;
 
 import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentCreateRequest;
+import com.sprint.mission.discodeit.dto.common.PageResponse;
 import com.sprint.mission.discodeit.dto.message.MessageCreateRequest;
 import com.sprint.mission.discodeit.dto.message.MessageResponse;
 import com.sprint.mission.discodeit.dto.message.MessageUpdateRequest;
@@ -15,20 +15,27 @@ import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.exception.ApiException;
-import com.sprint.mission.discodeit.repository.BinaryContentRepository;
+import com.sprint.mission.discodeit.mapper.MessageMapper;
+import com.sprint.mission.discodeit.mapper.PageMapper;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.MessageService;
+import com.sprint.mission.discodeit.storage.BinaryContentStorage;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
+@Transactional(readOnly = true)
 @RequiredArgsConstructor
 @Service
 public class BasicMessageService implements MessageService {
@@ -37,23 +44,20 @@ public class BasicMessageService implements MessageService {
   private final UserRepository userRepository;
   private final ChannelRepository channelRepository;
   private final ReadStatusRepository readStatusRepository;
-  private final BinaryContentRepository binaryContentRepository;
+  private final MessageMapper mapper;
+  private final PageMapper pageMapper;
+  private final BinaryContentStorage binaryContentStorage;
 
+  @Transactional
   @Override
   public MessageResponse createMessage(MessageCreateRequest messageCreateRequest,
       List<BinaryContentCreateRequest> binaryContentCreateRequests) {
-    if (messageCreateRequest.content() == null || messageCreateRequest.content().isBlank()) {
-      throw new ApiException(MESSAGE_CONTENT_REQUIRED);
-    }
-
-    User sender = this.userRepository.findById(messageCreateRequest.senderId())
+    User author = this.userRepository.findById(messageCreateRequest.authorId())
         .orElseThrow(() -> new ApiException(USER_NOT_FOUND));
     Channel channel = this.channelRepository.findById(messageCreateRequest.channelId())
         .orElseThrow(() -> new ApiException(CHANNEL_NOT_FOUND));
 
-    if (channel.isPrivate() && !this.readStatusRepository.existByUserIdAndChannelId(
-        sender.getId(),
-        channel.getId())) {
+    if (channel.isPrivate() && !this.readStatusRepository.existsByUserAndChannel(author, channel)) {
       throw new ApiException(MESSAGE_CHANNEL_ACCESS_REQUIRED);
     }
 
@@ -61,9 +65,9 @@ public class BasicMessageService implements MessageService {
     if (binaryContentCreateRequests != null && !binaryContentCreateRequests.isEmpty()) {
       attachments = binaryContentCreateRequests.stream()
           .map(req -> {
-            BinaryContent attachment = new BinaryContent(req.data(), req.fileName(),
-                req.contentType(), req.size());
-            this.binaryContentRepository.save(attachment);
+            BinaryContent attachment = new BinaryContent(req.fileName(), req.size(),
+                req.contentType());
+            this.binaryContentStorage.put(attachment.getId(), req.bytes());
             return attachment;
           })
           .toList();
@@ -71,27 +75,35 @@ public class BasicMessageService implements MessageService {
 
     Message message = new Message(
         messageCreateRequest.content(),
-        sender.getId(),
-        channel.getId(),
-        attachments.stream()
-            .map(BinaryContent::getId)
-            .toList()
+        channel,
+        author,
+        attachments
     );
     this.messageRepository.save(message);
 
     log.info("Message has been created successfully. ✅ [ID: {}]", message.getId());
     log.info("-> {channel: {}, sender: {}, content: {}}",
-        channel.isPrivate() ? '-' : channel.getName(), sender.getNickname(), message.getContent());
-    return this.toResponse(message);
+        channel.isPrivate() ? '-' : channel.getName(), author.getUsername(), message.getContent());
+    return this.mapper.toResponse(message);
   }
 
   @Override
-  public List<MessageResponse> findAllByChannelId(UUID channelId) {
-    return this.messageRepository.findAllByChannelId(channelId).stream()
-        .map(this::toResponse)
-        .toList();
+  public PageResponse<MessageResponse> findAllByChannelId(UUID channelId, Instant cursor,
+      Pageable pageable) {
+    if (!this.channelRepository.existsById(channelId)) {
+      throw new ApiException(CHANNEL_NOT_FOUND);
+    }
+
+    Slice<MessageResponse> slice = (cursor == null
+        ? this.messageRepository.findAllByChannelIdOrderByCreatedAtDesc(
+        channelId, pageable)
+        : this.messageRepository.findAllByChannelIdAndCreatedAtBeforeOrderByCreatedAtDesc(channelId,
+            cursor, pageable))
+        .map(this.mapper::toResponse);
+    return this.pageMapper.fromSlice(slice, MessageResponse::createdAt);
   }
 
+  @Transactional
   @Override
   public MessageResponse updateMessage(UUID id, MessageUpdateRequest messageUpdateRequest,
       List<BinaryContentCreateRequest> binaryContentCreateRequests) {
@@ -99,19 +111,19 @@ public class BasicMessageService implements MessageService {
         .orElseThrow(() -> new ApiException(MESSAGE_NOT_FOUND));
 
     if (messageUpdateRequest != null) {
-      if (messageUpdateRequest.content() != null && !messageUpdateRequest.content().isBlank()) {
-        message.updateContent(messageUpdateRequest.content());
+      if (messageUpdateRequest.newContent() != null && !messageUpdateRequest.newContent()
+          .isBlank()) {
+        message.updateContent(messageUpdateRequest.newContent());
       }
     }
 
     List<BinaryContent> newAttachments = new ArrayList<>();
     if (binaryContentCreateRequests != null && !binaryContentCreateRequests.isEmpty()) {
-      this.binaryContentRepository.deleteAllByIdIn(message.getAttachmentIds());
       newAttachments = binaryContentCreateRequests.stream()
           .map(req -> {
-            BinaryContent attachment = new BinaryContent(req.data(), req.fileName(),
-                req.contentType(), req.size());
-            this.binaryContentRepository.save(attachment);
+            BinaryContent attachment = new BinaryContent(req.fileName(), req.size(),
+                req.contentType());
+            this.binaryContentStorage.put(attachment.getId(), req.bytes());
             return attachment;
           })
           .toList();
@@ -120,32 +132,18 @@ public class BasicMessageService implements MessageService {
       message.replaceAttachments(newAttachments);
     }
 
-    this.messageRepository.save(message);
-
     log.info("Message has been updated successfully. ✅ [ID: {}]", id);
-    return this.toResponse(message);
+    return this.mapper.toResponse(message);
   }
 
+  @Transactional
   @Override
   public void deleteMessage(UUID id) {
     Message message = this.messageRepository.findById(id)
         .orElseThrow(() -> new ApiException(MESSAGE_NOT_FOUND));
 
-    this.binaryContentRepository.deleteAllByIdIn(message.getAttachmentIds());
     this.messageRepository.delete(message);
 
     log.info("Message has been deleted successfully. ✅ [ID: {}]", id);
-  }
-
-  private MessageResponse toResponse(Message message) {
-    return new MessageResponse(
-        message.getId(),
-        message.getCreatedAt(),
-        message.getUpdatedAt(),
-        message.getContent(),
-        message.getSenderId(),
-        message.getChannelId(),
-        message.getAttachmentIds()
-    );
   }
 }

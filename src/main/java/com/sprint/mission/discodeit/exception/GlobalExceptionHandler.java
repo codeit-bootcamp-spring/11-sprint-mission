@@ -1,10 +1,13 @@
 package com.sprint.mission.discodeit.exception;
 
 import static com.sprint.mission.discodeit.exception.ApiException.ERROR.COMMON_UNEXPECTED_ERROR;
+import static com.sprint.mission.discodeit.exception.ApiException.ERROR.COMMON_VALIDATION_ERROR;
 
-import com.sprint.mission.discodeit.dto.common.RestResponse;
+import java.util.List;
+import java.util.stream.Collectors;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -13,17 +16,27 @@ import org.springframework.web.bind.annotation.ResponseBody;
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
+  @ExceptionHandler(MethodArgumentNotValidException.class)
+  public ResponseEntity<ErrorResponse> handleValidationException(MethodArgumentNotValidException e) {
+    List<String> fields = e.getBindingResult().getFieldErrors().stream()
+        .map(fe -> fe.getField() + ": " + fe.getDefaultMessage())
+        .collect(Collectors.toList());
+    return ResponseEntity
+        .status(COMMON_VALIDATION_ERROR.getHttpStatus())
+        .body(ErrorResponse.from(COMMON_VALIDATION_ERROR, fields));
+  }
+
   @ExceptionHandler(ApiException.class)
-  public ResponseEntity<RestResponse<Void>> handleDiscodeitException(ApiException e) {
+  public ResponseEntity<ErrorResponse> handleDiscodeitException(ApiException e) {
     return ResponseEntity
         .status(e.getError().getHttpStatus())
-        .body(RestResponse.error(ErrorResponse.from(e.getError())));
+        .body(ErrorResponse.from(e.getError()));
   }
 
   @ExceptionHandler(Exception.class)
-  public ResponseEntity<RestResponse<Void>> handleException(Exception e) {
+  public ResponseEntity<ErrorResponse> handleException(Exception e) {
     return ResponseEntity
         .status(HttpStatus.INTERNAL_SERVER_ERROR)
-        .body(RestResponse.error(ErrorResponse.from(COMMON_UNEXPECTED_ERROR)));
+        .body(ErrorResponse.from(COMMON_UNEXPECTED_ERROR));
   }
 }

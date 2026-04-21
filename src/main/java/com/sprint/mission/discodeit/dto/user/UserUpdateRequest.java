@@ -1,11 +1,12 @@
 package com.sprint.mission.discodeit.dto.user;
 
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Size;
+
 public record UserUpdateRequest(
-    String nickname,
-    String username,
-    String email,
-    String password,
-    String phoneNumber
+    String newUsername,
+    @Email String newEmail,
+    @Size(min = 8) String newPassword
 ) {
 
 }

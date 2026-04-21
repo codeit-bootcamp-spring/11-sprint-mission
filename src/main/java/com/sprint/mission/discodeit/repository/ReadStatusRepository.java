@@ -1,30 +1,27 @@
 package com.sprint.mission.discodeit.repository;
 
+import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.ReadStatus;
-
+import com.sprint.mission.discodeit.entity.User;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface ReadStatusRepository {
+public interface ReadStatusRepository extends JpaRepository<ReadStatus, UUID> {
 
-  void save(ReadStatus readStatus);
-
-  Optional<ReadStatus> findById(UUID id);
-
-  List<ReadStatus> findAll();
-
+  @EntityGraph(attributePaths = {"channel"})
   List<ReadStatus> findAllByUserId(UUID userId);
 
-  List<ReadStatus> findAllByChannelId(UUID channelId);
+  @EntityGraph(attributePaths = {"user", "user.profile", "user.status"})
+  List<ReadStatus> findAllByChannel(Channel channel);
 
-  List<ReadStatus> findAllByChannelIdIn(List<UUID> channelIds);
+  @EntityGraph(attributePaths = {"user", "user.profile", "user.status"})
+  List<ReadStatus> findAllByChannelIn(List<Channel> channels);
 
-  boolean existByUserIdAndChannelId(UUID userId, UUID channelId);
+  boolean existsByUserAndChannel(User user, Channel channel);
 
-  void delete(ReadStatus readStatus);
+  void deleteAllByChannel(Channel channel);
 
-  void deleteAllByUserId(UUID userId);
-
-  void deleteAllByChannelId(UUID channelId);
+  void deleteAllByUser(User user);
 }
