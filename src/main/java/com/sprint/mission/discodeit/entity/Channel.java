@@ -1,47 +1,56 @@
 package com.sprint.mission.discodeit.entity;
 
+import com.sprint.mission.discodeit.entity.base.BaseUpdatableEntity;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
+import java.util.ArrayList;
+import java.util.List;
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import org.hibernate.annotations.BatchSize;
 
-import java.io.Serializable;
-import java.time.Instant;
-import java.util.UUID;
-
+@Entity
+@Table(name = "channels")
 @Getter
-public class Channel implements Serializable {
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class Channel extends BaseUpdatableEntity {
 
-  private UUID id;
-  private Instant createdAt;
-  private Instant updatedAt;
-  private String name;
-  private String description;
-  private static final long serialVersionUID = 1L;
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false, length = 10)
   private ChannelType type;
 
+  @Column(length = 100)
+  private String name;
+
+  @Column(length = 500)
+  private String description;
+
+  @BatchSize(size = 100)
+  @OneToMany(mappedBy = "channel", cascade = CascadeType.ALL, orphanRemoval = true)
+  private List<Message> messages = new ArrayList<>();
+
+  @BatchSize(size = 100)
+  @OneToMany(mappedBy = "channel", cascade = CascadeType.ALL, orphanRemoval = true)
+  private List<ReadStatus> readStatuses = new ArrayList<>();
+
   public Channel(ChannelType type, String name, String description) {
-    this.id = UUID.randomUUID();
-    this.createdAt = Instant.now();
+    this.type = type;
     this.name = name;
     this.description = description;
-    this.type = type;
   }
 
-  public Instant update(String name, String description) {
+  public void update(String name, String description) {
     if (name != null) {
       this.name = name;
     }
     if (description != null) {
       this.description = description;
     }
-    return this.updatedAt = Instant.now();
-  }
-
-  @Override
-  public String toString() {
-    return "Channel{" +
-        "id: " + id +
-        ", username: " + name +
-        ", createdAt: " + createdAt +
-        ", updatedAt: " + updatedAt +
-        "}";
   }
 }

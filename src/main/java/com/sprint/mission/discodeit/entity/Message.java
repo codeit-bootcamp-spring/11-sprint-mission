@@ -1,37 +1,58 @@
 package com.sprint.mission.discodeit.entity;
 
-import lombok.Getter;
-
-import java.io.Serializable;
-import java.time.Instant;
+import com.sprint.mission.discodeit.entity.base.BaseUpdatableEntity;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import org.hibernate.annotations.BatchSize;
 
+@Entity
+@Table(name = "messages")
 @Getter
-public class Message implements Serializable {
-    private UUID id;
-    private UUID authorId;
-    private UUID channelId;
-    private List<UUID> attachmentIds;
-    private Instant createdAt;
-    private Instant updatedAt;
-    private String content;
-    private static final long serialVersionUID = 1L;
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class Message extends BaseUpdatableEntity {
 
-    public Message(String content, UUID userId, UUID channelId) {
-        this.id = UUID.randomUUID();
-        this.createdAt = Instant.now();
-        this.content = content;
-        this.authorId = userId;
-        this.channelId = channelId;
-    }
+  @BatchSize(size = 100)
+  @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+  @JoinTable(name = "message_attachments",
+      joinColumns = @JoinColumn(name = "message_id"),
+      inverseJoinColumns = @JoinColumn(name = "attachment_id"))
+  private List<BinaryContent> attachments = new ArrayList<>();
 
-    public void update(String content) {
-       this.content = content;
-       this.updatedAt = Instant.now();
-    }
+  @Column(columnDefinition = "TEXT")
+  private String content;
 
-    public void setAttachmentIds(List<UUID> attachmentIds) {
-        this.attachmentIds = attachmentIds;
-    }
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "author_id", referencedColumnName = "id")
+  private User author;
+
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "channel_id", referencedColumnName = "id", nullable = false)
+  private Channel channel;
+
+
+  public Message(String content, User author, Channel channel) {
+    this.content = content;
+    this.author = author;
+    this.channel = channel;
+  }
+
+  public void update(String content) {
+    this.content = content;
+  }
+
+  public void setAttachments(List<BinaryContent> attachments) {
+    this.attachments = attachments;
+  }
 }

@@ -39,3 +39,7 @@ out/
 *.ser
 
 .postman
+
+.DS_Store
+
+uploads/

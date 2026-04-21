@@ -9,10 +9,16 @@ import java.util.List;
 import java.util.UUID;
 
 public interface ChannelService {
-    ChannelDto createPublic(PublicChannelCreateRequest request);
-    ChannelDto createPrivate(PrivateChannelCreateRequest request);
-    ChannelDto findById(UUID id);
-    List<ChannelDto> findAllByUserId(UUID userId);
-    void update(UUID id, ChannelUpdateRequest request);
-    void delete(UUID id);
+
+  ChannelDto createPublic(PublicChannelCreateRequest request);
+
+  ChannelDto createPrivate(PrivateChannelCreateRequest request);
+
+  ChannelDto findById(UUID id);
+
+  List<ChannelDto> findAllByUserId(UUID userId);
+
+  ChannelDto update(UUID id, ChannelUpdateRequest request);
+
+  void delete(UUID id);
 }

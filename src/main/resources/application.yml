@@ -1,8 +1,23 @@
 spring:
   application:
     name: discodeit
+  datasource:
+    url: jdbc:postgresql://localhost:5432/discodeit
+    username: postgres
+    password: mypassword
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        highlight_sql: true
+    open-in-view: false
 
 discodeit:
-  repository:
-    type: file
-    file-directory: .discodeit
+  storage:
+    type: local
+    local:
+      root-path: ./uploads
