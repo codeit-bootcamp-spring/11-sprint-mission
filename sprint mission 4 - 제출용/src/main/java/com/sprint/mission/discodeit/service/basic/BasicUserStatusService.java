@@ -1,10 +1,13 @@
 package com.sprint.mission.discodeit.service.basic;
 
+import com.sprint.mission.discodeit.dto.userStatus.UserStatusDto;
+import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.entity.UserStatus;
 import com.sprint.mission.discodeit.dto.userStatus.UserStatusCreateRequest;
 import com.sprint.mission.discodeit.dto.userStatus.UserStatusUpdateRequest;
 import com.sprint.mission.discodeit.exception.DiscodeitDuplicateException;
 import com.sprint.mission.discodeit.exception.DiscodeitNotFoundException;
+import com.sprint.mission.discodeit.mapper.UserStatusMapper;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.repository.UserStatusRepository;
 import com.sprint.mission.discodeit.service.UserStatusService;
@@ -14,53 +17,66 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class BasicUserStatusService implements UserStatusService {
 
   private final UserStatusRepository userStatusRepository;
   private final UserRepository userRepository;
+  private final UserStatusMapper userStatusMapper;
 
   @Override
-  public UserStatus create(UserStatusCreateRequest request) {
-    if (userRepository.read(request.getUserId()) == null) {
-      throw DiscodeitNotFoundException.user(request.getUserId());
-    }
-    // 유저는 하나의 상태만 가질 수 있음.
-    if (userStatusRepository.readByUserId(request.getUserId()) != null) {
+  @Transactional
+  public UserStatusDto create(UserStatusCreateRequest request) {
+    User user = userRepository.findById(request.getUserId())
+        .orElseThrow(() -> DiscodeitNotFoundException.user(request.getUserId()));
+
+    if (userStatusRepository.findByUser_Id(request.getUserId()).isPresent()) {
       throw DiscodeitDuplicateException.userStatus(request.getUserId());
     }
-    UserStatus userStatus = new UserStatus(request.getUserId(), Instant.now());
-    return userStatusRepository.create(userStatus);
+
+    UserStatus userStatus = new UserStatus(user, Instant.now());
+    UserStatus savedUserStatus = userStatusRepository.save(userStatus);
+
+    return userStatusMapper.toDto(savedUserStatus);
+  }
+
+  // userStatus가 아니라 userId 기반으로 찾기
+  @Override
+  @Transactional(readOnly = true)
+  public UserStatusDto findByUserId(UUID userId) {
+    UserStatus userStatus = userStatusRepository.findByUser_Id(userId)
+        .orElseThrow(() -> DiscodeitNotFoundException.userStatus(userId));
+
+    return userStatusMapper.toDto(userStatus);
   }
 
   @Override
-  public UserStatus read(UUID id) {
-    UserStatus userStatus = userStatusRepository.readByUserId(id);
-    if (userStatus == null) {
-      throw DiscodeitNotFoundException.userStatus(id);
-    }
-    return userStatus;
+  @Transactional(readOnly = true)
+  public List<UserStatusDto> findAll() {
+    return userStatusRepository.findAll().stream()
+        .map(userStatusMapper::toDto)
+        .toList();
   }
 
   @Override
-  public List<UserStatus> readAll() {
-    return userStatusRepository.readAll();
-  }
-
-  @Override
+  @Transactional
   public void update(UserStatusUpdateRequest request) {
-    UserStatus userStatus = userStatusRepository.readByUserId(request.getUserId());
-    if (userStatus == null) {
-      throw DiscodeitNotFoundException.userStatus(request.getUserId());
-    }
-    userStatus.updateLastOnlineAt(request.getNewLastActiveAt());
-    userStatusRepository.update(request.getUserId(), request.getNewLastActiveAt());
+    UserStatus userStatus = userStatusRepository.findByUser_Id(request.getUserId())
+        .orElseThrow(() -> DiscodeitNotFoundException.userStatus(request.getUserId()));
+
+    userStatus.updateUserStatus(request.getNewLastActiveAt());
   }
 
   @Override
-  public void delete(UUID id) {
-    userStatusRepository.delete(id);
+  @Transactional
+  public void delete(UUID userId) {
+    UserStatus userStatus = userStatusRepository.findByUser_Id(userId)
+        .orElseThrow(() -> DiscodeitNotFoundException.userStatus(userId));
+
+    userStatusRepository.delete(userStatus);
   }
 }

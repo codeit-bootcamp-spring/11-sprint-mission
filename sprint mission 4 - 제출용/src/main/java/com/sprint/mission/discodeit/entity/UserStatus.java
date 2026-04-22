@@ -1,29 +1,42 @@
 package com.sprint.mission.discodeit.entity;
 
+import com.sprint.mission.discodeit.entity.base.BaseUpdatableEntity;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
 import lombok.Getter;
-
-import java.io.Serializable;
 import java.time.Instant;
-import java.util.UUID;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Getter
-public class UserStatus implements Serializable {
+@Setter
+@NoArgsConstructor
+@Entity
+@Table(name = "user_statuses")
 
-  private static final long serialVersionUID = 1L;
-  private UUID userId;
-  private Instant lastOnlineAt;
+public class UserStatus extends BaseUpdatableEntity {
 
-  public UserStatus(UUID userId, Instant lastOnlineAt) {
-    this.userId = userId;
-    this.lastOnlineAt = lastOnlineAt;
+  @OneToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "user_id", nullable = false, unique = true)
+  private User user;
+
+  @Column(name = "last_active_at", nullable = false)
+  private Instant lastActiveAt;
+
+  public UserStatus(User user, Instant lastActiveAt) {
+    this.user = user;
+    this.lastActiveAt = lastActiveAt;
   }
 
-  public void updateLastOnlineAt(Instant lastOnlineAt) {  // 마지막 접속시간 설정하는 메소드
-    this.lastOnlineAt = lastOnlineAt;
+  public void updateUserStatus(Instant lastActiveAt) {
+    this.lastActiveAt = lastActiveAt;
   }
 
-  // 마지막 접속시간이 5분이내일시 접속 중
   public boolean isOnline() {
-    return Instant.now().minusSeconds(300).isBefore(this.lastOnlineAt);
+    return Instant.now().minusSeconds(300).isBefore(this.lastActiveAt);
   }
 }

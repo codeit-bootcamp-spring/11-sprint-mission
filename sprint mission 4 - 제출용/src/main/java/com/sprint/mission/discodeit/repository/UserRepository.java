@@ -1,31 +1,21 @@
 package com.sprint.mission.discodeit.repository;
 
 import com.sprint.mission.discodeit.entity.User;
-
-import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface UserRepository {
+public interface UserRepository extends JpaRepository<User, UUID> {
 
-  User create(User user);
+  boolean existsByUsername(String username);
 
-  User read(UUID id);
+  boolean existsByEmail(String email);
 
-  List<User> readAll();
+  Optional<User> findByUsername(String username);
 
-  void delete(UUID id);
+  Optional<User> findByEmail(String email);
 
-  User update(User user);
+  boolean existsByUsernameAndIdNot(String username, UUID id);
 
-  void restore(UUID id);
-
-  boolean existsByUserName(String userName);
-
-  boolean existsByEmail(String userEmail);
-
-  User findByUserName(String userName);
-
-  boolean existsByUserNameExcluding(String userName, UUID excludeId);
-
-  boolean existsByEmailExcluding(String userEmail, UUID excludeId);
+  boolean existsByEmailAndIdNot(String email, UUID id);
 }

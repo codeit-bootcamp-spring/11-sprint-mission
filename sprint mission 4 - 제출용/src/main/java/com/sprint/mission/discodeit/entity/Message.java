@@ -1,42 +1,52 @@
 package com.sprint.mission.discodeit.entity;
 
+import com.sprint.mission.discodeit.entity.base.BaseUpdatableEntity;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
+import java.util.List;
 import lombok.Getter;
-
-import java.io.Serializable;
-import java.util.UUID;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Getter
-public class Message extends BaseEntity implements Serializable {
+@Setter
+@NoArgsConstructor
+@Entity
+@Table(name = "messages")
+public class Message extends BaseUpdatableEntity {
 
+  @Column(name = "content")
   private String content;
-  private UUID authorId;
-  private UUID channelId;
-  private UUID messageReceiver;
-  private static final long serialVersionUID = 1L;
 
-  public Message(String content, UUID channelId, UUID authorId, UUID messageReceiver) {
-    super();
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "channel_id", nullable = false)
+  private Channel channel;
+
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "author_id")
+  private User author;
+
+  @OneToMany(fetch = FetchType.LAZY)
+  @JoinTable(
+      name = "message_attachments",
+      joinColumns = @JoinColumn(name = "message_id"),
+      inverseJoinColumns = @JoinColumn(name = "attachment_id")
+  )
+  private List<BinaryContent> attachments;
+
+  public Message(String content, Channel channel, User author) {
     this.content = content;
-    this.channelId = channelId;
-    this.authorId = authorId;
-    this.messageReceiver = messageReceiver;
+    this.channel = channel;
+    this.author = author;
   }
 
-  public void updateContent(String content) {
+  public void updateMessage(String content) {
     this.content = content;
-    updateTimestamp();
-  }
-
-  @Override
-  public String toString() {
-    return "Message ---- [" +
-        "id = " + id +
-        "] [channelId=" + channelId +
-        "] [sender='" + authorId + '\'' +
-        "], [receiver='" + messageReceiver + '\'' +
-        "], [content='" + content + "\']" +
-        " [createdAt='" + createdAt + "']" +
-        " [updatedAt='" + updatedAt + "']";
-
   }
 }

@@ -1,29 +1,39 @@
 package com.sprint.mission.discodeit.entity;
 
+import com.sprint.mission.discodeit.entity.base.BaseEntity;
 import com.sprint.mission.discodeit.exception.DiscodeitInvalidInputException;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 import lombok.Getter;
-
-import java.io.Serializable;
-import java.time.Instant;
-import java.util.UUID;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Getter
-public class BinaryContent implements Serializable {
+@Setter
+@NoArgsConstructor
+@Entity
+@Table(name = "binary_contents")
+public class BinaryContent extends BaseEntity {
 
-  private static final long serialVersionUID = 1L;
-  private UUID id;
-  private Instant createdAt;
-  private UUID userId;
-  private UUID messageId;
+  @Column(name = "file_name", nullable = false, length = 255)
   private String fileName;
-  private byte[] content;
+
+  @Column(name = "size", nullable = false)
+  private Long size;
+
+  @Column(name = "content_type", nullable = false, length = 100)
   private String contentType;
 
-  public BinaryContent(String fileName, byte[] content, String contentType) {
-    this.id = UUID.randomUUID();
-    this.createdAt = Instant.now();
+  public BinaryContent(String fileName, Long size, String contentType) {
     this.fileName = fileName;
-    this.content = content;
+    this.size = size;
+    this.contentType = contentType;
+  }
+
+  public void updateBinaryContent(String fileName, Long size, String contentType, byte[] bytes) {
+    this.fileName = fileName;
+    this.size = size;
     this.contentType = contentType;
   }
 
@@ -31,32 +41,11 @@ public class BinaryContent implements Serializable {
     if (this.fileName == null || this.fileName.isBlank()) {
       throw DiscodeitInvalidInputException.blankField("fileName");
     }
-    if (this.content == null || this.content.length == 0) {
-      throw DiscodeitInvalidInputException.blankField("content");
+    if (this.size == null || this.size <= 0) {
+      throw DiscodeitInvalidInputException.blankField("size");
     }
     if (this.contentType == null || this.contentType.isBlank()) {
       throw DiscodeitInvalidInputException.blankField("contentType");
     }
-    if (this.userId == null && this.messageId == null) {
-      throw DiscodeitInvalidInputException.blankField("userId or messageId");
-    }
-  }
-
-  // 프로필 이미지
-  public static BinaryContent forProfile(UUID userId, String fileName, byte[] content,
-      String contentType) {
-    BinaryContent binaryContent = new BinaryContent(fileName, content, contentType);
-    binaryContent.userId = userId;
-    binaryContent.messageId = null;
-    return binaryContent;
-  }
-
-  // 메세지 첨부파일
-  public static BinaryContent forMessage(UUID messageId, String fileName, byte[] content,
-      String contentType) {
-    BinaryContent binaryContent = new BinaryContent(fileName, content, contentType);
-    binaryContent.userId = null;
-    binaryContent.messageId = messageId;
-    return binaryContent;
   }
 }
