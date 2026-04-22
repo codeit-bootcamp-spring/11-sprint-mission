@@ -1,62 +1,74 @@
 package com.sprint.mission.discodeit.service.basic;
 
-import com.sprint.mission.discodeit.dto.BinaryContentCreateDto;
+import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentCreateRequest;
+import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentDto;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.exception.BusinessLogicException;
 import com.sprint.mission.discodeit.exception.ExceptionCode;
+import com.sprint.mission.discodeit.mapper.BinaryContentMapper;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.service.BinaryContentService;
+import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
 import java.util.*;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class BasicBinaryContentService implements BinaryContentService {
-    private final BinaryContentRepository binaryContentRepository;
 
-    @Override
-    public BinaryContent createBinaryContent(BinaryContentCreateDto request) {
-        if(request.data() == null || request.data().length == 0) {
-            throw new BusinessLogicException(ExceptionCode.FILE_EMPTY);
-        }
+  private final BinaryContentRepository binaryContentRepository;
+  private final BinaryContentStorage binaryContentStorage;
 
-        BinaryContent content = BinaryContent.builder()
-                .id(UUID.randomUUID())
-                .data(request.data())
-                .fileName(request.fileName())
-                .contentType(request.contentType())
-                .size(request.data().length)
-                .createdAt(Instant.now())
-                .build();
+  private final BinaryContentMapper binaryContentMapper;
 
-        return binaryContentRepository.save(content);
+  @Override
+  @Transactional
+  public BinaryContentDto createBinaryContent(BinaryContentCreateRequest request) {
+    if (request.bytes() == null || request.bytes().length == 0) {
+      throw new BusinessLogicException(ExceptionCode.FILE_EMPTY);
     }
 
-    @Override
-    public BinaryContent find(UUID id) {
-        return binaryContentRepository.findById(id)
-                .orElseThrow(() -> new BusinessLogicException(ExceptionCode.FILE_NOT_FOUND));
+    long fileSize = request.bytes().length;
+
+    BinaryContent content = new BinaryContent(request.fileName(),
+        request.contentType(), fileSize);
+
+    BinaryContent savedContent = binaryContentRepository.save(content);
+
+    binaryContentStorage.put(savedContent.getId(), request.bytes());
+
+    return binaryContentMapper.toDto(savedContent);
+  }
+
+  @Override
+  public BinaryContentDto find(UUID id) {
+    BinaryContent content = binaryContentRepository.findById(id)
+        .orElseThrow(() -> new BusinessLogicException(ExceptionCode.FILE_NOT_FOUND));
+
+    return binaryContentMapper.toDto(content);
+  }
+
+  @Override
+  public List<BinaryContentDto> findAllByIdIn(Collection<UUID> ids) {
+    if (ids == null) {
+      return Collections.emptyList();
     }
 
-    @Override
-    public List<BinaryContent> findAllByIdIn(Collection<UUID> ids) {
-        if(ids == null || ids.isEmpty()) {
-            System.out.println("❌목록이 비어있습니다");
-            return Collections.emptyList();
-        }
+    return binaryContentRepository.findAllById(ids)
+        .stream()
+        .map(binaryContentMapper::toDto)
+        .toList();
+  }
 
-        return binaryContentRepository.findAllById(ids);
-    }
-
-    @Override
-    public void deleteBinaryContent(UUID id) {
-        binaryContentRepository.findById(id)
-                .ifPresent(content -> {
-                    binaryContentRepository.delete(id);
-                    System.out.println("✅ 바이너리 콘텐츠 삭제 완료");
-                });
-    }
+  @Override
+  @Transactional
+  public void deleteBinaryContent(UUID id) {
+    BinaryContent binaryContent = binaryContentRepository.findById(id)
+        .orElseThrow(() -> new BusinessLogicException(ExceptionCode.BINARY_CONTENT_NOT_EXISTS));
+    binaryContentRepository.delete(binaryContent);
+  }
 }

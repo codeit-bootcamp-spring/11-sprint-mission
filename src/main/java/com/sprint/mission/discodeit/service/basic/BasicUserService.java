@@ -1,22 +1,24 @@
 package com.sprint.mission.discodeit.service.basic;
 
-import com.sprint.mission.discodeit.dto.UserCreateRequest;
-import com.sprint.mission.discodeit.dto.UserDto;
-import com.sprint.mission.discodeit.dto.UserUpdateRequest;
+import com.sprint.mission.discodeit.dto.user.UserCreateRequest;
+import com.sprint.mission.discodeit.dto.user.UserDto;
+import com.sprint.mission.discodeit.dto.user.UserUpdateRequest;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.entity.UserStatus;
 import com.sprint.mission.discodeit.exception.BusinessLogicException;
 import com.sprint.mission.discodeit.exception.ExceptionCode;
+import com.sprint.mission.discodeit.mapper.UserMapper;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.repository.UserStatusRepository;
 import com.sprint.mission.discodeit.service.UserService;
+import com.sprint.mission.discodeit.storage.BinaryContentStorage;
+import org.springframework.transaction.annotation.Transactional;
 import java.io.IOException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.InputMismatchException;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -24,125 +26,122 @@ import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class BasicUserService implements UserService {
 
   private final UserRepository userRepository;
   private final UserStatusRepository userStatusRepository;
   private final BinaryContentRepository binaryContentRepository;
+  private final BinaryContentStorage binaryContentStorage;
+
+  private final UserMapper userMapper;
 
   @Override
-  public User createUser(UserCreateRequest request, MultipartFile profile) {
+  @Transactional
+  public UserDto createUser(UserCreateRequest request, MultipartFile profile) {
     String name = request.username().trim();
     String email = request.email().trim();
     String password = request.password().trim();
-    if (userRepository.findByUserName(name).isPresent()) {
+    if (userRepository.findByUsername(name).isPresent()) {
       throw new BusinessLogicException(ExceptionCode.MEMBER_EXISTS);
     }
     if (userRepository.findByEmail(email).isPresent()) {
       throw new BusinessLogicException(ExceptionCode.EMAIL_EXISTS);
     }
 
-    UUID profileId = null;
+    BinaryContent profileEntity = null;
     if (profile != null && !profile.isEmpty()) {
       try {
-        BinaryContent binaryContent = new BinaryContent(profile.getBytes(),
-            profile.getOriginalFilename(), profile.getContentType());
-        binaryContentRepository.save(binaryContent);
-        profileId = binaryContent.getId();
-      } catch (IOException e) {
+        profileEntity = new BinaryContent(profile.getOriginalFilename(), profile.getContentType(),
+            profile.getSize());
+        BinaryContent savedProfile = binaryContentRepository.save(profileEntity);
+        binaryContentStorage.put(savedProfile.getId(), profile.getBytes());
+      } catch (Exception e) {
         throw new BusinessLogicException(ExceptionCode.INTERNAL_SERVER_ERROR);
       }
     }
 
-    User newUser = new User(name, email, password, profileId);
-    UserStatus newStatus = new UserStatus(newUser.getId());
-    try {
-      userRepository.save(newUser);
-      userStatusRepository.save(newStatus);
-    } catch (Exception e) {
-      throw new BusinessLogicException(ExceptionCode.INTERNAL_SERVER_ERROR);
-    }
+    User newUser = new User(name, email, password, profileEntity);
+    UserStatus newStatus = new UserStatus(newUser);
 
-    return newUser;
+    newUser.initStatus(newStatus);
+    userRepository.save(newUser);
+
+    return userMapper.toDto(newUser, newStatus);
   }
 
   @Override
   public UserDto readUser(UUID id) {
     User user = userRepository.findById(id)
         .orElseThrow(() -> new BusinessLogicException(ExceptionCode.USER_NOT_FOUND));
-    UserStatus status = userStatusRepository.findByUserId(user.getId())
-        .orElseThrow(() -> new BusinessLogicException(ExceptionCode.USER_STATUS_NOT_FOUND));
-
-    return UserDto.from(user, status);
+    return userMapper.toDto(user, user.getStatus());
   }
 
   @Override
   public List<UserDto> allReadUser() {
     List<User> users = userRepository.findAll();
     return users.stream()
-        .map(user -> {
-          UserStatus status = userStatusRepository.findByUserId(user.getId())
-              .orElseGet(() -> new UserStatus(user.getId()));
-          return UserDto.from(user, status);
-        })
+        .map(user -> userMapper.toDto(user, user.getStatus()))
         .collect(Collectors.toList());
   }
 
   @Override
+  @Transactional
   public void deleteUser(UUID id) {
     User user = userRepository.findById(id)
         .orElseThrow(() -> new BusinessLogicException(ExceptionCode.USER_NOT_FOUND));
 
-    if (user.getProfileId() != null) {
-      binaryContentRepository.delete(user.getProfileId());
+    BinaryContent profile = user.getProfile();
+    user.setProfile(null);
+    userRepository.save(user);
+    if (profile != null) {
+      binaryContentRepository.delete(profile);
     }
-    userStatusRepository.deleteByUserId(id);
-    userRepository.delete(id);
+    userRepository.delete(user);
   }
 
   @Override
-  public void updateUser(UUID id, UserUpdateRequest request, MultipartFile profile) {
+  @Transactional
+  public UserDto updateUser(UUID id, UserUpdateRequest request, MultipartFile profile) {
     User user = userRepository.findById(id)
         .orElseThrow(() -> new BusinessLogicException(ExceptionCode.MEMBER_NOT_FOUND));
-    String name = user.getUsername();
-    if (request.newUsername() != null) {
-      userRepository.findByUserName(request.newUsername())
-          .filter(u -> !u.getId().equals(id))
+    String name = (request.newUsername() != null) ? request.newUsername() : user.getUsername();
+    if (request.newUsername() != null && !name.equals(user.getUsername())) {
+      userRepository.findByUsername(name)
           .ifPresent(u -> {
             throw new BusinessLogicException(ExceptionCode.MEMBER_EXISTS);
           });
-      name = request.newUsername();
     }
-    String email = user.getEmail();
-    if (request.newEmail() != null) {
-      userRepository.findByEmail(request.newEmail())
-          .filter(u -> !u.getId().equals(id))
+    String email = (request.newEmail() != null) ? request.newEmail() : user.getEmail();
+    if (request.newEmail() != null && !email.equals(user.getEmail())) {
+      userRepository.findByEmail(email)
           .ifPresent(u -> {
             throw new BusinessLogicException(ExceptionCode.EMAIL_EXISTS);
           });
-      email = request.newEmail();
     }
 
     String password = (request.newPassword() != null) ? request.newPassword() : user.getPassword();
 
+    BinaryContent currentProfile = user.getProfile();
     if (profile != null && !profile.isEmpty()) {
-      if (user.getProfileId() != null) {
-        binaryContentRepository.delete(user.getProfileId());
+      if (currentProfile != null) {
+        binaryContentRepository.delete(currentProfile);
       }
       try {
-        BinaryContent newProfile = new BinaryContent(
-            profile.getBytes(),
+        currentProfile = new BinaryContent(
             profile.getOriginalFilename(),
-            profile.getContentType()
+            profile.getContentType(),
+            profile.getSize()
         );
-        binaryContentRepository.save(newProfile);
-        user.setProfileId(newProfile.getId());
+        BinaryContent savedProfile = binaryContentRepository.save(currentProfile);
+        binaryContentStorage.put(savedProfile.getId(), profile.getBytes());
       } catch (IOException e) {
         throw new BusinessLogicException(ExceptionCode.INTERNAL_SERVER_ERROR);
       }
     }
 
-    user.update(name, email, password);
-    userRepository.save(user);
+    user.update(name, email, password, currentProfile);
+
+    return userMapper.toDto(user, user.getStatus());
   }
 }

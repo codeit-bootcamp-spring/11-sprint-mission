@@ -1,9 +1,10 @@
 package com.sprint.mission.discodeit.control;
 
-import com.sprint.mission.discodeit.dto.BinaryContentResponse;
-import com.sprint.mission.discodeit.entity.BinaryContent;
+import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentDto;
 import com.sprint.mission.discodeit.service.BinaryContentService;
+import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,21 +17,26 @@ import java.util.UUID;
 public class BinaryContentController {
 
   private final BinaryContentService binaryContentService;
+  private final BinaryContentStorage binaryContentStorage;
 
   @GetMapping("/{binaryContentId}")
-  public ResponseEntity<BinaryContentResponse> findBinaryContent(
+  public ResponseEntity<BinaryContentDto> findBinaryContent(
       @PathVariable UUID binaryContentId) {
-    BinaryContent content = binaryContentService.find(binaryContentId);
-    return ResponseEntity.ok(BinaryContentResponse.from(content));
+    BinaryContentDto content = binaryContentService.find(binaryContentId);
+    return ResponseEntity.ok(content);
   }
 
   @GetMapping
-  public ResponseEntity<List<BinaryContentResponse>> findMultipleBinaryContents(
+  public ResponseEntity<List<BinaryContentDto>> findMultipleBinaryContents(
       @RequestParam("binaryContentIds") List<UUID> binaryContentIds
   ) {
-    List<BinaryContent> contents = binaryContentService.findAllByIdIn(binaryContentIds);
-    return ResponseEntity.ok(contents.stream()
-        .map(BinaryContentResponse::from)
-        .toList());
+    return ResponseEntity.ok(binaryContentService.findAllByIdIn(binaryContentIds));
+  }
+
+  @GetMapping("/{binaryContentId}/download")
+  public ResponseEntity<Resource> downloadFile(@PathVariable UUID binaryContentId) {
+    BinaryContentDto dto = binaryContentService.find(binaryContentId);
+
+    return binaryContentStorage.download(dto);
   }
 }

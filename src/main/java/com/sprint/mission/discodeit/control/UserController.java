@@ -1,13 +1,17 @@
 package com.sprint.mission.discodeit.control;
 
 
-import com.sprint.mission.discodeit.dto.*;
-import com.sprint.mission.discodeit.entity.User;
-import com.sprint.mission.discodeit.entity.UserStatus;
+import com.sprint.mission.discodeit.dto.user.UserCreateRequest;
+import com.sprint.mission.discodeit.dto.user.UserDto;
+import com.sprint.mission.discodeit.dto.user.UserUpdateRequest;
+import com.sprint.mission.discodeit.dto.userstatus.UserStatusDto;
+import com.sprint.mission.discodeit.dto.userstatus.UserStatusUpdateDto;
 import com.sprint.mission.discodeit.service.UserService;
 import com.sprint.mission.discodeit.service.UserStatusService;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
+import jakarta.validation.Valid;
+import java.net.URI;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -28,12 +32,12 @@ public class UserController {
 
   @PostMapping(consumes = "multipart/form-data")
   @ResponseStatus(HttpStatus.CREATED)
-  public ResponseEntity<User> createUser(
-      @Parameter(content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE))
-      @RequestPart("userCreateRequest") UserCreateRequest request,
+  public ResponseEntity<UserDto> createUser(
+      @Valid @RequestPart("userCreateRequest") UserCreateRequest request,
       @RequestPart(value = "profile", required = false) MultipartFile profile) {
-    User createdUser = userService.createUser(request, profile);
-    return ResponseEntity.status(HttpStatus.CREATED).body(createdUser);
+    UserDto createdUser = userService.createUser(request, profile);
+    URI location = URI.create("/api/users/" + createdUser.id());
+    return ResponseEntity.created(location).body(createdUser);
   }
 
   @GetMapping
@@ -50,20 +54,20 @@ public class UserController {
   }
 
   @PatchMapping(value = "/{id}", consumes = "multipart/form-data")
-  public ResponseEntity<Void> updateUser(@PathVariable UUID id,
+  public ResponseEntity<UserDto> updateUser(@PathVariable UUID id,
       @Parameter(content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE))
-      @RequestPart("userUpdateRequest") UserUpdateRequest request,
+      @Valid @RequestPart("userUpdateRequest") UserUpdateRequest request,
       @RequestPart(value = "profile", required = false) MultipartFile profile) {
-    userService.updateUser(id, request, profile);
-    return ResponseEntity.ok().build();
+    UserDto updatedUser = userService.updateUser(id, request, profile);
+    return ResponseEntity.ok(updatedUser);
   }
 
   @PatchMapping("/{userId}/userStatus")
-  public ResponseEntity<UserStatus> updateOnlineStatus(
+  public ResponseEntity<UserStatusDto> updateOnlineStatus(
       @PathVariable UUID userId,
       @RequestBody UserStatusUpdateDto request
   ) {
-    UserStatus updatedStatus = userStatusService.updateUserIdStatus(userId, request);
+    UserStatusDto updatedStatus = userStatusService.updateUserIdStatus(userId, request);
     return ResponseEntity.ok(updatedStatus);
   }
 }

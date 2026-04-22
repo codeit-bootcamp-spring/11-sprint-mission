@@ -1,54 +1,65 @@
 package com.sprint.mission.discodeit.entity;
 
+import com.sprint.mission.discodeit.entity.base.BaseUpdatableEntity;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
 import lombok.Getter;
 
-import java.io.Serializable;
-import java.time.Instant;
-import java.util.UUID;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Getter
-public class User implements Serializable {
+@Setter
+@Entity
+@Table(name = "users")
+@NoArgsConstructor
+public class User extends BaseUpdatableEntity {
 
-  private static final long serialVersionUID = 1L;
+  @OneToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "profile_id")
+  private BinaryContent profile;
 
-  private final UUID id;
-  private UUID profileId;
-  private final Instant createdAt;
-  private Instant updatedAt;
+  @Column(nullable = false, unique = true)
   private String username;
+
+  @Column(nullable = false)
   private String password;
+
+  @Column(nullable = false, unique = true)
   private String email;
 
+  @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+  private UserStatus status;
 
-  public User(String username, String email, String password, UUID profileId) {
-    this.id = UUID.randomUUID();
-    this.createdAt = Instant.now();
-    this.updatedAt = Instant.now();
+
+  public User(String username, String email, String password, BinaryContent profile) {
     this.username = username;
     this.email = email;
     this.password = password;
-    this.profileId = profileId;
-  }
-
-  public void setProfileId(UUID profileId) {
-    this.profileId = profileId;
-    this.updatedAt = Instant.now();
+    this.profile = profile;
   }
 
   // 필드를 수정하는 update 함수
-  public void update(String name, String email, String password) {
+  public void update(String name, String email, String password, BinaryContent profile) {
     this.username = name;
     this.email = email;
     this.password = password;
-    this.updatedAt = Instant.now();
+    this.profile = profile;
+  }
+
+  public void initStatus(UserStatus status) {
+    this.status = status;
   }
 
 
   @Override
   public String toString() {
-    return "User{" +
-        "id=" + id +
-        ", username='" + username + '\'' +
+    return "User { username=`" + username + '\'' +
         ", email='" + email + '\'' +
         '}';
   }
