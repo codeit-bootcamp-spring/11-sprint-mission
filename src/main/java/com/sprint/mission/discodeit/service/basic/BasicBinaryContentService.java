@@ -3,10 +3,14 @@ package com.sprint.mission.discodeit.service.basic;
 import com.sprint.mission.discodeit.dto.BinaryContentCreateRequest;
 import com.sprint.mission.discodeit.dto.BinaryContentDto;
 import com.sprint.mission.discodeit.entity.BinaryContent;
+import com.sprint.mission.discodeit.exception.NotFoundException;
+import com.sprint.mission.discodeit.mapper.BinaryContentMapper;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.service.BinaryContentService;
+import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -14,75 +18,51 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class BasicBinaryContentService implements BinaryContentService {
 
     private final BinaryContentRepository binaryContentRepository;
+    private final BinaryContentMapper binaryContentMapper;
+    private final BinaryContentStorage binaryContentStorage;
 
     @Override
+    @Transactional
     public BinaryContentDto create(BinaryContentCreateRequest request) {
         BinaryContent binaryContent = new BinaryContent(
                 request.fileName(),
-                request.contentType(),
-                request.bytes()
+                request.bytes() == null ? 0 : request.bytes().length,
+                request.contentType()
         );
 
         BinaryContent savedBinaryContent = binaryContentRepository.save(binaryContent);
 
-        return new BinaryContentDto(
-                savedBinaryContent.getId(),
-                savedBinaryContent.getFileName(),
-                savedBinaryContent.getContentType(),
-                savedBinaryContent.getBytes(),
-                savedBinaryContent.getBytes().length,
-                savedBinaryContent.getCreatedAt()
-        );
+        if (request.bytes() != null) {
+            binaryContentStorage.put(savedBinaryContent.getId(), request.bytes());
+        }
+
+        return binaryContentMapper.toDto(savedBinaryContent);
     }
 
     @Override
     public Optional<BinaryContentDto> find(UUID id) {
-        Optional<BinaryContent> optionalBinaryContent = binaryContentRepository.findById(id);
-
-        if (optionalBinaryContent.isEmpty()) {
-            return Optional.empty();
-        }
-
-        BinaryContent binaryContent = optionalBinaryContent.get();
-
-        BinaryContentDto binaryContentDto = new BinaryContentDto(
-                binaryContent.getId(),
-                binaryContent.getFileName(),
-                binaryContent.getContentType(),
-                binaryContent.getBytes(),
-                binaryContent.getBytes().length,
-                binaryContent.getCreatedAt()
-        );
-
-        return Optional.of(binaryContentDto);
+        return binaryContentRepository.findById(id)
+                .map(binaryContentMapper::toDto);
     }
 
     @Override
     public List<BinaryContentDto> findAllByIdIn(List<UUID> ids) {
-        return ids.stream()
-                .map(binaryContentRepository::findById)
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .map(binaryContent -> new BinaryContentDto(
-                        binaryContent.getId(),
-                        binaryContent.getFileName(),
-                        binaryContent.getContentType(),
-                        binaryContent.getBytes(),
-                        binaryContent.getBytes().length,
-                        binaryContent.getCreatedAt()
-                ))
+        return binaryContentRepository.findAllById(ids).stream()
+                .map(binaryContentMapper::toDto)
                 .toList();
     }
 
     @Override
+    @Transactional
     public void delete(UUID id) {
         binaryContentRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("해당 BinaryContent가 존재하지 않습니다."));
+                .orElseThrow(() -> new NotFoundException("해당 BinaryContent가 존재하지 않습니다."));
 
-        binaryContentRepository.delete(id);
+        binaryContentRepository.deleteById(id);
     }
 
     @Override

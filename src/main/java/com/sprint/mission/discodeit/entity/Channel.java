@@ -1,46 +1,45 @@
 package com.sprint.mission.discodeit.entity;
 
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
+
+import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Getter;
-import java.time.Instant;
+import com.sprint.mission.discodeit.entity.base.MutableBaseEntity;
+import lombok.NoArgsConstructor;
 
+@Entity
+@Table(name = "channels")
 @Getter
-public class Channel implements Serializable {
-    private static final long serialVersionUID = 1L;
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class Channel extends MutableBaseEntity{
 
-    private final UUID id;
-    private final Instant createdAt;
-    private Instant updatedAt;
-
+    @Column(length = 100)
     private String name;
+
+    @Column(length = 500)
     private String description;
 
-    private final ChannelType type;
-    private List<UUID> participantIds;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private ChannelType type;
 
     public Channel(String name, String description) {
-        Instant now = Instant.now();
         this.id = UUID.randomUUID();
-        this.createdAt = now;
-        this.updatedAt = now;
         this.name = name;
         this.description = description;
         this.type = ChannelType.PUBLIC;
-        this.participantIds = new ArrayList<>();
     }
 
-    public Channel(List<UUID> participantIds) {
-        Instant now = Instant.now();
+    public Channel(ChannelType type) {
         this.id = UUID.randomUUID();
-        this.createdAt = now;
-        this.updatedAt = now;
+        this.type = type;
         this.name = null;
         this.description = null;
-        this.type = ChannelType.PRIVATE;
-        this.participantIds = new ArrayList<>(participantIds);
+    }
+
+    public  static Channel createPrivateChannel() {
+        return new Channel(ChannelType.PRIVATE);
     }
 
     public void update(String name, String description) {
@@ -50,6 +49,5 @@ public class Channel implements Serializable {
 
         this.name = name;
         this.description = description;
-        this.updatedAt = Instant.now();
     }
 }

@@ -4,6 +4,6 @@ public record UserUpdateRequest(
         String newUsername,
         String newEmail,
         String newPassword,
-        BinaryContentCreateRequest profileImage
+        BinaryContentCreateRequest newProfileImage
 ) {
 }

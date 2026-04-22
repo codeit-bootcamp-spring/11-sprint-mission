@@ -5,19 +5,15 @@ import com.sprint.mission.discodeit.service.UserService;
 import com.sprint.mission.discodeit.service.UserStatusService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestPart;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 import java.util.UUID;
@@ -53,19 +49,21 @@ public class UserController {
             @Parameter(hidden = true)
             @RequestPart(value = "profile", required = false) MultipartFile profile
     ) {
+        UserCreatePart part;
         try {
-            UserCreatePart part = objectMapper.readValue(userCreateRequestJson, UserCreatePart.class);
-
-            UserCreateRequest newRequest = new UserCreateRequest(
-                    part.username(),
-                    part.email(),
-                    part.password(),
-                    toBinaryContentCreateRequest(profile));
-
-            return userService.create(newRequest);
+            part = objectMapper.readValue(userCreateRequestJson, UserCreatePart.class);
         } catch (Exception e) {
-            throw new IllegalArgumentException("잘못된 요청 형식입니다.");
+            throw new IllegalArgumentException("userCreateRequest 형식이 잘못되었습니다.", e);
         }
+
+        UserCreateRequest newRequest = new UserCreateRequest(
+                part.username(),
+                part.email(),
+                part.password(),
+                toBinaryContentCreateRequest(profile)
+        );
+
+        return userService.create(newRequest);
     }
 
     @RequestMapping(method = RequestMethod.GET)
@@ -88,20 +86,23 @@ public class UserController {
             @Parameter(hidden = true)
             @RequestPart("userUpdateRequest") String userUpdateRequestJson,
             @Parameter(hidden = true)
-            @RequestPart(value = "profile", required = false) MultipartFile profile)
-    {
+            @RequestPart(value = "profile", required = false) MultipartFile profile
+    ) {
+        UserUpdatePart part;
         try {
-            UserUpdatePart part = objectMapper.readValue(userUpdateRequestJson, UserUpdatePart.class);
-
-            UserUpdateRequest newRequest = new UserUpdateRequest(
-                    part.newUsername(),
-                    part.newEmail(),
-                    part.newPassword(),
-                    toBinaryContentCreateRequest(profile));
-            return userService.update(new UserUpdateParam(userId, newRequest));
+            part = objectMapper.readValue(userUpdateRequestJson, UserUpdatePart.class);
         } catch (Exception e) {
-            throw new IllegalArgumentException("잘못된 요청 형식입니다.");
+            throw new IllegalArgumentException("userUpdateRequest 형식이 잘못되었습니다.", e);
         }
+
+        UserUpdateRequest newRequest = new UserUpdateRequest(
+                part.newUsername(),
+                part.newEmail(),
+                part.newPassword(),
+                toBinaryContentCreateRequest(profile)
+        );
+
+        return userService.update(new UserUpdateParam(userId, newRequest));
     }
 
     @ResponseStatus(HttpStatus.NO_CONTENT)

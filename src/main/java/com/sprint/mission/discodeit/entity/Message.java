@@ -1,43 +1,60 @@
 package com.sprint.mission.discodeit.entity;
 
-import java.io.Serializable;
 import java.util.List;
 import java.util.UUID;
+
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.Column;
+import lombok.AccessLevel;
 import lombok.Getter;
-import java.time.Instant;
 import java.util.ArrayList;
+import com.sprint.mission.discodeit.entity.base.MutableBaseEntity;
+import lombok.NoArgsConstructor;
 
+@Entity
+@Table(name = "messages")
 @Getter
-public class Message implements Serializable{
-    private static final long serialVersionUID = 1L;
-    private final UUID id;
-    private final Instant createdAt;
-    private Instant updatedAt;
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class Message extends MutableBaseEntity{
 
-    private UUID userId;
-    private UUID channelId;
+    @ManyToOne
+    @JoinColumn(name = "author_id")
+    private User author;
+
+    @ManyToOne
+    @JoinColumn(name = "channel_id", nullable = false)
+    private Channel channel;
+
+    @Column(columnDefinition = "TEXT")
     private String content;
 
-    private List<UUID> attachmentIds;
+    @OneToMany
+    @JoinTable(
+            name = "message_attachments",
+            joinColumns = @JoinColumn(name = "message_id"),
+            inverseJoinColumns = @JoinColumn(name = "attachment_id")
 
-    public Message(UUID userId, UUID channelId, String content) {
-        Instant now = Instant.now();
+    )
+    private List<BinaryContent> attachments = new ArrayList<>();
+
+    public Message(User author, Channel channel, String content) {
         this.id = UUID.randomUUID();
-        this.createdAt = now;
-        this.updatedAt = now;
-        this.userId = userId;
-        this.channelId = channelId;
+        this.author = author;
+        this.channel = channel;
         this.content = content;
-        this.attachmentIds = new ArrayList<>();
+        this.attachments = new ArrayList<>();
     }
 
     public void update(String content) {
         this.content = content;
-        this.updatedAt = Instant.now();
     }
 
-    public void updateAttachments(List<UUID> attachmentIds) {
-        this.attachmentIds = new ArrayList<>(attachmentIds);
-        this.updatedAt = Instant.now();
+    public void updateAttachments(List<BinaryContent> attachments) {
+        this.attachments = new ArrayList<>(attachments);
     }
 }

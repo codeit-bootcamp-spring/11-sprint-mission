@@ -7,10 +7,7 @@ public record UserDto(
         UUID id,
         String username,
         String email,
-        String password,
-        UUID profileId,
-        boolean online,
-        Instant createdAt,
-        Instant updatedAt
+        BinaryContentDto profile,
+        boolean online
 ) {
 }

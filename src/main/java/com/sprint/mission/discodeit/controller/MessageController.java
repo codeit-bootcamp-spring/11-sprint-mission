@@ -19,6 +19,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
+import com.sprint.mission.discodeit.dto.response.PageResponse;
 
 import java.util.List;
 import java.util.UUID;
@@ -82,8 +83,11 @@ public class MessageController {
     }
 
     @RequestMapping(method = RequestMethod.GET)
-    public List<MessageDto> findAllByChannelId(@RequestParam UUID channelId) {
-        return messageService.findAllByChannelId(channelId);
+    public PageResponse<MessageDto> findAllByChannelId(
+            @RequestParam UUID channelId,
+            @RequestParam(defaultValue = "0") int page
+    ) {
+        return messageService.findAllByChannelId(channelId, page);
     }
 
     private List<BinaryContentCreateRequest> toBinaryContentCreateRequests(List<MultipartFile> files) {

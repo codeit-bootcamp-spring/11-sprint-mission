@@ -665,15 +665,24 @@
         "type": "object",
         "properties": {
           "username": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1
           },
           "email": {
-            "type": "string"
+            "type": "string",
+            "format": "email",
+            "minLength": 1
           },
           "password": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1
           }
-        }
+        },
+        "required": [
+          "email",
+          "password",
+          "username"
+        ]
       },
       "UserDto": {
         "type": "object",
@@ -686,9 +695,6 @@
             "type": "string"
           },
           "email": {
-            "type": "string"
-          },
-          "password": {
             "type": "string"
           },
           "profileId": {
@@ -907,13 +913,16 @@
         "type": "object",
         "properties": {
           "newUsername": {
-            "type": "string"
+            "type": "string",
+            "pattern": "\\S+"
           },
           "newEmail": {
-            "type": "string"
+            "type": "string",
+            "format": "email"
           },
           "newPassword": {
-            "type": "string"
+            "type": "string",
+            "pattern": "\\S+"
           }
         }
       },

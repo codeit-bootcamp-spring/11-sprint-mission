@@ -1,43 +1,59 @@
 package com.sprint.mission.discodeit.entity;
 
-import java.io.Serializable;
 import java.util.UUID;
+
+import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Getter;
-import java.time.Instant;
+import com.sprint.mission.discodeit.entity.base.MutableBaseEntity;
+import lombok.NoArgsConstructor;
 
+@Entity
+@Table(name = "users")
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
-public class User implements Serializable {
-    private static final long serialVersionUID = 1L;
-    private final UUID id;
-    private final Instant createdAt;
-    private Instant updatedAt;
+public class User extends MutableBaseEntity {
 
+    @Column(nullable = false, unique = true, length = 50)
     private String username;
+
+    @Column(nullable = false, unique = true, length = 100)
     private String email;
+
+    @Column(nullable = false, length = 60)
     private String password;
 
-    private UUID profileId;
+    @OneToOne
+    @JoinColumn(name = "profile_id")
+    private BinaryContent profile;
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private UserStatus status;
 
     public User(String username, String email, String password) {
-        Instant now = Instant.now();
         this.id = UUID.randomUUID();
-        this.createdAt = now;
-        this.updatedAt = now;
         this.username = username;
         this.email = email;
         this.password = password;
-        this.profileId = null;
     }
 
-    public void update(String username, String email, String password) {
-        this.username = username;
-        this.email = email;
-        this.password = password;
-        this.updatedAt = Instant.now();
+    public void update(String newUsername, String newEmail, String newPassword) {
+        if (newUsername != null && !newUsername.isBlank()) {
+            this.username = newUsername;
+        }
+        if (newEmail != null && !newEmail.isBlank()) {
+            this.email = newEmail;
+        }
+        if (newPassword != null && !newPassword.isBlank()) {
+            this.password = newPassword;
+        }
     }
 
-    public void updateProfile(UUID profileId) {
-        this.profileId = profileId;
-        this.updatedAt = Instant.now();
+    public void updateProfile(BinaryContent profile) {
+        this.profile = profile;
+    }
+
+    public void updateStatus(UserStatus status) {
+        this.status = status;
     }
 }

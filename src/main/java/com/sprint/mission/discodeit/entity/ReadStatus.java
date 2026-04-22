@@ -1,32 +1,42 @@
 package com.sprint.mission.discodeit.entity;
 
+import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Getter;
-import java.io.Serializable;
+import com.sprint.mission.discodeit.entity.base.MutableBaseEntity;
+import lombok.NoArgsConstructor;
+
 import java.util.UUID;
 import java.time.Instant;
 
+@Entity
+@Table(
+        name = "read_statuses",
+        uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "channel_id"})
+)
 @Getter
-public class ReadStatus implements Serializable {
-    private final UUID id;
-    private final Instant createdAt;
-    private Instant updatedAt;
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class ReadStatus extends MutableBaseEntity {
 
-    private final UUID userId;
-    private final UUID channelId;
+    @ManyToOne
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
+
+    @ManyToOne
+    @JoinColumn(name = "channel_id", nullable = false)
+    private Channel channel;
+
+    @Column(name = "last_read_at", nullable = false)
     private Instant lastReadAt;
 
-    public ReadStatus(UUID userId, UUID channelId, Instant lastReadAt) {
-        Instant now = Instant.now();
+    public ReadStatus(User user, Channel channel, Instant lastReadAt) {
         this.id = UUID.randomUUID();
-        this.createdAt = now;
-        this.updatedAt = now;
-        this.userId = userId;
-        this.channelId = channelId;
+        this.user = user;
+        this.channel = channel;
         this.lastReadAt = lastReadAt;
     }
 
     public void update(Instant lastReadAt) {
         this.lastReadAt = lastReadAt;
-        this.updatedAt = Instant.now();
     }
 }
