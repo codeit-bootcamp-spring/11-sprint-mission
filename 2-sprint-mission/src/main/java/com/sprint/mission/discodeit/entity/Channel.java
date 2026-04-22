@@ -1,66 +1,61 @@
 package com.sprint.mission.discodeit.entity;
 
-import lombok.*;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import com.sprint.mission.discodeit.entity.base.BaseUpdatableEntity;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Table;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Getter
+@Entity
+@Table(name = "channels")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Channel extends BaseEntity {
-    private ChannelType type;
-    private String name;
-    private String description;
-    private List<UUID> memberIds;
+public class Channel extends BaseUpdatableEntity {
 
-    private Channel(ChannelType type, String name, String description, List<UUID> memberIds) {
-        super();
-        this.type = type;
-        this.name = name;
-        this.description = description;
-        this.memberIds = memberIds != null ? new ArrayList<>(memberIds) : new ArrayList<>();
+  @Enumerated(EnumType.STRING)
+  @Column(length = 10, nullable = false)
+  private ChannelType type;
+
+  @Column(length = 100)
+  private String name;
+
+  @Column(length = 500)
+  private String description;
+
+  @Builder
+  private Channel(ChannelType type, String name, String description) {
+    this.type = type;
+    this.name = name;
+    this.description = description;
+  }
+
+  // PUBLIC 채널 생성 메서드
+  public static Channel createPublic(String name, String description) {
+    return Channel.builder()
+        .type(ChannelType.PUBLIC)
+        .name(name)
+        .description(description)
+        .build();
+  }
+
+  // PRIVATE 채널 생성 메서드
+  public static Channel createPrivate() {
+    return Channel.builder()
+        .type(ChannelType.PRIVATE)
+        .build();
+  }
+
+  public void update(String newName, String newDescription) {
+    if (newName != null && !newName.equals(this.name)) {
+      this.name = newName;
     }
-
-    // PUBLIC 채널 생성 메서드
-    public static Channel createPublic(String name, String description) {
-        return new Channel(ChannelType.PUBLIC, name, description, null);
+    if (newDescription != null && !newDescription.equals(this.description)) {
+      this.description = newDescription;
     }
-
-    // PRIVATE 채널 생성 메서드
-    public static Channel createPrivate(List<UUID> memberIds) {
-        return new Channel(ChannelType.PRIVATE, null, null, memberIds);
-    }
-
-    public void update(String newName, String newDescription) {
-        boolean anyValueUpdated = false;
-
-        if (newName != null && !newName.equals(this.name)) {
-            this.name = newName;
-            anyValueUpdated = true;
-        }
-        if (newDescription != null && !newDescription.equals(this.description)) {
-            this.description = newDescription;
-            anyValueUpdated = true;
-        }
-
-        if (anyValueUpdated) {
-            super.timeUpdate();
-        }
-    }
-
-    @Override
-    public String toString() {
-        return "Channel [" +
-                "UUID: " + getId() +
-                "\n이름: " + getName() +
-                ", 설명: " + getDescription() +
-                ", 타입: " + getType().getName() +
-                ", 참여 인원: " + (getMemberIds() != null ? getMemberIds().size() : 0) + "명" +
-                ", 생성 시간: " + getCreatedAt() +
-                ", 수정 시간: " + getUpdatedAt() +
-                "]\n";
-    }
-
-
+  }
 }

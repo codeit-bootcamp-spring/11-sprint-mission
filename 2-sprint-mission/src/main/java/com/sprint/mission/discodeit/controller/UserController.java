@@ -3,21 +3,25 @@ package com.sprint.mission.discodeit.controller;
 import com.sprint.mission.discodeit.dto.BinaryContentDto;
 import com.sprint.mission.discodeit.dto.UserDto;
 import com.sprint.mission.discodeit.dto.UserStatusDto;
-import com.sprint.mission.discodeit.exception.BusinessException;
-import com.sprint.mission.discodeit.exception.ErrorCode;
 import com.sprint.mission.discodeit.service.UserService;
 import com.sprint.mission.discodeit.service.UserStatusService;
 import jakarta.validation.Valid;
+import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.io.IOException;
-import java.util.List;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/users")
@@ -31,8 +35,9 @@ public class UserController {
   public ResponseEntity<UserDto.Response> create(
       @Valid @RequestPart("userCreateRequest") UserDto.CreateRequest request,
       @RequestPart(value = "profile", required = false) MultipartFile profileImage) {
-    BinaryContentDto.CreateRequest profileImageRequest = convertToProfileImageDto(profileImage);
 
+    BinaryContentDto.CreateRequest profileImageRequest = BinaryContentDto.CreateRequest.of(
+        profileImage);
     UserDto.Response response = userService.create(request, profileImageRequest);
     return ResponseEntity.status(HttpStatus.CREATED).body(response);
   }
@@ -42,8 +47,9 @@ public class UserController {
       @PathVariable UUID userId,
       @Valid @RequestPart("userUpdateRequest") UserDto.UpdateRequest request,
       @RequestPart(value = "profile", required = false) MultipartFile profileImage) {
-    BinaryContentDto.CreateRequest profileImageRequest = convertToProfileImageDto(profileImage);
 
+    BinaryContentDto.CreateRequest profileImageRequest = BinaryContentDto.CreateRequest.of(
+        profileImage);
     UserDto.Response response = userService.update(userId, request, profileImageRequest);
     return ResponseEntity.ok(response);
   }
@@ -68,22 +74,5 @@ public class UserController {
 
     UserStatusDto.Response response = userStatusService.updateByUserId(userId, request);
     return ResponseEntity.ok(response);
-  }
-
-  // 파일을 DTO 형태로 변환
-  private BinaryContentDto.CreateRequest convertToProfileImageDto(MultipartFile file) {
-    if (file == null || file.isEmpty()) {
-      return null;
-    }
-    try {
-      return BinaryContentDto.CreateRequest.builder()
-          .fileName(file.getOriginalFilename())
-          .size(file.getSize())
-          .contentType(file.getContentType())
-          .bytes(file.getBytes())
-          .build();
-    } catch (IOException e) {
-      throw new BusinessException(ErrorCode.FILE_READ_FAILED);
-    }
   }
 }

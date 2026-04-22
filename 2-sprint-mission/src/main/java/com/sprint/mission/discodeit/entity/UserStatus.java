@@ -1,26 +1,36 @@
 package com.sprint.mission.discodeit.entity;
 
-import lombok.AllArgsConstructor;
+import com.sprint.mission.discodeit.entity.base.BaseUpdatableEntity;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
+import java.time.Instant;
+import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
-
-import java.time.Instant;
-import java.util.UUID;
+import lombok.NoArgsConstructor;
 
 @Getter
-@Builder
-@AllArgsConstructor
-public class UserStatus extends BaseEntity {
+@Entity
+@Table(name = "user_statuses")
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class UserStatus extends BaseUpdatableEntity {
 
-  private final UUID userId;
+  @OneToOne(fetch = FetchType.LAZY, optional = false)
+  @JoinColumn(name = "user_id", nullable = false, unique = true)
+  private User user;
+
+  @Column(nullable = false)
   private Instant lastActiveAt;
 
-  public UserStatus(UUID userId) {
-    super();
-    this.userId = userId;
-    this.lastActiveAt = Instant.now();
+  @Builder
+  public UserStatus(User user, Instant lastActiveAt) {
+    this.setUser(user);
+    this.lastActiveAt = lastActiveAt != null ? lastActiveAt : Instant.now();
   }
-
 
   // 온라인 여부 확인 메서드
   public boolean isOnline() {
@@ -31,7 +41,13 @@ public class UserStatus extends BaseEntity {
   public void updateActiveTime(Instant lastActiveAt) {
     if (lastActiveAt != null && !lastActiveAt.equals(this.lastActiveAt)) {
       this.lastActiveAt = lastActiveAt;
-      super.timeUpdate();
+    }
+  }
+
+  protected void setUser(User user) {
+    this.user = user;
+    if (user != null) {
+      user.setStatus(this);
     }
   }
 }

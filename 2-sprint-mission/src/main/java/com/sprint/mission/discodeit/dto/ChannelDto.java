@@ -4,11 +4,10 @@ import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.ChannelType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
-import lombok.Builder;
-
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
+import lombok.Builder;
 
 public class ChannelDto {
 
@@ -38,7 +37,7 @@ public class ChannelDto {
     // DTO -> Entity
     // 엔티티의 정적 팩토리 메서드 호출
     public Channel toEntity() {
-      return Channel.createPrivate(this.participantIds);
+      return Channel.createPrivate();
     }
   }
 
@@ -58,20 +57,9 @@ public class ChannelDto {
       ChannelType type,
       String name,
       String description,
-      Instant lastMessageAt,
-      List<UUID> participantIds
+      List<UserDto.Response> participants,
+      Instant lastMessageAt
   ) {
 
-    // Entity -> DTO
-    public static Response of(Channel channel, Instant lastMessageAt, List<UUID> participantIds) {
-      return Response.builder()
-          .id(channel.getId())
-          .type(channel.getType())
-          .name(channel.getName())
-          .description(channel.getDescription())
-          .lastMessageAt(lastMessageAt)
-          .participantIds(channel.getType() == ChannelType.PRIVATE ? participantIds : null)
-          .build();
-    }
   }
 }

@@ -41,3 +41,6 @@ out/
 
 ### Backup Files ###
 *.bak
+
+### Local File Storage ###
+uploads/

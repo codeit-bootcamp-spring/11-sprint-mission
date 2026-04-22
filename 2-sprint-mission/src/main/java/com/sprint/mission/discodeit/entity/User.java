@@ -1,46 +1,73 @@
 package com.sprint.mission.discodeit.entity;
 
-import lombok.AllArgsConstructor;
+import com.sprint.mission.discodeit.entity.base.BaseUpdatableEntity;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
+import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-import java.util.UUID;
-
-@Builder
 @Getter
-@AllArgsConstructor
-public class User extends BaseEntity {
+@Entity
+@Table(name = "users")
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class User extends BaseUpdatableEntity {
 
+  @Column(length = 50, nullable = false, unique = true)
   private String username;
-  //  미사용 필드 주석처리
-//  private String nickname;
-//  private String description;
-  private String email;
-  private String password;
-  private UUID profileImageId;
 
+  @Column(length = 100, nullable = false, unique = true)
+  private String email;
+
+  @Column(length = 60, nullable = false)
+  private String password;
+
+  @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+  @JoinColumn(name = "profile_id", columnDefinition = "uuid")
+  private BinaryContent profile;
+
+  @Setter(AccessLevel.PROTECTED)
+  @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+  private UserStatus status;
+
+  //  미사용 필드 주석처리
+  //  private String nickname;
+  //  private String description;
+
+  @Builder
+  public User(String username, String email, String password, BinaryContent profile,
+      UserStatus status) {
+    this.username = username;
+    this.email = email;
+    this.password = password;
+    this.profile = profile;
+    this.status = status;
+  }
 
   public void changeUsername(String newUsername) {
     this.username = newUsername;
-    this.timeUpdate();
   }
 
   public void changeEmail(String newEmail) {
     this.email = newEmail;
-    this.timeUpdate();
   }
 
   public void changePassword(String newPassword) {
     this.password = newPassword;
-    this.timeUpdate();
   }
 
   // 프로필 이미지 수정
-  public void updateProfileImage(UUID newProfileImageId) {
-    if (newProfileImageId != null && !newProfileImageId.equals(this.profileImageId)) {
-      this.profileImageId = newProfileImageId;
+  public void updateProfileImage(BinaryContent newProfile) {
+    if (newProfile != null && !newProfile.equals(this.profile)) {
+      this.profile = newProfile;
     }
-    super.timeUpdate();
   }
 
   // 비밀번호 검증
@@ -50,18 +77,4 @@ public class User extends BaseEntity {
       throw new IllegalArgumentException("Invalid username or password");
     }
   }
-
-  @Override
-  public String toString() {
-    return "사용자 [" +
-        "UUID: " + getId() +
-        "\n이름: " + getUsername() +
-        ", 이메일: " + getEmail() +
-        //               ", 비밀번호: " + getPassword() + // 추후 비밀번호 관련 로직 변경 예정 + 제외
-        ", 프로필 사진: " + getProfileImageId() +
-        ", 생성 시간: " + getCreatedAt() +
-        ", 수정 시간: " + getUpdatedAt() +
-        "]\n";
-  }
-
 }

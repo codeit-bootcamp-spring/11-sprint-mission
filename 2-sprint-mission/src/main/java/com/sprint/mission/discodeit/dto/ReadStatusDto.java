@@ -1,11 +1,12 @@
 package com.sprint.mission.discodeit.dto;
 
+import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.ReadStatus;
+import com.sprint.mission.discodeit.entity.User;
 import jakarta.validation.constraints.NotNull;
-import lombok.Builder;
-
 import java.time.Instant;
 import java.util.UUID;
+import lombok.Builder;
 
 public class ReadStatusDto {
 
@@ -20,11 +21,11 @@ public class ReadStatusDto {
   ) {
 
     // DTO -> Entity
-    public ReadStatus toEntity() {
+    public ReadStatus toEntity(User user, Channel channel) {
       return ReadStatus.builder()
-          .userId(this.userId)
-          .channelId(this.channelId)
-          .lastReadAt(this.lastReadAt != null ? this.lastReadAt : Instant.now())
+          .user(user)
+          .channel(channel)
+          .lastReadAt(this.lastReadAt)
           .build();
     }
   }
@@ -38,23 +39,10 @@ public class ReadStatusDto {
   @Builder
   public record Response(
       UUID id,
-      Instant createdAt,
-      Instant updatedAt,
       UUID userId,
       UUID channelId,
       Instant lastReadAt
   ) {
 
-    // Entity -> DTO
-    public static Response of(ReadStatus readStatus) {
-      return Response.builder()
-          .id(readStatus.getId())
-          .createdAt(readStatus.getCreatedAt())
-          .updatedAt(readStatus.getUpdatedAt())
-          .userId(readStatus.getUserId())
-          .channelId(readStatus.getChannelId())
-          .lastReadAt(readStatus.getLastReadAt())
-          .build();
-    }
   }
 }
