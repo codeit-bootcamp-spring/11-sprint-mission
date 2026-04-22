@@ -1,33 +1,40 @@
 package com.sprint.mission.discodeit.entity;
 
+import com.sprint.mission.discodeit.entity.base.BaseUpdatableEntity;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
+import java.time.Instant;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
-
-import java.time.Instant;
-import java.util.UUID;
 
 @Getter
-@Setter
 @NoArgsConstructor
-public class UserStatus {
-    private UUID id;
-    private Instant createdAt;
-    private Instant updatedAt;
+@Entity
+@Table(name = "user_statuses")
+public class UserStatus extends BaseUpdatableEntity {
 
-    private UUID userId;
-    private Instant lastAccessAt;
+  @OneToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "user_id", nullable = false, unique = true)
+  private User user;
 
-    public UserStatus(UUID userId, Instant lastAccessAt) {
-        this.id = UUID.randomUUID();
-        this.createdAt = Instant.now();
-        this.updatedAt = this.createdAt;
-        this.userId = userId;
-        this.lastAccessAt = lastAccessAt;
-    }
+  @Column(nullable = false)
+  private Instant lastActiveAt;
 
-    public boolean isOnline() {
-        return lastAccessAt != null &&
-                lastAccessAt.isAfter(Instant.now().minusSeconds(300));
-    }
+  public UserStatus(User user, Instant lastActiveAt) {
+    this.user = user;
+    this.lastActiveAt = lastActiveAt;
+  }
+
+  public boolean isOnline() {
+    return lastActiveAt != null &&
+        lastActiveAt.isAfter(Instant.now().minusSeconds(300));
+  }
+
+  public void update(Instant lastActiveAt) {
+    this.lastActiveAt = lastActiveAt;
+  }
 }

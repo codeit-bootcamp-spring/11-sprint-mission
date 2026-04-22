@@ -1,12 +1,15 @@
 package com.sprint.mission.discodeit.controller;
 
-import com.sprint.mission.discodeit.dto.MessageCreateRequestDto;
-import com.sprint.mission.discodeit.dto.MessageResponseDto;
-import com.sprint.mission.discodeit.dto.MessageUpdateRequestDto;
+import com.sprint.mission.discodeit.dto.request.MessageCreateRequest;
+import com.sprint.mission.discodeit.dto.request.MessageUpdateRequest;
+import com.sprint.mission.discodeit.dto.response.MessageDto;
+import com.sprint.mission.discodeit.dto.response.PageResponse;
 import com.sprint.mission.discodeit.service.MessageService;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -29,37 +32,33 @@ public class MessageController {
   private final MessageService messageService;
 
   @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-  public ResponseEntity<MessageResponseDto> createMessage(
-      @RequestPart("messageCreateRequest") MessageCreateRequestDto dto,
+  public ResponseEntity<MessageDto> create(
+      @RequestPart("messageCreateRequest") MessageCreateRequest request,
       @RequestPart(value = "attachments", required = false) List<MultipartFile> attachments) {
-    try {
-      MessageResponseDto response = messageService.create(dto.getChannelId(), dto, attachments);
-      return ResponseEntity.ok(response);
-    } catch (IllegalArgumentException e) {
-      return ResponseEntity.badRequest().build();
-    }
+    MessageDto response = messageService.create(request, attachments);
+    return ResponseEntity.status(HttpStatus.CREATED).body(response);
   }
 
   @GetMapping
-  public ResponseEntity<List<MessageResponseDto>> findAllByChannelId(
-      @RequestParam UUID channelId) {
-    return ResponseEntity.ok(messageService.findAllByChannelId(channelId));
+  public ResponseEntity<PageResponse<MessageDto>> findAllByChannelId(
+      @RequestParam UUID channelId,
+      @RequestParam(required = false) Instant cursor,
+      @RequestParam(defaultValue = "50") int size) {
+    PageResponse<MessageDto> response = messageService.findAllByChannelId(channelId, cursor, size);
+    return ResponseEntity.ok(response);
   }
 
   @PatchMapping("/{messageId}")
-  public ResponseEntity<MessageResponseDto> updateMessage(
+  public ResponseEntity<MessageDto> update(
       @PathVariable UUID messageId,
-      @RequestBody MessageUpdateRequestDto dto) {
-    try {
-      return ResponseEntity.ok(messageService.update(null, messageId, dto));
-    } catch (IllegalArgumentException e) {
-      return ResponseEntity.badRequest().build();
-    }
+      @RequestBody MessageUpdateRequest request) {
+    MessageDto response = messageService.update(messageId, request);
+    return ResponseEntity.ok(response);
   }
 
   @DeleteMapping("/{messageId}")
-  public ResponseEntity<Void> deleteMessage(@PathVariable UUID messageId) {
-    messageService.delete(messageId, messageId);
+  public ResponseEntity<Void> delete(@PathVariable UUID messageId) {
+    messageService.delete(messageId);
     return ResponseEntity.noContent().build();
   }
 }

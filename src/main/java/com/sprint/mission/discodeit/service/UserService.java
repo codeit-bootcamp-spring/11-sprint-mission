@@ -1,24 +1,21 @@
 package com.sprint.mission.discodeit.service;
 
-import com.sprint.mission.discodeit.dto.*;
-
+import com.sprint.mission.discodeit.dto.request.UserCreateRequest;
+import com.sprint.mission.discodeit.dto.request.UserUpdateRequest;
+import com.sprint.mission.discodeit.dto.response.UserDto;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.web.multipart.MultipartFile;
 
 public interface UserService {
-    UserResponseDto create(UserCreateRequestDto dto);
 
-    UserResponseDto findById(UUID id);
+  UserDto create(UserCreateRequest request, MultipartFile profile);
 
-    List<UserResponseDto> findAll();
+  UserDto findById(UUID id);
 
-    UserResponseDto update(UUID id, UserUpdateRequestDto dto);
+  List<UserDto> findAll();
 
-    UserStatusResponseDto updateOnlineStatus(UUID id, UserStatusResponseDto dto);
+  UserDto update(UUID id, UserUpdateRequest request, MultipartFile profile);
 
-    boolean login(LoginRequestDto dto); // email, pw 받아서 성공/실패 boolean 반환
-
-    void delete(UUID id);
-
-    List<UserDto> getAllUsers();
+  void delete(UUID id);
 }
