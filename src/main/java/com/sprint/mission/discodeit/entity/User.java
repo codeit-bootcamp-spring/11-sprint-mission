@@ -1,62 +1,54 @@
 package com.sprint.mission.discodeit.entity;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.sprint.mission.discodeit.entity.base.UpdatableEntity;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
-public class User extends BaseEntity {
-    private static final long serialVersionUID = 1L;
-    private String name;
-    private String email;
-    private List<Message> sentMessages;
-    private List<Message> receivedMessages;
-    private List<Channel> joinedChannels;
-    private List<Channel> ownedChannels;
+@Getter
+@NoArgsConstructor
+@Entity
+@Table(name = "users")
+public class User extends UpdatableEntity {
 
-    public User(String name, String email) {
-        super();
-        this.name = name;
-        this.email = email;
-        this.sentMessages = new ArrayList<>();
-        this.receivedMessages = new ArrayList<>();
-        this.joinedChannels = new ArrayList<>();
-        this.ownedChannels = new ArrayList<>();
+  @Column(nullable = false, unique = true, length = 50)
+  private String username;
+
+  @Column(nullable = false, unique = true, length = 100)
+  private String email;
+
+  @Column(nullable = false, length = 60)
+  private String password;
+
+  @OneToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "profile_id")
+  private BinaryContent profile;
+
+  public User(String username, String email, String password, BinaryContent profile) {
+    this.username = username;
+    this.email = email;
+    this.password = password;
+    this.profile = profile;
+  }
+
+  public void update(String newUsername, String newEmail, String newPassword,
+                     BinaryContent newProfile) {
+    if (newUsername != null && !newUsername.equals(this.username)) {
+      this.username = newUsername;
     }
-
-    public String getName() {
-        return name;
+    if (newEmail != null && !newEmail.equals(this.email)) {
+      this.email = newEmail;
     }
-
-    public void setName(String name) {
-        this.name = name;
+    if (newPassword != null && !newPassword.equals(this.password)) {
+      this.password = newPassword;
     }
-
-    public String getEmail() {
-        return email;
+    if (newProfile != null && !newProfile.equals(this.profile)) {
+      this.profile = newProfile;
     }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public List<Message> getSentMessages() {
-        return sentMessages;
-    }
-
-    public List<Message> getReceivedMessages() {
-        return receivedMessages;
-    }
-
-    public List<Channel> getJoinedChannels() {
-        return joinedChannels;
-    }
-
-    public List<Channel> getOwnedChannels() {
-        return ownedChannels;
-    }
-
-    public void update(String name, String email) {
-        this.name = name;
-        this.email = email;
-        setUpdatedAt(System.currentTimeMillis());
-    }
+  }
 }

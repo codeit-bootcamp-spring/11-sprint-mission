@@ -1,76 +1,42 @@
 package com.sprint.mission.discodeit.entity;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.sprint.mission.discodeit.entity.base.UpdatableEntity;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
-public class Channel extends BaseEntity {
-    private static final long serialVersionUID = 1L;
-    private String name;
-    private int capacity;
-    private User owner;
-    private List<User> participants;
-    private List<Message> messages;
+@Getter
+@NoArgsConstructor
+@Entity
+@Table(name = "channels")
+public class Channel extends UpdatableEntity {
 
-    public Channel(String name, int capacity, User owner) {
-        super();
-        this.name = name;
-        this.capacity = capacity;
-        this.owner = owner;
-        this.participants = new ArrayList<>();
-        this.messages = new ArrayList<>();
-        this.participants.add(owner);
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false, length = 50)
+  private ChannelType type;
+
+  @Column(length = 100)
+  private String name;
+
+  @Column(length = 500)
+  private String description;
+
+  public Channel(ChannelType type, String name, String description) {
+    this.type = type;
+    this.name = name;
+    this.description = description;
+  }
+
+  public void update(String newName, String newDescription) {
+    if (newName != null && !newName.equals(this.name)) {
+      this.name = newName;
     }
-
-    public String getName() {
-        return name;
+    if (newDescription != null && !newDescription.equals(this.description)) {
+      this.description = newDescription;
     }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public int getCapacity() {
-        return capacity;
-    }
-
-    public void setCapacity(int capacity) {
-        this.capacity = capacity;
-    }
-
-    public User getOwner() {
-        return owner;
-    }
-
-    public List<User> getParticipants() {
-        return participants;
-    }
-
-    public List<Message> getMessages() {
-        return messages;
-    }
-
-    public boolean addParticipant(User user) {
-        if (participants.size() >= capacity) {
-            return false;
-        }
-        if (!participants.contains(user)) {
-            participants.add(user);
-            return true;
-        }
-        return false;
-    }
-
-    public boolean removeParticipant(User user) {
-        return participants.remove(user);
-    }
-
-    public void addMessage(Message message) {
-        messages.add(message);
-    }
-
-    public void update(String name, int capacity) {
-        this.name = name;
-        this.capacity = capacity;
-        setUpdatedAt(System.currentTimeMillis());
-    }
+  }
 }
