@@ -1,131 +1,118 @@
 package com.sprint.mission.discodeit.service.basic;
 
-import com.sprint.mission.discodeit.dto.readstatusdto.CreateReadStatusDto;
-import com.sprint.mission.discodeit.dto.readstatusdto.ReadStatusInfoDto;
-import com.sprint.mission.discodeit.dto.readstatusdto.UpdateReadStatus;
+import com.sprint.mission.discodeit.dto.readstatusdto.request.ReadStatusCreateRequest;
+import com.sprint.mission.discodeit.dto.readstatusdto.ReadStatusDto;
+import com.sprint.mission.discodeit.dto.readstatusdto.request.ReadStatusUpdateRequest;
+import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.ReadStatus;
+import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.exception.service.AlreadyExistException;
 import com.sprint.mission.discodeit.exception.service.NonExistException;
-import com.sprint.mission.discodeit.repository.ChannelRepository;
-import com.sprint.mission.discodeit.repository.ReadStatusRepository;
-import com.sprint.mission.discodeit.repository.UserRepository;
+import com.sprint.mission.discodeit.mapper.ReadStatusMapper;
+import com.sprint.mission.discodeit.repository.JPAChannelRepository;
+import com.sprint.mission.discodeit.repository.JPAReadStatusRepository;
+import com.sprint.mission.discodeit.repository.JPAUserRepository;
 import com.sprint.mission.discodeit.service.ReadStatusService;
+import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.UUID;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
 public class BasicReadStatusService implements ReadStatusService {
 
-  private final ReadStatusRepository readStatusRepository;
-  private final UserRepository userRepository;
-  private final ChannelRepository channelRepository;
+  private final JPAReadStatusRepository readStatusRepository;
+  private final JPAUserRepository userRepository;
+  private final JPAChannelRepository channelRepository;
+  private final ReadStatusMapper readStatusMapper;
 
   @Override
-  public ReadStatusInfoDto create(CreateReadStatusDto createReadStatusDto) {
-
-    ReadStatus readStatus = new ReadStatus(
-
-        createReadStatusDto.userId(),
-        createReadStatusDto.channelId(),
-        createReadStatusDto.lastReadAt()
-    );
-
-    //유효 유저, 채널인지
-    if (!userRepository.isExistUser(createReadStatusDto.userId())) {
-      throw new NonExistException("존재하는 유저 아이디가 아닙니다.");
-    }
-    if (!channelRepository.isExistChannel(createReadStatusDto.channelId())) {
-      throw new NonExistException("존재하는 채널 아이디가 아닙니다");
-    }
+  @Transactional
+  public ReadStatusDto create(ReadStatusCreateRequest readStatusCreateRequest) {
 
     //존재하는 스테이터스 인지 체크
 
-    if (readStatusRepository.isExist(createReadStatusDto.userId(),
-        createReadStatusDto.channelId())) {
+    if (readStatusRepository.existsByUserIdAndChannelId(readStatusCreateRequest.userId(),
+        readStatusCreateRequest.channelId())) {
       throw new AlreadyExistException("이미 존재하는 유저와 채널의 읽기 상태입니다");
     }
 
-    readStatusRepository.save(readStatus);
+    //유저, 채널 가져오기
+    User user = userRepository.findById(readStatusCreateRequest.userId())
+        .orElseThrow(() -> new NonExistException("존재하지 않는 유저 아이디입니다."));
+    Channel channel = channelRepository.findById(readStatusCreateRequest.channelId())
+        .orElseThrow(() -> new NonExistException("존재하지 않는 채널 아이디 입니다."));
 
-    return statusToInfoDto(readStatus);
+    //ReadStatus 생성
+    ReadStatus readStatus = new ReadStatus(
+        user,
+        channel,
+        readStatusCreateRequest.lastReadAt()
+    );
 
-  }
-
-  @Override
-  public ReadStatusInfoDto find(CreateReadStatusDto createReadStatusDto) {
-
-    return statusToInfoDto(
-        readStatusRepository.get(createReadStatusDto.userId(), createReadStatusDto.channelId())
-            .orElseThrow());
-
-  }
-
-  @Override
-  public List<ReadStatusInfoDto> findAllById(UUID userId) {
-    if (!userRepository.isExistUser(userId)) {
-      throw new NonExistException("존재하는 유저 아이디가 아닙니다.");
+    if (readStatusCreateRequest.lastReadAt() == null) {
+      readStatus.updateLastReadAt(Instant.now().minusSeconds(1));
     }
 
-    return readStatusRepository.getAllByUserId(userId).stream()
-        .map(this::statusToInfoDto)
+    //저장
+    readStatusRepository.save(readStatus);
+    //Dto 반환
+    return readStatusMapper.toDto(readStatus);
+
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public ReadStatusDto find(UUID readStatusId) {
+
+    ReadStatus readStatus = readStatusRepository.findById(readStatusId)
+        .orElseThrow(() -> new NonExistException("존재하지 않는 읽기 상태 아이디입니다."));
+    return readStatusMapper.toDto(readStatus);
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public List<ReadStatusDto> findAllByUserId(UUID userId) {
+
+    return readStatusRepository.findAllByUserId(userId).stream()
+        .map(readStatusMapper::toDto)
         .toList();
   }
 
   @Override
-  public ReadStatusInfoDto update(UUID readStatusId, UpdateReadStatus updateReadStatusDto) {
+  @Transactional
+  public ReadStatusDto update(UUID readStatusId,
+      ReadStatusUpdateRequest readStatusUpdateRequestDto) {
 
-    ReadStatus readStatus = readStatusRepository.get(readStatusId)
-        .orElseThrow(() -> new NonExistException("존재하는 읽기 상태가 아닙니다."));
+    ReadStatus readStatus = readStatusRepository.findById(readStatusId)
+        .orElseThrow(() -> new NonExistException("존재하는 읽기 상태 아이디가 아닙니다."));
 
-    readStatus.updateLastReadAt(updateReadStatusDto.newLastReadAt());
+    readStatus.updateLastReadAt(readStatusUpdateRequestDto.newLastReadAt());
 
-    readStatusRepository.save(readStatus);
+    if (readStatusUpdateRequestDto.newLastReadAt() == null) {
+      readStatus.updateLastReadAt(Instant.now().minusSeconds(1));
+    }
 
-    return statusToInfoDto(readStatus);
+    return readStatusMapper.toDto(readStatus);
 
   }
 
   @Override
-  public boolean delete(CreateReadStatusDto createReadStatusDto) {
+  @Transactional
+  public void delete(UUID readStatusId) {
 
-    //유효 유저, 채널인지
-    if (!userRepository.isExistUser(createReadStatusDto.userId())) {
-      throw new NonExistException("존재하는 유저 아이디가 아닙니다.");
-    }
-    if (!channelRepository.isExistChannel(createReadStatusDto.channelId())) {
-      throw new NonExistException("존재하는 채널 아이디가 아닙니다");
+    if (!readStatusRepository.existsById(readStatusId)) {
+      throw new NonExistException("존재하지 않는 읽기 상태입니다.");
     }
 
-    //존재하는 스테이터스 인지 체크
-
-    if (readStatusRepository.isExist(createReadStatusDto.userId(),
-        createReadStatusDto.channelId())) {
-      throw new AlreadyExistException("이미 존재하는 유저와 채널의 읽기 상태입니다");
-    }
-
-    readStatusRepository.delete(createReadStatusDto.userId(), createReadStatusDto.channelId());
-    return true;
+    readStatusRepository.deleteById(readStatusId);
 
 
   }
 
-
-  ReadStatusInfoDto statusToInfoDto(ReadStatus readStatus) {
-    return new ReadStatusInfoDto(
-
-        readStatus.getId(),
-        readStatus.getCreatedAt(),
-        readStatus.getLastReadAt(),
-        readStatus.getUserId(),
-        readStatus.getChannelId(),
-        readStatus.getLastReadAt()
-    );
-
-
-  }
 
 }

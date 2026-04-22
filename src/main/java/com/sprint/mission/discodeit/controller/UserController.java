@@ -3,19 +3,17 @@ package com.sprint.mission.discodeit.controller;
 
 import com.sprint.mission.discodeit.dto.error.ExceptionDto;
 import com.sprint.mission.discodeit.dto.userdto.*;
-import com.sprint.mission.discodeit.dto.userstatusdto.CreateUserStatusDto;
-import com.sprint.mission.discodeit.dto.userstatusdto.UpdateUserStatusDto;
-import com.sprint.mission.discodeit.dto.userstatusdto.UserStatusInfoDto;
+import com.sprint.mission.discodeit.dto.userdto.request.UserCreateRequest;
+import com.sprint.mission.discodeit.dto.userstatusdto.request.UserStatusUpdateRequest;
+import com.sprint.mission.discodeit.dto.userstatusdto.UserStatusDto;
 import com.sprint.mission.discodeit.exception.service.DiffPasswordException;
 import com.sprint.mission.discodeit.exception.service.DupEmailException;
 import com.sprint.mission.discodeit.exception.service.DupNameException;
-import com.sprint.mission.discodeit.service.BinaryContentService;
 import com.sprint.mission.discodeit.service.UserService;
 import com.sprint.mission.discodeit.service.UserStatusService;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
-import org.springframework.boot.context.properties.bind.Binder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -37,10 +35,10 @@ public class UserController {
 
   @PostMapping(consumes = "multipart/form-data")
   @ApiResponse(description = "유저 생성", responseCode = "201")
-  public ResponseEntity<CreatedUserDto> createUser(@RequestPart CreateUserDto userCreateRequest,
+  public ResponseEntity<UserDto> createUser(@RequestPart UserCreateRequest userCreateRequest,
       @RequestPart(required = false) MultipartFile profile) {
 
-    CreatedUserDto userInfo = userService.create(userCreateRequest, profile);
+    UserDto userInfo = userService.create(userCreateRequest, profile);
 
     URI uri = ServletUriComponentsBuilder.fromCurrentRequest()
         .path("/{id}")
@@ -54,12 +52,12 @@ public class UserController {
 
   @GetMapping(value = "/{userId}")
   @ApiResponse(description = "유저 1명 정보 가져오기", responseCode = "200")
-  public ResponseEntity<CreatedUserDto> readUser(@PathVariable("userId") UUID userId) {
+  public ResponseEntity<UserDto> readUser(@PathVariable("userId") UUID userId) {
     return ResponseEntity.status(HttpStatus.OK).body(userService.find(userId));
   }
 
   @GetMapping
-  public ResponseEntity<List<UserInfoDto>> readAllUser() {
+  public ResponseEntity<List<UserDto>> readAllUser() {
 
     return ResponseEntity.status(HttpStatus.OK).body(userService.findAll());
   }
@@ -67,11 +65,11 @@ public class UserController {
 
   @ApiResponse(responseCode = "200")
   @PatchMapping(value = "/{userId}", consumes = "multipart/form-data")
-  public ResponseEntity<CreatedUserDto> updateUser(@PathVariable UUID userId,
+  public ResponseEntity<UserDto> updateUser(@PathVariable UUID userId,
       @RequestPart UpdateUserDto userUpdateRequest,
       @RequestPart(required = false) MultipartFile profile) {
 
-    CreatedUserDto userInfo = userService.updateUser(userId, userUpdateRequest, profile);
+    UserDto userInfo = userService.updateUser(userId, userUpdateRequest, profile);
     return ResponseEntity.status(HttpStatus.OK).body(userInfo);
   }
 
@@ -79,10 +77,10 @@ public class UserController {
   //유저 상태 업데이트
   @ApiResponse(responseCode = "200")
   @PatchMapping(value = "/{userId}/userStatus")
-  public ResponseEntity<UserStatusInfoDto> updateUserStatus(@PathVariable UUID userId,
-      @RequestBody UpdateUserStatusDto updateUserStatusDto) {
+  public ResponseEntity<UserStatusDto> updateUserStatus(@PathVariable UUID userId,
+      @RequestBody UserStatusUpdateRequest userStatusUpdateRequest) {
 
-    userStatusService.update(userId, updateUserStatusDto);
+    userStatusService.update(userId, userStatusUpdateRequest);
 
     return ResponseEntity.status(HttpStatus.OK).body(userStatusService.find(userId));
 

@@ -1,17 +1,30 @@
 package com.sprint.mission.discodeit.entity;
 
+import com.sprint.mission.discodeit.entity.base.BaseUpdatableEntity;
+import jakarta.annotation.Nullable;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Table;
 import lombok.Getter;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import lombok.NoArgsConstructor;
 
 @Getter
-public class Channel extends Entity {
+@Table(name = "channels")
+@Entity
+@NoArgsConstructor
+public class Channel extends BaseUpdatableEntity {
 
-  private String channelName; //채널 이름
-  private ChannelType channelType;
-  private String channelDescription;
+  @Column(length = 100)
+  private String name; //채널 이름
+
+  @Column(nullable = false, length = 10)
+  @Enumerated(EnumType.STRING)
+  private ChannelType type;
+
+  @Column(length = 500)
+  private String description;
 
 
   public enum ChannelType {
@@ -19,26 +32,18 @@ public class Channel extends Entity {
     PRIVATE
   }
 
-  public Channel(String channelName, ChannelType channelType,
-      String channelDescription) {
-    this.channelName = channelName;
-    this.channelDescription = channelDescription;
-    this.channelType = channelType;
+  public Channel(String name, String description, ChannelType type) {
+    this.name = name;
+    this.description = description;
+    this.type = type;
   }
 
-  public void updateChannelName(String channelName) {
-    this.channelName = channelName;
-    super.updateUpdatedAt();
+  public void updateName(String name) {
+    this.name = name;
   }
 
-  public void updateChannelType(ChannelType channelType) {
-    this.channelType = channelType;
-    super.updateUpdatedAt();
-  }
-
-  public void updateChannelDescription(String channelDescription) {
-    this.channelDescription = channelDescription;
-    super.updateUpdatedAt();
+  public void updateDescription(String description) {
+    this.description = description;
   }
 
 

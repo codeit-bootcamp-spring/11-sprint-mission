@@ -1,13 +1,14 @@
 package com.sprint.mission.discodeit.service.basic;
 
 import com.sprint.mission.discodeit.dto.userstatusdto.CreateUserStatusDto;
-import com.sprint.mission.discodeit.dto.userstatusdto.UpdateUserStatusDto;
-import com.sprint.mission.discodeit.dto.userstatusdto.UserStatusInfoDto;
+import com.sprint.mission.discodeit.dto.userstatusdto.request.UserStatusUpdateRequest;
+import com.sprint.mission.discodeit.dto.userstatusdto.UserStatusDto;
 import com.sprint.mission.discodeit.entity.UserStatus;
 import com.sprint.mission.discodeit.exception.service.AlreadyExistException;
 import com.sprint.mission.discodeit.exception.service.NonExistException;
-import com.sprint.mission.discodeit.repository.UserRepository;
-import com.sprint.mission.discodeit.repository.UserStatusRepository;
+import com.sprint.mission.discodeit.mapper.UserStatusMapper;
+import com.sprint.mission.discodeit.repository.JPAUserRepository;
+import com.sprint.mission.discodeit.repository.JPAUserStatusRepository;
 import com.sprint.mission.discodeit.service.UserStatusService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -20,95 +21,84 @@ import java.util.UUID;
 public class BasicUserStatusService implements UserStatusService {
 
 
-  private final UserRepository userRepository;
-  private final UserStatusRepository userStatusRepository;
+  private final JPAUserRepository userRepository;
+  private final JPAUserStatusRepository userStatusRepository;
+  private final UserStatusMapper userStatusMapper;
 
 
   @Override
-  public UserStatusInfoDto create(CreateUserStatusDto createUserStatusDto) {
+  public UserStatusDto create(CreateUserStatusDto createUserStatusDto) {
     UserStatus userStatus = new UserStatus(
-        createUserStatusDto.userId()
+        createUserStatusDto.user(),
+        createUserStatusDto.lastActiveAt()
 
     );
 
     //유저 존재 체크
-    if (!userRepository.isExistUser(userStatus.getId())) {
+    if (!userRepository.existsById(userStatus.getId())) {
       throw new NonExistException("존재하지 않는 유저 아이디 입니다.");
     }
 
     // 유저 스테이터스 존재 체크
-    if (userStatusRepository.isExistUserStatus(userStatus.getId())) {
+    if (userStatusRepository.existsById(userStatus.getId())) {
       throw new AlreadyExistException("이미 존재하는 유저 스테이터스 입니다");
     }
 
     //저장
-    userStatusRepository.saveUserStatus(userStatus);
+    userStatusRepository.save(userStatus);
 
-    return InfoDtoToStatus(userStatus);
+    return userStatusMapper.toDto(userStatus);
 
   }
 
   @Override
-  public UserStatusInfoDto find(UUID userId) {
+  public UserStatusDto find(UUID userId) {
 
-    UserStatus userStatus = userStatusRepository.getUserStatus(userId)
+    UserStatus userStatus = userStatusRepository.findByUserId(userId)
         .orElseThrow(() -> new NonExistException("존재하지 않는 유저 아이디 입니다."));
 
-    return InfoDtoToStatus(userStatus);
+    return userStatusMapper.toDto(userStatus);
   }
 
   @Override
-  public List<UserStatusInfoDto> findAll() {
+  public List<UserStatusDto> findAll() {
 
-    return userStatusRepository.getAllUserStatus().stream()
-        .map(this::InfoDtoToStatus)
+    return userStatusRepository.findAll().stream()
+        .map(userStatusMapper::toDto)
         .toList();
   }
 
   @Override
-  public UserStatusInfoDto update(UUID userId, UpdateUserStatusDto updateUserStatusDto) {
+  public UserStatusDto update(UUID userId, UserStatusUpdateRequest userStatusUpdateRequest) {
 
     //가져와서
-    UserStatus userStatus = userStatusRepository.getUserStatus(userId)
+    UserStatus userStatus = userStatusRepository.findByUserId(userId)
         .orElseThrow(() -> new NonExistException("존재하지 않는 유저 아이디 입니다."));
 
     //접속시간 초기화
-    userStatus.updateLastActiveAt(updateUserStatusDto.newLastActiveAt());
+    userStatus.updateLastActiveAt(userStatusUpdateRequest.newLastActiveAt());
     //저장
-    userStatusRepository.saveUserStatus(userStatus);
+    userStatusRepository.save(userStatus);
 
-    return InfoDtoToStatus(userStatus);
+    return userStatusMapper.toDto(userStatus);
 
   }
 
   @Override
-  public boolean delete(UUID userId) {
+  public void delete(UUID userId) {
 
     //존재 체크
-    if (!userRepository.isExistUser(userId)) {
+    if (!userRepository.existsById(userId)) {
       throw new NonExistException("존재하지 않는 유저 아이디 입니다.");
     }
 
+    UserStatus status = userStatusRepository.findByUserId(userId)
+        .orElseThrow(() -> new NonExistException("존재하지 않는 유저 스테이터스 입니다"));
     //삭제
-    userRepository.deleteUser(userId);
+    userStatusRepository.delete(status);
 
-    return true;
 
   }
 
 
-  //Status -> InfoDto
-  public UserStatusInfoDto InfoDtoToStatus(UserStatus userStatus) {
-
-    return new UserStatusInfoDto(
-
-        userStatus.getId(),
-        userStatus.getCreatedAt(),
-        userStatus.getUpdatedAt(),
-        userStatus.getUserId(),
-        userStatus.getLastActiveAt(),
-        userStatus.isOnline()
-    );
-
-  }
 }

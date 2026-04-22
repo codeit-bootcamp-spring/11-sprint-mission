@@ -1,48 +1,61 @@
 package com.sprint.mission.discodeit.entity;
 
+import com.sprint.mission.discodeit.entity.base.BaseUpdatableEntity;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
+import java.util.ArrayList;
 import lombok.Getter;
 
 import java.util.List;
 import java.util.UUID;
+import lombok.NoArgsConstructor;
+import org.hibernate.annotations.BatchSize;
 
 @Getter
-public class Message extends Entity {
-
-  private String message;
-  private final UUID senderId; //전송자 아이디
-  private final UUID channelId; //채널 아이디
-  private List<UUID> attachmentIds;
+@Table(name = "messages")
+@Entity
+@NoArgsConstructor
+public class Message extends BaseUpdatableEntity {
 
 
-  public Message(UUID senderId, UUID channelId, String message, List<UUID> attachmentIds) {
+  private String content;
+  @ManyToOne
+  @JoinColumn(nullable = false, updatable = false)
+  private User author;
+  @ManyToOne
+  @JoinColumn(nullable = false, updatable = false)
+  private Channel channel; //채널 아이디
+  @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+  @BatchSize(size = 100)
+  @JoinTable(
+      name = "message_attachments",
+      joinColumns = @JoinColumn(name = "message_id"),
+      inverseJoinColumns = @JoinColumn(name = "binary_content_id")
 
-    super();
-    this.senderId = senderId;
-    this.channelId = channelId;
-    this.message = message;
-    this.attachmentIds = attachmentIds;
+  )
+  private List<BinaryContent> attachments = new ArrayList<>();
 
+
+  public Message(User author, Channel channel, String content, List<BinaryContent> attachments) {
+    this.author = author;
+    this.channel = channel;
+    this.content = content;
+    this.attachments = attachments;
   }
 
-
-  public void updateMessage(String message) {
-    this.message = message;
-    super.updateUpdatedAt();
+  public void updateContent(String content) {
+    this.content = content;
   }
 
-  public void updateAttachmentIds(List<UUID> attachmentIds) {
-    this.attachmentIds = attachmentIds;
-    super.updateUpdatedAt();
-
+  public void updateAttachments(List<BinaryContent> attachments) {
+    this.attachments = attachments;
   }
 
-  @Override
-
-  public String toString() {
-    return "Message{" +
-        "message='" + message + '\'' +
-        ", authorId='" + senderId + '\'' +
-        ", id='" + channelId + '\'' +
-        '}';
-  }
 }

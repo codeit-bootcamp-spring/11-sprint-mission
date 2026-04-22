@@ -1,8 +1,8 @@
 package com.sprint.mission.discodeit.controller;
 
-import com.sprint.mission.discodeit.dto.readstatusdto.CreateReadStatusDto;
-import com.sprint.mission.discodeit.dto.readstatusdto.ReadStatusInfoDto;
-import com.sprint.mission.discodeit.dto.readstatusdto.UpdateReadStatus;
+import com.sprint.mission.discodeit.dto.readstatusdto.request.ReadStatusCreateRequest;
+import com.sprint.mission.discodeit.dto.readstatusdto.ReadStatusDto;
+import com.sprint.mission.discodeit.dto.readstatusdto.request.ReadStatusUpdateRequest;
 import com.sprint.mission.discodeit.service.ReadStatusService;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import java.util.List;
@@ -16,11 +16,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.Map;
 
 @RequestMapping("/api/readStatuses")
 @RestController
@@ -32,11 +29,11 @@ public class ReadStatusController {
 
   @PostMapping
   @ApiResponse(responseCode = "201")
-  public ResponseEntity<ReadStatusInfoDto> createReadStatus(
-      @RequestBody CreateReadStatusDto readStatusDto
+  public ResponseEntity<ReadStatusDto> createReadStatus(
+      @RequestBody ReadStatusCreateRequest readStatusDto
   ) {
 
-    ReadStatusInfoDto readStatusInfoDto = readStatusService.create(readStatusDto);
+    ReadStatusDto readStatusInfoDto = readStatusService.create(readStatusDto);
     return ResponseEntity.status(201).body(readStatusInfoDto);
 
 
@@ -44,10 +41,10 @@ public class ReadStatusController {
 
 
   @GetMapping
-  public ResponseEntity<List<ReadStatusInfoDto>> getReadStatusById(
+  public ResponseEntity<List<ReadStatusDto>> getReadStatusById(
       @RequestParam UUID userId) {
 
-    List<ReadStatusInfoDto> readStatusInfoList = readStatusService.findAllById(userId);
+    List<ReadStatusDto> readStatusInfoList = readStatusService.findAllByUserId(userId);
 
     return ResponseEntity.status(200).body(readStatusInfoList);
 
@@ -55,12 +52,12 @@ public class ReadStatusController {
 
 
   @PatchMapping(value = "/{readStatusId}")
-  ResponseEntity<ReadStatusInfoDto> updateReadStatus(
+  ResponseEntity<ReadStatusDto> updateReadStatus(
       @PathVariable UUID readStatusId,
-      @RequestBody UpdateReadStatus updateReadStatusDto) {
-    ReadStatusInfoDto readStatusInfoDto = readStatusService.update(readStatusId,
-        updateReadStatusDto);
-    return ResponseEntity.status(200).body(readStatusInfoDto);
+      @RequestBody ReadStatusUpdateRequest readStatusUpdateRequestDto) {
+    ReadStatusDto readStatusDto = readStatusService.update(readStatusId,
+        readStatusUpdateRequestDto);
+    return ResponseEntity.status(200).body(readStatusDto);
 
   }
 }

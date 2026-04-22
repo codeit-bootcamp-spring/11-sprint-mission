@@ -1,60 +1,33 @@
 package com.sprint.mission.discodeit.entity;
 
 
+import com.sprint.mission.discodeit.entity.base.BaseEntity;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
-import java.util.Arrays;
-import java.util.UUID;
-
+@Entity
+@Table(name = "binary_contents")
 @Getter
-public class BinaryContent extends Entity {
+@NoArgsConstructor
+public class BinaryContent extends BaseEntity {
+
+  @Column(nullable = false, length = 255, updatable = false)
+  private String fileName;
+  @Column(nullable = false, length = 100, updatable = false)
+  private String contentType;
+  @Column(nullable = false, updatable = false)
+  private Long size;
 
 
-  UUID userID;
-  UUID MessageId;
-  String fileName;
-  String contentType;
-  Long size;
-  byte[] bytes;
-
-
-  public BinaryContent(UUID userID, UUID messageId, String fileName, String contentType,
-      byte[] bytes, long size) {
-    this.fileName = fileName;
-    this.userID = userID;
-    MessageId = messageId;
-    this.contentType = contentType;
-    this.bytes = bytes;
-    this.size = size;
-
-  }
-
-  public BinaryContent(UUID userID, String fileName, String contentType, byte[] bytes, long size) {
-    this.userID = userID;
-    MessageId = null;
+  public BinaryContent(String fileName, String contentType, Long size) {
     this.fileName = fileName;
     this.contentType = contentType;
-    this.bytes = bytes;
     this.size = size;
-
-
   }
 
 
-  public void updateUpdatedAt() {
-
-  }
-
-
-  @Override
-  public String toString() {
-    return "BinaryContent{" +
-        "userID=" + userID +
-        ", MessageId=" + MessageId +
-        ", fileName='" + fileName + '\'' +
-        ", contentType='" + contentType + '\'' +
-        ", bytes=" + Arrays.toString(bytes) +
-        '}';
-  }
 }
 

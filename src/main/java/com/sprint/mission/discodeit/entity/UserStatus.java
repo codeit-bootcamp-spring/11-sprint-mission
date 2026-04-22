@@ -1,25 +1,34 @@
 package com.sprint.mission.discodeit.entity;
 
+import com.sprint.mission.discodeit.entity.base.BaseUpdatableEntity;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
 import lombok.Getter;
 
 import java.time.Instant;
-import java.util.UUID;
+import lombok.NoArgsConstructor;
 
 @Getter
-public class UserStatus extends Entity {
+@Table(name = "user_statuses")
+@Entity
+@NoArgsConstructor
+public class UserStatus extends BaseUpdatableEntity {
 
-  private final UUID userId;
+  @OneToOne
+  private User user;
+
+  @Column(nullable = false)
   private Instant lastActiveAt;
 
-  public UserStatus(UUID userId) {
-    this.userId = userId;
-    lastActiveAt = Instant.now();
+  public UserStatus(User user, Instant lastActiveAt) {
+    this.user = user;
+    this.lastActiveAt = lastActiveAt;
   }
-
 
   public void updateLastActiveAt(Instant lastActiveAt) {
     this.lastActiveAt = lastActiveAt;
-    super.updateUpdatedAt();
   }
 
   public boolean isOnline() {
