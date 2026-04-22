@@ -1,9 +1,10 @@
 package com.sprint.mission.discodeit.dto.readstatus;
 
-import java.util.UUID;
+import java.time.Instant;
 
+// 읽음 상태 업데이트
 public record ReadStatusUpdateRequest(
-        UUID userId,
-        UUID channelId
+    Instant newLastReadAt
 ) {
+
 }

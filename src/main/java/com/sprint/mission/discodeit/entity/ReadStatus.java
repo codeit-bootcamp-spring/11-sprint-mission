@@ -1,46 +1,55 @@
 package com.sprint.mission.discodeit.entity;
 
+import com.sprint.mission.discodeit.entity.base.BaseUpdatableEntity;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
+import lombok.AccessLevel;
 import lombok.Getter;
-
-import java.io.Serializable;
 import java.time.Instant;
-import java.util.UUID;
+import lombok.NoArgsConstructor;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
+@Entity
+@Table(
+    name = "read_statuses",
+    uniqueConstraints = {
+        @UniqueConstraint(
+            name = "uk_read_statuses_user_channel",
+            columnNames = {"user_id", "channel_id"}
+        )
+    })
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
-public class ReadStatus implements Serializable {
+public class ReadStatus extends BaseUpdatableEntity {
 
-    private static final long SerialVersionUID = 1L;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "user_id", nullable = false)
+  @OnDelete(action = OnDeleteAction.CASCADE)
+  private User user;
 
-    private UUID id;
-    private Instant createdAt;
-    private Instant updatedAt;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "channel_id", nullable = false)
+  @OnDelete(action = OnDeleteAction.CASCADE)
+  private Channel channel;
 
-    private UUID userId;
-    private UUID channelId;
-    private Instant lastReadAt;
+  @Column(name = "last_read_at", nullable = false)
+  private Instant lastReadAt;
 
-    public ReadStatus(UUID userId, UUID channelId, Instant lastReadAt) {
-        this.id = UUID.randomUUID();
-        this.createdAt = Instant.now();
-        this.updatedAt = Instant.now();
+  public ReadStatus(User user, Channel channel, Instant lastReadAt) {
+    this.user = user;
+    this.channel = channel;
+    this.lastReadAt = lastReadAt != null ? lastReadAt : Instant.now();
+  }
 
-        this.userId = userId;
-        this.channelId = channelId;
-        this.lastReadAt = this.createdAt;
+  public void updateLastReadAt(Instant newLastReadAt) {
+    if (newLastReadAt != null && !newLastReadAt.equals(this.lastReadAt)) {
+      this.lastReadAt = newLastReadAt;
     }
-
-    public void updateLastReadAt() {
-        lastReadAt = Instant.now();
-        updatedAt = Instant.now();
-    }
-
-    @Override
-    public String toString() {
-        return "ReadStatus{" +
-                "userId='" + userId + '\'' +
-                ", channelId='" + channelId + '\'' +
-                ", lastReadAt=" + lastReadAt + '\'' +
-                 ", updateTime='" + updatedAt + '\'' +
-                "}";
-    }
+  }
 }

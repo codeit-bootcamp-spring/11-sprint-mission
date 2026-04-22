@@ -1,52 +1,54 @@
 package com.sprint.mission.discodeit.entity;
 
+import com.sprint.mission.discodeit.entity.base.BaseUpdatableEntity;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
-import java.io.Serializable;
-import java.time.Instant;
-import java.util.UUID;
-
+@Entity
+@Table(name = "users")
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
-public class User implements Serializable {
+public class User extends BaseUpdatableEntity {
 
-    private static final long serialVersionUID = 1L;
+  @Column(nullable = false, unique = true, length = 50)
+  private String username;
 
-    private UUID id;
-    private Instant createdAt;
-    private Instant updatedAt;
+  @Column(nullable = false, unique = true, length = 100)
+  private String email;
 
-    private String name;
-    private String email;
-    private String password;
+  @Column(nullable = false, length = 60)
+  private String password;
 
-    private UUID profileImageId;
+  @OneToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "profile_id", unique = true)
+  @OnDelete(action = OnDeleteAction.SET_NULL)
+  private BinaryContent profile;
 
-    public User(String name, String email, String password, UUID profileImageId) {
-        this.id = UUID.randomUUID();
-        this.createdAt = Instant.now();
-        this.updatedAt = Instant.now();
+  @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+  // UserState 엔티티의 user 필드가 FK를 가진 주인이라는 뜻
+  private UserStatus status;
 
-        this.name = name;
-        this.email = email;
-        this.password = password;
-        this.profileImageId = profileImageId;
-    }
+  public User(String username, String email, String password, BinaryContent profile) {
+    this.username = username;
+    this.email = email;
+    this.password = password;
+    this.profile = profile;
+  }
 
-    public void update(String name, String email, String password, UUID profileImageId) {
-        this.name = name;
-        this.email = email;
-        this.password = password;
-        this.profileImageId = profileImageId;
-        updatedAt = Instant.now();
-    }
-
-
-    @Override
-    public String toString() {
-        return "User{" +
-                "name='" + name + '\'' +
-                ", email='" + email + '\'' +
-                ", profileImageId='" + profileImageId + '\'' +
-                "}";
-    }
+  public void update(String username, String email, String password, BinaryContent profile) {
+    this.username = username;
+    this.email = email;
+    this.password = password;
+    this.profile = profile;
+  }
 }

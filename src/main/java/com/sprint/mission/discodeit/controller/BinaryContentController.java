@@ -1,41 +1,57 @@
 package com.sprint.mission.discodeit.controller;
 
-import com.sprint.mission.discodeit.dto.BinaryContentCreateRequest;
-import com.sprint.mission.discodeit.entity.BinaryContent;
+import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentDto;
 import com.sprint.mission.discodeit.service.BinaryContentService;
+import com.sprint.mission.discodeit.storage.BinaryContentStorage;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 
+@Tag(name = "BinaryContent")
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/binaryContent")
+@RequestMapping("/api/binaryContents")
 public class BinaryContentController {
 
-    private final BinaryContentService binaryContentService;
+  private final BinaryContentService binaryContentService;
+  private final BinaryContentStorage binaryContentStorage;
 
-    @RequestMapping(method = RequestMethod.POST)
-    public ResponseEntity<BinaryContent> create(@RequestParam("file") MultipartFile file) throws IOException {
-        BinaryContentCreateRequest dto = new BinaryContentCreateRequest(file.getBytes());
-        BinaryContent binaryContent = binaryContentService.create(dto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(binaryContent);
-    }
+  @Operation(summary = "첨부 파일 조회", operationId = "find")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "첨부 파일 조회 성공"),
+      @ApiResponse(responseCode = "404", description = "첨부 파일을 찾을 수 없음")
+  })
+  @GetMapping("/{binaryContentId}")
+  public ResponseEntity<BinaryContentDto> find(@PathVariable UUID binaryContentId) {
+    BinaryContentDto binaryContentDto = binaryContentService.find(binaryContentId);
+    return ResponseEntity.ok(binaryContentDto);
+  }
 
-    @RequestMapping(value = "/find", method = RequestMethod.GET)
-    public ResponseEntity<BinaryContent> find(@RequestParam("binaryContentId") UUID id) {
-        BinaryContent binaryContent = binaryContentService.find(id);
-        return ResponseEntity.ok(binaryContent);
-    }
+  @Operation(summary = "여러 첨부 파일 조회", operationId = "findAllByIdIn")
+  @ApiResponse(responseCode = "200", description = "첨부 파일 목록 조회 성공")
+  @GetMapping
+  public ResponseEntity<List<BinaryContentDto>> findAllIdIn(
+      @RequestParam("binaryContentIds") List<UUID> binaryContentIds) {
+    List<BinaryContentDto> binaryContentDtoList = binaryContentService.findAllByIdIn(
+        binaryContentIds);
+    return ResponseEntity.ok(binaryContentDtoList);
+  }
 
-    @RequestMapping(value = "/findAll", method = RequestMethod.GET)
-    public ResponseEntity<List<BinaryContent>> findAll(@RequestParam("uuidList") List<UUID> uuidList) {
-        List<BinaryContent> binaryContents = binaryContentService.findAllByIdIn(uuidList);
-        return ResponseEntity.ok(binaryContents);
-    }
+  @Operation(summary = "파일 다운로드", operationId = "download")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "파일 다운로드 성공"),
+      @ApiResponse(responseCode = "404", description = "파일을 찾을 수 없음")
+  })
+  @GetMapping("/{binaryContentId}/download")
+  public ResponseEntity<?> download(@PathVariable UUID binaryContentId) {
+    BinaryContentDto binaryContentDto = binaryContentService.find(binaryContentId);
+    return binaryContentStorage.download(binaryContentDto);
+  }
 }

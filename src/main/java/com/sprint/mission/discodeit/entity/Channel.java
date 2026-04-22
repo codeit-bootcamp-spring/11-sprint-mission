@@ -1,46 +1,41 @@
 package com.sprint.mission.discodeit.entity;
 
+import com.sprint.mission.discodeit.entity.base.BaseUpdatableEntity;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Table;
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
-import java.io.Serializable;
-import java.time.Instant;
-import java.util.UUID;
-
+@Entity
+@Table(name = "channels")
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
-public class Channel implements Serializable {
+public class Channel extends BaseUpdatableEntity {
 
-    private static final long serialVersionUID = 1L;
+  @Column(length = 100)
+  private String name;
 
-    private UUID id;
-    private Instant createdAt;
-    private Instant updatedAt;
+  @Column(length = 500)
+  private String description;
 
-    private String name;
-    private String description;
-    private ChannelType type;
+  @Column(nullable = false, length = 10)
+  @Enumerated(EnumType.STRING)
+  private ChannelType type;
 
-    public Channel(String name, String description, ChannelType type) {
-        this.id = UUID.randomUUID();
-        this.createdAt = Instant.now();
-        this.updatedAt = Instant.now();
+  public Channel(String name, String description, ChannelType type) {
+    this.name = name;
+    this.description = description;
+    this.type = type;
+  }
 
-        this.name = name;
-        this.description = description;
-        this.type = type;
-    }
+  public void update(String name, String description) {
+    this.name = name;
+    this.description = description;
 
-    public void update(String name, String description) {
-        this.name = name;
-        this.description = description;
-        updatedAt = Instant.now();
-    }
-
-    @Override
-    public String toString() {
-        return "Channel{" +
-                "name='" + name + '\'' +
-                ", description='" + description + '\'' +
-                ", type='" + type + '\'' +
-                "}";
-    }
+    // this.updatedAt = Instant.now(); // 부모의 @LastModifiedDate가 알아서 해줌
+  }
 }

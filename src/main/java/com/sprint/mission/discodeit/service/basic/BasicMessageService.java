@@ -1,79 +1,129 @@
 package com.sprint.mission.discodeit.service.basic;
 
+import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentCreateRequest;
 import com.sprint.mission.discodeit.dto.message.MessageCreateRequest;
-import com.sprint.mission.discodeit.dto.message.MessageResponse;
+import com.sprint.mission.discodeit.dto.message.MessageDto;
 import com.sprint.mission.discodeit.dto.message.MessageUpdateRequest;
+import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.Message;
+import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.entity.UserStatus;
+import com.sprint.mission.discodeit.mapper.MessageMapper;
+import com.sprint.mission.discodeit.mapper.PageResponseMapper;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
+import com.sprint.mission.discodeit.response.PageResponse;
 import com.sprint.mission.discodeit.service.MessageService;
-import com.sprint.mission.discodeit.service.UserStatusService;
+import com.sprint.mission.discodeit.storage.BinaryContentStorage;
+import java.time.Instant;
+import java.util.NoSuchElementException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.UUID;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class BasicMessageService implements MessageService {
 
-    private final MessageRepository messageRepository;
-    private final UserRepository userRepository;
-    private final ChannelRepository channelRepository;
-    private final BinaryContentRepository binaryContentRepository;
-    private final UserStatusService userStatusService;
+  private final MessageRepository messageRepository;
+  private final UserRepository userRepository;
+  private final ChannelRepository channelRepository;
+  private final BinaryContentRepository binaryContentRepository;
+  private final MessageMapper messageMapper;
+  private final BinaryContentStorage binaryContentStorage;
+  private final PageResponseMapper pageResponseMapper;
 
-    @Override
-    public Message create(MessageCreateRequest dto) {
-        userRepository.findById(dto.userId())
-                .orElseThrow(() -> new IllegalArgumentException("없는 user id 입니다."));
-        channelRepository.findById(dto.channelId())
-                .orElseThrow(() -> new IllegalArgumentException("없는 channel id 입니다."));
+  @Override
+  @Transactional
+  public MessageDto create(MessageCreateRequest dto,
+      List<BinaryContentCreateRequest> binaryContentDto) {
+    User author = userRepository.findById(dto.authorId())
+        .orElseThrow(
+            () -> new NoSuchElementException(
+                "Author with id " + dto.authorId() + " does not exist"));
+    Channel channel = channelRepository.findById(dto.channelId())
+        .orElseThrow(() -> new NoSuchElementException(
+            "Channel with id " + dto.channelId() + " does not exist"));
 
-        // binaryContent는 이미 생성된 후 이므로 가져다 쓰기만 하면 됨
-        Message message = new Message(dto.userId(), dto.channelId(), dto.content(), dto.attachments());
-        userStatusService.updateByUserId(dto.userId());
-        return messageRepository.save(message);
+    List<BinaryContent> attachments = binaryContentDto.stream()
+        .map(request -> new BinaryContent(request.fileName(),
+            (long) request.bytes().length, request.contentType()))
+        .toList();
+
+    attachments = binaryContentRepository.saveAll(attachments);
+
+    for (int i = 0; i < attachments.size(); i++) {
+      binaryContentStorage.put(attachments.get(i).getId(), binaryContentDto.get(i).bytes());
     }
 
-    @Override
-    public List<MessageResponse> findAllByChannelId(UUID channelId) {
-        Channel channel = channelRepository.findById(channelId)
-                .orElseThrow(() -> new IllegalArgumentException("없는 channel id 입니다."));
+    Message message = new Message(author, channel, dto.content(), attachments);
+    messageRepository.save(message);
 
-        return messageRepository.findAllByChannelId(channel.getId()).stream()
-                .map(m -> new MessageResponse(m.getId(), m.getUserId(), m.getChannelId(),
-                            m.getContent(), m.getAttachmentIds(), m.getCreatedAt()))
-                .toList();
+    UserStatus status = author.getStatus();
+    status.updateTime(Instant.now());
+
+    return messageMapper.toDto(message);
+  }
+
+  // 채팅방에 들어가서 위로 스크롤하면 예전 메시지가 계속 뜨는 로직
+  @Override
+  public PageResponse<MessageDto> findAllByChannelId(UUID channelId, Instant cursor) {
+    if (!channelRepository.existsById(channelId)) {
+      throw new NoSuchElementException("Channel with id " + channelId + " does not exist");
     }
 
-    @Override
-    public MessageResponse update(UUID id, MessageUpdateRequest dto) {
-        Message message = messageRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("없는 message id 입니다."));
+    Pageable pageable = PageRequest.of(0, 50);
 
-        message.update(dto.content());
-        messageRepository.save(message);
-        userStatusService.updateByUserId(message.getUserId());
+    Slice<Message> slice;
 
-        return new MessageResponse(message.getId(), message.getUserId(), message.getChannelId(),
-                message.getContent(), message.getAttachmentIds(), message.getUpdatedAt());
+    if (cursor == null) {
+      // 처음엔 무조건 맨 처음부터 최신순으로 50개
+      slice = messageRepository.findByChannelIdOrderByCreatedAtDesc(channelId,
+          pageable);
+    } else {
+      // 커서(시간)보다 옛날 메시지를 최신순으로 50개
+      slice = messageRepository.findByChannelIdAndCreatedAtLessThanOrderByCreatedAtDesc(channelId,
+          cursor, pageable);
     }
 
-    @Override
-    public void delete(UUID id) {
-        Message message = messageRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("없는 message id 입니다."));
+    Slice<MessageDto> dtoSlice = slice.map(messageMapper::toDto);
 
-        if (!message.getAttachmentIds().isEmpty()) {
-            message.getAttachmentIds()
-                    .forEach(binaryContentRepository::delete);
-        }
+    return pageResponseMapper.fromSlice(dtoSlice, MessageDto::createdAt);
+  }
 
-        messageRepository.delete(message.getId());
+  @Override
+  @Transactional
+  public MessageDto update(UUID id, MessageUpdateRequest dto) {
+    Message message = messageRepository.findById(id)
+        .orElseThrow(() -> new NoSuchElementException("Message with id " + id + " not found"));
+
+    message.update(dto.newContent());
+
+    UserStatus status = message.getAuthor().getStatus();
+    status.updateTime(Instant.now());
+
+    return messageMapper.toDto(message);
+  }
+
+  @Override
+  @Transactional
+  public void delete(UUID id) {
+    Message message = messageRepository.findById(id)
+        .orElseThrow(() -> new NoSuchElementException("Message with id " + id + " not found"));
+
+    if (message.getAttachments() != null && !message.getAttachments().isEmpty()) {
+      binaryContentRepository.deleteAll(message.getAttachments());
     }
+    messageRepository.delete(message);
+  }
 }
