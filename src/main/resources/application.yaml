@@ -12,6 +12,9 @@ spring:
 logging:
   level:
     root: info
+    com.sprint.mission.discodeit: debug
+    org.hibernate.SQL: warn
+    org.hibernate.orm.jdbc.bind: warn
 
 discodeit:
   repository:

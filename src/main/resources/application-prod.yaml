@@ -26,5 +26,5 @@ logging:
     org.springframework: warn
     com.zaxxer.hikari: warn
 
-    org.hibernate.SQL: info
-    com.example.discodeit: info
+    org.hibernate.SQL: off
+    com.sprint.mission.discodeit: info
