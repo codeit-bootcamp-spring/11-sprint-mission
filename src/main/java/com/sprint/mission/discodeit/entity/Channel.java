@@ -8,6 +8,7 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.Getter;
@@ -31,6 +32,9 @@ public class Channel extends BaseUpdatableEntity {
   @Column
   private String description = "";
 
+  @Column(name = "last_message_at")
+  private Instant lastMessageAt;
+
   @OneToMany(mappedBy = "channel", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<Message> messages = new ArrayList<>();
 
@@ -47,6 +51,10 @@ public class Channel extends BaseUpdatableEntity {
   public void update(String name, String description) {
     this.name = name;
     this.description = description;
+  }
+
+  public void updateLastMessageAt(Instant createdAt) {
+    this.lastMessageAt = createdAt;
   }
 
   @Override

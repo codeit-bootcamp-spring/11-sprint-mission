@@ -10,6 +10,8 @@ import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.service.BinaryContentService;
 import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.Resource;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -17,7 +19,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 public class BasicBinaryContentService implements BinaryContentService {
 
   private final BinaryContentRepository binaryContentRepository;
@@ -45,6 +46,7 @@ public class BasicBinaryContentService implements BinaryContentService {
   }
 
   @Override
+  @Transactional(readOnly = true)
   public BinaryContentDto find(UUID id) {
     BinaryContent content = binaryContentRepository.findById(id)
         .orElseThrow(() -> new BusinessLogicException(ExceptionCode.FILE_NOT_FOUND));
@@ -53,6 +55,7 @@ public class BasicBinaryContentService implements BinaryContentService {
   }
 
   @Override
+  @Transactional(readOnly = true)
   public List<BinaryContentDto> findAllByIdIn(Collection<UUID> ids) {
     if (ids == null) {
       return Collections.emptyList();
@@ -70,5 +73,12 @@ public class BasicBinaryContentService implements BinaryContentService {
     BinaryContent binaryContent = binaryContentRepository.findById(id)
         .orElseThrow(() -> new BusinessLogicException(ExceptionCode.BINARY_CONTENT_NOT_EXISTS));
     binaryContentRepository.delete(binaryContent);
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public ResponseEntity<Resource> download(UUID id) {
+    BinaryContentDto dto = this.find(id);
+    return binaryContentStorage.download(dto);
   }
 }

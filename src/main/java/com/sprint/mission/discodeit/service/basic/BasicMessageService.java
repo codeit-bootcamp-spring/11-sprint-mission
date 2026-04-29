@@ -7,6 +7,7 @@ import com.sprint.mission.discodeit.dto.response.PageResponse;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.Message;
+import com.sprint.mission.discodeit.entity.MessageAttachment;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.exception.BusinessLogicException;
 import com.sprint.mission.discodeit.exception.ExceptionCode;
@@ -76,6 +77,7 @@ public class BasicMessageService implements MessageService {
     }
 
     Message savedMessage = messageRepository.save(message);
+    channel.updateLastMessageAt(savedMessage.getCreatedAt());
 
     return messageMapper.toDto(savedMessage);
   }
@@ -112,8 +114,12 @@ public class BasicMessageService implements MessageService {
     Message mes = messageRepository.findById(id)
         .orElseThrow(() -> new BusinessLogicException(ExceptionCode.MESSAGE_NOT_FOUND));
 
-    if (!mes.getAttachments().isEmpty()) {
-      binaryContentRepository.deleteAll(mes.getAttachments());
+    if (!mes.getMessageAttachments().isEmpty()) {
+      List<BinaryContent> contentsToDelete = mes.getMessageAttachments().stream()
+          .map(MessageAttachment::getBinaryContent)
+          .toList();
+
+      binaryContentRepository.deleteAll(contentsToDelete);
     }
 
     messageRepository.delete(mes);

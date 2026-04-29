@@ -20,12 +20,10 @@ public interface MessageRepository extends JpaRepository<Message, UUID> {
 
   @Query("""
       SELECT m FROM Message m
-      WHERE m.channel.id IN :channelIds
-      AND m.createdAt = (
-            SELECT MAX(m2.createdAt)
-            FROM Message m2
-            WHERE m2.channel.id = m.channel.id
-            )""")
+      JOIN m.channel c
+      WHERE c.id IN :channelIds
+      AND m.createdAt = c.lastMessageAt
+      """)
   List<Message> findLatestMessagesByChannelIds(@Param("channelIds") Collection<UUID> channelIds);
 
   Optional<Message> findTopByChannelIdOrderByCreatedAtDesc(UUID channelId);
