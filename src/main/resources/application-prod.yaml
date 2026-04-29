@@ -24,7 +24,7 @@ logging:
     root: info
 
     org.springframework: warn
-    org.hibernate: warn
     com.zaxxer.hikari: warn
 
+    org.hibernate.SQL: info
     com.example.discodeit: info

@@ -29,3 +29,4 @@ logging:
   level:
     org.hobernate.SQL: debug
     org.hibernate.orm.jdbc.bind: trace
+    com.example.discodeit: debug

@@ -9,6 +9,10 @@ spring:
       hibernate:
         default_batch_fetch_size: 100
 
+logging:
+  level:
+    root: info
+
 discodeit:
   repository:
     type: jpa
