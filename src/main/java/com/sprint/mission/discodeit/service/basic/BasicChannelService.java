@@ -13,11 +13,11 @@ import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.exception.BusinessException;
 import com.sprint.mission.discodeit.exception.ErrorCode;
 import com.sprint.mission.discodeit.mapper.ChannelMapper;
-import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
+import com.sprint.mission.discodeit.service.BinaryContentService;
 import com.sprint.mission.discodeit.service.ChannelService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,9 +40,9 @@ public class BasicChannelService implements ChannelService {
     private final ChannelRepository channelRepo;
     private final MessageRepository messageRepo;
     private final ReadStatusRepository readStatusRepo;
-    private final BinaryContentRepository binaryContentRepo;
     private final UserRepository userRepo;
     private final ChannelMapper channelMapper;
+    private final BinaryContentService binaryContentService;
 
     @Override
     @Transactional
@@ -173,7 +173,7 @@ public class BasicChannelService implements ChannelService {
                 .flatMap(message -> message.getAttachments().stream())
                 .toList();
 
-        binaryContentRepo.deleteAll(attachments);
+        binaryContentService.deleteAll(attachments);
 
         channelRepo.delete(channel);
         log.info("Channel deleted. channelId={}, attachmentCount = {}", channel.getId(), attachments.size());

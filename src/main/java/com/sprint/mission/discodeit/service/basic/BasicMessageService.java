@@ -12,19 +12,17 @@ import com.sprint.mission.discodeit.exception.BusinessException;
 import com.sprint.mission.discodeit.exception.ErrorCode;
 import com.sprint.mission.discodeit.mapper.MessageMapper;
 import com.sprint.mission.discodeit.mapper.PageResponseMapper;
-import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
+import com.sprint.mission.discodeit.service.BinaryContentService;
 import com.sprint.mission.discodeit.service.MessageService;
-import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -38,10 +36,9 @@ public class BasicMessageService implements MessageService {
     private final MessageRepository messageRepo;
     private final ChannelRepository channelRepo;
     private final UserRepository userRepo;
-    private final BinaryContentRepository binaryContentRepo;
     private final MessageMapper messageMapper;
     private final PageResponseMapper pageResponseMapper;
-    private final BinaryContentStorage binaryContentStorage;
+    private final BinaryContentService binaryContentService;
 
     @Override
     @Transactional
@@ -52,7 +49,7 @@ public class BasicMessageService implements MessageService {
         User author = userRepo.findById(dto.authorId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-        List<BinaryContent> binaryContents = saveAttachments(attachments);
+        List<BinaryContent> binaryContents = binaryContentService.createAll(attachments);
 
         Message message = new Message(dto.content(), channel, author, binaryContents);
         messageRepo.save(message);
@@ -105,39 +102,9 @@ public class BasicMessageService implements MessageService {
         Message message = messageRepo.findWithDetailsById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MESSAGE_NOT_FOUND));
 
-        for(BinaryContent attachment : message.getAttachments()) {
-            binaryContentStorage.deleteById(attachment.getId());
-        }
-        binaryContentRepo.deleteAll(message.getAttachments());
+        binaryContentService.deleteAll(message.getAttachments());
 
         messageRepo.delete(message);
         log.info("Message deleted. messageId={}", message.getId());
-    }
-
-    private List<BinaryContent> saveAttachments(List<MultipartFile> attachments) {
-        if(attachments == null || attachments.isEmpty()) {
-            return List.of();
-        }
-        return attachments.stream()
-                .filter(p -> !p.isEmpty())
-                .map(this::saveAttachment)
-                .toList();
-    }
-
-    private BinaryContent saveAttachment(MultipartFile file) {
-        try {
-            byte[] bytes = file.getBytes();
-            BinaryContent binaryContent = new BinaryContent(
-                    file.getOriginalFilename(),
-                    file.getContentType(),
-                    (long) bytes.length
-            );
-            binaryContentRepo.save(binaryContent);
-            binaryContentStorage.put(binaryContent.getId(), bytes);
-
-            return binaryContent;
-        } catch (IOException e){
-            throw new BusinessException(ErrorCode.FILE_SAVE_FAILED);
-        }
     }
 }
