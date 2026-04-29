@@ -36,7 +36,7 @@ public class PageResponseMapper {
 
     public <T, R> PageResponse<R> toCursorDto(List<T> items, int pageSize,
                                               Function<T, R> contentMapper, Function<T, Object> cursorMapper) {
-        boolean hasNext = items.size() > 50;
+        boolean hasNext = items.size() > pageSize;
         List<T> pageItems = hasNext
                 ? items.subList(0, pageSize)
                 : items;

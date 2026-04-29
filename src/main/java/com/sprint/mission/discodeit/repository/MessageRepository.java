@@ -2,6 +2,8 @@ package com.sprint.mission.discodeit.repository;
 
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.Message;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -38,7 +40,7 @@ public interface MessageRepository extends JpaRepository<Message, UUID> {
             "author.profile",
             "attachments"
     })
-    List<Message> findTop51ByChannelOrderByCreatedAtDesc(Channel channel);
+    List<Message> findAllByChannelOrderByCreatedAtDesc(Channel channel, Pageable pageable);
 
     @EntityGraph(attributePaths = {
             "channel",
@@ -47,7 +49,18 @@ public interface MessageRepository extends JpaRepository<Message, UUID> {
             "author.profile",
             "attachments"
     })
-    List<Message> findTop51ByChannelAndCreatedAtLessThanOrderByCreatedAtDesc(Channel channel, Instant createdAt);
+    List<Message> findAllByChannelAndCreatedAtLessThanOrderByCreatedAtDesc(
+            Channel channel, Instant createdAt, Pageable pageable
+    );
+
+    default List<Message> findAllByChannelWithCursor(
+            Channel channel, Instant cursor, int pageSize
+    ) {
+        PageRequest pageRequest = PageRequest.of(0, pageSize + 1);
+        return cursor == null
+                ? findAllByChannelOrderByCreatedAtDesc(channel, pageRequest)
+                : findAllByChannelAndCreatedAtLessThanOrderByCreatedAtDesc(channel, cursor, pageRequest);
+    }
 
     @EntityGraph(attributePaths = {
             "channel",

@@ -39,6 +39,7 @@ public class BasicMessageService implements MessageService {
     private final MessageMapper messageMapper;
     private final PageResponseMapper pageResponseMapper;
     private final BinaryContentService binaryContentService;
+    private static final int MESSAGE_PAGE_SIZE = 50;
 
     @Override
     @Transactional
@@ -71,16 +72,15 @@ public class BasicMessageService implements MessageService {
         Channel channel = channelRepo.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.CHANNEL_NOT_FOUND));
 
-        List<Message> messages;
-        if(cursor == null) {
-            messages = messageRepo.findTop51ByChannelOrderByCreatedAtDesc(channel);
-        } else {
-            messages = messageRepo.findTop51ByChannelAndCreatedAtLessThanOrderByCreatedAtDesc(channel, cursor);
-        }
+        List<Message> messages = messageRepo.findAllByChannelWithCursor(
+                channel,
+                cursor,
+                MESSAGE_PAGE_SIZE
+        );
 
         return pageResponseMapper.toCursorDto(
                 messages,
-                50,
+                MESSAGE_PAGE_SIZE,
                 messageMapper::toDto,
                 Message::getCreatedAt
         );
