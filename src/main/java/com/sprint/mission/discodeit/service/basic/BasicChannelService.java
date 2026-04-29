@@ -127,24 +127,13 @@ public class BasicChannelService implements ChannelService {
                         Collectors.mapping(row -> (User) row[1], Collectors.toList())
                 ));
 
-        List<ChannelDto> response = new ArrayList<>();
-
-        for(Channel channel : publicChannels) {
-            response.add(channelMapper.toDto(
-                    channel,
-                    List.of(),
-                    lastMessageAtMap.get(channel.getId())
-            ));
-        }
-        for(Channel channel : privateChannels) {
-            response.add(channelMapper.toDto(
-                    channel,
-                    participantsMap.getOrDefault(channel.getId(), List.of()),
-                    lastMessageAtMap.get(channel.getId())
-            ));
-        }
-
-        return response;
+        return allChannels.stream()
+                .map(channel -> channelMapper.toDto(
+                        channel,
+                        participantsMap.getOrDefault(channel.getId(), List.of()),
+                        lastMessageAtMap.get(channel.getId())
+                ))
+                .toList();
     }
 
     @Override
