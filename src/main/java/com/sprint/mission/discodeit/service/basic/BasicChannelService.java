@@ -1,5 +1,7 @@
 package com.sprint.mission.discodeit.service.basic;
 
+import com.sprint.mission.discodeit.dto.projection.ChannelLastMessageAtProjection;
+import com.sprint.mission.discodeit.dto.projection.ChannelParticipantProjection;
 import com.sprint.mission.discodeit.dto.request.ChannelUpdateRequest;
 import com.sprint.mission.discodeit.dto.request.PrivateChannelCreateRequest;
 import com.sprint.mission.discodeit.dto.request.PublicChannelCreateRequest;
@@ -118,13 +120,13 @@ public class BasicChannelService implements ChannelService {
 
         Map<UUID, Instant> lastMessageAtMap = messageRepo.findLastMessageAtByChannels(allChannels).stream()
                 .collect(Collectors.toMap(
-                        row -> (UUID) row[0],
-                        row -> (Instant) row[1]
+                        ChannelLastMessageAtProjection::channelId,
+                        ChannelLastMessageAtProjection::lastMessageAt
                 ));
         Map<UUID, List<User>> participantsMap = readStatusRepo.findUsersByChannels(privateChannels).stream()
                 .collect(Collectors.groupingBy(
-                        row -> (UUID) row[0],
-                        Collectors.mapping(row -> (User) row[1], Collectors.toList())
+                        ChannelParticipantProjection::channelId,
+                        Collectors.mapping(ChannelParticipantProjection::participant, Collectors.toList())
                 ));
 
         return allChannels.stream()

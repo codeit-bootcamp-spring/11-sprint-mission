@@ -1,5 +1,6 @@
 package com.sprint.mission.discodeit.repository;
 
+import com.sprint.mission.discodeit.dto.projection.ChannelLastMessageAtProjection;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.Message;
 import org.springframework.data.domain.PageRequest;
@@ -23,12 +24,15 @@ public interface MessageRepository extends JpaRepository<Message, UUID> {
     Optional<Instant> findLastMessageAtByChannel(@Param("channel")Channel channels);
 
     @Query("""
-        select m.channel.id, max(m.createdAt)
+        select new com.sprint.mission.discodeit.dto.projection.ChannelLastMessageAtProjection(
+            m.channel.id,
+            max(m.createdAt)
+        )
         from Message m
         where m.channel in :channels
         group by m.channel.id
     """)
-    List<Object[]> findLastMessageAtByChannels(@Param("channels") List<Channel> channels);
+    List<ChannelLastMessageAtProjection> findLastMessageAtByChannels(@Param("channels") List<Channel> channels);
 
     @EntityGraph(attributePaths = "attachments")
     List<Message> findAllWithAttachmentsByChannel(Channel channel);
