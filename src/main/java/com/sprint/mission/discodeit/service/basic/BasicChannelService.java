@@ -28,8 +28,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -64,11 +66,17 @@ public class BasicChannelService implements ChannelService {
     @Override
     @Transactional
     public ChannelDto createPrivateChannel(PrivateChannelCreateRequest dto) {
+        List<UUID> participantIds = dto.participantIds();
+        Set<UUID> uniqueParticipantIds = new HashSet<>(participantIds);
+        if(uniqueParticipantIds.size() != participantIds.size()) {
+            throw new BusinessException(ErrorCode.DUPLICATE_PARTICIPANT);
+        }
+
         Channel channel = new Channel(ChannelType.PRIVATE, null, null);
         channelRepo.save(channel);
 
-        List<User> participants = userRepo.findAllById(dto.participantIds());
-        if(participants.size() != dto.participantIds().size()) {
+        List<User> participants = userRepo.findAllById(participantIds);
+        if(participants.size() != participantIds.size()) {
             throw new BusinessException(ErrorCode.USER_NOT_FOUND);
         }
 
@@ -78,7 +86,7 @@ public class BasicChannelService implements ChannelService {
 
         readStatusRepo.saveAll(readStatuses);
 
-        log.info("Private channel created. channelId={}, participantCount={}", channel.getId(), dto.participantIds().size());
+        log.info("Private channel created. channelId={}, participantCount={}", channel.getId(), participantIds.size());
 
         return channelMapper.toDto(
                 channel,

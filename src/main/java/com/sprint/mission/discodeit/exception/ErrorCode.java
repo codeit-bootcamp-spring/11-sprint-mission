@@ -17,6 +17,7 @@ public enum ErrorCode {
     DUPLICATE_NAME(HttpStatus.BAD_REQUEST, "Duplicate name"),
     INVALID_PASSWORD(HttpStatus.BAD_REQUEST, "Invalid password"),
     PRIVATE_CHANNEL_UPDATE_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "Private channel cannot be updated"),
+    DUPLICATE_PARTICIPANT(HttpStatus.BAD_REQUEST, "Duplicate participant"),
     READ_STATUS_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "Read status already exists"),
     USER_STATUS_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "User status already exists"),
 
