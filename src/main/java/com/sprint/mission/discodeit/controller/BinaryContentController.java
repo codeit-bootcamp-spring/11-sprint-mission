@@ -1,74 +1,50 @@
 package com.sprint.mission.discodeit.controller;
 
-import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentResponseDTO;
-import com.sprint.mission.discodeit.dto.binarycontent.CreateBinaryContentRequestDTO;
-import com.sprint.mission.discodeit.entity.BinaryContent;
-import com.sprint.mission.discodeit.response.ApiResponse;
+import com.sprint.mission.discodeit.controller.api.BinaryContentApi;
+import com.sprint.mission.discodeit.dto.data.BinaryContentDto;
 import com.sprint.mission.discodeit.service.BinaryContentService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
-
-import java.io.IOException;
+import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import java.util.List;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
-@Slf4j
-@RestController
-@RequestMapping("/api/contents")
 @RequiredArgsConstructor
-public class BinaryContentController {
+@RestController
+@RequestMapping("/api/binaryContents")
+public class BinaryContentController implements BinaryContentApi {
 
-    private final BinaryContentService binaryContentService;
+  private final BinaryContentService binaryContentService;
+  private final BinaryContentStorage binaryContentStorage;
 
-    // 심화 요구사항
-    @RequestMapping(value = "/find", method = RequestMethod.GET)
-    public ResponseEntity<BinaryContent> find(
-            @RequestParam("binaryContentId") UUID binaryContentId
-    ) {
-        BinaryContent content = binaryContentService.find(binaryContentId);
-        return ResponseEntity.ok(content);
-    }
+  @GetMapping(path = "{binaryContentId}")
+  public ResponseEntity<BinaryContentDto> find(
+      @PathVariable("binaryContentId") UUID binaryContentId) {
+    BinaryContentDto binaryContent = binaryContentService.find(binaryContentId);
+    return ResponseEntity
+        .status(HttpStatus.OK)
+        .body(binaryContent);
+  }
 
-    // 파일 업로드 API
-    @RequestMapping(
-            method = RequestMethod.POST,
-            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
-    )
-    public ApiResponse<BinaryContentResponseDTO> upload(
-            @RequestParam("file") MultipartFile file
-    ) throws IOException {
+  @GetMapping
+  public ResponseEntity<List<BinaryContentDto>> findAllByIdIn(
+      @RequestParam("binaryContentIds") List<UUID> binaryContentIds) {
+    List<BinaryContentDto> binaryContents = binaryContentService.findAllByIdIn(binaryContentIds);
+    return ResponseEntity
+        .status(HttpStatus.OK)
+        .body(binaryContents);
+  }
 
-        CreateBinaryContentRequestDTO dto = new CreateBinaryContentRequestDTO(
-                file.getOriginalFilename(),
-                file.getContentType(),
-                file.getBytes()
-        );
-
-        return ApiResponse.success(BinaryContentResponseDTO.from(binaryContentService.create(dto)));
-    }
-
-    // 단건 조회
-    @RequestMapping(value = "/{id}", method = RequestMethod.GET)
-    public ApiResponse<BinaryContentResponseDTO> findContent(
-            @PathVariable UUID id
-    ) {
-        BinaryContentResponseDTO responseDto = BinaryContentResponseDTO.from(binaryContentService.find(id));
-        return ApiResponse.success(responseDto);
-    }
-
-    // 다건 조회
-    @RequestMapping(method = RequestMethod.GET)
-    public ApiResponse<List<BinaryContentResponseDTO>> findMultipleContents(
-            @RequestParam List<UUID> ids
-    ) {
-        List<BinaryContentResponseDTO> responseList = binaryContentService.findAllByIdIn(ids).stream()
-                .map(BinaryContentResponseDTO::from)
-                .toList();
-
-        return ApiResponse.success(responseList);
-    }
+  @GetMapping(path = "{binaryContentId}/download")
+  public ResponseEntity<?> download(
+      @PathVariable("binaryContentId") UUID binaryContentId) {
+    BinaryContentDto binaryContentDto = binaryContentService.find(binaryContentId);
+    return binaryContentStorage.download(binaryContentDto);
+  }
 }
