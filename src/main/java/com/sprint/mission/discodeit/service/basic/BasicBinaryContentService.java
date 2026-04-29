@@ -47,9 +47,12 @@ public class BasicBinaryContentService implements BinaryContentService {
             );
             binaryContentRepo.save(binaryContent);
             binaryContentStorage.put(binaryContent.getId(), bytes);
+            log.info("BinaryContent uploaded. binaryContentId={}, fileName={}, size={}",
+                    binaryContent.getId(), binaryContent.getFileName(), binaryContent.getSize());
 
             return binaryContent;
         } catch (IOException e){
+            log.error("BinaryContent upload failed. fileName={}", file.getOriginalFilename(), e);
             throw new BusinessException(ErrorCode.FILE_SAVE_FAILED);
         }
     }
@@ -63,11 +66,14 @@ public class BasicBinaryContentService implements BinaryContentService {
             return List.of();
         }
 
-        return files.stream()
+        List<BinaryContent> binaryContents = files.stream()
                 .filter(p -> p != null && !p.isEmpty())
                 .map(this::create)
                 .toList();
 
+        log.debug("BinaryContents uploaded. count={}", binaryContents.size());
+
+        return binaryContents;
     }
 
     @Override
@@ -102,6 +108,9 @@ public class BasicBinaryContentService implements BinaryContentService {
 
         binaryContentStorage.deleteById(binaryContent.getId());
         binaryContentRepo.delete(binaryContent);
+
+        log.info("BinaryContent deleted. binaryContentId={}, fileName={}",
+                binaryContent.getId(), binaryContent.getFileName());
     }
 
     @Override
@@ -119,5 +128,6 @@ public class BasicBinaryContentService implements BinaryContentService {
             binaryContentStorage.deleteById(binaryContent.getId());
         }
         binaryContentRepo.deleteAll(binaryContentList);
+        log.info("BinaryContents deleted. count={}", binaryContentList.size());
     }
 }

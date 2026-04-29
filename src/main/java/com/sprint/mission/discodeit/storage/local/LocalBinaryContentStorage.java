@@ -5,6 +5,7 @@ import com.sprint.mission.discodeit.exception.BusinessException;
 import com.sprint.mission.discodeit.exception.ErrorCode;
 import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import jakarta.annotation.PostConstruct;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.io.InputStreamResource;
@@ -21,6 +22,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.UUID;
 
+@Slf4j
 @Component
 @ConditionalOnProperty(name = "discodeit.storage.type", havingValue = "local")
 public class LocalBinaryContentStorage implements BinaryContentStorage {
@@ -73,6 +75,9 @@ public class LocalBinaryContentStorage implements BinaryContentStorage {
             InputStream inputStream = get(dto.id());
             InputStreamResource resource = new InputStreamResource(inputStream);
 
+            log.info("BinaryContent download prepared. binaryContentId={}, fileName={}, size={}",
+                    dto.id(), dto.fileName(), dto.size());
+
             return ResponseEntity.ok()
                     .contentType(MediaType.parseMediaType(dto.contentType()))
                     .contentLength(dto.size())
@@ -85,6 +90,8 @@ public class LocalBinaryContentStorage implements BinaryContentStorage {
                     )
                     .body(resource);
         } catch (Exception e) {
+            log.error("BinaryContent download failed. binaryContentId={}, fileName={}",
+                    dto.id(), dto.fileName(), e);
             throw new BusinessException(ErrorCode.FILE_LOAD_FAILED);
         }
     }

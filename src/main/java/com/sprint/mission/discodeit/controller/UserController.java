@@ -9,6 +9,7 @@ import com.sprint.mission.discodeit.service.UserService;
 import com.sprint.mission.discodeit.service.UserStatusService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -26,6 +27,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
@@ -39,6 +41,8 @@ public class UserController implements UserApi {
             @RequestPart("userCreateRequest") @Valid UserCreateRequest dto,
             @RequestPart(value = "profile", required = false) MultipartFile profile
     ) {
+        log.debug("User create request received. username={}, email={}, hasProfile={}",
+                dto.username(), dto.email(), profile != null && !profile.isEmpty());
         UserDto result = userService.create(dto, profile);
         return ResponseEntity.status(HttpStatus.CREATED).body(result);
     }
@@ -49,6 +53,8 @@ public class UserController implements UserApi {
             @RequestPart("userUpdateRequest") @Valid UserUpdateRequest dto,
             @RequestPart(value = "profile", required = false) MultipartFile profile
     ) {
+        log.debug("User update request received. userId={}, hasProfile={}",
+                userId, profile != null && !profile.isEmpty());
         userService.update(userId, dto, profile);
         return ResponseEntity.ok().build();
     }
@@ -57,6 +63,7 @@ public class UserController implements UserApi {
     public ResponseEntity<Void> delete(
             @PathVariable UUID userId
     ) {
+        log.debug("User delete request received. userId={}", userId);
         userService.delete(userId);
         return ResponseEntity.noContent().build();
     }
