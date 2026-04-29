@@ -25,10 +25,8 @@ discodeit:
       root-path: data/binaryContents
 
 logging:
-  file:
-    name: logs/app.log
   level:
-    root: WARN
+    root: INFO
     com.sprint.mission.discodeit: INFO
     org.hibernate.SQL: OFF
     org.hibernate.orm.jdbc.bind: OFF

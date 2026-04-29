@@ -8,3 +8,9 @@ spring:
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
+
+logging:
+  level:
+    com.sprint.mission.discodeit: INFO
+    org.hibernate.SQL: OFF
+    org.hibernate.orm.jdbc.bind: OFF
