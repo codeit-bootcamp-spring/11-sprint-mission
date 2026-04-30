@@ -10,7 +10,7 @@
     </encoder>
   </appender>
 
-  <appender name="FILEE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+  <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
     <file>${LOG_PATTERN}/application.log</file>
 
     <encoder>

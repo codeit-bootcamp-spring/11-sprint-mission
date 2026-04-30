@@ -11,6 +11,7 @@ import jakarta.validation.Valid;
 import java.net.URI;
 import java.time.Instant;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -21,6 +22,7 @@ import java.util.List;
 import java.util.UUID;
 import org.springframework.web.multipart.MultipartFile;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/messages")
 @RequiredArgsConstructor
@@ -34,8 +36,11 @@ public class MessageController {
       @Parameter(content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE))
       @Valid @RequestPart("messageCreateRequest") CreateMessageRequest request,
       @RequestPart(value = "attachments", required = false) List<MultipartFile> attachments) {
+    log.info("메시지 생성 요청 수신 - channelId: {}, attachmentCount: {}", request.channelId(),
+        attachments != null ? attachments.size() : 0);
     MessageDto createdMessage = messageService.createMessage(request, attachments);
     URI location = URI.create("/api/messages/" + createdMessage.id());
+    log.info("메시지 생성 응답 완료 - messageId: {}", createdMessage.id());
     return ResponseEntity.created(location).body(createdMessage);
   }
 
@@ -52,14 +57,18 @@ public class MessageController {
   @DeleteMapping("/{messageId}")
   @ResponseStatus(HttpStatus.NO_CONTENT)
   public ResponseEntity<Void> deleteMessage(@PathVariable UUID messageId) {
+    log.info("메시지 삭제 요청 수신 - messageId: {}", messageId);
     messageService.deleteMessage(messageId);
+    log.info("메시지 삭제 응답 완료 - messageId: {}", messageId);
     return ResponseEntity.noContent().build();
   }
 
   @PatchMapping("/{messageId}")
   public ResponseEntity<MessageDto> updateMessage(@PathVariable UUID messageId,
       @RequestBody MessageUpdateRequest request) {
+    log.info("메시지 업데이트 요청 수신 - messageId: {}", messageId);
     MessageDto updatedMessage = messageService.updateMessage(messageId, request);
+    log.info("메시지 업데이트 응답 완료 - messageId: {}", messageId);
     return ResponseEntity.ok(updatedMessage);
   }
 }
