@@ -12,8 +12,11 @@ import com.sprint.mission.discodeit.entity.ChannelType;
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.entity.User;
-import com.sprint.mission.discodeit.exception.BusinessException;
-import com.sprint.mission.discodeit.exception.ErrorCode;
+import com.sprint.mission.discodeit.exception.channel.ChannelNotFoundException;
+import com.sprint.mission.discodeit.exception.channel.ChannelParticipantDuplicatedException;
+import com.sprint.mission.discodeit.exception.channel.ChannelUpdateNotAllowedException;
+import com.sprint.mission.discodeit.exception.channel.InvalidParticipantIdException;
+import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.mapper.ChannelMapper;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
@@ -69,16 +72,22 @@ public class BasicChannelService implements ChannelService {
         List<UUID> participantIds = dto.participantIds();
         Set<UUID> uniqueParticipantIds = new HashSet<>(participantIds);
         if(uniqueParticipantIds.size() != participantIds.size()) {
-            throw new BusinessException(ErrorCode.DUPLICATE_PARTICIPANT);
+            throw new ChannelParticipantDuplicatedException(participantIds);
+        }
+
+        List<User> participants = userRepo.findAllById(uniqueParticipantIds);
+        if(participants.size() != uniqueParticipantIds.size()) {
+            Set<UUID> foundParticipantIds = participants.stream()
+                    .map(User::getId)
+                    .collect(Collectors.toSet());
+            List<UUID> invalidParticipantIds = uniqueParticipantIds.stream()
+                    .filter(participantId -> !foundParticipantIds.contains(participantId))
+                    .toList();
+            throw new InvalidParticipantIdException(invalidParticipantIds);
         }
 
         Channel channel = new Channel(ChannelType.PRIVATE, null, null);
         channelRepo.save(channel);
-
-        List<User> participants = userRepo.findAllById(participantIds);
-        if(participants.size() != participantIds.size()) {
-            throw new BusinessException(ErrorCode.USER_NOT_FOUND);
-        }
 
         List<ReadStatus> readStatuses = participants.stream()
                 .map(user -> new ReadStatus(user, channel, Instant.now()))
@@ -98,7 +107,7 @@ public class BasicChannelService implements ChannelService {
     @Override
     public ChannelDto findById(UUID id) {
         Channel channel = channelRepo.findById(id)
-                .orElseThrow(() -> new BusinessException(ErrorCode.CHANNEL_NOT_FOUND));
+                .orElseThrow(() -> new ChannelNotFoundException(id));
 
         Instant lastMessageAt = messageRepo.findLastMessageAtByChannel(channel)
                 .orElse(null);
@@ -113,7 +122,7 @@ public class BasicChannelService implements ChannelService {
     @Override
     public List<ChannelDto> findAllByUserId(UUID id) {
         User user = userRepo.findById(id)
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new UserNotFoundException(id));
 
         List<Channel> publicChannels = channelRepo.findAllByChannelType(ChannelType.PUBLIC);
         List<Channel> privateChannels = channelRepo.findChannelsByUser(user);
@@ -150,10 +159,10 @@ public class BasicChannelService implements ChannelService {
     @Transactional
     public void update(UUID id, ChannelUpdateRequest dto) {
         Channel channel = channelRepo.findById(id)
-                .orElseThrow(() -> new BusinessException(ErrorCode.CHANNEL_NOT_FOUND));
+                .orElseThrow(() -> new ChannelNotFoundException(id));
 
         if(channel.getChannelType() == ChannelType.PRIVATE)
-            throw new BusinessException(ErrorCode.PRIVATE_CHANNEL_UPDATE_NOT_ALLOWED);
+            throw new ChannelUpdateNotAllowedException(id);
 
         channel.update(dto.newName(), dto.newDescription());
 
@@ -164,7 +173,7 @@ public class BasicChannelService implements ChannelService {
     @Transactional
     public void delete(UUID id) {
         Channel channel = channelRepo.findById(id)
-                .orElseThrow(() -> new BusinessException(ErrorCode.CHANNEL_NOT_FOUND));
+                .orElseThrow(() -> new ChannelNotFoundException(id));
 
         List<Message> messages = messageRepo.findAllWithAttachmentsByChannel(channel);
 

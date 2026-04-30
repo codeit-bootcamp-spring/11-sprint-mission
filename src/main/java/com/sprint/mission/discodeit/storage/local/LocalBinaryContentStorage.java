@@ -1,8 +1,10 @@
 package com.sprint.mission.discodeit.storage.local;
 
 import com.sprint.mission.discodeit.dto.response.BinaryContentDto;
-import com.sprint.mission.discodeit.exception.BusinessException;
-import com.sprint.mission.discodeit.exception.ErrorCode;
+import com.sprint.mission.discodeit.exception.binarycontent.DirectoryCreateFailedException;
+import com.sprint.mission.discodeit.exception.binarycontent.FileDeleteFailedException;
+import com.sprint.mission.discodeit.exception.binarycontent.FileLoadFailedException;
+import com.sprint.mission.discodeit.exception.binarycontent.FileSaveFailedException;
 import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
@@ -40,7 +42,7 @@ public class LocalBinaryContentStorage implements BinaryContentStorage {
         try {
             Files.createDirectories(root);
         } catch (IOException e) {
-            throw new BusinessException(ErrorCode.DIRECTORY_CREATION_FAILED);
+            throw new DirectoryCreateFailedException();
         }
     }
 
@@ -55,7 +57,7 @@ public class LocalBinaryContentStorage implements BinaryContentStorage {
             Files.write(path, bytes);
             return id;
         } catch (IOException e) {
-            throw new BusinessException(ErrorCode.FILE_SAVE_FAILED);
+            throw new FileSaveFailedException();
         }
     }
 
@@ -65,7 +67,7 @@ public class LocalBinaryContentStorage implements BinaryContentStorage {
         try {
             return Files.newInputStream(path);
         } catch (IOException e) {
-            throw new BusinessException(ErrorCode.FILE_LOAD_FAILED);
+            throw new FileLoadFailedException();
         }
     }
 
@@ -92,7 +94,7 @@ public class LocalBinaryContentStorage implements BinaryContentStorage {
         } catch (Exception e) {
             log.error("BinaryContent download failed. binaryContentId={}, fileName={}",
                     dto.id(), dto.fileName(), e);
-            throw new BusinessException(ErrorCode.FILE_LOAD_FAILED);
+            throw new FileLoadFailedException();
         }
     }
 
@@ -102,7 +104,7 @@ public class LocalBinaryContentStorage implements BinaryContentStorage {
         try {
             Files.deleteIfExists(path);
         } catch (IOException e) {
-            throw new BusinessException(ErrorCode.FILE_DELETE_FAILED);
+            throw new FileDeleteFailedException();
         }
     }
 

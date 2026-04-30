@@ -26,10 +26,10 @@ public class GlobalExceptionHandler {
     }
 
     // 지정 예외
-    @ExceptionHandler(BusinessException.class)
-    public ResponseEntity<String> handleBusinessException(BusinessException e) {
+    @ExceptionHandler(DiscodeitException.class)
+    public ResponseEntity<String> handleBusinessException(DiscodeitException e) {
         if(e.getErrorCode().getStatus().is5xxServerError()) {
-            log.error("Business exception occurred: {}", e.getErrorCode(), e);
+            log.warn("Business exception occurred: {}", e.getErrorCode(), e);
         }
 
         return ResponseEntity.status(e.getErrorCode().getStatus())

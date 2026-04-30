@@ -6,8 +6,9 @@ import com.sprint.mission.discodeit.dto.response.UserDto;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.entity.UserStatus;
-import com.sprint.mission.discodeit.exception.BusinessException;
-import com.sprint.mission.discodeit.exception.ErrorCode;
+import com.sprint.mission.discodeit.exception.user.EmailAlreadyExistsException;
+import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
+import com.sprint.mission.discodeit.exception.user.UsernameAlreadyExistsException;
 import com.sprint.mission.discodeit.mapper.UserMapper;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.BinaryContentService;
@@ -35,8 +36,8 @@ public class BasicUserService implements UserService {
     @Override
     @Transactional
     public UserDto create(UserCreateRequest dto, MultipartFile profile) {
-        if(userRepo.findByUsername(dto.username()).isPresent()) throw new BusinessException(ErrorCode.DUPLICATE_NAME);
-        if(userRepo.findByEmail(dto.email()).isPresent()) throw new BusinessException(ErrorCode.DUPLICATE_EMAIL);
+        if(userRepo.findByUsername(dto.username()).isPresent()) throw new UsernameAlreadyExistsException(dto.username());
+        if(userRepo.findByEmail(dto.email()).isPresent()) throw new EmailAlreadyExistsException(dto.email());
 
         BinaryContent binaryContent = binaryContentService.create(profile);
 
@@ -51,7 +52,7 @@ public class BasicUserService implements UserService {
     @Override
     public UserDto findById(UUID id) {
         User user = userRepo.findWithStatusAndProfileById(id)
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new UserNotFoundException(id));
         return userMapper.toDto(user);
     }
 
@@ -66,14 +67,14 @@ public class BasicUserService implements UserService {
     @Transactional
     public void update(UUID id, UserUpdateRequest dto, MultipartFile profile) {
         User user = userRepo.findById(id)
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new UserNotFoundException(id));
 
         if(!user.getUsername().equals(dto.newUsername())
                 && userRepo.findByUsername(dto.newUsername()).isPresent())
-            throw new BusinessException(ErrorCode.DUPLICATE_NAME);
+            throw new UsernameAlreadyExistsException(dto.newUsername());
         if(!user.getEmail().equals(dto.newEmail())
                 && userRepo.findByEmail(dto.newEmail()).isPresent())
-            throw new BusinessException(ErrorCode.DUPLICATE_EMAIL);
+            throw new EmailAlreadyExistsException(dto.newEmail());
 
         BinaryContent oldProfile = user.getProfile();
         BinaryContent newProfile = binaryContentService.create(profile);
@@ -91,7 +92,7 @@ public class BasicUserService implements UserService {
     @Transactional
     public void delete(UUID id) {
         User user = userRepo.findById(id)
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new UserNotFoundException(id));
         BinaryContent profile = user.getProfile();
 
         if(profile != null) binaryContentService.delete(profile);

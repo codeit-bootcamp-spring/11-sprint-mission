@@ -2,8 +2,8 @@ package com.sprint.mission.discodeit.service.basic;
 
 import com.sprint.mission.discodeit.dto.response.BinaryContentDto;
 import com.sprint.mission.discodeit.entity.BinaryContent;
-import com.sprint.mission.discodeit.exception.BusinessException;
-import com.sprint.mission.discodeit.exception.ErrorCode;
+import com.sprint.mission.discodeit.exception.binarycontent.BinaryContentNotFoundException;
+import com.sprint.mission.discodeit.exception.binarycontent.FileSaveFailedException;
 import com.sprint.mission.discodeit.mapper.BinaryContentMapper;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.service.BinaryContentService;
@@ -15,9 +15,12 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -53,7 +56,7 @@ public class BasicBinaryContentService implements BinaryContentService {
             return binaryContent;
         } catch (IOException e){
             log.error("BinaryContent upload failed. fileName={}", file.getOriginalFilename(), e);
-            throw new BusinessException(ErrorCode.FILE_SAVE_FAILED);
+            throw new FileSaveFailedException();
         }
     }
 
@@ -80,7 +83,7 @@ public class BasicBinaryContentService implements BinaryContentService {
     public BinaryContentDto find(UUID id) {
 
         BinaryContent binaryContent = binaryContentRepo.findById(id)
-                .orElseThrow(() -> new BusinessException(ErrorCode.BINARY_CONTENT_NOT_FOUND));
+                .orElseThrow(() -> new BinaryContentNotFoundException(id));
 
         return binaryContentMapper.toDto(binaryContent);
     }
@@ -88,10 +91,17 @@ public class BasicBinaryContentService implements BinaryContentService {
     @Override
     public List<BinaryContentDto> findAllByIdIn(List<UUID> idList) {
 
-        List<BinaryContent> binaryContents = binaryContentRepo.findAllById(idList);
+        Set<UUID> uniqueIds = new HashSet<>(idList);
+        List<BinaryContent> binaryContents = binaryContentRepo.findAllById(uniqueIds);
 
-        if(binaryContents.size() != idList.size()) {
-            throw new BusinessException(ErrorCode.BINARY_CONTENT_NOT_FOUND);
+        if(binaryContents.size() != uniqueIds.size()) {
+            Set<UUID> foundIds = binaryContents.stream()
+                    .map(BinaryContent::getId)
+                    .collect(Collectors.toSet());
+            List<UUID> missingIds = uniqueIds.stream()
+                    .filter(id -> !foundIds.contains(id))
+                    .toList();
+            throw new BinaryContentNotFoundException(missingIds);
         }
 
         return binaryContents.stream()
