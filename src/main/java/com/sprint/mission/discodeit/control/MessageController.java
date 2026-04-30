@@ -65,7 +65,7 @@ public class MessageController {
 
   @PatchMapping("/{messageId}")
   public ResponseEntity<MessageDto> updateMessage(@PathVariable UUID messageId,
-      @RequestBody MessageUpdateRequest request) {
+      @Valid @RequestBody MessageUpdateRequest request) {
     log.info("메시지 업데이트 요청 수신 - messageId: {}", messageId);
     MessageDto updatedMessage = messageService.updateMessage(messageId, request);
     log.info("메시지 업데이트 응답 완료 - messageId: {}", messageId);

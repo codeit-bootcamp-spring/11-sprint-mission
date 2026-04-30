@@ -76,7 +76,7 @@ public class UserController {
   @PatchMapping("/{userId}/userStatus")
   public ResponseEntity<UserStatusDto> updateOnlineStatus(
       @PathVariable UUID userId,
-      @RequestBody UserStatusUpdateDto request
+      @Valid @RequestBody UserStatusUpdateDto request
   ) {
     log.debug("사용자 온라인 상태 변경 요청 - userId: {}", userId);
 
