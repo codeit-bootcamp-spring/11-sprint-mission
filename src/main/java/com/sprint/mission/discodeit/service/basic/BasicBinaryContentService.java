@@ -3,8 +3,8 @@ package com.sprint.mission.discodeit.service.basic;
 import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentCreateRequest;
 import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentDto;
 import com.sprint.mission.discodeit.entity.BinaryContent;
-import com.sprint.mission.discodeit.exception.BusinessLogicException;
-import com.sprint.mission.discodeit.exception.ExceptionCode;
+import com.sprint.mission.discodeit.exception.DiscodeitException;
+import com.sprint.mission.discodeit.exception.ErrorCode;
 import com.sprint.mission.discodeit.mapper.BinaryContentMapper;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.service.BinaryContentService;
@@ -35,7 +35,7 @@ public class BasicBinaryContentService implements BinaryContentService {
         request.contentType());
     if (request.bytes() == null || request.bytes().length == 0) {
       log.warn("파일 업로드 실패 - 빈 파일 - fileName: {}", request.fileName());
-      throw new BusinessLogicException(ExceptionCode.FILE_EMPTY);
+      throw new DiscodeitException(ErrorCode.FILE_EMPTY);
     }
 
     long fileSize = request.bytes().length;
@@ -56,7 +56,7 @@ public class BasicBinaryContentService implements BinaryContentService {
   @Transactional(readOnly = true)
   public BinaryContentDto find(UUID id) {
     BinaryContent content = binaryContentRepository.findById(id)
-        .orElseThrow(() -> new BusinessLogicException(ExceptionCode.FILE_NOT_FOUND));
+        .orElseThrow(() -> new DiscodeitException(ErrorCode.FILE_NOT_FOUND));
 
     return binaryContentMapper.toDto(content);
   }
@@ -78,7 +78,7 @@ public class BasicBinaryContentService implements BinaryContentService {
   @Transactional
   public void deleteBinaryContent(UUID id) {
     BinaryContent binaryContent = binaryContentRepository.findById(id)
-        .orElseThrow(() -> new BusinessLogicException(ExceptionCode.BINARY_CONTENT_NOT_EXISTS));
+        .orElseThrow(() -> new DiscodeitException(ErrorCode.BINARY_CONTENT_NOT_EXISTS));
     binaryContentRepository.delete(binaryContent);
   }
 

@@ -9,8 +9,8 @@ import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.entity.MessageAttachment;
 import com.sprint.mission.discodeit.entity.User;
-import com.sprint.mission.discodeit.exception.BusinessLogicException;
-import com.sprint.mission.discodeit.exception.ExceptionCode;
+import com.sprint.mission.discodeit.exception.DiscodeitException;
+import com.sprint.mission.discodeit.exception.ErrorCode;
 import com.sprint.mission.discodeit.mapper.MessageMapper;
 import com.sprint.mission.discodeit.mapper.PageResponseMapper;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
@@ -24,10 +24,6 @@ import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Limit;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Slice;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -59,12 +55,12 @@ public class BasicMessageService implements MessageService {
     Channel channel = channelRepository.findById(request.channelId())
         .orElseThrow(() -> {
           log.warn("메세지 생성 실패 - 채널이 존재하지 않음 - channelId: {}", request.channelId());
-          return new BusinessLogicException(ExceptionCode.CHANNEL_NOT_FOUND);
+          return new DiscodeitException(ErrorCode.CHANNEL_NOT_FOUND);
         });
     User author = userRepository.findById(request.authorId())
         .orElseThrow(() -> {
           log.warn("메시지 생성 실패 - 유저를 찾을 수 없음 - authorId: {}", request.authorId());
-          return new BusinessLogicException(ExceptionCode.USER_NOT_FOUND);
+          return new DiscodeitException(ErrorCode.USER_NOT_FOUND);
         });
 
     Message message = new Message(channel, author, request.content());
@@ -84,7 +80,7 @@ public class BasicMessageService implements MessageService {
           message.addAttachment(savedContent);
         } catch (IOException e) {
           log.error("첨부파일 저장 중 서버 오류 발생 - filename: {}", file.getOriginalFilename(), e);
-          throw new BusinessLogicException(ExceptionCode.INTERNAL_SERVER_ERROR);
+          throw new DiscodeitException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
       }
     }
@@ -130,7 +126,7 @@ public class BasicMessageService implements MessageService {
     Message mes = messageRepository.findById(id)
         .orElseThrow(() -> {
           log.warn("메시지 삭제 실패 - 존재하지 않는 메시지: {}", id);
-          return new BusinessLogicException(ExceptionCode.MESSAGE_NOT_FOUND);
+          return new DiscodeitException(ErrorCode.MESSAGE_NOT_FOUND);
         });
 
     if (!mes.getMessageAttachments().isEmpty()) {
@@ -153,7 +149,7 @@ public class BasicMessageService implements MessageService {
     Message mes = messageRepository.findById(id)
         .orElseThrow(() -> {
           log.warn("메시지 업데이트 실패 - 존재하지 않는 메시지: {}", id);
-          return new BusinessLogicException(ExceptionCode.MESSAGE_NOT_FOUND);
+          return new DiscodeitException(ErrorCode.MESSAGE_NOT_FOUND);
         });
 
     mes.update(request.newContent());

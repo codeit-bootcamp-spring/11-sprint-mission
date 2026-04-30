@@ -5,8 +5,8 @@ import com.sprint.mission.discodeit.dto.userstatus.UserStatusDto;
 import com.sprint.mission.discodeit.dto.userstatus.UserStatusUpdateDto;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.entity.UserStatus;
-import com.sprint.mission.discodeit.exception.BusinessLogicException;
-import com.sprint.mission.discodeit.exception.ExceptionCode;
+import com.sprint.mission.discodeit.exception.DiscodeitException;
+import com.sprint.mission.discodeit.exception.ErrorCode;
 import com.sprint.mission.discodeit.mapper.UserStatusMapper;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.repository.UserStatusRepository;
@@ -32,11 +32,11 @@ public class BasicUserStatusService implements UserStatusService {
   @Transactional
   public UserStatusDto createUserStatus(UserStatusCreateRequest statusCreateDto) {
     User user = userRepository.findById(statusCreateDto.userId())
-        .orElseThrow(() -> new BusinessLogicException(ExceptionCode.USER_NOT_FOUND));
+        .orElseThrow(() -> new DiscodeitException(ErrorCode.USER_NOT_FOUND));
 
     userStatusRepository.findByUserId(statusCreateDto.userId())
         .ifPresent(existStatus -> {
-          throw new BusinessLogicException(ExceptionCode.USER_STATUS_EXISTS);
+          throw new DiscodeitException(ErrorCode.USER_STATUS_EXISTS);
         });
 
     UserStatus userStatus = new UserStatus(user);
@@ -47,7 +47,7 @@ public class BasicUserStatusService implements UserStatusService {
   @Override
   public UserStatusDto findUserStatus(UUID userId) {
     UserStatus status = userStatusRepository.findByUserId(userId)
-        .orElseThrow(() -> new BusinessLogicException(ExceptionCode.USER_STATUS_NOT_FOUND));
+        .orElseThrow(() -> new DiscodeitException(ErrorCode.USER_STATUS_NOT_FOUND));
 
     return userStatusMapper.toDto(status);
   }
@@ -63,7 +63,7 @@ public class BasicUserStatusService implements UserStatusService {
   @Transactional
   public void deleteUserStatus(UUID userId) {
     UserStatus status = userStatusRepository.findByUserId(userId)
-        .orElseThrow(() -> new BusinessLogicException(ExceptionCode.USER_STATUS_NOT_FOUND));
+        .orElseThrow(() -> new DiscodeitException(ErrorCode.USER_STATUS_NOT_FOUND));
 
     userStatusRepository.delete(status);
   }
@@ -76,7 +76,7 @@ public class BasicUserStatusService implements UserStatusService {
           status.update(request.newLastActiveAt());
           return status;
         })
-        .orElseThrow(() -> new BusinessLogicException(ExceptionCode.USER_STATUS_NOT_FOUND));
+        .orElseThrow(() -> new DiscodeitException(ErrorCode.USER_STATUS_NOT_FOUND));
 
     return userStatusMapper.toDto(userStatus);
   }
