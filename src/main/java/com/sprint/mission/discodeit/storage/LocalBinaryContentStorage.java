@@ -10,6 +10,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.UUID;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.io.InputStreamResource;
@@ -19,6 +20,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.util.UriUtils;
 
+@Slf4j
 @Component
 @ConditionalOnProperty(name = "discodeit.storage.type", havingValue = "local")
 public class LocalBinaryContentStorage implements BinaryContentStorage {
@@ -47,7 +49,9 @@ public class LocalBinaryContentStorage implements BinaryContentStorage {
     Path path = resolvePath(id);
     try (OutputStream os = Files.newOutputStream(path)) {
       os.write(bytes);
+      log.debug("파일 저장 완료 - path: {}", path);
     } catch (IOException e) {
+      log.error("파일 저장 실패 - binaryContentId: {}", id, e);
       throw new RuntimeException("파일 저장 실패: " + id, e);
     }
     return id;
@@ -58,6 +62,7 @@ public class LocalBinaryContentStorage implements BinaryContentStorage {
     try {
       return Files.newInputStream(resolvePath(id));
     } catch (IOException e) {
+      log.error("파일 조회 실패 - binaryContentId: {}", id, e);
       throw new RuntimeException("파일 조회 실패: " + id, e);
     }
   }

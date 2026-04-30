@@ -35,6 +35,7 @@ public class UserController {
   @PostMapping(consumes = "multipart/form-data")
   @ResponseStatus(HttpStatus.CREATED)
   public ResponseEntity<UserDto> createUser(
+      @Parameter(content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE))
       @Valid @RequestPart("userCreateRequest") UserCreateRequest request,
       @RequestPart(value = "profile", required = false) MultipartFile profile) {
     log.info("사용자 생성 요청 수신 - username: {}, email: {}, hasProfile: {}",

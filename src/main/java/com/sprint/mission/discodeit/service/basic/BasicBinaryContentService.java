@@ -10,6 +10,7 @@ import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.service.BinaryContentService;
 import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class BasicBinaryContentService implements BinaryContentService {
@@ -29,7 +31,10 @@ public class BasicBinaryContentService implements BinaryContentService {
   @Override
   @Transactional
   public BinaryContentDto createBinaryContent(BinaryContentCreateRequest request) {
+    log.debug("파일 업로드 비즈니스 로직 시작 - fileName: {}, contentType: {}", request.fileName(),
+        request.contentType());
     if (request.bytes() == null || request.bytes().length == 0) {
+      log.warn("파일 업로드 실패 - 빈 파일 - fileName: {}", request.fileName());
       throw new BusinessLogicException(ExceptionCode.FILE_EMPTY);
     }
 
@@ -42,6 +47,8 @@ public class BasicBinaryContentService implements BinaryContentService {
 
     binaryContentStorage.put(savedContent.getId(), request.bytes());
 
+    log.info("파일 업로드 완료 - binaryContentId: {}, fileName: {}, size: {}bytes", savedContent.getId(),
+        request.fileName(), fileSize);
     return binaryContentMapper.toDto(savedContent);
   }
 
@@ -78,7 +85,10 @@ public class BasicBinaryContentService implements BinaryContentService {
   @Override
   @Transactional(readOnly = true)
   public ResponseEntity<Resource> download(UUID id) {
+    log.debug("파일 다운로드 비즈니스 로직 시작 - binaryContentId: {}", id);
     BinaryContentDto dto = this.find(id);
-    return binaryContentStorage.download(dto);
+    ResponseEntity<Resource> response = binaryContentStorage.download(dto);
+    log.info("파일 다운로드 완료 - binaryContentId: {}, fileName: {}", id, dto.fileName());
+    return response;
   }
 }
