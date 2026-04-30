@@ -43,7 +43,7 @@ public class ChannelController implements ChannelApi {
 
     @PostMapping(value = "/private")
     public ResponseEntity<ChannelDto> createPrivateChannel(
-            @RequestBody PrivateChannelCreateRequest dto
+            @Valid @RequestBody PrivateChannelCreateRequest dto
     ) {
         int participantCount = dto.participantIds() == null ? 0 : dto.participantIds().size();
         log.debug("Private channel create request received. participantCount={}", participantCount);
