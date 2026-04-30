@@ -6,7 +6,7 @@ import java.util.UUID;
 
 public class ReadStatusNotFoundException extends MessageException {
 
-  public ReadStatusNotFoundException(UUID userId, UUID messageId) {
-    super(ErrorCode.READ_STATUS_NOT_FOUND, Map.of("userId", userId, "messageId", messageId));
+  public ReadStatusNotFoundException(UUID id) {
+    super(ErrorCode.READ_STATUS_NOT_FOUND, Map.of("readStatusId", id));
   }
 }

@@ -11,6 +11,9 @@ import com.sprint.mission.discodeit.entity.MessageAttachment;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.exception.DiscodeitException;
 import com.sprint.mission.discodeit.exception.ErrorCode;
+import com.sprint.mission.discodeit.exception.channel.ChannelNotFoundException;
+import com.sprint.mission.discodeit.exception.message.MessageNotFoundException;
+import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.mapper.MessageMapper;
 import com.sprint.mission.discodeit.mapper.PageResponseMapper;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
@@ -21,6 +24,7 @@ import com.sprint.mission.discodeit.service.MessageService;
 import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import java.io.IOException;
 import java.time.Instant;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Limit;
@@ -55,12 +59,12 @@ public class BasicMessageService implements MessageService {
     Channel channel = channelRepository.findById(request.channelId())
         .orElseThrow(() -> {
           log.warn("메세지 생성 실패 - 채널이 존재하지 않음 - channelId: {}", request.channelId());
-          return new DiscodeitException(ErrorCode.CHANNEL_NOT_FOUND);
+          return new ChannelNotFoundException(request.channelId());
         });
     User author = userRepository.findById(request.authorId())
         .orElseThrow(() -> {
           log.warn("메시지 생성 실패 - 유저를 찾을 수 없음 - authorId: {}", request.authorId());
-          return new DiscodeitException(ErrorCode.USER_NOT_FOUND);
+          return new UserNotFoundException(request.authorId());
         });
 
     Message message = new Message(channel, author, request.content());
@@ -70,8 +74,12 @@ public class BasicMessageService implements MessageService {
       for (MultipartFile file : attachments) {
         try {
           log.debug("첨부파일 저장 중 - filename: {}", file.getOriginalFilename());
+          String originalFileName = file.getOriginalFilename();
+          String safeFileName = (originalFileName != null && !originalFileName.trim().isEmpty())
+              ? originalFileName : "unnamed_attachment";
+
           BinaryContent content = new BinaryContent(
-              file.getOriginalFilename(),
+              safeFileName,
               file.getContentType(),
               file.getSize()
           );
@@ -80,7 +88,10 @@ public class BasicMessageService implements MessageService {
           message.addAttachment(savedContent);
         } catch (IOException e) {
           log.error("첨부파일 저장 중 서버 오류 발생 - filename: {}", file.getOriginalFilename(), e);
-          throw new DiscodeitException(ErrorCode.INTERNAL_SERVER_ERROR);
+          throw new DiscodeitException(ErrorCode.INTERNAL_SERVER_ERROR, Map.of(
+              "fileName", file.getOriginalFilename(),
+              "errorMessage", e.getMessage() != null ? e.getMessage() : "Unknown error"
+          ));
         }
       }
     }
@@ -126,7 +137,7 @@ public class BasicMessageService implements MessageService {
     Message mes = messageRepository.findById(id)
         .orElseThrow(() -> {
           log.warn("메시지 삭제 실패 - 존재하지 않는 메시지: {}", id);
-          return new DiscodeitException(ErrorCode.MESSAGE_NOT_FOUND);
+          return new MessageNotFoundException(id);
         });
 
     if (!mes.getMessageAttachments().isEmpty()) {
@@ -149,7 +160,7 @@ public class BasicMessageService implements MessageService {
     Message mes = messageRepository.findById(id)
         .orElseThrow(() -> {
           log.warn("메시지 업데이트 실패 - 존재하지 않는 메시지: {}", id);
-          return new DiscodeitException(ErrorCode.MESSAGE_NOT_FOUND);
+          return new MessageNotFoundException(id);
         });
 
     mes.update(request.newContent());

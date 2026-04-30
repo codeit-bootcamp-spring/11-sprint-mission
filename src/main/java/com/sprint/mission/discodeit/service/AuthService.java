@@ -4,8 +4,9 @@ import com.sprint.mission.discodeit.dto.LoginRequest;
 import com.sprint.mission.discodeit.dto.user.UserDto;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.entity.UserStatus;
-import com.sprint.mission.discodeit.exception.DiscodeitException;
-import com.sprint.mission.discodeit.exception.ErrorCode;
+import com.sprint.mission.discodeit.exception.auth.PasswordNotMatchException;
+import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
+import com.sprint.mission.discodeit.exception.user.UserStatusNotFoundException;
 import com.sprint.mission.discodeit.mapper.UserMapper;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.repository.UserStatusRepository;
@@ -23,18 +24,18 @@ public class AuthService {
 
   private final UserMapper userMapper;
 
-  @Transactional(readOnly = true)
+  @Transactional
   public UserDto login(LoginRequest loginRequest) {
     String name = loginRequest.username();
     String password = loginRequest.password();
 
     User user = userRepository.findByUsername(name)
-        .orElseThrow(() -> new DiscodeitException(ErrorCode.MEMBER_NOT_FOUND));
+        .orElseThrow(() -> new UserNotFoundException(name));
     if (!user.getPassword().equals(password.trim())) {
-      throw new DiscodeitException(ErrorCode.LOGIN_FAILED);
+      throw new PasswordNotMatchException(name);
     }
     UserStatus status = userStatusRepository.findByUserId(user.getId())
-        .orElseThrow(() -> new DiscodeitException(ErrorCode.INTERNAL_SERVER_ERROR));
+        .orElseThrow(() -> new UserStatusNotFoundException(user.getId()));
 
     status.update(null);
 

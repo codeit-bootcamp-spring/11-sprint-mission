@@ -10,8 +10,9 @@ import com.sprint.mission.discodeit.entity.ChannelType;
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.entity.User;
-import com.sprint.mission.discodeit.exception.DiscodeitException;
-import com.sprint.mission.discodeit.exception.ErrorCode;
+import com.sprint.mission.discodeit.exception.channel.ChannelNotFoundException;
+import com.sprint.mission.discodeit.exception.channel.PrivateChannelUpdateException;
+import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.mapper.ChannelMapper;
 import com.sprint.mission.discodeit.mapper.UserMapper;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
@@ -77,7 +78,7 @@ public class BasicChannelService implements ChannelService {
       User user = userRepository.findById(userId)
           .orElseThrow(() -> {
             log.warn("Private 채널 생성 실패 - 유저를 찾을 수 없음 - userId: {}", userId);
-            return new DiscodeitException(ErrorCode.USER_NOT_FOUND);
+            return new UserNotFoundException(userId);
           });
       ReadStatus readStatus = new ReadStatus(user, createdChannel, createdChannel.getCreatedAt());
       readStatusRepository.save(readStatus);
@@ -93,7 +94,7 @@ public class BasicChannelService implements ChannelService {
   @Override
   public ChannelDto readChannel(UUID id) {
     Channel channel = channelRepository.findById(id)
-        .orElseThrow(() -> new DiscodeitException(ErrorCode.CHANNEL_NOT_FOUND));
+        .orElseThrow(() -> new ChannelNotFoundException(id));
 
     List<UserDto> participants = Collections.emptyList();
     if (channel.getType() == ChannelType.PRIVATE) {
@@ -164,7 +165,7 @@ public class BasicChannelService implements ChannelService {
     Channel channel = channelRepository.findById(id)
         .orElseThrow(() -> {
           log.warn("삭제할 채널이 존재하지 않음 - channelId: {}", id);
-          return new DiscodeitException(ErrorCode.CHANNEL_NOT_FOUND);
+          return new ChannelNotFoundException(id);
         });
 
     channelRepository.delete(channel);
@@ -178,12 +179,12 @@ public class BasicChannelService implements ChannelService {
     Channel channel = channelRepository.findById(id)
         .orElseThrow(() -> {
           log.warn("업데이트 할 채널이 존재하지 않음 - channelId: {}", id);
-          return new DiscodeitException(ErrorCode.CHANNEL_NOT_FOUND);
+          return new ChannelNotFoundException(id);
         });
 
     if (channel.getType() == ChannelType.PRIVATE) {
       log.warn("Private 채널은 수정될 수 없음 - channelId: {}", id);
-      throw new DiscodeitException(ErrorCode.CHANNEL_MODIFY_PRIVATE);
+      throw new PrivateChannelUpdateException(id);
     }
 
     String name = (request.newName() != null) ? request.newName() : channel.getName();

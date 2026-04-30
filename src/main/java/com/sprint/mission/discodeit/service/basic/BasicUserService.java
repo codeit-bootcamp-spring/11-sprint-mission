@@ -8,12 +8,16 @@ import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.entity.UserStatus;
 import com.sprint.mission.discodeit.exception.DiscodeitException;
 import com.sprint.mission.discodeit.exception.ErrorCode;
+import com.sprint.mission.discodeit.exception.user.DuplicateUserException;
+import com.sprint.mission.discodeit.exception.user.EmailAlreadyExistsException;
+import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.mapper.UserMapper;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.repository.UserStatusRepository;
 import com.sprint.mission.discodeit.service.UserService;
 import com.sprint.mission.discodeit.storage.BinaryContentStorage;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
 import java.io.IOException;
@@ -47,11 +51,11 @@ public class BasicUserService implements UserService {
     log.debug("사용자 생성 비즈니스 로직 시작 - username: {}, email: {}", name, email);
     if (userRepository.findByUsername(name).isPresent()) {
       log.warn("사용자 생성 실패 - 중복된 username: {}", name);
-      throw new DiscodeitException(ErrorCode.MEMBER_EXISTS);
+      throw new DuplicateUserException(name);
     }
     if (userRepository.findByEmail(email).isPresent()) {
       log.warn("사용자 생성 실패 - 중복된 email: {}", email);
-      throw new DiscodeitException(ErrorCode.EMAIL_EXISTS);
+      throw new EmailAlreadyExistsException(email);
     }
 
     BinaryContent profileEntity = null;
@@ -67,7 +71,8 @@ public class BasicUserService implements UserService {
         log.debug("프로필 이미지 저장 완료 - binaryContentId: {}", savedProfile.getId());
       } catch (Exception e) {
         log.error("사용자 프로필 이미지 저장 중 서버 오류 발생 - username: {}", name, e);
-        throw new DiscodeitException(ErrorCode.INTERNAL_SERVER_ERROR);
+        throw new DiscodeitException(ErrorCode.INTERNAL_SERVER_ERROR,
+            Map.of("errorMessage", e.getMessage()));
       }
     }
 
@@ -87,7 +92,7 @@ public class BasicUserService implements UserService {
     User user = userRepository.findById(id)
         .orElseThrow(() -> {
           log.warn("사용자를 찾을 수 없음 - userId: {}", id);
-          return new DiscodeitException(ErrorCode.USER_NOT_FOUND);
+          return new UserNotFoundException(id);
         });
 
     return userMapper.toDto(user, user.getStatus());
@@ -108,7 +113,7 @@ public class BasicUserService implements UserService {
     User user = userRepository.findById(id)
         .orElseThrow(() -> {
           log.warn("삭제할 사용자를 찾을 수 없음 - userId: {}", id);
-          return new DiscodeitException(ErrorCode.USER_NOT_FOUND);
+          return new UserNotFoundException(id);
         });
 
     BinaryContent profile = user.getProfile();
@@ -131,14 +136,14 @@ public class BasicUserService implements UserService {
     User user = userRepository.findById(id)
         .orElseThrow(() -> {
           log.warn("업데이트 할 사용자를 찾을 수 없음 - userId: {}", id);
-          return new DiscodeitException(ErrorCode.MEMBER_NOT_FOUND);
+          return new UserNotFoundException(id);
         });
     String name = (request.newUsername() != null) ? request.newUsername() : user.getUsername();
     if (request.newUsername() != null && !name.equals(user.getUsername())) {
       userRepository.findByUsername(name)
           .ifPresent(u -> {
             log.warn("사용자 이름이 이미 존재함 - username: {}", name);
-            throw new DiscodeitException(ErrorCode.MEMBER_EXISTS);
+            throw new DuplicateUserException(name);
           });
     }
     String email = (request.newEmail() != null) ? request.newEmail() : user.getEmail();
@@ -146,7 +151,7 @@ public class BasicUserService implements UserService {
       userRepository.findByEmail(email)
           .ifPresent(u -> {
             log.warn("사용자 이메일이 이미 존재함 - email: {}", email);
-            throw new DiscodeitException(ErrorCode.EMAIL_EXISTS);
+            throw new EmailAlreadyExistsException(email);
           });
     }
 
@@ -169,7 +174,8 @@ public class BasicUserService implements UserService {
         log.debug("새 프로필 이미지 저장 완료 - userId: {}, binaryContentId: {}", id, savedProfile.getId());
       } catch (IOException e) {
         log.error("프로필 이미지 저장 중 서버 오류 발생 - userId: {}", id, e);
-        throw new DiscodeitException(ErrorCode.INTERNAL_SERVER_ERROR);
+        throw new DiscodeitException(ErrorCode.INTERNAL_SERVER_ERROR,
+            Map.of("userId", id, "errorMessage", e.getMessage()));
       }
     }
 
