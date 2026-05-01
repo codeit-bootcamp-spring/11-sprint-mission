@@ -3,10 +3,8 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/Develop.iml" filepath="$PROJECT_DIR$/.idea/Develop.iml" />
-      <module fileurl="file://$PROJECT_DIR$/Sprint1.iml" filepath="$PROJECT_DIR$/Sprint1.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/Sprint1.main.iml" filepath="$PROJECT_DIR$/.idea/modules/Sprint1.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/Sprint1.test.iml" filepath="$PROJECT_DIR$/.idea/modules/Sprint1.test.iml" />
-      <module fileurl="file://$PROJECT_DIR$/Sprint2.iml" filepath="$PROJECT_DIR$/Sprint2.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/Sprint2.main.iml" filepath="$PROJECT_DIR$/.idea/modules/Sprint2.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/Sprint2.test.iml" filepath="$PROJECT_DIR$/.idea/modules/Sprint2.test.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/discodeit.iml" filepath="$PROJECT_DIR$/.idea/modules/discodeit.iml" />
