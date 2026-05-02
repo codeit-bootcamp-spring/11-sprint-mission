@@ -50,7 +50,7 @@ src/main/resources/logback.xml
 .discodeit
 
 ### application.yaml ###
-application.yaml
+application*.yaml
 
 ### docs ###
 docs/
