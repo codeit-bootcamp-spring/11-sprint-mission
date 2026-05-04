@@ -150,7 +150,7 @@ public class BasicMessageService implements MessageService {
     }
 
     messageRepository.delete(mes);
-    log.info("메시지 삭제 완룔 - messageId: {}", id);
+    log.info("메시지 삭제 완료 - messageId: {}", id);
   }
 
   @Override
