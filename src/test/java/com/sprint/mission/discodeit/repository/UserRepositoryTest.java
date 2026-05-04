@@ -20,6 +20,7 @@ import org.springframework.test.context.ActiveProfiles;
 
 @DataJpaTest
 @ActiveProfiles("test")
+@EnableJpaAuditing
 @AutoConfigureTestDatabase(replace = Replace.NONE)
 class UserRepositoryTest {
 
@@ -98,7 +99,7 @@ class UserRepositoryTest {
     assertThat(result.get().getEmail()).isEqualTo("test@test.com");
     assertThat(result.get().getProfile()).isNotNull();
   }
-  
+
   @Test
   @DisplayName("존재하지 않는 유저명으로 조회를 할 경우 빈 Optional을 반환")
   void findByUsername_nonExistingUsername_returnsEmpty() {
