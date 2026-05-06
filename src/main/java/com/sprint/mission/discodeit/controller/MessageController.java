@@ -42,12 +42,15 @@ public class MessageController implements MessageApi {
       @Valid @RequestPart(value = "messageCreateRequest") MessageCreateRequest messageCreateRequest,
       @RequestPart(value = "attachments", required = false) List<MultipartFile> attachments
   ) {
+    log.info("message create request: request={}, attachments-count={}", messageCreateRequest,
+        attachments != null ? attachments.size() : 0);
     List<BinaryContentCreateRequest> attachmentsRequest = MultipartFileUtil.toCreateRequests(
         attachments);
 
     MessageResponse createdMessage = this.messageService.createMessage(messageCreateRequest,
         attachmentsRequest);
 
+    log.debug("message create response: {}", createdMessage);
     return ResponseEntity
         .status(HttpStatus.CREATED)
         .body(createdMessage);
@@ -59,12 +62,15 @@ public class MessageController implements MessageApi {
       @RequestPart(value = "messageUpdateRequest", required = false) MessageUpdateRequest messageUpdateRequest,
       @RequestPart(value = "attachments", required = false) List<MultipartFile> attachments
   ) {
+    log.info("message update request: id={}, request={}, attachments-count={}", messageId,
+        messageUpdateRequest, attachments != null ? attachments.size() : 0);
     List<BinaryContentCreateRequest> attachmentsRequest = MultipartFileUtil.toCreateRequests(
         attachments);
 
     MessageResponse updatedMessage = this.messageService.updateMessage(messageId,
         messageUpdateRequest, attachmentsRequest);
 
+    log.debug("message update response: {}", updatedMessage);
     return ResponseEntity
         .status(HttpStatus.OK)
         .body(updatedMessage);
@@ -72,8 +78,10 @@ public class MessageController implements MessageApi {
 
   @DeleteMapping(path = "{messageId}")
   public ResponseEntity<Void> delete(@PathVariable UUID messageId) {
+    log.info("message delete request: id={}", messageId);
     this.messageService.deleteMessage(messageId);
 
+    log.debug("message delete response: no-content");
     return ResponseEntity
         .status(HttpStatus.NO_CONTENT)
         .build();
@@ -85,9 +93,13 @@ public class MessageController implements MessageApi {
       @RequestParam(value = "cursor", required = false) Instant cursor,
       Pageable pageable
   ) {
+    log.info("message find-all-by-channel-id request: channelId={}, cursor={}, pageable={}",
+        channelId, cursor, pageable);
     PageResponse<MessageResponse> messages = this.messageService.findAllByChannelId(channelId,
         cursor, pageable);
 
+    log.debug("message find-all-by-channel-id response: size={}, hasNext={}",
+        messages.content().size(), messages.hasNext());
     return ResponseEntity
         .status(HttpStatus.OK)
         .body(messages);

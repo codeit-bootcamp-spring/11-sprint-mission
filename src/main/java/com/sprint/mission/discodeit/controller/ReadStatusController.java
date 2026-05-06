@@ -32,9 +32,11 @@ public class ReadStatusController implements ReadStatusApi {
   @PostMapping
   public ResponseEntity<ReadStatusResponse> create(
       @Valid @RequestBody ReadStatusCreateRequest readStatusCreateRequest) {
+    log.info("read-status create request: {}", readStatusCreateRequest);
     ReadStatusResponse createdReadStatusResponse = this.readStatusService.createReadStatus(
         readStatusCreateRequest);
 
+    log.debug("read-status create response: {}", createdReadStatusResponse);
     return ResponseEntity
         .status(HttpStatus.CREATED)
         .body(createdReadStatusResponse);
@@ -45,9 +47,12 @@ public class ReadStatusController implements ReadStatusApi {
       @PathVariable UUID readStatusId,
       @Valid @RequestBody ReadStatusUpdateRequest readStatusUpdateRequest
   ) {
+    log.info("read-status update request: id={}, request={}", readStatusId,
+        readStatusUpdateRequest);
     ReadStatusResponse updatedReadStatusResponse = this.readStatusService.updateReadStatus(
         readStatusId, readStatusUpdateRequest);
 
+    log.debug("read-status update response: {}", updatedReadStatusResponse);
     return ResponseEntity
         .status(HttpStatus.OK)
         .body(updatedReadStatusResponse);
@@ -56,8 +61,10 @@ public class ReadStatusController implements ReadStatusApi {
   @GetMapping
   public ResponseEntity<List<ReadStatusResponse>> findAllByUserId(
       @RequestParam UUID userId) {
+    log.info("read-status find-all-by-user-id request: userId={}", userId);
     List<ReadStatusResponse> readStatusResponses = this.readStatusService.findAllByUserId(userId);
 
+    log.debug("read-status find-all-by-user-id response: count={}", readStatusResponses.size());
     return ResponseEntity
         .status(HttpStatus.OK)
         .body(readStatusResponses);

@@ -32,8 +32,10 @@ public class BinaryContentController implements BinaryContentApi {
   @GetMapping(path = "{binaryContentId}")
   public ResponseEntity<BinaryContentResponse> findById(
       @PathVariable UUID binaryContentId) {
+    log.info("binary-content find-by-id request: id={}", binaryContentId);
     BinaryContentResponse binaryContent = this.binaryContentService.findById(binaryContentId);
 
+    log.debug("binary-content find-by-id response: {}", binaryContent);
     return ResponseEntity
         .status(HttpStatus.OK)
         .body(binaryContent);
@@ -42,9 +44,11 @@ public class BinaryContentController implements BinaryContentApi {
   @GetMapping
   public ResponseEntity<List<BinaryContentResponse>> findAllByIdIn(
       @RequestParam("binaryContentIds") List<UUID> binaryContentIds) {
+    log.info("binary-content find-all-by-id-in request: ids={}", binaryContentIds);
     List<BinaryContentResponse> binaryContents = this.binaryContentService.findAllByIdIn(
         binaryContentIds);
 
+    log.debug("binary-content find-all-by-id-in response: count={}", binaryContents.size());
     return ResponseEntity
         .status(HttpStatus.OK)
         .body(binaryContents);
@@ -53,10 +57,12 @@ public class BinaryContentController implements BinaryContentApi {
   @GetMapping(path = "{binaryContentId}/download")
   public ResponseEntity<Resource> download(
       @PathVariable UUID binaryContentId) {
+    log.info("binary-content download request: id={}", binaryContentId);
     BinaryContentResponse binaryContent = this.binaryContentService.findById(binaryContentId);
 
     Resource resource = this.binaryContentStorage.download(binaryContent);
-
+    log.debug("binary-content download response: fileName={}, content-type={}, content-length={}",
+        binaryContent.fileName(), binaryContent.contentType(), binaryContent.size());
     return ResponseEntity.ok()
         .header(HttpHeaders.CONTENT_DISPOSITION,
             ContentDisposition.attachment()

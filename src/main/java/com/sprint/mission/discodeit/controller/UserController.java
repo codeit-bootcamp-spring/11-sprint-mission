@@ -44,11 +44,13 @@ public class UserController implements UserApi {
       @Valid @RequestPart(value = "userCreateRequest") UserCreateRequest userCreateRequest,
       @RequestPart(value = "profile", required = false) MultipartFile profile
   ) {
+    log.info("user create request: request={}, profile={}", userCreateRequest, profile != null);
     Optional<BinaryContentCreateRequest> profileRequest = MultipartFileUtil.toCreateRequest(
         profile);
 
     UserResponse createdUser = this.userService.createUser(userCreateRequest, profileRequest);
 
+    log.debug("user create response: {}", createdUser);
     return ResponseEntity
         .status(HttpStatus.CREATED)
         .body(createdUser);
@@ -60,12 +62,14 @@ public class UserController implements UserApi {
       @Valid @RequestPart(value = "userUpdateRequest", required = false) UserUpdateRequest userUpdateRequest,
       @RequestPart(value = "profile", required = false) MultipartFile profile
   ) {
+    log.info("user update request: id={}, request={}, profile={}", userId, userUpdateRequest, profile != null);
     Optional<BinaryContentCreateRequest> profileRequest = MultipartFileUtil.toCreateRequest(
         profile);
 
     UserResponse updatedUser = this.userService.updateUser(userId, userUpdateRequest,
         profileRequest);
 
+    log.debug("user update response: {}", updatedUser);
     return ResponseEntity
         .status(HttpStatus.OK)
         .body(updatedUser);
@@ -73,8 +77,10 @@ public class UserController implements UserApi {
 
   @DeleteMapping(path = "{userId}")
   public ResponseEntity<Void> delete(@PathVariable UUID userId) {
+    log.info("user delete request: id={}", userId);
     this.userService.deleteUser(userId);
 
+    log.debug("user delete response: no-content");
     return ResponseEntity
         .status(HttpStatus.NO_CONTENT)
         .build();
@@ -82,8 +88,10 @@ public class UserController implements UserApi {
 
   @GetMapping
   public ResponseEntity<List<UserResponse>> findAll() {
+    log.info("user find-all request");
     List<UserResponse> users = this.userService.findAll();
 
+    log.debug("user find-all response: count={}", users.size());
     return ResponseEntity
         .status(HttpStatus.OK)
         .body(users);
@@ -94,9 +102,11 @@ public class UserController implements UserApi {
       @PathVariable UUID userId,
       @Valid @RequestBody UserStatusUpdateRequest userStatusUpdateRequest
   ) {
+    log.info("user-status update-user-status request: id={}, request={}", userId, userStatusUpdateRequest);
     UserStatusResponse updatedUserStatus = this.userStatusService.updateUserStatusByUserId(userId,
         userStatusUpdateRequest);
 
+    log.debug("user-status update-user-status response: {}", updatedUserStatus);
     return ResponseEntity
         .status(HttpStatus.OK)
         .body(updatedUserStatus);
