@@ -24,3 +24,9 @@ logging:
     org.hibernate.orm.jdbc.bind: debug
     org.springframework.test: info
     com.sprint.mission.discodeit: debug
+
+discodeit:
+  repository:
+    type: jpa
+  storage:
+    type: test
