@@ -1,6 +1,6 @@
 <configuration>
   <property name="LOG_PATTERN"
-    value="%d{yy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"/>
+    value="%d{yy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} [%X{requestId:--} | %X{method:--} | %X{url:--}] - %msg%n"/>
 
   <property name="LOG_PATH" value=".logs"/>
 
@@ -11,7 +11,7 @@
   </appender>
 
   <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-    <file>${LOG_PATTERN}/application.log</file>
+    <file>${LOG_PATH}/application.log</file>
 
     <encoder>
       <pattern>${LOG_PATTERN}</pattern>
