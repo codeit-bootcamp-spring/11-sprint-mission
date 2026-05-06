@@ -18,5 +18,5 @@ public interface ChannelRepository extends JpaRepository<Channel, UUID> {
         from ReadStatus rs
         where rs.user = :user
     """)
-    List<Channel> findChannelsByUser(@Param("user") User user);
+    List<Channel> findPrivateChannelsByUser(@Param("user") User user);
 }

@@ -333,7 +333,7 @@ public class BasicChannelServiceTest {
         given(userRepo.findById(userId)).willReturn(Optional.of(user));
         given(channelRepo.findAllByChannelType(ChannelType.PUBLIC))
                 .willReturn(List.of(publicChannel));
-        given(channelRepo.findChannelsByUser(user))
+        given(channelRepo.findPrivateChannelsByUser(user))
                 .willReturn(privateChannels);
         given(messageRepo.findLastMessageAtByChannels(allChannels))
                 .willReturn(List.of(
@@ -355,7 +355,7 @@ public class BasicChannelServiceTest {
 
         then(userRepo).should().findById(userId);
         then(channelRepo).should().findAllByChannelType(ChannelType.PUBLIC);
-        then(channelRepo).should().findChannelsByUser(user);
+        then(channelRepo).should().findPrivateChannelsByUser(user);
         then(messageRepo).should().findLastMessageAtByChannels(allChannels);
         then(readStatusRepo).should().findUsersByChannels(privateChannels);
     }
@@ -371,7 +371,7 @@ public class BasicChannelServiceTest {
 
         then(userRepo).should().findById(userId);
         then(channelRepo).should(never()).findAllByChannelType(any());
-        then(channelRepo).should(never()).findChannelsByUser(any());
+        then(channelRepo).should(never()).findPrivateChannelsByUser(any());
     }
 
 }

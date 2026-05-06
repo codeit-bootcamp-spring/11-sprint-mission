@@ -125,7 +125,7 @@ public class BasicChannelService implements ChannelService {
                 .orElseThrow(() -> new UserNotFoundException(id));
 
         List<Channel> publicChannels = channelRepo.findAllByChannelType(ChannelType.PUBLIC);
-        List<Channel> privateChannels = channelRepo.findChannelsByUser(user);
+        List<Channel> privateChannels = channelRepo.findPrivateChannelsByUser(user);
 
         List<Channel> allChannels = new ArrayList<>();
         allChannels.addAll(publicChannels);
