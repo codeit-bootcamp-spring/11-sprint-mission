@@ -35,7 +35,7 @@ public class JcfUserService implements UserService {
 
 
     @Override
-    public User upDate(UUID id, String password, String email) {
+    public User update(UUID id, String password, String email) {
         //기존 유저 정보 가져오기 유저 확인하기
         User targetUser = readUser(id);
         if (targetUser != null) {
