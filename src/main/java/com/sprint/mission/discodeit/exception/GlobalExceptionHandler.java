@@ -1,7 +1,7 @@
 package com.sprint.mission.discodeit.exception;
 
-import java.util.NoSuchElementException;
-import org.springframework.http.HttpStatus;
+import com.sprint.mission.discodeit.dto.response.ErrorResponse;
+import java.time.Instant;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -9,27 +9,26 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-  @ExceptionHandler(IllegalArgumentException.class)
-  public ResponseEntity<String> handleException(IllegalArgumentException e) {
-    e.printStackTrace();
-    return ResponseEntity
-        .status(HttpStatus.BAD_REQUEST)
-        .body(e.getMessage());
-  }
+    @ExceptionHandler(DiscodeitException.class)
+    public ResponseEntity<ErrorResponse> handleDiscodeitException(DiscodeitException e) {
+        ErrorCode errorCode = e.getErrorCode();
+        ErrorResponse response = new ErrorResponse(
+                Instant.now(),
+                errorCode.getStatus().value(),
+                errorCode.name(),
+                errorCode.getMessage()
+        );
+        return ResponseEntity.status(errorCode.getStatus()).body(response);
+    }
 
-  @ExceptionHandler(NoSuchElementException.class)
-  public ResponseEntity<String> handleException(NoSuchElementException e) {
-    e.printStackTrace();
-    return ResponseEntity
-        .status(HttpStatus.NOT_FOUND)
-        .body(e.getMessage());
-  }
-
-  @ExceptionHandler(Exception.class)
-  public ResponseEntity<String> handleException(Exception e) {
-    e.printStackTrace();
-    return ResponseEntity
-        .status(HttpStatus.INTERNAL_SERVER_ERROR)
-        .body(e.getMessage());
-  }
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponse> handleException(Exception e) {
+        ErrorResponse response = new ErrorResponse(
+                Instant.now(),
+                500,
+                "INTERNAL_SERVER_ERROR",
+                e.getMessage()
+        );
+        return ResponseEntity.internalServerError().body(response);
+    }
 }
