@@ -1,15 +1,13 @@
 package com.sprint.mission.discodeit.service.basic;
 
-import static com.sprint.mission.discodeit.exception.ApiException.ERROR.USER_NOT_FOUND;
-import static com.sprint.mission.discodeit.exception.ApiException.ERROR.USER_STATUS_DUPLICATED;
-import static com.sprint.mission.discodeit.exception.ApiException.ERROR.USER_STATUS_NOT_FOUND;
-
 import com.sprint.mission.discodeit.dto.userstatus.UserStatusCreateRequest;
 import com.sprint.mission.discodeit.dto.userstatus.UserStatusResponse;
 import com.sprint.mission.discodeit.dto.userstatus.UserStatusUpdateRequest;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.entity.UserStatus;
-import com.sprint.mission.discodeit.exception.ApiException;
+import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
+import com.sprint.mission.discodeit.exception.userstatus.DuplicateUserStatusException;
+import com.sprint.mission.discodeit.exception.userstatus.UserStatusNotFoundException;
 import com.sprint.mission.discodeit.mapper.UserStatusMapper;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.repository.UserStatusRepository;
@@ -36,10 +34,10 @@ public class BasicUserStatusService implements UserStatusService {
   public UserStatusResponse createUserStatus(UserStatusCreateRequest userStatusCreateRequest) {
     log.debug("user-status create trial: {}", userStatusCreateRequest);
     User user = this.userRepository.findById(userStatusCreateRequest.userId())
-        .orElseThrow(() -> new ApiException(USER_NOT_FOUND));
+        .orElseThrow(() -> UserNotFoundException.withId(userStatusCreateRequest.userId()));
 
     if (this.userStatusRepository.existsByUser(user)) {
-      throw new ApiException(USER_STATUS_DUPLICATED);
+      throw DuplicateUserStatusException.withUserId(user.getId());
     }
 
     UserStatus userStatus = new UserStatus(user);
@@ -53,7 +51,7 @@ public class BasicUserStatusService implements UserStatusService {
   public UserStatusResponse findById(UUID id) {
     log.debug("user-status find-by-id trial: id={}", id);
     UserStatus userStatus = this.userStatusRepository.findById(id)
-        .orElseThrow(() -> new ApiException(USER_STATUS_NOT_FOUND));
+        .orElseThrow(() -> UserStatusNotFoundException.withId(id));
 
     log.info("user-status find-by-id success: id={}", userStatus.getId());
     return this.mapper.toResponse(userStatus);
@@ -76,7 +74,7 @@ public class BasicUserStatusService implements UserStatusService {
       UserStatusUpdateRequest userStatusUpdateRequest) {
     log.debug("user-status update trial: userId={}, request={}", userId, userStatusUpdateRequest);
     UserStatus userStatus = this.userStatusRepository.findByUserId(userId)
-        .orElseThrow(() -> new ApiException(USER_STATUS_NOT_FOUND));
+        .orElseThrow(() -> UserStatusNotFoundException.withUserId(userId));
 
     userStatus.updateLastActiveAt(userStatusUpdateRequest.newLastActiveAt());
 
@@ -89,7 +87,7 @@ public class BasicUserStatusService implements UserStatusService {
   public void deleteUserStatus(UUID id) {
     log.debug("user-status delete trial: id={}", id);
     UserStatus userStatus = this.userStatusRepository.findById(id)
-        .orElseThrow(() -> new ApiException(USER_STATUS_NOT_FOUND));
+        .orElseThrow(() -> UserStatusNotFoundException.withId(id));
 
     this.userStatusRepository.delete(userStatus);
 

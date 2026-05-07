@@ -1,10 +1,5 @@
 package com.sprint.mission.discodeit.service.basic;
 
-import static com.sprint.mission.discodeit.exception.ApiException.ERROR.CHANNEL_NOT_FOUND;
-import static com.sprint.mission.discodeit.exception.ApiException.ERROR.MESSAGE_CHANNEL_ACCESS_REQUIRED;
-import static com.sprint.mission.discodeit.exception.ApiException.ERROR.MESSAGE_NOT_FOUND;
-import static com.sprint.mission.discodeit.exception.ApiException.ERROR.USER_NOT_FOUND;
-
 import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentCreateRequest;
 import com.sprint.mission.discodeit.dto.common.PageResponse;
 import com.sprint.mission.discodeit.dto.message.MessageCreateRequest;
@@ -14,7 +9,10 @@ import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.entity.User;
-import com.sprint.mission.discodeit.exception.ApiException;
+import com.sprint.mission.discodeit.exception.channel.ChannelNotFoundException;
+import com.sprint.mission.discodeit.exception.message.MessageNotFoundException;
+import com.sprint.mission.discodeit.exception.message.MessageWithoutChannelAccessException;
+import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.mapper.MessageMapper;
 import com.sprint.mission.discodeit.mapper.PageMapper;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
@@ -55,12 +53,12 @@ public class BasicMessageService implements MessageService {
     log.debug("message create trial: request={}, attachments-count={}", messageCreateRequest,
         binaryContentCreateRequests.size());
     User author = this.userRepository.findById(messageCreateRequest.authorId())
-        .orElseThrow(() -> new ApiException(USER_NOT_FOUND));
+        .orElseThrow(() -> UserNotFoundException.withId(messageCreateRequest.authorId()));
     Channel channel = this.channelRepository.findById(messageCreateRequest.channelId())
-        .orElseThrow(() -> new ApiException(CHANNEL_NOT_FOUND));
+        .orElseThrow(() -> ChannelNotFoundException.withId(messageCreateRequest.channelId()));
 
     if (channel.isPrivate() && !this.readStatusRepository.existsByUserAndChannel(author, channel)) {
-      throw new ApiException(MESSAGE_CHANNEL_ACCESS_REQUIRED);
+      throw MessageWithoutChannelAccessException.withUserAndChannel(author.getId(), channel.getId());
     }
 
     List<BinaryContent> attachments = new ArrayList<>();
@@ -94,7 +92,7 @@ public class BasicMessageService implements MessageService {
     log.debug("message find-all-by-channel-id trial: channelId={}, cursor={}, pageable={}",
         channelId, cursor, pageable);
     if (!this.channelRepository.existsById(channelId)) {
-      throw new ApiException(CHANNEL_NOT_FOUND);
+      throw ChannelNotFoundException.withId(channelId);
     }
 
     Slice<MessageResponse> slice = (cursor == null
@@ -117,7 +115,7 @@ public class BasicMessageService implements MessageService {
     log.debug("message update trial: id={}, request={}, attachments-count={}", id,
         messageUpdateRequest, binaryContentCreateRequests.size());
     Message message = this.messageRepository.findById(id)
-        .orElseThrow(() -> new ApiException(MESSAGE_NOT_FOUND));
+        .orElseThrow(() -> MessageNotFoundException.withId(id));
 
     if (messageUpdateRequest != null) {
       if (messageUpdateRequest.newContent() != null && !messageUpdateRequest.newContent()
@@ -150,7 +148,7 @@ public class BasicMessageService implements MessageService {
   public void deleteMessage(UUID id) {
     log.debug("message delete trial: id={}", id);
     Message message = this.messageRepository.findById(id)
-        .orElseThrow(() -> new ApiException(MESSAGE_NOT_FOUND));
+        .orElseThrow(() -> MessageNotFoundException.withId(id));
 
     this.messageRepository.delete(message);
 

@@ -1,17 +1,15 @@
 package com.sprint.mission.discodeit.service.basic;
 
-import static com.sprint.mission.discodeit.exception.ApiException.ERROR.CHANNEL_NOT_FOUND;
-import static com.sprint.mission.discodeit.exception.ApiException.ERROR.READ_STATUS_DUPLICATED;
-import static com.sprint.mission.discodeit.exception.ApiException.ERROR.READ_STATUS_NOT_FOUND;
-import static com.sprint.mission.discodeit.exception.ApiException.ERROR.USER_NOT_FOUND;
-
 import com.sprint.mission.discodeit.dto.readstatus.ReadStatusCreateRequest;
 import com.sprint.mission.discodeit.dto.readstatus.ReadStatusResponse;
 import com.sprint.mission.discodeit.dto.readstatus.ReadStatusUpdateRequest;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.entity.User;
-import com.sprint.mission.discodeit.exception.ApiException;
+import com.sprint.mission.discodeit.exception.channel.ChannelNotFoundException;
+import com.sprint.mission.discodeit.exception.readstatus.DuplicateReadStatusException;
+import com.sprint.mission.discodeit.exception.readstatus.ReadStatusNotFoundException;
+import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.mapper.ReadStatusMapper;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
@@ -40,12 +38,12 @@ public class BasicReadStatusService implements ReadStatusService {
   public ReadStatusResponse createReadStatus(ReadStatusCreateRequest readStatusCreateRequest) {
     log.debug("read-status create trial: {}", readStatusCreateRequest);
     User user = this.userRepository.findById(readStatusCreateRequest.userId())
-        .orElseThrow(() -> new ApiException(USER_NOT_FOUND));
+        .orElseThrow(() -> UserNotFoundException.withId(readStatusCreateRequest.userId()));
     Channel channel = this.channelRepository.findById(readStatusCreateRequest.channelId())
-        .orElseThrow(() -> new ApiException(CHANNEL_NOT_FOUND));
+        .orElseThrow(() -> ChannelNotFoundException.withId(readStatusCreateRequest.channelId()));
 
     if (this.readStatusRepository.existsByUserAndChannel(user, channel)) {
-      throw new ApiException(READ_STATUS_DUPLICATED);
+      throw DuplicateReadStatusException.withUserAndChannel(user.getId(), channel.getId());
     }
 
     ReadStatus readStatus = new ReadStatus(user, channel, readStatusCreateRequest.lastReadAt());
@@ -60,7 +58,7 @@ public class BasicReadStatusService implements ReadStatusService {
   public ReadStatusResponse findById(UUID id) {
     log.debug("read-status find-by-id trial: id={}", id);
     ReadStatus readStatus = this.readStatusRepository.findById(id)
-        .orElseThrow(() -> new ApiException(READ_STATUS_NOT_FOUND));
+        .orElseThrow(() -> ReadStatusNotFoundException.withId(id));
 
     log.info("read-status find-by-id success: id={}", id);
     return this.mapper.toResponse(readStatus);
@@ -84,7 +82,7 @@ public class BasicReadStatusService implements ReadStatusService {
       ReadStatusUpdateRequest readStatusUpdateRequest) {
     log.debug("read-status update trial: id={}, request={}", id, readStatusUpdateRequest);
     ReadStatus readStatus = this.readStatusRepository.findById(id)
-        .orElseThrow(() -> new ApiException(READ_STATUS_NOT_FOUND));
+        .orElseThrow(() -> ReadStatusNotFoundException.withId(id));
 
     readStatus.updateLastReadAt(readStatusUpdateRequest.newLastReadAt());
 
@@ -97,7 +95,7 @@ public class BasicReadStatusService implements ReadStatusService {
   public void deleteReadStatus(UUID id) {
     log.debug("read-status delete trial: id={}", id);
     ReadStatus readStatus = this.readStatusRepository.findById(id)
-        .orElseThrow(() -> new ApiException(READ_STATUS_NOT_FOUND));
+        .orElseThrow(() -> ReadStatusNotFoundException.withId(id));
 
     this.readStatusRepository.delete(readStatus);
 

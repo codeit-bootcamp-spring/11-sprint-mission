@@ -1,9 +1,5 @@
 package com.sprint.mission.discodeit.service.basic;
 
-import static com.sprint.mission.discodeit.exception.ApiException.ERROR.USER_EMAIL_DUPLICATED;
-import static com.sprint.mission.discodeit.exception.ApiException.ERROR.USER_NOT_FOUND;
-import static com.sprint.mission.discodeit.exception.ApiException.ERROR.USER_USERNAME_DUPLICATED;
-
 import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentCreateRequest;
 import com.sprint.mission.discodeit.dto.user.UserCreateRequest;
 import com.sprint.mission.discodeit.dto.user.UserResponse;
@@ -11,7 +7,8 @@ import com.sprint.mission.discodeit.dto.user.UserUpdateRequest;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.entity.UserStatus;
-import com.sprint.mission.discodeit.exception.ApiException;
+import com.sprint.mission.discodeit.exception.user.DuplicateUserException;
+import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.mapper.UserMapper;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
@@ -44,10 +41,10 @@ public class BasicUserService implements UserService {
     log.debug("user create trial: request={}, profile={}", userCreateRequest,
         binaryContentCreateRequest.isPresent());
     if (this.userRepository.existsByUsername(userCreateRequest.username())) {
-      throw new ApiException(USER_USERNAME_DUPLICATED);
+      throw DuplicateUserException.withUsername(userCreateRequest.username());
     }
     if (this.userRepository.existsByEmail(userCreateRequest.email())) {
-      throw new ApiException(USER_EMAIL_DUPLICATED);
+      throw DuplicateUserException.withEmail(userCreateRequest.email());
     }
 
     BinaryContent profile = null;
@@ -77,7 +74,7 @@ public class BasicUserService implements UserService {
   public UserResponse findById(UUID id) {
     log.debug("user find-by-id trial: id={}", id);
     User user = this.userRepository.findById(id)
-        .orElseThrow(() -> new ApiException(USER_NOT_FOUND));
+        .orElseThrow(() -> UserNotFoundException.withId(id));
 
     log.info("user find-by-id success: id={}", id);
     return this.mapper.toResponse(user);
@@ -101,13 +98,13 @@ public class BasicUserService implements UserService {
     log.debug("user update trial: id={}, request={}, profile={}", id, userUpdateRequest,
         binaryContentCreateRequest.isPresent());
     User user = this.userRepository.findById(id)
-        .orElseThrow(() -> new ApiException(USER_NOT_FOUND));
+        .orElseThrow(() -> UserNotFoundException.withId(id));
 
     String username = user.getUsername();
     if (userUpdateRequest.newUsername() != null && !userUpdateRequest.newUsername().isBlank()) {
       if (!user.getUsername().equals(userUpdateRequest.newUsername())
           && this.userRepository.existsByUsername(userUpdateRequest.newUsername())) {
-        throw new ApiException(USER_USERNAME_DUPLICATED);
+        throw DuplicateUserException.withUsername(userUpdateRequest.newUsername());
       }
       username = userUpdateRequest.newUsername();
     }
@@ -116,7 +113,7 @@ public class BasicUserService implements UserService {
     if (userUpdateRequest.newEmail() != null && !userUpdateRequest.newEmail().isBlank()) {
       if (!user.getEmail().equals(userUpdateRequest.newEmail())
           && this.userRepository.existsByEmail(userUpdateRequest.newEmail())) {
-        throw new ApiException(USER_EMAIL_DUPLICATED);
+        throw DuplicateUserException.withEmail(userUpdateRequest.newEmail());
       }
       email = userUpdateRequest.newEmail();
     }
@@ -145,7 +142,7 @@ public class BasicUserService implements UserService {
   public void deleteUser(UUID id) {
     log.debug("user delete trial: id={}", id);
     User user = this.userRepository.findById(id)
-        .orElseThrow(() -> new ApiException(USER_NOT_FOUND));
+        .orElseThrow(() -> UserNotFoundException.withId(id));
 
     this.readStatusRepository.deleteAllByUser(user);
 

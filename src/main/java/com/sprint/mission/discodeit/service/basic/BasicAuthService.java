@@ -1,12 +1,10 @@
 package com.sprint.mission.discodeit.service.basic;
 
-import static com.sprint.mission.discodeit.exception.ApiException.ERROR.AUTH_INVALID_CREDENTIALS;
-import static com.sprint.mission.discodeit.exception.ApiException.ERROR.USER_NOT_FOUND;
-
 import com.sprint.mission.discodeit.dto.auth.LoginRequest;
 import com.sprint.mission.discodeit.dto.user.UserResponse;
 import com.sprint.mission.discodeit.entity.User;
-import com.sprint.mission.discodeit.exception.ApiException;
+import com.sprint.mission.discodeit.exception.auth.InvalidCredentialsException;
+import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.mapper.UserMapper;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.AuthService;
@@ -30,10 +28,10 @@ public class BasicAuthService implements AuthService {
   public UserResponse login(LoginRequest loginRequest) {
     log.debug("auth login trial: username={}", loginRequest.username());
     User user = this.userRepository.findByUsername(loginRequest.username())
-        .orElseThrow(() -> new ApiException(USER_NOT_FOUND));
+        .orElseThrow(() -> UserNotFoundException.withUsername(loginRequest.username()));
 
     if (!loginRequest.password().equals(user.getPassword())) {
-      throw new ApiException(AUTH_INVALID_CREDENTIALS);
+      throw InvalidCredentialsException.withWrongPassword();
     }
 
     user.getStatus().updateLastActiveAt(Instant.now());

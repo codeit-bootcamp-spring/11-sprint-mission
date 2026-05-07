@@ -1,10 +1,5 @@
 package com.sprint.mission.discodeit.service.basic;
 
-import static com.sprint.mission.discodeit.exception.ApiException.ERROR.CHANNEL_NAME_DUPLICATED;
-import static com.sprint.mission.discodeit.exception.ApiException.ERROR.CHANNEL_NOT_FOUND;
-import static com.sprint.mission.discodeit.exception.ApiException.ERROR.CHANNEL_NO_VALID_PARTICIPANTS;
-import static com.sprint.mission.discodeit.exception.ApiException.ERROR.CHANNEL_PRIVATE_UPDATE_FORBIDDEN;
-
 import com.sprint.mission.discodeit.dto.channel.ChannelResponse;
 import com.sprint.mission.discodeit.dto.channel.PrivateChannelCreateRequest;
 import com.sprint.mission.discodeit.dto.channel.PublicChannelCreateRequest;
@@ -12,7 +7,10 @@ import com.sprint.mission.discodeit.dto.channel.PublicChannelUpdateRequest;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.entity.User;
-import com.sprint.mission.discodeit.exception.ApiException;
+import com.sprint.mission.discodeit.exception.channel.ChannelNotFoundException;
+import com.sprint.mission.discodeit.exception.channel.DuplicateChannelException;
+import com.sprint.mission.discodeit.exception.channel.NoValidParticipantsException;
+import com.sprint.mission.discodeit.exception.channel.PrivateChannelUpdateForbiddenException;
 import com.sprint.mission.discodeit.mapper.ChannelMapper;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
@@ -47,7 +45,7 @@ public class BasicChannelService implements ChannelService {
       PublicChannelCreateRequest publicChannelCreateRequest) {
     log.debug("channel create-public trial: {}", publicChannelCreateRequest);
     if (this.channelRepository.existsByName(publicChannelCreateRequest.name())) {
-      throw new ApiException(CHANNEL_NAME_DUPLICATED);
+      throw DuplicateChannelException.withName(publicChannelCreateRequest.name());
     }
 
     Channel channel = new Channel(publicChannelCreateRequest.name(),
@@ -72,7 +70,7 @@ public class BasicChannelService implements ChannelService {
         .toList();
 
     if (participants.isEmpty()) {
-      throw new ApiException(CHANNEL_NO_VALID_PARTICIPANTS);
+      throw NoValidParticipantsException.withRequestedIds(requestedIds);
     }
 
     Channel channel = new Channel();
@@ -93,7 +91,7 @@ public class BasicChannelService implements ChannelService {
   public ChannelResponse findById(UUID id) {
     log.debug("channel find-by-id trial: id={}", id);
     Channel channel = this.channelRepository.findById(id)
-        .orElseThrow(() -> new ApiException(CHANNEL_NOT_FOUND));
+        .orElseThrow(() -> ChannelNotFoundException.withId(id));
     List<User> participants = this.readStatusRepository.findAllByChannel(channel).stream()
         .map(ReadStatus::getUser)
         .toList();
@@ -144,15 +142,15 @@ public class BasicChannelService implements ChannelService {
       PublicChannelUpdateRequest publicChannelUpdateRequest) {
     log.debug("channel update trial: id={}, request={}", id, publicChannelUpdateRequest);
     Channel channel = this.channelRepository.findById(id)
-        .orElseThrow(() -> new ApiException(CHANNEL_NOT_FOUND));
+        .orElseThrow(() -> ChannelNotFoundException.withId(id));
     if (channel.isPrivate()) {
-      throw new ApiException(CHANNEL_PRIVATE_UPDATE_FORBIDDEN);
+      throw PrivateChannelUpdateForbiddenException.withId(id);
     }
     if (publicChannelUpdateRequest.newName() != null && !publicChannelUpdateRequest.newName()
         .isBlank()) {
       if (!channel.getName().equals(publicChannelUpdateRequest.newName())
           && this.channelRepository.existsByName(publicChannelUpdateRequest.newName())) {
-        throw new ApiException(CHANNEL_NAME_DUPLICATED);
+        throw DuplicateChannelException.withName(publicChannelUpdateRequest.newName());
       }
       channel.updateName(publicChannelUpdateRequest.newName());
     }
@@ -175,7 +173,7 @@ public class BasicChannelService implements ChannelService {
   public void deleteChannel(UUID id) {
     log.debug("channel delete trial: id={}", id);
     Channel channel = this.channelRepository.findById(id)
-        .orElseThrow(() -> new ApiException(CHANNEL_NOT_FOUND));
+        .orElseThrow(() -> ChannelNotFoundException.withId(id));
 
     this.messageRepository.deleteAllByChannel(channel);
 

@@ -1,11 +1,9 @@
 package com.sprint.mission.discodeit.service.basic;
 
-import static com.sprint.mission.discodeit.exception.ApiException.ERROR.BINARY_CONTENT_NOT_FOUND;
-
 import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentCreateRequest;
 import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentResponse;
 import com.sprint.mission.discodeit.entity.BinaryContent;
-import com.sprint.mission.discodeit.exception.ApiException;
+import com.sprint.mission.discodeit.exception.binarycontent.BinaryContentNotFoundException;
 import com.sprint.mission.discodeit.mapper.BinaryContentMapper;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.service.BinaryContentService;
@@ -47,7 +45,7 @@ public class BasicBinaryContentService implements BinaryContentService {
   public BinaryContentResponse findById(UUID id) {
     log.debug("binary-content find-by-id trial: id={}", id);
     BinaryContent binaryContent = this.binaryContentRepository.findById(id)
-        .orElseThrow(() -> new ApiException(BINARY_CONTENT_NOT_FOUND));
+        .orElseThrow(() -> BinaryContentNotFoundException.withId(id));
 
     log.info("binary-content find-by-id success: id={}, file-name={}, content-type={}, size={}",
         binaryContent.getId(), binaryContent.getFileName(), binaryContent.getContentType(),
@@ -71,7 +69,7 @@ public class BasicBinaryContentService implements BinaryContentService {
   public void deleteBinaryContent(UUID id) {
     log.debug("binary-content delete trial: id={}", id);
     BinaryContent binaryContent = this.binaryContentRepository.findById(id)
-        .orElseThrow(() -> new ApiException(BINARY_CONTENT_NOT_FOUND));
+        .orElseThrow(() -> BinaryContentNotFoundException.withId(id));
 
     this.binaryContentRepository.delete(binaryContent);
 
