@@ -52,6 +52,8 @@ public class BasicMessageService implements MessageService {
   @Override
   public MessageResponse createMessage(MessageCreateRequest messageCreateRequest,
       List<BinaryContentCreateRequest> binaryContentCreateRequests) {
+    log.debug("message create trial: request={}, attachments-count={}", messageCreateRequest,
+        binaryContentCreateRequests.size());
     User author = this.userRepository.findById(messageCreateRequest.authorId())
         .orElseThrow(() -> new ApiException(USER_NOT_FOUND));
     Channel channel = this.channelRepository.findById(messageCreateRequest.channelId())
@@ -81,15 +83,16 @@ public class BasicMessageService implements MessageService {
     );
     this.messageRepository.save(message);
 
-    log.info("Message has been created successfully. ✅ [ID: {}]", message.getId());
-    log.info("-> {channel: {}, sender: {}, content: {}}",
-        channel.isPrivate() ? '-' : channel.getName(), author.getUsername(), message.getContent());
+    log.info("message create success: id={}, channelId={}, authorId={}, attachments-count={}",
+        message.getId(), channel.getId(), author.getId(), attachments.size());
     return this.mapper.toResponse(message);
   }
 
   @Override
   public PageResponse<MessageResponse> findAllByChannelId(UUID channelId, Instant cursor,
       Pageable pageable) {
+    log.debug("message find-all-by-channel-id trial: channelId={}, cursor={}, pageable={}",
+        channelId, cursor, pageable);
     if (!this.channelRepository.existsById(channelId)) {
       throw new ApiException(CHANNEL_NOT_FOUND);
     }
@@ -100,13 +103,19 @@ public class BasicMessageService implements MessageService {
         : this.messageRepository.findAllByChannelIdAndCreatedAtBeforeOrderByCreatedAtDesc(channelId,
             cursor, pageable))
         .map(this.mapper::toResponse);
-    return this.pageMapper.fromSlice(slice, MessageResponse::createdAt);
+    PageResponse<MessageResponse> result = this.pageMapper.fromSlice(slice,
+        MessageResponse::createdAt);
+    log.info("message find-all-by-channel-id success: channelId={}, size={}, hasNext={}",
+        slice.getContent().get(0).channelId(), result.content().size(), result.hasNext());
+    return result;
   }
 
   @Transactional
   @Override
   public MessageResponse updateMessage(UUID id, MessageUpdateRequest messageUpdateRequest,
       List<BinaryContentCreateRequest> binaryContentCreateRequests) {
+    log.debug("message update trial: id={}, request={}, attachments-count={}", id,
+        messageUpdateRequest, binaryContentCreateRequests.size());
     Message message = this.messageRepository.findById(id)
         .orElseThrow(() -> new ApiException(MESSAGE_NOT_FOUND));
 
@@ -132,18 +141,19 @@ public class BasicMessageService implements MessageService {
       message.replaceAttachments(newAttachments);
     }
 
-    log.info("Message has been updated successfully. ✅ [ID: {}]", id);
+    log.info("message update success: id={}, attachments-count={}", id, newAttachments.size());
     return this.mapper.toResponse(message);
   }
 
   @Transactional
   @Override
   public void deleteMessage(UUID id) {
+    log.debug("message delete trial: id={}", id);
     Message message = this.messageRepository.findById(id)
         .orElseThrow(() -> new ApiException(MESSAGE_NOT_FOUND));
 
     this.messageRepository.delete(message);
 
-    log.info("Message has been deleted successfully. ✅ [ID: {}]", id);
+    log.info("message delete success: id={}", id);
   }
 }

@@ -34,6 +34,7 @@ public class BasicUserStatusService implements UserStatusService {
   @Transactional
   @Override
   public UserStatusResponse createUserStatus(UserStatusCreateRequest userStatusCreateRequest) {
+    log.debug("user-status create trial: {}", userStatusCreateRequest);
     User user = this.userRepository.findById(userStatusCreateRequest.userId())
         .orElseThrow(() -> new ApiException(USER_NOT_FOUND));
 
@@ -44,20 +45,27 @@ public class BasicUserStatusService implements UserStatusService {
     UserStatus userStatus = new UserStatus(user);
     this.userStatusRepository.save(userStatus);
 
-    log.info("user status has been created successfully. ✅ [ID: {}]", userStatus.getId());
-    log.info("-> {user: {}}", user.getId());
+    log.info("user-status create success: id={}, userId={}", userStatus.getId(), user.getId());
     return this.mapper.toResponse(userStatus);
   }
 
   @Override
   public UserStatusResponse findById(UUID id) {
-    return this.mapper.toResponse(this.userStatusRepository.findById(id)
-        .orElseThrow(() -> new ApiException(USER_STATUS_NOT_FOUND)));
+    log.debug("user-status find-by-id trial: id={}", id);
+    UserStatus userStatus = this.userStatusRepository.findById(id)
+        .orElseThrow(() -> new ApiException(USER_STATUS_NOT_FOUND));
+
+    log.info("user-status find-by-id success: id={}", userStatus.getId());
+    return this.mapper.toResponse(userStatus);
   }
 
   @Override
   public List<UserStatusResponse> findAll() {
-    return this.userStatusRepository.findAll().stream()
+    log.debug("user-status find-all trial");
+    List<UserStatus> userStatuses = this.userStatusRepository.findAll();
+
+    log.info("user-status find-all success: count={}", userStatuses.size());
+    return userStatuses.stream()
         .map(this.mapper::toResponse)
         .toList();
   }
@@ -66,24 +74,25 @@ public class BasicUserStatusService implements UserStatusService {
   @Override
   public UserStatusResponse updateUserStatusByUserId(UUID userId,
       UserStatusUpdateRequest userStatusUpdateRequest) {
+    log.debug("user-status update trial: userId={}, request={}", userId, userStatusUpdateRequest);
     UserStatus userStatus = this.userStatusRepository.findByUserId(userId)
         .orElseThrow(() -> new ApiException(USER_STATUS_NOT_FOUND));
 
     userStatus.updateLastActiveAt(userStatusUpdateRequest.newLastActiveAt());
 
-    log.info("UserStatus has been updated successfully. ✅ [ID: {}]", userStatus.getId());
-    log.info("-> {user: {}}", userId);
+    log.info("user-status update success: id={}, userId={}", userStatus.getId(), userId);
     return this.mapper.toResponse(userStatus);
   }
 
   @Transactional
   @Override
   public void deleteUserStatus(UUID id) {
+    log.debug("user-status delete trial: id={}", id);
     UserStatus userStatus = this.userStatusRepository.findById(id)
         .orElseThrow(() -> new ApiException(USER_STATUS_NOT_FOUND));
 
     this.userStatusRepository.delete(userStatus);
 
-    log.info("UserStatus has been deleted successfully. ✅ [ID: {}]", userStatus.getId());
+    log.info("user-status delete success: id={}", userStatus.getId());
   }
 }

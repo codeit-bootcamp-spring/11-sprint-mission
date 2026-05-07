@@ -38,6 +38,7 @@ public class BasicReadStatusService implements ReadStatusService {
   @Transactional
   @Override
   public ReadStatusResponse createReadStatus(ReadStatusCreateRequest readStatusCreateRequest) {
+    log.debug("read-status create trial: {}", readStatusCreateRequest);
     User user = this.userRepository.findById(readStatusCreateRequest.userId())
         .orElseThrow(() -> new ApiException(USER_NOT_FOUND));
     Channel channel = this.channelRepository.findById(readStatusCreateRequest.channelId())
@@ -50,20 +51,29 @@ public class BasicReadStatusService implements ReadStatusService {
     ReadStatus readStatus = new ReadStatus(user, channel, readStatusCreateRequest.lastReadAt());
     this.readStatusRepository.save(readStatus);
 
-    log.info("read status has been created successfully. ✅ [ID: {}]", readStatus.getId());
-    log.info("-> {user: {}, channel: {}}", user.getId(), channel.getId());
+    log.info("read-status create success: id={}, userId={}, channelId={}",
+        readStatus.getId(), user.getId(), channel.getId());
     return this.mapper.toResponse(readStatus);
   }
 
   @Override
   public ReadStatusResponse findById(UUID id) {
-    return this.mapper.toResponse(this.readStatusRepository.findById(id)
-        .orElseThrow(() -> new ApiException(READ_STATUS_NOT_FOUND)));
+    log.debug("read-status find-by-id trial: id={}", id);
+    ReadStatus readStatus = this.readStatusRepository.findById(id)
+        .orElseThrow(() -> new ApiException(READ_STATUS_NOT_FOUND));
+
+    log.info("read-status find-by-id success: id={}", id);
+    return this.mapper.toResponse(readStatus);
   }
 
   @Override
   public List<ReadStatusResponse> findAllByUserId(UUID userId) {
-    return this.readStatusRepository.findAllByUserId(userId).stream()
+    log.debug("read-status find-all-by-user-id trial: userId={}", userId);
+    List<ReadStatus> readStatuses = this.readStatusRepository.findAllByUserId(userId);
+
+    log.info("read-status find-all-by-user-id success: userId={}, count={}",
+        readStatuses.get(0).getUser().getId(), readStatuses.size());
+    return readStatuses.stream()
         .map(this.mapper::toResponse)
         .toList();
   }
@@ -72,23 +82,25 @@ public class BasicReadStatusService implements ReadStatusService {
   @Override
   public ReadStatusResponse updateReadStatus(UUID id,
       ReadStatusUpdateRequest readStatusUpdateRequest) {
+    log.debug("read-status update trial: id={}, request={}", id, readStatusUpdateRequest);
     ReadStatus readStatus = this.readStatusRepository.findById(id)
         .orElseThrow(() -> new ApiException(READ_STATUS_NOT_FOUND));
 
     readStatus.updateLastReadAt(readStatusUpdateRequest.newLastReadAt());
 
-    log.info("read status has been updated successfully. ✅ [ID: {}]", readStatus.getId());
+    log.info("read-status update success: id={}", readStatus.getId());
     return this.mapper.toResponse(readStatus);
   }
 
   @Transactional
   @Override
   public void deleteReadStatus(UUID id) {
+    log.debug("read-status delete trial: id={}", id);
     ReadStatus readStatus = this.readStatusRepository.findById(id)
         .orElseThrow(() -> new ApiException(READ_STATUS_NOT_FOUND));
 
     this.readStatusRepository.delete(readStatus);
 
-    log.info("read status has been deleted successfully. ✅ [ID: {}]", readStatus.getId());
+    log.info("read-status delete success: id={}", readStatus.getId());
   }
 }

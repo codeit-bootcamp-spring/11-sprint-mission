@@ -30,24 +30,38 @@ public class BasicBinaryContentService implements BinaryContentService {
   @Transactional
   @Override
   public BinaryContentResponse createBinaryContent(BinaryContentCreateRequest req) {
+    log.debug("binary-content create trial: file-name={}, content-type={}, size={}", req.fileName(),
+        req.contentType(), req.size());
     BinaryContent binaryContent = new BinaryContent(req.fileName(), req.size(), req.contentType());
     this.binaryContentRepository.save(binaryContent);
 
     this.binaryContentStorage.put(binaryContent.getId(), req.bytes());
 
-    log.info("binary content has been created successfully. ✅ [ID: {}]", binaryContent.getId());
+    log.info("binary-content create success: id={}, file-name={}, content-type={}, size={}",
+        binaryContent.getId(), binaryContent.getFileName(), binaryContent.getContentType(),
+        binaryContent.getSize());
     return this.mapper.toResponse(binaryContent);
   }
 
   @Override
   public BinaryContentResponse findById(UUID id) {
-    return this.mapper.toResponse(this.binaryContentRepository.findById(id)
-        .orElseThrow(() -> new ApiException(BINARY_CONTENT_NOT_FOUND)));
+    log.debug("binary-content find-by-id trial: id={}", id);
+    BinaryContent binaryContent = this.binaryContentRepository.findById(id)
+        .orElseThrow(() -> new ApiException(BINARY_CONTENT_NOT_FOUND));
+
+    log.info("binary-content find-by-id success: id={}, file-name={}, content-type={}, size={}",
+        binaryContent.getId(), binaryContent.getFileName(), binaryContent.getContentType(),
+        binaryContent.getSize());
+    return this.mapper.toResponse(binaryContent);
   }
 
   @Override
   public List<BinaryContentResponse> findAllByIdIn(List<UUID> ids) {
-    return this.binaryContentRepository.findAllByIdIn(ids).stream()
+    log.debug("binary-content find-all-by-id-in trial: ids={}", ids);
+    List<BinaryContent> binaryContents = this.binaryContentRepository.findAllByIdIn(ids);
+
+    log.info("binary-content find-all-by-id-in success: count={}", binaryContents.size());
+    return binaryContents.stream()
         .map(this.mapper::toResponse)
         .toList();
   }
@@ -55,11 +69,12 @@ public class BasicBinaryContentService implements BinaryContentService {
   @Transactional
   @Override
   public void deleteBinaryContent(UUID id) {
+    log.debug("binary-content delete trial: id={}", id);
     BinaryContent binaryContent = this.binaryContentRepository.findById(id)
         .orElseThrow(() -> new ApiException(BINARY_CONTENT_NOT_FOUND));
 
     this.binaryContentRepository.delete(binaryContent);
 
-    log.info("binary content has been deleted successfully. ✅ [ID: {}]", binaryContent.getId());
+    log.info("binary-content delete success: id={}", binaryContent.getId());
   }
 }

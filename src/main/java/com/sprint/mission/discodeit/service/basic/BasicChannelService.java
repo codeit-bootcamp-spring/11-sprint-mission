@@ -45,6 +45,7 @@ public class BasicChannelService implements ChannelService {
   @Override
   public ChannelResponse createPublicChannel(
       PublicChannelCreateRequest publicChannelCreateRequest) {
+    log.debug("channel create-public trial: {}", publicChannelCreateRequest);
     if (this.channelRepository.existsByName(publicChannelCreateRequest.name())) {
       throw new ApiException(CHANNEL_NAME_DUPLICATED);
     }
@@ -53,15 +54,16 @@ public class BasicChannelService implements ChannelService {
         publicChannelCreateRequest.description());
     this.channelRepository.save(channel);
 
-    log.info("{} channel has been created successfully. ✅ [ID: {}]", channel.getName(),
-        channel.getId());
+    log.info("channel create-public success: id={}, name={}", channel.getId(), channel.getName());
     return this.mapper.toResponse(channel, List.of(), Instant.now());
   }
+
 
   @Transactional
   @Override
   public ChannelResponse createPrivateChannel(
       PrivateChannelCreateRequest privateChannelCreateRequest) {
+    log.debug("channel create-private trial: {}", privateChannelCreateRequest);
     List<UUID> requestedIds = privateChannelCreateRequest.participantIds().stream()
         .distinct()
         .toList();
@@ -82,12 +84,14 @@ public class BasicChannelService implements ChannelService {
 
     this.readStatusRepository.saveAll(readStatuses);
 
-    log.info("private channel has been created successfully. ✅ [ID: {}]", channel.getId());
+    log.info("channel create-private success: id={}, participants-count={}", channel.getId(),
+        participants.size());
     return this.mapper.toResponse(channel, participants, null);
   }
 
   @Override
   public ChannelResponse findById(UUID id) {
+    log.debug("channel find-by-id trial: id={}", id);
     Channel channel = this.channelRepository.findById(id)
         .orElseThrow(() -> new ApiException(CHANNEL_NOT_FOUND));
     List<User> participants = this.readStatusRepository.findAllByChannel(channel).stream()
@@ -95,11 +99,16 @@ public class BasicChannelService implements ChannelService {
         .toList();
     Instant lastMessageAt = this.messageRepository
         .findTopCreatedAtByChannelOrderByCreatedAtDesc(channel).orElse(null);
+
+    log.info(
+        "channel find-by-id success: id={}, name={}, participants-count={}, last-message-at={}",
+        channel.getId(), channel.getName(), participants.size(), lastMessageAt);
     return this.mapper.toResponse(channel, participants, lastMessageAt);
   }
 
   @Override
   public List<ChannelResponse> findAllByUserId(UUID userId) {
+    log.debug("channel find-all-by-user-id trial: userId={}", userId);
     List<Channel> channels = this.channelRepository.findAllByUserId(userId);
 
     List<UUID> channelIds = channels.stream().map(Channel::getId).toList();
@@ -119,6 +128,7 @@ public class BasicChannelService implements ChannelService {
             ChannelResponse.LastMessageAt::getLastMessageAt
         ));
 
+    log.info("channel find-all-by-user-id success: count={}", channels.size());
     return channels.stream()
         .map(channel -> this.mapper.toResponse(
             channel,
@@ -132,6 +142,7 @@ public class BasicChannelService implements ChannelService {
   @Override
   public ChannelResponse updateChannel(UUID id,
       PublicChannelUpdateRequest publicChannelUpdateRequest) {
+    log.debug("channel update trial: id={}, request={}", id, publicChannelUpdateRequest);
     Channel channel = this.channelRepository.findById(id)
         .orElseThrow(() -> new ApiException(CHANNEL_NOT_FOUND));
     if (channel.isPrivate()) {
@@ -150,8 +161,7 @@ public class BasicChannelService implements ChannelService {
       channel.updateDescription(publicChannelUpdateRequest.newDescription());
     }
 
-    log.info("{} channel has been updated successfully. ✅ [ID: {}]", channel.getName(),
-        channel.getId());
+    log.info("channel update success: id={}, name={}", channel.getId(), channel.getName());
     List<User> participants = this.readStatusRepository.findAllByChannel(channel).stream()
         .map(ReadStatus::getUser)
         .toList();
@@ -163,6 +173,7 @@ public class BasicChannelService implements ChannelService {
   @Transactional
   @Override
   public void deleteChannel(UUID id) {
+    log.debug("channel delete trial: id={}", id);
     Channel channel = this.channelRepository.findById(id)
         .orElseThrow(() -> new ApiException(CHANNEL_NOT_FOUND));
 
@@ -172,6 +183,6 @@ public class BasicChannelService implements ChannelService {
 
     this.channelRepository.delete(channel);
 
-    log.info("{} channel has been deleted successfully. ✅ [ID: {}]", channel.getName(), id);
+    log.info("channel delete success: id={}", id);
   }
 }

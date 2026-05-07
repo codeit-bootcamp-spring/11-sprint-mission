@@ -36,10 +36,13 @@ public class BasicUserService implements UserService {
   private final ReadStatusRepository readStatusRepository;
   private final UserMapper mapper;
   private final BinaryContentStorage binaryContentStorage;
+
   @Transactional
   @Override
   public UserResponse createUser(UserCreateRequest userCreateRequest,
       Optional<BinaryContentCreateRequest> binaryContentCreateRequest) {
+    log.debug("user create trial: request={}, profile={}", userCreateRequest,
+        binaryContentCreateRequest.isPresent());
     if (this.userRepository.existsByUsername(userCreateRequest.username())) {
       throw new ApiException(USER_USERNAME_DUPLICATED);
     }
@@ -66,19 +69,27 @@ public class BasicUserService implements UserService {
 
     this.userRepository.save(user);
 
-    log.info("{} has been created successfully. ✅ [ID: {}]", user.getUsername(), user.getId());
+    log.info("user create success: id={}, username={}", user.getId(), user.getUsername());
     return this.mapper.toResponse(user);
   }
 
   @Override
   public UserResponse findById(UUID id) {
-    return this.mapper.toResponse(this.userRepository.findById(id)
-        .orElseThrow(() -> new ApiException(USER_NOT_FOUND)));
+    log.debug("user find-by-id trial: id={}", id);
+    User user = this.userRepository.findById(id)
+        .orElseThrow(() -> new ApiException(USER_NOT_FOUND));
+
+    log.info("user find-by-id success: id={}", id);
+    return this.mapper.toResponse(user);
   }
 
   @Override
   public List<UserResponse> findAll() {
-    return this.userRepository.findAll().stream()
+    log.debug("user find-all trial");
+    List<User> users = this.userRepository.findAll();
+
+    log.info("user find-all success: count={}", users.size());
+    return users.stream()
         .map(this.mapper::toResponse)
         .toList();
   }
@@ -87,6 +98,8 @@ public class BasicUserService implements UserService {
   @Override
   public UserResponse updateUser(UUID id, UserUpdateRequest userUpdateRequest,
       Optional<BinaryContentCreateRequest> binaryContentCreateRequest) {
+    log.debug("user update trial: id={}, request={}, profile={}", id, userUpdateRequest,
+        binaryContentCreateRequest.isPresent());
     User user = this.userRepository.findById(id)
         .orElseThrow(() -> new ApiException(USER_NOT_FOUND));
 
@@ -123,13 +136,14 @@ public class BasicUserService implements UserService {
     user.update(username, email, password, profile);
     user.getStatus().updateLastActiveAt(Instant.now());
 
-    log.info("{} has been updated successfully. ✅ [ID: {}]", user.getUsername(), id);
+    log.info("user update success: id={}, username={}", id, user.getUsername());
     return this.mapper.toResponse(user);
   }
 
   @Transactional
   @Override
   public void deleteUser(UUID id) {
+    log.debug("user delete trial: id={}", id);
     User user = this.userRepository.findById(id)
         .orElseThrow(() -> new ApiException(USER_NOT_FOUND));
 
@@ -137,6 +151,6 @@ public class BasicUserService implements UserService {
 
     this.userRepository.delete(user);
 
-    log.info("{} has been deleted successfully. ✅ [ID: {}]", user.getUsername(), id);
+    log.info("user delete success: id={}", user.getId());
   }
 }

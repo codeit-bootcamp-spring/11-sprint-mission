@@ -28,6 +28,7 @@ public class BasicAuthService implements AuthService {
   @Transactional
   @Override
   public UserResponse login(LoginRequest loginRequest) {
+    log.debug("auth login trial: username={}", loginRequest.username());
     User user = this.userRepository.findByUsername(loginRequest.username())
         .orElseThrow(() -> new ApiException(USER_NOT_FOUND));
 
@@ -37,6 +38,7 @@ public class BasicAuthService implements AuthService {
 
     user.getStatus().updateLastActiveAt(Instant.now());
 
+    log.info("auth login success: userId={}, username={}", user.getId(), user.getUsername());
     return this.mapper.toResponse(user);
   }
 }
