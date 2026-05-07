@@ -1,0 +1,20 @@
+spring:
+  application:
+    name: discodeit
+  profiles:
+    default: dev
+  servlet:
+    multipart:
+      maxFileSize: 10MB
+      maxRequestSize: 30MB
+  jpa:
+    properties:
+      hibernate:
+        format_sql: true
+    open-in-view: false
+
+discodeit:
+  storage:
+    type: local
+    local:
+      root-path: .discodeit/storage
