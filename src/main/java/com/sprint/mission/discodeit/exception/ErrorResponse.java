@@ -1,31 +1,26 @@
 package com.sprint.mission.discodeit.exception;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import java.util.List;
+import java.time.Instant;
+import java.util.Map;
 
 public record ErrorResponse(
+    Instant timestamp,
     String code,
-    String exceptionType,
     String message,
-    @JsonInclude(value = Include.NON_NULL, content = Include.NON_NULL) List<String> fields
+    Map<String, Object> details,
+    String exceptionType,
+    int status
 ) {
 
-  public static ErrorResponse from(ApiException.ERROR errorCode) {
+  public static ErrorResponse from(DiscodeitException e) {
+    ErrorCode errorCode = e.getErrorCode();
     return new ErrorResponse(
+        e.getTimestamp(),
         errorCode.getCode(),
-        errorCode.getExceptionType(),
         errorCode.getMessage(),
-        null
-    );
-  }
-
-  public static ErrorResponse from(ApiException.ERROR errorCode, List<String> fields) {
-    return new ErrorResponse(
-        errorCode.getCode(),
-        errorCode.getExceptionType(),
-        errorCode.getMessage(),
-        fields
+        e.getDetails(),
+        e.getClass().getSimpleName(),
+        errorCode.getHttpStatus().value()
     );
   }
 }
