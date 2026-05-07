@@ -23,6 +23,12 @@ spring:
     init:
       mode: always
 
+  boot:
+    admin:
+      client:
+        instance:
+          name: discodeit
+
 discodeit:
   storage:
     type: local
