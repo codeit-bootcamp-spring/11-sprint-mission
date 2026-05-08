@@ -7,6 +7,7 @@ import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RequiredArgsConstructor
 @RestController
+@Slf4j
 @RequestMapping("/api/binaryContents")
 public class BinaryContentController implements BinaryContentApi {
 
@@ -26,7 +28,9 @@ public class BinaryContentController implements BinaryContentApi {
   @GetMapping(path = "{binaryContentId}")
   public ResponseEntity<BinaryContentDto> find(
       @PathVariable("binaryContentId") UUID binaryContentId) {
+    log.info("파일 메타데이터 조회 요청 들어옴. binaryContentId={}", binaryContentId);
     BinaryContentDto binaryContent = binaryContentService.find(binaryContentId);
+    log.info("파일 메타데이터 조회 처리 완료. binaryContentId={}", binaryContentId);
     return ResponseEntity
         .status(HttpStatus.OK)
         .body(binaryContent);
@@ -35,7 +39,9 @@ public class BinaryContentController implements BinaryContentApi {
   @GetMapping
   public ResponseEntity<List<BinaryContentDto>> findAllByIdIn(
       @RequestParam("binaryContentIds") List<UUID> binaryContentIds) {
+    log.debug("파일 목록 조회 요청 들어옴. binaryContentIds={}", binaryContentIds);
     List<BinaryContentDto> binaryContents = binaryContentService.findAllByIdIn(binaryContentIds);
+    log.info("파일 목록 조회 처리 완료. count={}", binaryContents.size());
     return ResponseEntity
         .status(HttpStatus.OK)
         .body(binaryContents);
@@ -44,7 +50,10 @@ public class BinaryContentController implements BinaryContentApi {
   @GetMapping(path = "{binaryContentId}/download")
   public ResponseEntity<?> download(
       @PathVariable("binaryContentId") UUID binaryContentId) {
+    log.info("파일 다운로드 요청 들어옴. binaryContentId={}", binaryContentId);
     BinaryContentDto binaryContentDto = binaryContentService.find(binaryContentId);
+    log.info("파일 다운로드 처리 시작. binaryContentId={}, fileName={}, size={}",
+        binaryContentId, binaryContentDto.fileName(), binaryContentDto.size());
     return binaryContentStorage.download(binaryContentDto);
   }
 }

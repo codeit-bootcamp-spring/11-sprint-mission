@@ -10,3 +10,6 @@ spring:
   jpa:
     hibernate:
       ddl-auto: validate
+logging:
+  level:
+    com.sprint.mission.discodeit: info

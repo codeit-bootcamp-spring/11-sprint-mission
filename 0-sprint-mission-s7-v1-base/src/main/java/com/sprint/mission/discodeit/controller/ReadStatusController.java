@@ -8,6 +8,7 @@ import com.sprint.mission.discodeit.service.ReadStatusService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RequiredArgsConstructor
 @RestController
+@Slf4j
 @RequestMapping("/api/readStatuses")
 public class ReadStatusController implements ReadStatusApi {
 
@@ -28,7 +30,10 @@ public class ReadStatusController implements ReadStatusApi {
 
   @PostMapping
   public ResponseEntity<ReadStatusDto> create(@RequestBody ReadStatusCreateRequest request) {
+    log.info("유저 상태 생성 요청 들어옴.");
+    log.debug("userId={}, channelId={}, lastReadAt={}", request.userId(), request.channelId(),request.lastReadAt());
     ReadStatusDto createdReadStatus = readStatusService.create(request);
+    log.info("유저 상태 생성 처리 완료.");
     return ResponseEntity
         .status(HttpStatus.CREATED)
         .body(createdReadStatus);
@@ -37,7 +42,10 @@ public class ReadStatusController implements ReadStatusApi {
   @PatchMapping(path = "{readStatusId}")
   public ResponseEntity<ReadStatusDto> update(@PathVariable("readStatusId") UUID readStatusId,
       @RequestBody ReadStatusUpdateRequest request) {
+    log.info("유저 상태 수정 요청 들어옴");
+    log.debug("readStatusId={}, newLastReadAt={}", readStatusId, request.newLastReadAt());
     ReadStatusDto updatedReadStatus = readStatusService.update(readStatusId, request);
+    log.info("유저 상태 수정 처리 완료.");
     return ResponseEntity
         .status(HttpStatus.OK)
         .body(updatedReadStatus);
@@ -45,7 +53,10 @@ public class ReadStatusController implements ReadStatusApi {
 
   @GetMapping
   public ResponseEntity<List<ReadStatusDto>> findAllByUserId(@RequestParam("userId") UUID userId) {
+    log.info("유저 상태 목록 조회 요청 들어옴.");
+    log.debug("userId={}", userId);
     List<ReadStatusDto> readStatuses = readStatusService.findAllByUserId(userId);
+    log.info("유저 상태 목록 조회 완료.");
     return ResponseEntity
         .status(HttpStatus.OK)
         .body(readStatuses);

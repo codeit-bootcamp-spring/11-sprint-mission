@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -31,6 +32,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/users")
+@Slf4j
 public class UserController implements UserApi {
 
   private final UserService userService;
@@ -42,9 +44,18 @@ public class UserController implements UserApi {
       @RequestPart("userCreateRequest") UserCreateRequest userCreateRequest,
       @RequestPart(value = "profile", required = false) MultipartFile profile
   ) {
+    log.info("사용자 create요청 들어옴.");
+    log.debug("username={}, email={}, profileIncluded={}",
+        userCreateRequest.username(),
+        userCreateRequest.email(),
+        profile != null && !profile.isEmpty());
+
     Optional<BinaryContentCreateRequest> profileRequest = Optional.ofNullable(profile)
         .flatMap(this::resolveProfileRequest);
     UserDto createdUser = userService.create(userCreateRequest, profileRequest);
+
+    log.info("사용자 create요청 처리 완료. userId={}", createdUser.id());
+
     return ResponseEntity
         .status(HttpStatus.CREATED)
         .body(createdUser);
@@ -60,9 +71,18 @@ public class UserController implements UserApi {
       @RequestPart("userUpdateRequest") UserUpdateRequest userUpdateRequest,
       @RequestPart(value = "profile", required = false) MultipartFile profile
   ) {
+    log.info("사용자 update요청 들어옴.");
+    log.debug("newUsername={}, newEmail={}, profileIncluded={}",
+        userUpdateRequest.newUsername(),
+        userUpdateRequest.newEmail(),
+        profile != null && !profile.isEmpty());
+
     Optional<BinaryContentCreateRequest> profileRequest = Optional.ofNullable(profile)
         .flatMap(this::resolveProfileRequest);
     UserDto updatedUser = userService.update(userId, userUpdateRequest, profileRequest);
+
+    log.info("사용자 update요청 처리 완료. userId={}", userId);
+
     return ResponseEntity
         .status(HttpStatus.OK)
         .body(updatedUser);
@@ -71,7 +91,12 @@ public class UserController implements UserApi {
   @DeleteMapping(path = "{userId}")
   @Override
   public ResponseEntity<Void> delete(@PathVariable("userId") UUID userId) {
+    log.info("사용자 delete요청 들어옴.");
+    log.debug("userId={}", userId);
     userService.delete(userId);
+
+    log.info("사용자 delete요청 처리 완료. userId={}", userId);
+
     return ResponseEntity
         .status(HttpStatus.NO_CONTENT)
         .build();
@@ -80,7 +105,11 @@ public class UserController implements UserApi {
   @GetMapping
   @Override
   public ResponseEntity<List<UserDto>> findAll() {
+    log.debug("사용자 findAll요청 들어옴.");
     List<UserDto> users = userService.findAll();
+
+    log.info("사용자 findAll요청 처리 완료. users.size={}", users.size());
+
     return ResponseEntity
         .status(HttpStatus.OK)
         .body(users);
@@ -90,7 +119,12 @@ public class UserController implements UserApi {
   @Override
   public ResponseEntity<UserStatusDto> updateUserStatusByUserId(@PathVariable("userId") UUID userId,
       @RequestBody UserStatusUpdateRequest request) {
+    log.info("사용자 updateUserStatusByUserId요청 들어옴.");
+    log.debug("userId={}, newLastActiveAt={}", userId, request.newLastActiveAt());
     UserStatusDto updatedUserStatus = userStatusService.updateByUserId(userId, request);
+
+    log.info("사용자 updateUserStatusByUserId요청 처리 완료. userId={}", userId);
+
     return ResponseEntity
         .status(HttpStatus.OK)
         .body(updatedUserStatus);
@@ -98,9 +132,15 @@ public class UserController implements UserApi {
 
   private Optional<BinaryContentCreateRequest> resolveProfileRequest(MultipartFile profileFile) {
     if (profileFile.isEmpty()) {
+      log.debug("profileFile is empty.");
       return Optional.empty();
     } else {
       try {
+        log.debug("profileFile is not empty. fileName={}, contentType={}, size={}",
+            profileFile.getOriginalFilename(),
+            profileFile.getContentType(),
+            profileFile.getSize());
+
         BinaryContentCreateRequest binaryContentCreateRequest = new BinaryContentCreateRequest(
             profileFile.getOriginalFilename(),
             profileFile.getContentType(),
@@ -108,6 +148,7 @@ public class UserController implements UserApi {
         );
         return Optional.of(binaryContentCreateRequest);
       } catch (IOException e) {
+        log.error("프로필 파일 처리 오류 발생. fileName={}", profileFile.getOriginalFilename(), e);
         throw new RuntimeException(e);
       }
     }
