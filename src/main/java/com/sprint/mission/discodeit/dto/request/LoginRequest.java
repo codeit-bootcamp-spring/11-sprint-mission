@@ -1,8 +1,8 @@
 package com.sprint.mission.discodeit.dto.request;
 
-public record LoginRequest(
-    String username,
-    String password
-) {
+import jakarta.validation.constraints.NotBlank;
 
-}
+public record LoginRequest(
+        @NotBlank(message = "아이디를 입력해주세요.") String username,
+        @NotBlank(message = "비밀번호를 입력해주세요.") String password
+) {}

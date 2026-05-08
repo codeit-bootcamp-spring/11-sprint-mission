@@ -2,6 +2,7 @@ plugins {
     id 'java'
     id 'org.springframework.boot' version '3.4.0'
     id 'io.spring.dependency-management' version '1.1.6'
+    id 'jacoco'
 }
 
 group = 'com.sprint.mission'
@@ -36,8 +37,47 @@ dependencies {
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+
+    implementation 'de.codecentric:spring-boot-admin-starter-client:3.4.5'
+    // 테스트 환경에서만 사용할 것이므로
+    testImplementation 'com.h2database:h2'
+}
+
+jacoco {
+    toolVersion = "0.8.12"
 }
 
 tasks.named('test') {
     useJUnitPlatform()
+    // 테스트가 성공하든 실패하든, 무조건 커버리지 리포트를 생성하도록 연결
+    finalizedBy 'jacocoTestReport'
+}
+
+jacocoTestReport {
+    dependsOn test // 리포트 생성 전에는 항상 테스트가 먼저 실행되어야 함
+
+    reports {
+        html.required = true  // 사람이 보기 편한 HTML 문서
+        xml.required = true   // SonarQube 등 외부 툴 연동용
+        csv.required = false
+    }
+
+    // 커버리지 측정에서 제외할 패키지 및 클래스 설정
+    afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: [
+                    "**/*Application*",           // 메인 실행 클래스
+                    "**/*Config*",                // 설정 클래스들
+                    "**/*Dto*",                   // DTO (단순 데이터 전송 객체)
+                    "**/*Request*",               // 요청 DTO
+                    "**/*Response*",              // 응답 DTO
+                    "**/*Exception*",             // 예외 클래스
+                    "**/entity/**",               // 엔티티 (비즈니스 로직이 많다면 포함하기도 함)
+                    "**/*MapperImpl*"             // MapStruct가 자동 생성한 구현체 제외!
+            ])
+        }))
+    }
 }
