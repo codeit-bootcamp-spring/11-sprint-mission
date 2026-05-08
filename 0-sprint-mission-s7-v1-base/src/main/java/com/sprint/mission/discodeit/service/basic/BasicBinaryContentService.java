@@ -11,10 +11,12 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @RequiredArgsConstructor
+@Slf4j
 @Service
 public class BasicBinaryContentService implements BinaryContentService {
 
@@ -28,6 +30,10 @@ public class BasicBinaryContentService implements BinaryContentService {
     String fileName = request.fileName();
     byte[] bytes = request.bytes();
     String contentType = request.contentType();
+
+    log.info("파일 업로드 처리 시작.");
+    log.debug("fileName={}, contentType={}, size={}", fileName, contentType, bytes.length);
+
     BinaryContent binaryContent = new BinaryContent(
         fileName,
         (long) bytes.length,
@@ -36,30 +42,51 @@ public class BasicBinaryContentService implements BinaryContentService {
     binaryContentRepository.save(binaryContent);
     binaryContentStorage.put(binaryContent.getId(), bytes);
 
+    log.info("파일 업로드 처리 완료. binaryContentId={}", binaryContent.getId());
+
     return binaryContentMapper.toDto(binaryContent);
   }
 
   @Override
   public BinaryContentDto find(UUID binaryContentId) {
-    return binaryContentRepository.findById(binaryContentId)
+    log.debug("파일 메타데이터 조회 처리 시작. binaryContentId={}", binaryContentId);
+
+    BinaryContentDto binaryContentDto = binaryContentRepository.findById(binaryContentId)
         .map(binaryContentMapper::toDto)
         .orElseThrow(() -> new NoSuchElementException(
             "BinaryContent with id " + binaryContentId + " not found"));
+
+    log.debug("파일 메타데이터 조회 처리 완료. binaryContentId={}", binaryContentId);
+
+    return binaryContentDto;
   }
 
   @Override
   public List<BinaryContentDto> findAllByIdIn(List<UUID> binaryContentIds) {
-    return binaryContentRepository.findAllById(binaryContentIds).stream()
+    log.debug("파일 목록 조회 처리 시작. binaryContentIds={}", binaryContentIds);
+
+    List<BinaryContentDto> binaryContentDtos = binaryContentRepository.findAllById(binaryContentIds)
+        .stream()
         .map(binaryContentMapper::toDto)
         .toList();
+
+    log.info("파일 목록 조회 처리 완료. count={}", binaryContentDtos.size());
+
+    return binaryContentDtos;
   }
 
   @Transactional
   @Override
   public void delete(UUID binaryContentId) {
+    log.info("파일 삭제 처리 시작. binaryContentId={}", binaryContentId);
+
     if (!binaryContentRepository.existsById(binaryContentId)) {
+      log.warn("존재하지 않는 파일 삭제 시도. binaryContentId={}", binaryContentId);
       throw new NoSuchElementException("BinaryContent with id " + binaryContentId + " not found");
     }
+
     binaryContentRepository.deleteById(binaryContentId);
+
+    log.info("파일 삭제 처리 완료. binaryContentId={}", binaryContentId);
   }
 }
