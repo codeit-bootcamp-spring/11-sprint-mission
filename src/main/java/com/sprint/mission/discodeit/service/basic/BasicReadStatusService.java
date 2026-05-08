@@ -18,9 +18,11 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class BasicReadStatusService implements ReadStatusService {
@@ -37,9 +39,15 @@ public class BasicReadStatusService implements ReadStatusService {
     UUID channelId = request.channelId();
 
     User user = userRepository.findById(userId)
-        .orElseThrow(UserNotFoundException::new);
+        .orElseThrow(() ->{
+          log.warn("존재하지 않는 id: {}", userId);
+          return new UserNotFoundException();
+        });
     Channel channel = channelRepository.findById(channelId)
-        .orElseThrow(ChannelNotFoundException::new);
+        .orElseThrow(() ->{
+          log.warn("존재하지 않는 채널: {}", channelId);
+          return new ChannelNotFoundException();
+        });
 
     ReadStatus readStatus = readStatusRepository.findByUserIdAndChannelId(user.getId(), channel.getId())
         .orElseGet(() -> {
@@ -47,6 +55,7 @@ public class BasicReadStatusService implements ReadStatusService {
           return readStatusRepository.save(new ReadStatus(user, channel, lastReadAt));
         });
 
+    log.info("ReadStatus 생성 완료: {}", readStatus.getId());
     return readStatusMapper.toDto(readStatus);
   }
 
@@ -54,7 +63,10 @@ public class BasicReadStatusService implements ReadStatusService {
   public ReadStatusDto find(UUID readStatusId) {
     return readStatusRepository.findById(readStatusId)
         .map(readStatusMapper::toDto)
-        .orElseThrow(ReadStatusNotFoundException::new);
+        .orElseThrow(() ->{
+          log.warn("존재하지 않는 ReadStatusId: {}", readStatusId);
+          return new ReadStatusNotFoundException();
+        });
   }
 
   @Override
@@ -68,8 +80,12 @@ public class BasicReadStatusService implements ReadStatusService {
   @Override
   public ReadStatusDto update(UUID readStatusId, ReadStatusUpdateRequest request) {
     ReadStatus readStatus = readStatusRepository.findById(readStatusId)
-        .orElseThrow(ReadStatusNotFoundException::new);
+        .orElseThrow(() -> {
+          log.warn("존재하지 않는 id: {}", readStatusId);
+          return new ReadStatusNotFoundException();
+        });
     readStatus.update(request.newLastReadAt());
+    log.info("ReadStatusId 업데이트 완료: {}", readStatusId);
     return readStatusMapper.toDto(readStatus);
   }
 
@@ -77,8 +93,10 @@ public class BasicReadStatusService implements ReadStatusService {
   @Override
   public void delete(UUID readStatusId) {
     if (!readStatusRepository.existsById(readStatusId)) {
+      log.warn("존재하지 않는 readStatusId: {}", readStatusId);
       throw new ReadStatusNotFoundException();
     }
     readStatusRepository.deleteById(readStatusId);
+    log.info("ReadStatus 삭제 완료: {}", readStatusId);
   }
 }

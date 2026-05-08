@@ -18,9 +18,11 @@ import com.sprint.mission.discodeit.service.ChannelService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class BasicChannelService implements ChannelService {
@@ -58,8 +60,11 @@ public class BasicChannelService implements ChannelService {
   public ChannelDto find(UUID channelId) {
     return channelRepository.findById(channelId)
         .map(channelMapper::toDto)
-        .orElseThrow(ChannelNotFoundException::new);
-  }
+        .orElseThrow(() -> {
+          log.warn("존재하지 않는 채널: {}", channelId);
+          return new ChannelNotFoundException();
+        });
+        }
 
   @Transactional(readOnly = true)
   @Override
@@ -79,8 +84,12 @@ public class BasicChannelService implements ChannelService {
   @Override
   public ChannelDto update(UUID channelId, PublicChannelUpdateRequest request) {
     Channel channel = channelRepository.findById(channelId)
-        .orElseThrow(ChannelNotFoundException::new);
+        .orElseThrow(() ->{
+          log.warn("존재하지 않는 채널: {}", channelId);
+          return new ChannelNotFoundException();
+        });
     if (channel.getType().equals(ChannelType.PRIVATE)) {
+      log.warn("프라이빗 채널 수정 시도: {}", channelId);
       throw new PrivateChannelUpdateException();
     }
     channel.update(request.newName(), request.newDescription());
@@ -91,6 +100,7 @@ public class BasicChannelService implements ChannelService {
   @Override
   public void delete(UUID channelId) {
     if (!channelRepository.existsById(channelId)) {
+      log.warn("존재하지 않는 채널: {}", channelId);
       throw new ChannelNotFoundException();
     }
 

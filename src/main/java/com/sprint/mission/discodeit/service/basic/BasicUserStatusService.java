@@ -15,9 +15,10 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class BasicUserStatusService implements UserStatusService {
@@ -32,9 +33,13 @@ public class BasicUserStatusService implements UserStatusService {
     UUID userId = request.userId();
 
     User user = userRepository.findById(userId)
-        .orElseThrow(() -> new NoSuchElementException("User with id " + userId + " not found"));
+        .orElseThrow(() -> {
+         log.warn("존재하지 않는 유저: {}", userId);
+          return new NoSuchElementException("User with id " + userId + " not found");
+        });
     Optional.ofNullable(user.getStatus())
         .ifPresent(status -> {
+          log.warn("이미 존재하는 UserStatus: {}", userId);
           throw new IllegalArgumentException("UserStatus with id " + userId + " already exists");
         });
 
@@ -48,8 +53,10 @@ public class BasicUserStatusService implements UserStatusService {
   public UserStatusDto find(UUID userStatusId) {
     return userStatusRepository.findById(userStatusId)
         .map(userStatusMapper::toDto)
-        .orElseThrow(
-            () -> new NoSuchElementException("UserStatus with id " + userStatusId + " not found"));
+        .orElseThrow(() -> {
+          log.warn("존재하지 않는 UserStatusId: {}", userStatusId);
+          return new NoSuchElementException("UserStatus with id " + userStatusId + " not found");
+  });
   }
 
   @Override
@@ -65,8 +72,11 @@ public class BasicUserStatusService implements UserStatusService {
     Instant newLastActiveAt = request.newLastActiveAt();
 
     UserStatus userStatus = userStatusRepository.findById(userStatusId)
-        .orElseThrow(
-            () -> new NoSuchElementException("UserStatus with id " + userStatusId + " not found"));
+        .orElseThrow(() -> {
+          log.warn("존재하지 않는 userStatusId: {}", userStatusId);
+          return new NoSuchElementException("UserStatus with id " + userStatusId + " not found");
+        });
+
     userStatus.update(newLastActiveAt);
 
     return userStatusMapper.toDto(userStatus);
@@ -78,8 +88,10 @@ public class BasicUserStatusService implements UserStatusService {
     Instant newLastActiveAt = request.newLastActiveAt();
 
     UserStatus userStatus = userStatusRepository.findByUserId(userId)
-        .orElseThrow(
-            () -> new NoSuchElementException("UserStatus with userId " + userId + " not found"));
+        .orElseThrow(() -> {
+          log.warn("존재하지 않는 UserStatus userId: {}", userId);
+          return new NoSuchElementException("UserStatus with userId " + userId + " not found");
+        });
     userStatus.update(newLastActiveAt);
 
     return userStatusMapper.toDto(userStatus);
@@ -89,6 +101,7 @@ public class BasicUserStatusService implements UserStatusService {
   @Override
   public void delete(UUID userStatusId) {
     if (!userStatusRepository.existsById(userStatusId)) {
+      log.warn("존재하지 않는 UserStatus: {}", userStatusId);
       throw new NoSuchElementException("UserStatus with id " + userStatusId + " not found");
     }
     userStatusRepository.deleteById(userStatusId);

@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.web.PageableDefault;
@@ -33,6 +34,7 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+@Slf4j
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/messages")
@@ -61,6 +63,7 @@ public class MessageController implements MessageApi {
             .toList())
         .orElse(new ArrayList<>());
     MessageDto createdMessage = messageService.create(messageCreateRequest, attachmentRequests);
+    log.info("메시지 생성 완료: id={}", createdMessage.id());
     return ResponseEntity
         .status(HttpStatus.CREATED)
         .body(createdMessage);
@@ -70,6 +73,7 @@ public class MessageController implements MessageApi {
   public ResponseEntity<MessageDto> update(@PathVariable("messageId") UUID messageId,
       @RequestBody @Valid MessageUpdateRequest request) {
     MessageDto updatedMessage = messageService.update(messageId, request);
+    log.info("메시지 수정 완료: messageId={}", messageId);
     return ResponseEntity
         .status(HttpStatus.OK)
         .body(updatedMessage);
@@ -78,6 +82,7 @@ public class MessageController implements MessageApi {
   @DeleteMapping(path = "{messageId}")
   public ResponseEntity<Void> delete(@PathVariable("messageId") UUID messageId) {
     messageService.delete(messageId);
+    log.info("메시지 삭제 완료: messageId={}", messageId);
     return ResponseEntity
         .status(HttpStatus.NO_CONTENT)
         .build();

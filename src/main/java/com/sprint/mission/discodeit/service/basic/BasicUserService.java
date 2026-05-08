@@ -21,9 +21,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class BasicUserService implements UserService {
@@ -42,9 +44,11 @@ public class BasicUserService implements UserService {
     String email = userCreateRequest.email();
 
     if (userRepository.existsByEmail(email)) {
+        log.warn("이미 사용 중인 이메일: {}", email);
       throw new DuplicateEmailException();
     }
     if (userRepository.existsByUsername(username)) {
+        log.warn("이미 사용 중인 유저명: {}",username);
       throw new DuplicateUsernameException();
     }
 
@@ -67,6 +71,7 @@ public class BasicUserService implements UserService {
     UserStatus userStatus = new UserStatus(user, now);
 
     userRepository.save(user);
+    log.info("유저 생성 완료: {}", username);
     return userMapper.toDto(user);
   }
 
@@ -74,7 +79,10 @@ public class BasicUserService implements UserService {
   public UserDto find(UUID userId) {
     return userRepository.findById(userId)
         .map(userMapper::toDto)
-        .orElseThrow(UserNotFoundException::new);
+        .orElseThrow(() -> {
+            log.warn("존재하지 않는 유저: {}", userId);
+            return new UserNotFoundException();
+                });
   }
 
   @Override
@@ -90,14 +98,19 @@ public class BasicUserService implements UserService {
   public UserDto update(UUID userId, UserUpdateRequest userUpdateRequest,
       Optional<BinaryContentCreateRequest> optionalProfileCreateRequest) {
     User user = userRepository.findById(userId)
-        .orElseThrow(UserNotFoundException::new);
+        .orElseThrow(() -> {
+            log.warn("존재하지 않는 유저: {}", userId);
+            return new UserNotFoundException();
+        });
 
     String newUsername = userUpdateRequest.newUsername();
     String newEmail = userUpdateRequest.newEmail();
     if (userRepository.existsByEmail(newEmail)) {
+        log.warn("이미 사용 중인 이메일: {}", newEmail);
       throw new DuplicateEmailException();
     }
     if (userRepository.existsByUsername(newUsername)) {
+        log.warn("이미 사용 중인 유저명: {}", newUsername);
       throw new DuplicateUsernameException();
     }
 
@@ -124,9 +137,11 @@ public class BasicUserService implements UserService {
   @Override
   public void delete(UUID userId) {
     if (!userRepository.existsById(userId)) {
+        log.warn("존재하지 않는 유저: {}", userId);
       throw new UserNotFoundException();
     }
 
+    log.info("유저 삭제 완료: {}", userId);
     userRepository.deleteById(userId);
   }
 }
