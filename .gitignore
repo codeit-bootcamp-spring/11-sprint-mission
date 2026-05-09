@@ -41,5 +41,6 @@ bin/
 ### Discodeit ###
 .discodeit
 
-### Local Data Files ###
-data/*
+### 숨김 파일 ###
+.*
+!.gitignore
