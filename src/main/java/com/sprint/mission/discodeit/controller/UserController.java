@@ -13,10 +13,12 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
@@ -47,6 +49,10 @@ public class UserController {
             @Parameter(hidden = true)
             @RequestPart(value = "profile", required = false) MultipartFile profile
     ) {
+        log.info("사용자 생성 API 요청: username={}, email={}, hasProfile={}",
+                part.username(), part.email(), profile != null && !profile.isEmpty()
+        );
+
         UserCreateRequest request = new UserCreateRequest(
                 part.username(),
                 part.email(),
@@ -58,6 +64,7 @@ public class UserController {
 
     @GetMapping
     public List<UserDto> findAll() {
+        log.debug("사용자 목록 조회 API 요청");
         return userService.findAll();
     }
 
@@ -79,6 +86,10 @@ public class UserController {
             @Parameter(hidden = true)
             @RequestPart(value = "profile", required = false) MultipartFile profile
     ) {
+        log.info("사용자 수정 API 요청: userId={}, hasprofile={}",
+                userId, profile != null && !profile.isEmpty()
+        );
+
         UserUpdateRequest request = new UserUpdateRequest(
                 part.newUsername(),
                 part.newEmail(),
@@ -91,12 +102,17 @@ public class UserController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @DeleteMapping(value = "/{userId}")
     public void delete(@PathVariable UUID userId) {
+        log.info("사용자 삭제 API 요청: userId={}", userId);
         userService.delete(userId);
     }
 
     @PatchMapping(value = "/{userId}/userStatus")
     public UserStatusDto updateStatus(@PathVariable UUID userId,
-                                      @RequestBody UserStatusUpdateRequest request) {
+                                      @Valid @RequestBody UserStatusUpdateRequest request) {
+        log.debug("사용자 상태수정 API 요청: userId={}, newLastActiveAt={}",
+                userId,
+                request.newLastActiveAt()
+        );
         return userStatusService.updateByUserId(userId, request);
     }
 
@@ -112,6 +128,8 @@ public class UserController {
                     file.getBytes()
             );
         } catch (Exception e) {
+            log.error("사용자 프로필 파일 수정 실패: fileName={}",
+                    file.getOriginalFilename(), e);
             throw new InvalidException("파일 처리 중 오류가 발생했습니다.");
         }
     }

@@ -7,6 +7,7 @@ import com.sprint.mission.discodeit.dto.ReadStatusUpdateRequest;
 import com.sprint.mission.discodeit.service.ReadStatusService;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.HttpStatus;
+import jakarta.validation.Valid;
 
 import java.util.List;
 import java.util.UUID;
@@ -23,13 +24,13 @@ public class MessageReceiptController {
 
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping
-    public ReadStatusDto create(@RequestBody ReadStatusCreateRequest request) {
+    public ReadStatusDto create(@Valid @RequestBody ReadStatusCreateRequest request) {
         return readStatusService.create(request);
     }
 
     @PatchMapping(value = "/{readStatusId}")
     public ReadStatusDto update(@PathVariable UUID readStatusId,
-                                @RequestBody ReadStatusUpdateRequest request) {
+                                @Valid @RequestBody ReadStatusUpdateRequest request) {
         return readStatusService.update(
                 new ReadStatusUpdateParam(readStatusId, request)
         );

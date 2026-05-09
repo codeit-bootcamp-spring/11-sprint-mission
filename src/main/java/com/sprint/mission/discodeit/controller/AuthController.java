@@ -3,12 +3,9 @@ package com.sprint.mission.discodeit.controller;
 import com.sprint.mission.discodeit.dto.LoginRequest;
 import com.sprint.mission.discodeit.dto.UserDto;
 import com.sprint.mission.discodeit.service.AuthService;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.*;
+
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -20,8 +17,8 @@ public class AuthController {
         this.authService = authService;
     }
 
-    @RequestMapping(value = "/login", method = RequestMethod.POST)
-    public UserDto login(@RequestBody LoginRequest request) {
+    @PostMapping(value = "/login")
+    public UserDto login(@Valid @RequestBody LoginRequest request) {
         return authService.login(request);
     }
 }

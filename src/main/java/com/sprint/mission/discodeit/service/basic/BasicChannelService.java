@@ -13,7 +13,12 @@ import com.sprint.mission.discodeit.repository.MessageRepository;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.ChannelService;
+import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
+import com.sprint.mission.discodeit.exception.channel.ChannelNotFoundException;
+import com.sprint.mission.discodeit.exception.channel.PrivateChannelUpdateException;
+
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +29,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -39,17 +45,28 @@ public class BasicChannelService implements ChannelService {
     @Override
     @Transactional
     public ChannelDto createPublic(PublicChannelCreateRequest request) {
+        log.info("PUBLIC 채널 생성 시작: name={}", request.name());
+
         Channel channel = new Channel(request.name(), request.description());
         Channel savedChannel = channelRepository.save(channel);
+
+        log.info("PUBLIC 채널 생성 완료: channelId={}", savedChannel.getId());
+
         return channelMapper.toDto(savedChannel, List.of(), null);
     }
 
     @Override
     @Transactional
     public ChannelDto createPrivate(PrivateChannelCreateRequest request) {
+        log.debug("PRIVATE 채널 참여자 목록: participantIds={}",
+                request.participantIds());
+
         List<User> participants = request.participantIds().stream()
                 .map(userId -> userRepository.findById(userId)
-                        .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다.")))
+                        .orElseThrow(() -> {
+                            log.warn("PRIVATE 채널 생성 실패 - 사용자 없음: userId={}", userId);
+                            return new UserNotFoundException(userId);
+                        }))
                 .toList();
 
         Channel channel = Channel.createPrivateChannel();
@@ -63,6 +80,11 @@ public class BasicChannelService implements ChannelService {
         List<UserDto> participantDtos = participants.stream()
                 .map(userMapper::toDto)
                 .toList();
+
+        log.info("PRIVATE 채널 생성 완료: channelId={}, participantCount={}",
+                savedChannel.getId(),
+                participants.size()
+        );
 
         return channelMapper.toDto(savedChannel, participantDtos, null);
     }
@@ -97,9 +119,12 @@ public class BasicChannelService implements ChannelService {
 
     @Override
     public List<ChannelDto> findAllByUserId(UUID userId) {
+        log.debug("사용자별 채널 목록 조회 시작: userId={}", userId);
+
         List<Channel> channels = channelRepository.findVisibleChannelsByUserId(userId);
 
         if (channels.isEmpty()) {
+            log.debug("사용자별 채널 목록 조회 결과 없음: userId={}", userId);
             return List.of();
         }
 
@@ -119,29 +144,41 @@ public class BasicChannelService implements ChannelService {
                         Collectors.mapping(rs -> userMapper.toDto(rs.getUser()), Collectors.toList())
                 ));
 
-        return channels.stream()
+      List<ChannelDto> result = channels.stream()
                 .map(channel -> channelMapper.toDto(
                         channel,
                         participantsMap.getOrDefault(channel.getId(), List.of()),
                         lastMessageAtMap.get(channel.getId())
                 ))
                 .toList();
+
+        log.debug("사용자별 채널 목록 조회 완료: userId={}, count={}", userId, result.size());
+
+        return result;
     }
 
     @Override
     @Transactional
     public ChannelDto update(ChannelUpdateParam param) {
+        log.info("채널 수정 시작: channelId={}", param.id());
+
         Channel channel = channelRepository.findById(param.id())
-                .orElseThrow(() -> new NotFoundException("해당 채널이 존재하지 않습니다."));
+                .orElseThrow(() -> {
+                    log.warn("채널 수정 실패 - 채널 없음: channelId={}", param.id());
+                    return new ChannelNotFoundException(param.id());
+                });
 
         if (channel.getType().name().equals("PRIVATE")) {
-            throw new InvalidException("PRIVATE 채널은 수정할 수 없습니다.");
+            log.warn("채널 수정 실패 - PRIVATE 채널 수정 시도: channelId={}", channel.getId());
+            throw new PrivateChannelUpdateException(channel.getId());
         }
 
         channel.update(
                 param.request().newName(),
                 param.request().newDescription()
         );
+
+        log.info("채널 수정 완료: channelId={}", channel.getId());
 
         return find(channel.getId())
                 .orElseThrow(() -> new NotFoundException("해당 채널이 존재하지 않습니다."));
@@ -150,9 +187,16 @@ public class BasicChannelService implements ChannelService {
     @Override
     @Transactional
     public void delete(UUID id) {
+        log.info("채널 삭제 시작: channelId={}", id);
+
         Channel channel = channelRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("해당 채널이 존재하지 않습니다."));
+                .orElseThrow(() -> {
+                    log.warn("채널 삭제 실패 - 채널 없음: channelId={}", id);
+                    return new ChannelNotFoundException(id);
+                });
 
         channelRepository.delete(channel);
+
+        log.info("채널 삭제 완료: channelId={}", id);
     }
 }

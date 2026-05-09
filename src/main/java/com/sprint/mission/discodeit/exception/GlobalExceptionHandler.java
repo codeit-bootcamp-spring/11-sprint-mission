@@ -1,5 +1,6 @@
 package com.sprint.mission.discodeit.exception;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -10,76 +11,133 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.multipart.support.MissingServletRequestPartException;
 
+import java.util.Map;
+import java.util.stream.Collectors;
+
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<String> handleIllegalArgumentException(IllegalArgumentException e) {
-        return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(e.getMessage());
-    }
 
-    @ExceptionHandler(DuplicatedException.class)
-    public ResponseEntity<String> handleDuplicatedException(DuplicatedException e) {
-        return ResponseEntity
-                .status(HttpStatus.CONFLICT)
-                .body(e.getMessage());
-    }
+    @ExceptionHandler(DiscodeitException.class)
+    public ResponseEntity<ErrorResponse> handleDiscodeitException(DiscodeitException e) {
+        ErrorCode errorCode = e.getErrorCode();
 
-    @ExceptionHandler(NotFoundException.class)
-    public ResponseEntity<String> handleNotFoundException(NotFoundException e) {
-        return ResponseEntity
-                .status(HttpStatus.NOT_FOUND)
-                .body(e.getMessage());
-    }
+        log.warn("비즈니스 예외 발생: errorCode={}, details={}",
+                errorCode.name(),
+                e.getDetails()
+        );
 
-    @ExceptionHandler(StorageException.class)
-    public ResponseEntity<String> handleStorageException(StorageException e) {
         return ResponseEntity
-                .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(e.getMessage());
-    }
-
-    @ExceptionHandler(InvalidException.class)
-    public ResponseEntity<String> handleInvalidException(InvalidException e) {
-        return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(e.getMessage());
+                .status(errorCode.getStatus())
+                .body(ErrorResponse.from(e));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<String> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
-        FieldError fieldError = e.getBindingResult().getFieldError();
+    public ResponseEntity<ErrorResponse> handleMethodArgumentNotValidException(
+            MethodArgumentNotValidException e
+    ) {
+        Map<String, Object> details = e.getBindingResult()
+                .getFieldErrors()
+                .stream()
+                .collect(Collectors.toMap(
+                        FieldError::getField,
+                        FieldError::getDefaultMessage,
+                        (oldValue, newValue) -> oldValue
+                ));
 
-        if (fieldError == null) {
-            return ResponseEntity
-                    .status(HttpStatus.BAD_REQUEST)
-                    .body("올바르지 않은 요청입니다.");
-        }
+        ErrorResponse response = ErrorResponse.of(
+                ErrorCode.VALIDATION_FAILED,
+                e.getClass().getSimpleName(),
+                details
+        );
+
+        log.warn("요청 값 검증 실패: details={}", details);
 
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
-                .body(fieldError.getDefaultMessage());
+                .body(response);
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
-    public ResponseEntity<String> handleHttpMessageNotReadableException(HttpMessageNotReadableException e) {
+    public ResponseEntity<ErrorResponse> handleHttpMessageNotReadableException(
+            HttpMessageNotReadableException e
+    ) {
+        ErrorResponse response = ErrorResponse.of(
+                ErrorCode.INVALID_REQUEST,
+                e.getClass().getSimpleName(),
+                Map.of("reason", "요청 JSON 형식이 올바르지 않습니다.")
+        );
+
+        log.warn("요청 본문 파싱 실패: {}", e.getMessage());
+
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
-                .body("요청 JSON 형식이 올바르지 않습니다.");
+                .body(response);
     }
 
     @ExceptionHandler(MissingServletRequestPartException.class)
-    public ResponseEntity<String> handleMissingServletRequestPartException(MissingServletRequestPartException e) {
+    public ResponseEntity<ErrorResponse> handleMissingServletRequestPartException(
+            MissingServletRequestPartException e
+    ) {
+        ErrorResponse response = ErrorResponse.of(
+                ErrorCode.INVALID_REQUEST,
+                e.getClass().getSimpleName(),
+                Map.of("missingPart", e.getRequestPartName())
+        );
+
+        log.warn("multipart 요청 파트 누락: part={}", e.getRequestPartName());
+
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
-                .body(e.getRequestPartName() + " 파트가 누락되었습니다.");
+                .body(response);
     }
 
     @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
-    public ResponseEntity<String> handleHttpMediaTypeNotSupportedException(HttpMediaTypeNotSupportedException e) {
+    public ResponseEntity<ErrorResponse> handleHttpMediaTypeNotSupportedException(
+            HttpMediaTypeNotSupportedException e
+    ) {
+        ErrorResponse response = ErrorResponse.of(
+                ErrorCode.INVALID_REQUEST,
+                e.getClass().getSimpleName(),
+                Map.of("reason", "지원하지 않는 Content-Type 입니다.")
+        );
+
+        log.warn("지원하지 않는 Content-Type 요청: {}", e.getMessage());
+
         return ResponseEntity
                 .status(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
-                .body("지원하지 않는 Content-Type 입니다.");
+                .body(response);
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalArgumentException(
+            IllegalArgumentException e
+    ) {
+        ErrorResponse response = ErrorResponse.of(
+                ErrorCode.INVALID_REQUEST,
+                e.getClass().getSimpleName(),
+                Map.of("reason", e.getMessage())
+        );
+
+        log.warn("잘못된 요청 예외 발생: {}", e.getMessage());
+
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(response);
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponse> handleException(Exception e) {
+        ErrorResponse response = ErrorResponse.of(
+                ErrorCode.INTERNAL_SERVER_ERROR,
+                e.getClass().getSimpleName(),
+                Map.of("reason", "예상하지 못한 서버 오류가 발생했습니다.")
+        );
+
+        log.error("예상하지 못한 서버 오류", e);
+
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(response);
     }
 }

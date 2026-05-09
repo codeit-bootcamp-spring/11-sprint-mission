@@ -13,7 +13,11 @@ import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.repository.UserStatusRepository;
 import com.sprint.mission.discodeit.service.UserService;
+import com.sprint.mission.discodeit.exception.user.UserAlreadyExistsException;
+import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
+
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.sprint.mission.discodeit.mapper.UserMapper;
@@ -24,6 +28,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -38,12 +43,19 @@ public class BasicUserService implements UserService {
     @Override
     @Transactional
     public UserDto create(UserCreateRequest request) {
+        log.info("사용자 생성 요청: username={}, email={}",
+                request.username(),
+                request.email()
+        );
+
         if (userRepository.existsByUsername(request.username())) {
-            throw new DuplicatedException("이미 사용 중인 username입니다.");
+            log.warn("사용자 생성 실패 - 중복 username: {}", request.username());
+            throw new UserAlreadyExistsException("username", request.username());
         }
 
         if (userRepository.existsByEmail(request.email())) {
-            throw new DuplicatedException("이미 사용 중인 email입니다.");
+            log.warn("사용자 생성 실패 - 중복 email: {}", request.email());
+            throw new UserAlreadyExistsException("email", request.email());
         }
 
         BinaryContent profile = null;
@@ -78,6 +90,7 @@ public class BasicUserService implements UserService {
         UserStatus savedUserStatus = userStatusRepository.save(userStatus);
         savedUser.updateStatus(savedUserStatus);
 
+        log.info("사용자 생성 완료: userId={}", savedUser.getId());
         return userMapper.toDto(savedUser);
     }
 
@@ -90,16 +103,27 @@ public class BasicUserService implements UserService {
 
     @Override
     public List<UserDto> findAll() {
-        return userRepository.findAll().stream()
+        log.debug("사용자 목록 조회 처리 시작");
+
+        List<UserDto> users = userRepository.findAll().stream()
                 .map(userMapper::toDto)
                 .toList();
+
+        log.debug("사용자 목록 조회 완료: count={}", users.size());
+
+        return users;
     }
 
     @Override
     @Transactional
     public UserDto update(UserUpdateParam param) {
+        log.info("사용자 수정 처리 시작: userId={}", param.id());
+
         User user = userRepository.findById(param.id())
-                .orElseThrow(() -> new NotFoundException("해당 사용자가 존재하지 않습니다."));
+                .orElseThrow(() -> {
+                    log.warn("사용자 수정 실패 - 사용자가 존재하지 않음: userId={}", param.id());
+                    return new UserNotFoundException(param.id());
+                });
 
         String newUsername = user.getUsername();
         String newEmail = user.getEmail();
@@ -124,28 +148,45 @@ public class BasicUserService implements UserService {
         if (param.request().newProfileImage() != null){
             replaceProfileImage(user, param.request().newProfileImage());
         }
+
+        log.info("사용자 수정 처리 완료: userId={}", user.getId());
         return userMapper.toDto(user);
         }
 
     private void validateUsername(String newUsername, User user) {
         Optional<User> userByUsername = userRepository.findByUsername(newUsername);
         if (userByUsername.isPresent() && !userByUsername.get().getId().equals(user.getId())) {
-            throw new DuplicatedException("이미 사용 중인 username입니다.");
+            log.warn("사용자 수정 실패 - 중복 username: userId={}, username={}",
+                    user.getId(),
+                    newUsername
+            );
+            throw new UserAlreadyExistsException("username", newUsername);
         }
     }
 
     private void validateEmail(String newEmail, User user) {
         Optional<User> userByEmail = userRepository.findByEmail(newEmail);
         if (userByEmail.isPresent() && !userByEmail.get().getId().equals(user.getId())) {
-            throw new DuplicatedException("이미 사용 중인 email입니다.");
+            log.warn("사용자 수정 실패 - 중복 email: userId={}, email={}",
+                    user.getId(),
+                    newEmail
+            );
+            throw new UserAlreadyExistsException("email", newEmail);
         }
     }
 
     private void replaceProfileImage(User user, BinaryContentCreateRequest newProfileImage) {
+        log.debug("사용자 프로필 이미지 교체 시작: userId={}", user.getId());
+
         if (user.getProfile() != null) {
             UUID oldProfileId = user.getProfile().getId();
             binaryContentRepository.deleteById(oldProfileId);
             binaryContentStorage.delete(oldProfileId);
+
+            log.debug("기존 프로필 이미지 삭제 완료: userId={}, oldProfileId={}",
+                    user.getId(),
+                    oldProfileId
+            );
         }
 
         BinaryContent newProfile = new BinaryContent(
@@ -161,13 +202,23 @@ public class BasicUserService implements UserService {
         }
 
         user.updateProfile(savedProfile);
+
+        log.debug("새 프로필 이미지 저장 완료: userId={}, profileId={}",
+                user.getId(),
+                savedProfile.getId()
+        );
     }
 
     @Override
     @Transactional
     public void delete(UUID id) {
+        log.info("사용자 삭제 처리 시작: userId={}", id);
+
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("해당 사용자가 존재하지 않습니다."));
+                .orElseThrow(() -> {
+                    log.warn("사용자 삭제 실패 - 사용자 없음: userId={}", id);
+                    return new UserNotFoundException(id);
+                });
 
         if (user.getProfile() != null) {
             UUID profileId = user.getProfile().getId();
@@ -179,5 +230,7 @@ public class BasicUserService implements UserService {
                 .ifPresent(status -> userStatusRepository.deleteById(status.getId()));
 
         userRepository.deleteById(id);
+
+        log.info("사용자 삭제 완료: userId={}", id);
     }
 }
