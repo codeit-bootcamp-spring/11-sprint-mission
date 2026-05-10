@@ -21,7 +21,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.util.ReflectionTestUtils;
 
 @EnableJpaAuditing
 @ActiveProfiles("test")
@@ -51,15 +50,16 @@ class MessageRepositoryTest {
     otherChannel = new Channel("other", "desc");
     entityManager.persist(otherChannel);
 
-    Instant newer = Instant.now();
-    Instant older = newer.minusSeconds(60);
-
     olderMessage = new Message("older", channel, author, List.of());
-    ReflectionTestUtils.setField(olderMessage, "createdAt", older);
-    entityManager.persist(olderMessage);
+    entityManager.persistAndFlush(olderMessage);
+
+    try {
+      Thread.sleep(10);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
 
     newerMessage = new Message("newer", channel, author, List.of());
-    ReflectionTestUtils.setField(newerMessage, "createdAt", newer);
     entityManager.persistAndFlush(newerMessage);
   }
 
@@ -108,7 +108,7 @@ class MessageRepositoryTest {
     @DisplayName("return messages before cursor")
     void findAllByChannelIdAndCreatedAtBeforeOrderByCreatedAtDesc_ReturnsMessageBeforeCursor() {
       // given
-      Instant cursor = Instant.now().minusSeconds(30);
+      Instant cursor = olderMessage.getCreatedAt().plusMillis(5);
       Pageable pageable = PageRequest.of(0, 10);
 
       // when
