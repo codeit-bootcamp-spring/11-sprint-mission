@@ -9,8 +9,3 @@ spring:
   jpa:
     hibernate:
       ddl-auto: validate
-
-logging:
-  level:
-    root: warn
-    org.hibernate.SQL: warn
