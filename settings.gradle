@@ -1,1 +1,4 @@
-rootProject.name = 'discodeit'
+rootProject.name = '11-sprint-mission'
+
+include 'discodeit'
+include 'admin'
