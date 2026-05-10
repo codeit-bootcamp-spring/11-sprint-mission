@@ -54,6 +54,10 @@ tasks.named('test') {
     finalizedBy jacocoTestReport
 }
 
+tasks.named('bootRun') {
+    workingDir = project.projectDir
+}
+
 jacocoTestReport {
     dependsOn test
     reports {

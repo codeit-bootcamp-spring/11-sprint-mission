@@ -9,9 +9,9 @@
   </appender>
 
   <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-    <file>.logs/discodeit.log</file>
+    <file>${user.dir}/.logs/discodeit.log</file>
     <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-      <fileNamePattern>.logs/discodeit.%d{yyyy-MM-dd}.log</fileNamePattern>
+      <fileNamePattern>${user.dir}/.logs/discodeit.%d{yyyy-MM-dd}.log</fileNamePattern>
       <maxHistory>30</maxHistory>
     </rollingPolicy>
     <encoder>
