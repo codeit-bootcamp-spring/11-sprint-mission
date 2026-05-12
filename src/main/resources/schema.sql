@@ -81,7 +81,7 @@ CREATE TABLE IF NOT EXISTS read_statuses (
 
 CREATE TABLE IF NOT EXISTS message_attachments (
     message_id UUID NOT NULL,
-    attachment_id UUID NOT NULL,
+    attachment_id UUID NOT NULL UNIQUE,
 
     PRIMARY KEY (message_id, attachment_id),
 

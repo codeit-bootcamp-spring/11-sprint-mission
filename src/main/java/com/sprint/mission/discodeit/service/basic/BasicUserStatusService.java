@@ -5,8 +5,9 @@ import com.sprint.mission.discodeit.dto.request.UserStatusUpdateRequest;
 import com.sprint.mission.discodeit.dto.response.UserStatusDto;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.entity.UserStatus;
-import com.sprint.mission.discodeit.exception.BusinessException;
-import com.sprint.mission.discodeit.exception.ErrorCode;
+import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
+import com.sprint.mission.discodeit.exception.user.UserStatusAlreadyExistsException;
+import com.sprint.mission.discodeit.exception.user.UserStatusNotFoundException;
 import com.sprint.mission.discodeit.mapper.UserStatusMapper;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.repository.UserStatusRepository;
@@ -31,10 +32,10 @@ public class BasicUserStatusService implements UserStatusService {
     @Transactional
     public UserStatusDto create(UserStatusCreateRequest dto) {
         User user = userRepo.findById(dto.userId())
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new UserNotFoundException(dto.userId()));
 
         if(userStatusRepo.findByUser(user).isPresent())
-            throw new BusinessException(ErrorCode.USER_STATUS_ALREADY_EXISTS);
+            throw new UserStatusAlreadyExistsException(user.getId());
 
         UserStatus userStatus = new UserStatus(user, dto.lastActiveAt());
         userStatusRepo.save(userStatus);
@@ -45,7 +46,7 @@ public class BasicUserStatusService implements UserStatusService {
     @Override
     public UserStatusDto find(UUID id) {
         UserStatus userStatus = userStatusRepo.findById(id)
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_STATUS_NOT_FOUND));
+                .orElseThrow(() -> new UserStatusNotFoundException(id));
 
         return userStatusMapper.toDto(userStatus);
     }
@@ -53,10 +54,10 @@ public class BasicUserStatusService implements UserStatusService {
     @Override
     public UserStatusDto findByUserId(UUID id) {
         User user = userRepo.findById(id)
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new UserNotFoundException(id));
 
         UserStatus userStatus = userStatusRepo.findByUser(user)
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_STATUS_NOT_FOUND));
+                .orElseThrow(() -> new UserStatusNotFoundException(user));
 
         return userStatusMapper.toDto(userStatus);
     }
@@ -72,7 +73,7 @@ public class BasicUserStatusService implements UserStatusService {
     @Transactional
     public void update(UUID id, UserStatusUpdateRequest dto) {
         UserStatus userStatus = userStatusRepo.findById(id)
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_STATUS_NOT_FOUND));
+                .orElseThrow(() -> new UserStatusNotFoundException(id));
 
         userStatus.update(dto.newLastActiveAt());
     }
@@ -81,10 +82,10 @@ public class BasicUserStatusService implements UserStatusService {
     @Transactional
     public void updateByUserId(UUID id, UserStatusUpdateRequest dto) {
         User user = userRepo.findById(id)
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new UserNotFoundException(id));
 
         UserStatus userStatus = userStatusRepo.findByUser(user)
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_STATUS_NOT_FOUND));
+                .orElseThrow(() -> new UserStatusNotFoundException(user));
 
         userStatus.update(dto.newLastActiveAt());
     }
@@ -93,7 +94,7 @@ public class BasicUserStatusService implements UserStatusService {
     @Transactional
     public void delete(UUID id) {
         UserStatus userStatus = userStatusRepo.findById(id)
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_STATUS_NOT_FOUND));
+                .orElseThrow(() -> new UserStatusNotFoundException(id));
         userStatusRepo.delete(userStatus);
     }
 }

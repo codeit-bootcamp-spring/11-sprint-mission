@@ -6,8 +6,10 @@ import com.sprint.mission.discodeit.dto.response.ReadStatusDto;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.entity.User;
-import com.sprint.mission.discodeit.exception.BusinessException;
-import com.sprint.mission.discodeit.exception.ErrorCode;
+import com.sprint.mission.discodeit.exception.channel.ChannelNotFoundException;
+import com.sprint.mission.discodeit.exception.readstatus.ReadStatusAlreadyExistsException;
+import com.sprint.mission.discodeit.exception.readstatus.ReadStatusNotFoundException;
+import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.mapper.ReadStatusMapper;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
@@ -36,13 +38,13 @@ public class BasicReadStatusService implements ReadStatusService {
     @Transactional
     public ReadStatusDto create(ReadStatusCreateRequest dto) {
         Channel channel = channelRepo.findById(dto.channelId())
-                .orElseThrow(() -> new BusinessException(ErrorCode.CHANNEL_NOT_FOUND));
+                .orElseThrow(() -> new ChannelNotFoundException(dto.channelId()));
 
         User user = userRepo.findById(dto.userId())
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new UserNotFoundException(dto.userId()));
 
         if(readStatusRepo.findByUserAndChannel(user, channel).isPresent())
-            throw new BusinessException(ErrorCode.READ_STATUS_ALREADY_EXISTS);
+            throw new ReadStatusAlreadyExistsException(user.getId(), channel.getId());
 
         ReadStatus readStatus = new ReadStatus(user, channel, dto.lastReadAt());
         readStatusRepo.save(readStatus);
@@ -54,7 +56,7 @@ public class BasicReadStatusService implements ReadStatusService {
     @Override
     public ReadStatusDto find(UUID id) {
         ReadStatus readStatus = readStatusRepo.findById(id)
-                .orElseThrow(() -> new BusinessException(ErrorCode.READ_STATUS_NOT_FOUND));
+                .orElseThrow(() -> new ReadStatusNotFoundException(id));
 
         return readStatusMapper.toDto(readStatus);
     }
@@ -62,7 +64,7 @@ public class BasicReadStatusService implements ReadStatusService {
     @Override
     public List<ReadStatusDto> findAllByUserId(UUID id) {
         User user = userRepo.findById(id)
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new UserNotFoundException(id));
 
         return readStatusRepo.findAllWithUserAndChannelByUser(user).stream()
                 .map(readStatusMapper::toDto)
@@ -71,9 +73,9 @@ public class BasicReadStatusService implements ReadStatusService {
 
     @Override
     @Transactional
-    public void update(UUID readStatusId, ReadStatusUpdateRequest dto) {
-        ReadStatus readStatus = readStatusRepo.findById(readStatusId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.READ_STATUS_NOT_FOUND));
+    public void update(UUID id, ReadStatusUpdateRequest dto) {
+        ReadStatus readStatus = readStatusRepo.findById(id)
+                .orElseThrow(() -> new ReadStatusNotFoundException(id));
 
         readStatus.update(dto.newLastReadAt());
     }
@@ -82,7 +84,7 @@ public class BasicReadStatusService implements ReadStatusService {
     @Transactional
     public void delete(UUID id) {
         ReadStatus readStatus = readStatusRepo.findById(id)
-                .orElseThrow(() -> new BusinessException(ErrorCode.READ_STATUS_NOT_FOUND));
+                .orElseThrow(() -> new ReadStatusNotFoundException(id));
         readStatusRepo.delete(readStatus);
         log.info("ReadStatus deleted. userId={}, channelId={}",
                 readStatus.getUser().getId(), readStatus.getChannel().getId());

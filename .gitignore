@@ -5,7 +5,12 @@ build/
 !**/src/test/**/build/
 .kotlin
 data/
-logs/
+.logs/
+
+### Admin module generated files ###
+admin/.gradle/
+admin/build/
+admin/*.iml
 
 ### IntelliJ IDEA ###
 .idea

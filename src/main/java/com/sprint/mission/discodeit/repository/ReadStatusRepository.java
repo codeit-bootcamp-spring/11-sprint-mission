@@ -1,5 +1,6 @@
 package com.sprint.mission.discodeit.repository;
 
+import com.sprint.mission.discodeit.dto.projection.ChannelParticipantProjection;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.entity.User;
@@ -23,11 +24,14 @@ public interface ReadStatusRepository extends JpaRepository<ReadStatus, UUID> {
     List<User> findUsersByChannel(@Param("channel") Channel channel);
 
     @Query("""
-        select rs.channel.id, rs.user
+        select new com.sprint.mission.discodeit.dto.projection.ChannelParticipantProjection(
+            rs.channel.id,
+            rs.user
+        )
         from ReadStatus rs
         where rs.channel in :channels
     """)
-    List<Object[]> findUsersByChannels(@Param("channels") List<Channel> channel);
+    List<ChannelParticipantProjection> findUsersByChannels(@Param("channels") List<Channel> channel);
 
     @EntityGraph(attributePaths = {"user", "channel"})
     List<ReadStatus> findAllWithUserAndChannelByUser(User user);

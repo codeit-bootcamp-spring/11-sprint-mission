@@ -8,6 +8,7 @@ import com.sprint.mission.discodeit.dto.response.PageResponse;
 import com.sprint.mission.discodeit.service.MessageService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -27,6 +28,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/messages")
 @RequiredArgsConstructor
@@ -39,6 +41,9 @@ public class MessageController implements MessageApi {
             @RequestPart("messageCreateRequest") @Valid MessageCreateRequest dto,
             @RequestPart(value = "attachments", required = false) List<MultipartFile> attachments
     ) {
+        int attachmentCount = attachments == null ? 0 : attachments.size();
+        log.debug("Message create request received. channelId={}, authorId={}, attachmentCount={}",
+                dto.channelId(), dto.authorId(), attachmentCount);
         MessageDto result = messageService.create(dto, attachments);
         return ResponseEntity.status(HttpStatus.CREATED).body(result);
     }
@@ -48,6 +53,7 @@ public class MessageController implements MessageApi {
             @PathVariable UUID messageId,
             @Valid @RequestBody MessageUpdateRequest dto
     ) {
+        log.debug("Message update request received. messageId={}", messageId);
         messageService.update(messageId, dto);
         return ResponseEntity.ok().build();
     }
@@ -56,6 +62,7 @@ public class MessageController implements MessageApi {
     public ResponseEntity<Void> delete(
             @PathVariable UUID messageId
     ) {
+        log.debug("Message delete request received. messageId={}", messageId);
         messageService.delete(messageId);
         return ResponseEntity.noContent().build();
     }
