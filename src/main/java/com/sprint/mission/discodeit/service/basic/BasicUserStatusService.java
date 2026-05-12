@@ -1,89 +1,99 @@
 package com.sprint.mission.discodeit.service.basic;
 
-import com.sprint.mission.discodeit.dto.userstatus.CreateUserStatusRequestDTO;
-import com.sprint.mission.discodeit.dto.userstatus.UpdateUserStatusByUserIdResponseDTO;
-import com.sprint.mission.discodeit.dto.userstatus.UpdateUserStatusRequestDTO;
+import com.sprint.mission.discodeit.dto.data.UserStatusDto;
+import com.sprint.mission.discodeit.dto.request.UserStatusCreateRequest;
+import com.sprint.mission.discodeit.dto.request.UserStatusUpdateRequest;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.entity.UserStatus;
-import com.sprint.mission.discodeit.entity.UserStatusType;
-import com.sprint.mission.discodeit.exception.BusinessException;
-import com.sprint.mission.discodeit.exception.ErrorCode;
+import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
+import com.sprint.mission.discodeit.exception.userstatus.UserStatusAlreadyExistsException;
+import com.sprint.mission.discodeit.exception.userstatus.UserStatusNotFoundException;
+import com.sprint.mission.discodeit.mapper.UserStatusMapper;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.repository.UserStatusRepository;
 import com.sprint.mission.discodeit.service.UserStatusService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
-@Service
 @RequiredArgsConstructor
+@Service
 public class BasicUserStatusService implements UserStatusService {
 
-    private final UserRepository userRepository;
-    private final UserStatusRepository userStatusRepository;
+  private final UserStatusRepository userStatusRepository;
+  private final UserRepository userRepository;
+  private final UserStatusMapper userStatusMapper;
 
-    @Override
-    public UserStatus create(
-            CreateUserStatusRequestDTO dto
-    ) {
-        User user = userRepository.findById(dto.userId())
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+  @Transactional
+  @Override
+  public UserStatusDto create(UserStatusCreateRequest request) {
+    UUID userId = request.userId();
 
-        if (userStatusRepository.findByUserId(user.getId()).isPresent()) {
-            throw new BusinessException(ErrorCode.USER_STATUS_ALREADY_EXIST);
-        }
+    User user = userRepository.findById(userId)
+        .orElseThrow(() -> new UserNotFoundException(userId));
+    Optional.ofNullable(user.getStatus())
+        .ifPresent(status -> {
+          throw new UserStatusAlreadyExistsException(userId);
+        });
 
-        UserStatus newUserStatus = UserStatus.create(user.getId());
+    Instant lastActiveAt = request.lastActiveAt();
+    UserStatus userStatus = new UserStatus(user, lastActiveAt);
+    userStatusRepository.save(userStatus);
+    return userStatusMapper.toDto(userStatus);
+  }
 
-        return userStatusRepository.save(newUserStatus);
+  @Override
+  public UserStatusDto find(UUID userStatusId) {
+    return userStatusRepository.findById(userStatusId)
+        .map(userStatusMapper::toDto)
+        .orElseThrow(
+            () -> UserStatusNotFoundException.byUserStatusId(userStatusId));
+  }
+
+  @Override
+  public List<UserStatusDto> findAll() {
+    return userStatusRepository.findAll().stream()
+        .map(userStatusMapper::toDto)
+        .toList();
+  }
+
+  @Transactional
+  @Override
+  public UserStatusDto update(UUID userStatusId, UserStatusUpdateRequest request) {
+    Instant newLastActiveAt = request.newLastActiveAt();
+
+    UserStatus userStatus = userStatusRepository.findById(userStatusId)
+        .orElseThrow(
+            () -> UserStatusNotFoundException.byUserStatusId(userStatusId));
+    userStatus.update(newLastActiveAt);
+
+    return userStatusMapper.toDto(userStatus);
+  }
+
+  @Transactional
+  @Override
+  public UserStatusDto updateByUserId(UUID userId, UserStatusUpdateRequest request) {
+    Instant newLastActiveAt = request.newLastActiveAt();
+
+    UserStatus userStatus = userStatusRepository.findByUserId(userId)
+        .orElseThrow(
+            () -> UserStatusNotFoundException.byUserId(userId));
+    userStatus.update(newLastActiveAt);
+
+    return userStatusMapper.toDto(userStatus);
+  }
+
+  @Transactional
+  @Override
+  public void delete(UUID userStatusId) {
+    if (!userStatusRepository.existsById(userStatusId)) {
+      throw UserStatusNotFoundException.byUserStatusId(userStatusId);
     }
-
-    @Override
-    public UserStatus find(
-            UUID userStatusId
-    ) {
-        return  userStatusRepository.findById(userStatusId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_STATUS_NOT_FOUND));
-    }
-
-    @Override
-    public List<UserStatus> findAll() {
-        return userStatusRepository.findAll();
-    }
-
-    @Override
-    public UserStatus update(
-            UpdateUserStatusRequestDTO dto
-    ) {
-        UserStatus userStatus = find(dto.userStatusId());
-
-        userStatus.updateLastOnlineTime();
-
-        return userStatusRepository.save(userStatus);
-    }
-
-    @Override // 이거 그냥 온라인으로 강제로 업데이트하는 과정이라고 생각하자
-    public UpdateUserStatusByUserIdResponseDTO updateByUserId(
-            UUID userId
-    ) {
-        UserStatus userStatus = userStatusRepository.findByUserId(userId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_STATUS_NOT_FOUND));
-
-        userStatus.updateUserStatusType(UserStatusType.ONLINE);
-
-        UpdateUserStatusByUserIdResponseDTO dto = UpdateUserStatusByUserIdResponseDTO.from(userStatusRepository.save(userStatus));
-
-        return dto;
-    }
-
-    @Override
-    public void delete(
-            UUID userStatusId
-    ) {
-        UserStatus userStatus = find(userStatusId);
-
-        userStatusRepository.deleteById(userStatus.getId());
-    }
+    userStatusRepository.deleteById(userStatusId);
+  }
 }

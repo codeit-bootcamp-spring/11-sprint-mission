@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  # 1. 기존: 로컬 개발용 DB (포트 5432)
+  postgres:
+    image: postgres:15-alpine
+    container_name: discodeit-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: discodeit
+      POSTGRES_USER: discodeit_user
+      POSTGRES_PASSWORD: discodeit1234
+      TZ: Asia/Seoul
+    restart: "no"
+
+  # 2. 신규: 테스트 전용 DB (포트 5433)
+  postgres-test:
+    image: postgres:15-alpine
+    container_name: discodeit-postgres-test
+    ports:
+      - "5433:5432"  # 🚨 핵심: 호스트(내 PC)의 5433 포트를 이 컨테이너의 5432에 연결
+    environment:
+      POSTGRES_DB: discodeit_test # DB 이름 변경
+      POSTGRES_USER: discodeit_user
+      POSTGRES_PASSWORD: discodeit1234
+      TZ: Asia/Seoul
+    restart: "no"
+    # 테스트 DB는 매번 껐다 켜면 초기화되는 것이 좋으므로 volumes를 연결하지 않습니다.

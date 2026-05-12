@@ -1,13 +1,49 @@
 spring:
+  profiles:
+    active: dev
   application:
-    name: Sprint_Mission_03
+    name: discodeit
+  servlet:
+    multipart:
+      maxFileSize: 10MB # 파일 하나의 최대 크기
+      maxRequestSize: 30MB  # 한 번에 최대 업로드 가능 용량
+  jpa:
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+    #        default_batch_fetch_size: 100
+  boot:
+    admin:
+      client:
+        instance:
+          name: discodeit
 
-app:
-  data:
-    user-path: ./data/users.dat
-    channel-path: ./data/channels.dat
-    message-path: ./data/messages.dat
-    userchannel-path: ./data/userchannels.dat
-    readstatus-path: ./data/readstatus.dat
-    userstatus-path: ./data/userstatus.dat
-    binarycontent-path: ./data/binarycontent.dat
+logging:
+  level:
+    root: info
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+
+info:
+  app:
+    name: Discodeit
+    version: 1.7.0
+    java-version: 17
+    spring-boot-version: 3.4.0
+  config:
+    datasource:
+      url: ${spring.datasource.url:unknown}
+      driver-class-name: ${spring.datasource.driver-class-name:unknown}
+    jpa:
+      ddl-auto: ${spring.jpa.hibernate.ddl-auto:none}
+    storage:
+      type: ${discodeit.storage.type:unknown}
+      path: ${discodeit.storage.local.root-path:unknown}
+    multipart:
+      max-file-size: ${spring.servlet.multipart.maxFileSize:unknown}
+      max-request-size: ${spring.servlet.multipart.maxRequestSize:unknown}

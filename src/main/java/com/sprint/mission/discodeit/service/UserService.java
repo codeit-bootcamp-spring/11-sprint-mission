@@ -1,23 +1,24 @@
 package com.sprint.mission.discodeit.service;
 
-import com.sprint.mission.discodeit.dto.user.*;
-
+import com.sprint.mission.discodeit.dto.data.UserDto;
+import com.sprint.mission.discodeit.dto.request.BinaryContentCreateRequest;
+import com.sprint.mission.discodeit.dto.request.UserCreateRequest;
+import com.sprint.mission.discodeit.dto.request.UserUpdateRequest;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface UserService {
 
-    List<UserDto> findAllUserDtos();
+  UserDto create(UserCreateRequest userCreateRequest,
+      Optional<BinaryContentCreateRequest> profileCreateRequest);
 
-    SignUpResponseDTO signUp(SignUpRequestDTO dto);
+  UserDto find(UUID userId);
 
-    FindUserByIdResponseDTO findUser(UUID userId);
+  List<UserDto> findAll();
 
-    FindAllUserResponseDTO findAllUser();
+  UserDto update(UUID userId, UserUpdateRequest userUpdateRequest,
+      Optional<BinaryContentCreateRequest> profileCreateRequest);
 
-    // 아하 지금 유저 정보 자체를 업데이트 하도록 수정해야함
-    // - 현재는 프로필만 수정하도록 되어있음
-    UpdateUserInfoResponseDTO updateUserInfo(UUID id, UpdateUserInfoRequestDTO dto);
-
-    void deleteUser(UUID userId);
+  void delete(UUID userId);
 }
