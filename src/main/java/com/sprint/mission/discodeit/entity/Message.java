@@ -15,6 +15,7 @@ import java.util.List;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.BatchSize;
 
 @Entity
 @Table(name = "messages")
@@ -30,6 +31,7 @@ public class Message extends BaseUpdatableEntity {
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "author_id", columnDefinition = "uuid")
   private User author;
+  @BatchSize(size = 100)
   @OneToMany(fetch = FetchType.LAZY, orphanRemoval = true, cascade = CascadeType.ALL)
   @JoinTable(
       name = "message_attachments",
