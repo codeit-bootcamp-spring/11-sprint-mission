@@ -1,10 +1,10 @@
 package com.sprint.mission.discodeit.dto;
 
 import com.sprint.mission.discodeit.entity.BinaryContent;
-import com.sprint.mission.discodeit.exception.BusinessException;
-import com.sprint.mission.discodeit.exception.ErrorCode;
+import com.sprint.mission.discodeit.exception.binarycontent.FileOperationException;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.Size;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
@@ -19,9 +19,11 @@ public class BinaryContentDto {
   @Builder
   public record CreateRequest(
       @NotBlank(message = "파일명은 필수 항목입니다.")
+      @Size(max = 255, message = "파일명은 255자를 초과할 수 없습니다.")
       String fileName,
 
       @NotBlank(message = "콘텐츠 타입은 필수 항목입니다.")
+      @Size(max = 100, message = "콘텐츠 타입은 100자를 초과할 수 없습니다.")
       String contentType,
 
       Long size,
@@ -45,7 +47,7 @@ public class BinaryContentDto {
             .bytes(file.getBytes())
             .build();
       } catch (IOException e) {
-        throw new BusinessException(ErrorCode.FILE_READ_FAILED);
+        throw FileOperationException.readFailed();
       }
     }
 

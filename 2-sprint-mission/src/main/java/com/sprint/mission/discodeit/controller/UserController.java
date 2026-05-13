@@ -9,6 +9,7 @@ import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +24,7 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
@@ -35,10 +37,13 @@ public class UserController {
   public ResponseEntity<UserDto.Response> create(
       @Valid @RequestPart("userCreateRequest") UserDto.CreateRequest request,
       @RequestPart(value = "profile", required = false) MultipartFile profileImage) {
+    log.info("사용자 생성 요청: username={}", request.username());
 
     BinaryContentDto.CreateRequest profileImageRequest = BinaryContentDto.CreateRequest.of(
         profileImage);
     UserDto.Response response = userService.create(request, profileImageRequest);
+
+    log.debug("사용자 생성 응답: {}", response);
     return ResponseEntity.status(HttpStatus.CREATED).body(response);
   }
 
@@ -47,23 +52,32 @@ public class UserController {
       @PathVariable UUID userId,
       @Valid @RequestPart("userUpdateRequest") UserDto.UpdateRequest request,
       @RequestPart(value = "profile", required = false) MultipartFile profileImage) {
+    log.info("사용자 업데이트 요청: userId={}", userId);
 
     BinaryContentDto.CreateRequest profileImageRequest = BinaryContentDto.CreateRequest.of(
         profileImage);
     UserDto.Response response = userService.update(userId, request, profileImageRequest);
+
+    log.debug("사용자 업데이트 응답: {}", response);
     return ResponseEntity.ok(response);
   }
 
   @DeleteMapping(path = "/{userId}")
   public ResponseEntity<Void> delete(
       @PathVariable UUID userId) {
+    log.info("사용자 삭제 요청: userId={}", userId);
     userService.delete(userId);
+
+    log.debug("사용자 삭제 응답 완료");
     return ResponseEntity.noContent().build();
   }
 
   @GetMapping
   public ResponseEntity<List<UserDto.Response>> findAll() {
+    log.debug("사용자 전체 조회 요청");
     List<UserDto.Response> responseList = userService.findAll();
+
+    log.debug("사용자 전체 조회 응답: {}건", responseList.size());
     return ResponseEntity.ok(responseList);
   }
 
@@ -71,8 +85,10 @@ public class UserController {
   public ResponseEntity<UserStatusDto.Response> updateUserStatus(
       @PathVariable UUID userId,
       @RequestBody @Valid UserStatusDto.UpdateRequest request) {
-
+    log.info("사용자 상태 업데이트 요청: userId={}", userId);
     UserStatusDto.Response response = userStatusService.updateByUserId(userId, request);
+
+    log.debug("사용자 상태 업데이트 응답: {}", response);
     return ResponseEntity.ok(response);
   }
 }

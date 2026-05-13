@@ -3,8 +3,7 @@ package com.sprint.mission.discodeit.service.basic;
 import com.sprint.mission.discodeit.dto.BinaryContentDto;
 import com.sprint.mission.discodeit.dto.BinaryContentDto.Response;
 import com.sprint.mission.discodeit.entity.BinaryContent;
-import com.sprint.mission.discodeit.exception.BusinessException;
-import com.sprint.mission.discodeit.exception.ErrorCode;
+import com.sprint.mission.discodeit.exception.binarycontent.BinaryContentNotFoundException;
 import com.sprint.mission.discodeit.mapper.BinaryContentMapper;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.service.BinaryContentService;
@@ -12,9 +11,11 @@ import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -27,33 +28,52 @@ public class BasicBinaryContentService implements BinaryContentService {
   @Override
   @Transactional
   public BinaryContentDto.Response create(BinaryContentDto.CreateRequest request) {
+    log.debug("바이너리 콘텐츠 생성 시작: fileName={}, contentType={}, size={} bytes",
+        request.fileName(), request.contentType(), request.size());
+
     BinaryContent binaryContent = request.toEntity();
     binaryContentRepository.save(binaryContent);
 
     binaryContentStorage.put(binaryContent.getId(), request.bytes());
+
+    log.info("바이너리 콘텐츠 생성 완료: binaryContentId={}", binaryContent.getId());
     return binaryContentMapper.toDto(binaryContent);
   }
 
   @Override
   public Response findById(UUID id) {
-    return binaryContentRepository.findById(id)
+    log.debug("바이너리 콘텐츠 단건 조회 시작: id={}", id);
+
+    Response response = binaryContentRepository.findById(id)
         .map(binaryContentMapper::toDto)
-        .orElseThrow(() -> new BusinessException(ErrorCode.BINARY_CONTENT_NOT_FOUND));
+        .orElseThrow(() -> BinaryContentNotFoundException.withId(id));
+
+    log.info("바이너리 콘텐츠 단건 조회 완료: id={}", id);
+    return response;
   }
 
   @Override
   public List<Response> findAllByIdIn(List<UUID> ids) {
-    return binaryContentRepository.findAllByIdIn(ids).stream()
+    log.debug("바이너리 콘텐츠 다건 조회 시작: 요청 건수={}", ids != null ? ids.size() : 0);
+
+    List<Response> responses = binaryContentRepository.findAllByIdIn(ids).stream()
         .map(binaryContentMapper::toDto)
         .toList();
+
+    log.info("바이너리 콘텐츠 다건 조회 완료: 총 {}건", responses.size());
+    return responses;
   }
 
   @Override
   @Transactional
   public void delete(UUID id) {
+    log.debug("바이너리 콘텐츠 삭제 시작: id={}", id);
+
     if (!binaryContentRepository.existsById(id)) {
-      throw new BusinessException(ErrorCode.BINARY_CONTENT_NOT_FOUND);
+      throw BinaryContentNotFoundException.withId(id);
     }
+
     binaryContentRepository.deleteById(id);
+    log.info("바이너리 콘텐츠 삭제 완료: id={}", id);
   }
 }

@@ -14,10 +14,10 @@ public class ChannelDto {
   // PUBLIC 채널 생성
   public record CreatePublicRequest(
       @NotBlank(message = "채널 이름은 필수 항목입니다.")
-      @Size(max = 50, message = "채널 이름은 50자를 초과할 수 없습니다.")
+      @Size(max = 100, message = "채널 이름은 100자를 초과할 수 없습니다.")
       String name,
 
-      @Size(max = 255, message = "채널 설명은 255자를 초과할 수 없습니다.")
+      @Size(max = 500, message = "채널 설명은 500자를 초과할 수 없습니다.")
       String description
   ) {
 
@@ -42,10 +42,10 @@ public class ChannelDto {
   }
 
   public record UpdateRequest(
-      @Size(max = 50, message = "채널 이름은 50자를 초과할 수 없습니다.")
+      @Size(max = 100, message = "채널 이름은 100자를 초과할 수 없습니다.")
       String newName,
 
-      @Size(max = 255, message = "채널 설명은 255자를 초과할 수 없습니다.")
+      @Size(max = 500, message = "채널 설명은 500자를 초과할 수 없습니다.")
       String newDescription
   ) {
 

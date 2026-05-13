@@ -15,15 +15,16 @@ public enum ErrorCode {
   API_NOT_FOUND(HttpStatus.NOT_FOUND, "COMMON-004", "요청하신 API 주소를 찾을 수 없습니다."),
   INVALID_TYPE_VALUE(HttpStatus.BAD_REQUEST, "COMMON-005", "입력값의 타입이 올바르지 않습니다."),
   MISSING_REQUEST_PARAMETER(HttpStatus.BAD_REQUEST, "COMMON-006", "필수 요청 파라미터가 누락되었습니다."),
+  UNSUPPORTED_MEDIA_TYPE(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "COMMON-007",
+      "지원하지 않는 Content-Type입니다."),
 
   // ==== User ====
   USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER-001", "존재하지 않는 유저입니다."),
-  DUPLICATE_EMAIL(HttpStatus.BAD_REQUEST, "USER-002", "이미 사용 중인 이메일입니다."),
-  DUPLICATE_NAME(HttpStatus.BAD_REQUEST, "USER-003", "이미 사용 중인 이름입니다."),
+  DUPLICATE_USER(HttpStatus.CONFLICT, "USER-002", "이미 사용 중인 사용자 정보입니다."),
 
   // ==== UserStatus ====
   USER_STATUS_NOT_FOUND(HttpStatus.NOT_FOUND, "USER-STATUS-001", "유저 상태 정보를 찾을 수 없습니다."),
-  USER_STATUS_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "USER-STATUS-002", "해당 유저의 상태 정보가 이미 존재합니다."),
+  DUPLICATE_USER_STATUS(HttpStatus.CONFLICT, "USER-STATUS-002", "해당 유저의 상태 정보가 이미 존재합니다."),
 
   // ==== Auth ====
   INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "AUTH-001", "아이디 또는 비밀번호가 일치하지 않습니다."),
@@ -38,7 +39,7 @@ public enum ErrorCode {
 
   // ==== ReadStatus ====
   READ_STATUS_NOT_FOUND(HttpStatus.NOT_FOUND, "READ-STATUS-001", "존재하지 않는 메시지 수신 정보입니다."),
-  READ_STATUS_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "READ-STATUS-002",
+  DUPLICATE_READ_STATUS(HttpStatus.CONFLICT, "READ-STATUS-002",
       "해당 채널에 이미 유저의 수신 정보가 존재합니다."),
 
   // ==== File/BinaryContent ====

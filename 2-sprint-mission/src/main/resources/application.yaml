@@ -1,31 +1,54 @@
 spring:
   application:
     name: discodeit
+  profiles:
+    active: dev
   servlet:
     multipart:
       enabled: true
       max-file-size: 10MB
       max-request-size: 50MB
-
-  datasource:
-    url: jdbc:postgresql://localhost:5432/discodeit
-    username: discodeit_user
-    password: discodeit1234
-    driver-class-name: org.postgresql.Driver
-
   jpa:
     open-in-view: false # OSIV 비활성화
-    hibernate:
-      ddl-auto: validate
     properties:
       hibernate:
         format_sql: true
         highlight_sql: true
+  boot:
+    admin:
+      client:
+        instance:
+          name: discodeit
 
-logging:
-  level:
-    org.hibernate.SQL: debug
-    org.hibernate.orm.jdbc.bind: trace
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,loggers
+  info:
+    env:
+      enabled: true
+
+info:
+  app:
+    name: Discodeit
+    version: 1.7.0
+  java:
+    version: 17
+  spring-boot:
+    version: 3.4.0
+  config:
+    datasource:
+      url: ${spring.datasource.url}
+      driver-class-name: ${spring.datasource.driver-class-name}
+    jpa:
+      ddl-auto: ${spring.jpa.hibernate.ddl-auto}
+    storage:
+      type: ${discodeit.storage.type}
+      path: ${discodeit.storage.local.root-path}
+    multipart:
+      max-file-size: ${spring.servlet.multipart.max-file-size}
+      max-request-size: ${spring.servlet.multipart.max-request-size}
 
 discodeit:
   repository:
@@ -35,3 +58,7 @@ discodeit:
     type: local
     local:
       root-path: ./uploads/
+
+logging:
+  level:
+    root: info

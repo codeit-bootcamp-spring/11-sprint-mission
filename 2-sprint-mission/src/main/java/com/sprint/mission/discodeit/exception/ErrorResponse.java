@@ -1,39 +1,49 @@
 package com.sprint.mission.discodeit.exception;
 
-import java.util.ArrayList;
-import java.util.List;
-import org.springframework.validation.BindingResult;
+import java.time.Instant;
+import java.util.HashMap;
+import java.util.Map;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
-public record ErrorResponse(
-    String code,
-    String message,
-    List<FieldError> errors
-) {
+@Getter
+@RequiredArgsConstructor
+public class ErrorResponse {
 
-  public static ErrorResponse of(ErrorCode errorCode) {
-    return new ErrorResponse(errorCode.getCode(), errorCode.getMessage(), new ArrayList<>());
+  private final Instant timestamp;
+  private final String code;
+  private final String message;
+  private final Map<String, Object> details;
+  private final String exceptionType;
+  private final int status;
+
+  /// 커스텀 예외
+  public ErrorResponse(DiscodeitException exception) {
+    this(
+        Instant.now(),
+        exception.getErrorCode().getCode(),
+        exception.getErrorCode().getMessage(),
+        exception.getDetails(),
+        exception.getClass().getSimpleName(),
+        exception.getErrorCode().getStatus().value()
+    );
   }
 
-  // 유효성 검사용
-  public static ErrorResponse of(ErrorCode errorCode, BindingResult bindingResult) {
-    return new ErrorResponse(errorCode.getCode(), errorCode.getMessage(),
-        FieldError.of(bindingResult));
+  /// 외부 예외 - 유효성 검사
+  public ErrorResponse(ErrorCode errorCode, Exception exception, Map<String, Object> details) {
+    this(
+        Instant.now(),
+        errorCode.getCode(),
+        errorCode.getMessage(),
+        details != null ? details : new HashMap<>(),  // null 방지
+        exception.getClass().getSimpleName(),
+        errorCode.getStatus().value()
+    );
   }
 
-  public record FieldError(
-      String field,
-      String value,
-      String reason
-  ) {
-
-    public static List<FieldError> of(BindingResult bindingResult) {
-      return bindingResult.getFieldErrors().stream()
-          .map(error -> new FieldError(
-              error.getField(),
-              error.getRejectedValue() == null ? "" : error.getRejectedValue().toString(),
-              error.getDefaultMessage()
-          ))
-          .toList();
-    }
+  /// 외부 예외 - detail 불필요
+  public ErrorResponse(ErrorCode errorCode, Exception exception) {
+    this(errorCode, exception, new HashMap<>());
   }
+
 }
