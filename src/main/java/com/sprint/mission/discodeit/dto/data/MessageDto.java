@@ -4,13 +4,14 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
-public record MessageDto (
+public record MessageDto(
     UUID id,
     Instant createdAt,
-    Instant updateAt,
+    Instant updatedAt,
     String content,
     UUID channelId,
-    UUID authorId,
-    List<UUID> attachmentIds
- ) {
+    UserDto author,
+    List<BinaryContentDto> attachments
+) {
+
 }

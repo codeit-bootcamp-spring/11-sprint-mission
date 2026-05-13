@@ -2,27 +2,12 @@ package com.sprint.mission.discodeit.mapper;
 
 import com.sprint.mission.discodeit.dto.data.MessageDto;
 import com.sprint.mission.discodeit.entity.Message;
-import org.springframework.stereotype.Component;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 
-import java.util.List;
-import java.util.UUID;
+@Mapper(componentModel = "spring", uses = {BinaryContentMapper.class, UserMapper.class})
+public interface MessageMapper {
 
-@Component
-public class MessageMapper {
-
-    public MessageDto toDto(Message message) {
-        List<UUID> attachmentIds = message.getAttachments().stream()
-                .map(attachment -> attachment.getId())
-                .toList();
-
-        return new MessageDto(
-                message.getId(),
-                message.getCreatedAt(),
-                message.getUpdatedAt(),
-                message.getContent(),
-                message.getChannel().getId(),
-                message.getAuthor() != null ? message.getAuthor().getId() : null,
-                attachmentIds
-        );
-    }
+  @Mapping(target = "channelId", source = "channel.id")
+  MessageDto toDto(Message message);
 }

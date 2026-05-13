@@ -2,21 +2,12 @@ package com.sprint.mission.discodeit.mapper;
 
 import com.sprint.mission.discodeit.dto.data.UserDto;
 import com.sprint.mission.discodeit.entity.User;
-import org.springframework.stereotype.Component;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 
-@Component
-public class UserMapper {
+@Mapper(componentModel = "spring", uses = {BinaryContentMapper.class, UserStatusMapper.class})
+public interface UserMapper {
 
-    public UserDto toDto(User user, Boolean online) {
-        return new UserDto(
-                user.getId(),
-                user.getCreatedAt(),
-                user.getUpdatedAt(),
-                user.getUsername(),
-                user.getEmail(),
-                user.getProfile() != null ? user.getProfile().getId() : null,
-                online
-        );
-    }
-
+  @Mapping(target = "online", expression = "java(user.getStatus().isOnline())")
+  UserDto toDto(User user);
 }
