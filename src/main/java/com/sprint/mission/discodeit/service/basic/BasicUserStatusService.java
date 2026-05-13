@@ -4,8 +4,8 @@ import com.sprint.mission.discodeit.dto.userstatusdto.CreateUserStatusDto;
 import com.sprint.mission.discodeit.dto.userstatusdto.request.UserStatusUpdateRequest;
 import com.sprint.mission.discodeit.dto.userstatusdto.UserStatusDto;
 import com.sprint.mission.discodeit.entity.UserStatus;
-import com.sprint.mission.discodeit.exception.service.AlreadyExistException;
-import com.sprint.mission.discodeit.exception.service.NonExistException;
+import com.sprint.mission.discodeit.exception.service.user.NonExistUserException;
+import com.sprint.mission.discodeit.exception.service.userstatus.DupUserStatus;
 import com.sprint.mission.discodeit.mapper.UserStatusMapper;
 import com.sprint.mission.discodeit.repository.JPAUserRepository;
 import com.sprint.mission.discodeit.repository.JPAUserStatusRepository;
@@ -35,13 +35,13 @@ public class BasicUserStatusService implements UserStatusService {
     );
 
     //유저 존재 체크
-    if (!userRepository.existsById(userStatus.getId())) {
-      throw new NonExistException("존재하지 않는 유저 아이디 입니다.");
+    if (!userRepository.existsById(createUserStatusDto.user().getId())) {
+      throw new NonExistUserException(createUserStatusDto.user().getId());
     }
 
     // 유저 스테이터스 존재 체크
-    if (userStatusRepository.existsById(userStatus.getId())) {
-      throw new AlreadyExistException("이미 존재하는 유저 스테이터스 입니다");
+    if (userStatusRepository.existsByUserId(userStatus.getId())) {
+      throw new DupUserStatus(createUserStatusDto.user().getId());
     }
 
     //저장
@@ -55,7 +55,7 @@ public class BasicUserStatusService implements UserStatusService {
   public UserStatusDto find(UUID userId) {
 
     UserStatus userStatus = userStatusRepository.findByUserId(userId)
-        .orElseThrow(() -> new NonExistException("존재하지 않는 유저 아이디 입니다."));
+        .orElseThrow(() -> new NonExistUserException(userId));
 
     return userStatusMapper.toDto(userStatus);
   }
@@ -73,7 +73,7 @@ public class BasicUserStatusService implements UserStatusService {
 
     //가져와서
     UserStatus userStatus = userStatusRepository.findByUserId(userId)
-        .orElseThrow(() -> new NonExistException("존재하지 않는 유저 아이디 입니다."));
+        .orElseThrow(() -> new NonExistUserException(userId));
 
     //접속시간 초기화
     userStatus.updateLastActiveAt(userStatusUpdateRequest.newLastActiveAt());
@@ -89,11 +89,11 @@ public class BasicUserStatusService implements UserStatusService {
 
     //존재 체크
     if (!userRepository.existsById(userId)) {
-      throw new NonExistException("존재하지 않는 유저 아이디 입니다.");
+      throw new NonExistUserException(userId);
     }
 
     UserStatus status = userStatusRepository.findByUserId(userId)
-        .orElseThrow(() -> new NonExistException("존재하지 않는 유저 스테이터스 입니다"));
+        .orElseThrow(() -> new NonExistUserException(userId));
     //삭제
     userStatusRepository.delete(status);
 

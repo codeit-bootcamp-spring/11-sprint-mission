@@ -19,25 +19,31 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.BatchSize;
 
 @Getter
-@Table(name = "messages")
+@Table(name = "message")
 @Entity
 @NoArgsConstructor
 public class Message extends BaseUpdatableEntity {
 
-
+  @Column
   private String content;
+
+
   @ManyToOne
-  @JoinColumn(nullable = false, updatable = false)
+  @JoinColumn(updatable = false)
   private User author;
+
+
   @ManyToOne
   @JoinColumn(nullable = false, updatable = false)
   private Channel channel; //채널 아이디
+
+
   @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
   @BatchSize(size = 100)
   @JoinTable(
-      name = "message_attachments",
+      name = "message_attachment",
       joinColumns = @JoinColumn(name = "message_id"),
-      inverseJoinColumns = @JoinColumn(name = "binary_content_id")
+      inverseJoinColumns = @JoinColumn(name = "attachment_id")
 
   )
   private List<BinaryContent> attachments = new ArrayList<>();

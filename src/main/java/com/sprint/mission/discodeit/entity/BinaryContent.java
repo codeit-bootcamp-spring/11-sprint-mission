@@ -9,7 +9,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "binary_contents")
+@Table(name = "binary_content")
 @Getter
 @NoArgsConstructor
 public class BinaryContent extends BaseEntity {

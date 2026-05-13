@@ -7,6 +7,7 @@ import com.sprint.mission.discodeit.dto.messagedto.request.MessageUpdateRequest;
 import com.sprint.mission.discodeit.dto.response.PageResponse;
 import com.sprint.mission.discodeit.service.MessageService;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import jakarta.validation.Valid;
 import java.awt.Insets;
 import java.time.Instant;
 import lombok.RequiredArgsConstructor;
@@ -31,7 +32,7 @@ public class MessageController {
   @ApiResponse(responseCode = "201", description = "메시지 전송")
   @PostMapping(consumes = "multipart/form-data")
   public ResponseEntity<MessageDto> sendMessage(
-      @RequestPart("messageCreateRequest") MessageCreateRequest messageCreateRequest,
+      @Valid @RequestPart("messageCreateRequest") MessageCreateRequest messageCreateRequest,
       @RequestPart(required = false) List<MultipartFile> attachments) {
 
     MessageDto messageDto = messageService.create(messageCreateRequest, attachments);
@@ -60,7 +61,7 @@ public class MessageController {
   @PatchMapping(value = "/{messageId}")
   public ResponseEntity<MessageDto> updateMessage(
       @PathVariable UUID messageId,
-      @RequestBody MessageUpdateRequest messageUpdateRequest
+      @Valid @RequestBody MessageUpdateRequest messageUpdateRequest
   ) {
     messageService.update(messageId, messageUpdateRequest);
     return ResponseEntity.status(HttpStatus.OK)

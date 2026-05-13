@@ -1,18 +1,15 @@
 package com.sprint.mission.discodeit.controller;
 
 
-import com.sprint.mission.discodeit.dto.error.ExceptionDto;
 import com.sprint.mission.discodeit.dto.userdto.*;
 import com.sprint.mission.discodeit.dto.userdto.request.UserCreateRequest;
 import com.sprint.mission.discodeit.dto.userstatusdto.request.UserStatusUpdateRequest;
 import com.sprint.mission.discodeit.dto.userstatusdto.UserStatusDto;
-import com.sprint.mission.discodeit.exception.service.DiffPasswordException;
-import com.sprint.mission.discodeit.exception.service.DupEmailException;
-import com.sprint.mission.discodeit.exception.service.DupNameException;
+
 import com.sprint.mission.discodeit.service.UserService;
 import com.sprint.mission.discodeit.service.UserStatusService;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -35,7 +32,7 @@ public class UserController {
 
   @PostMapping(consumes = "multipart/form-data")
   @ApiResponse(description = "유저 생성", responseCode = "201")
-  public ResponseEntity<UserDto> createUser(@RequestPart UserCreateRequest userCreateRequest,
+  public ResponseEntity<UserDto> createUser(@Valid @RequestPart UserCreateRequest userCreateRequest,
       @RequestPart(required = false) MultipartFile profile) {
 
     UserDto userInfo = userService.create(userCreateRequest, profile);
@@ -66,7 +63,7 @@ public class UserController {
   @ApiResponse(responseCode = "200")
   @PatchMapping(value = "/{userId}", consumes = "multipart/form-data")
   public ResponseEntity<UserDto> updateUser(@PathVariable UUID userId,
-      @RequestPart UpdateUserDto userUpdateRequest,
+      @Valid @RequestPart UserUpdateRequest userUpdateRequest,
       @RequestPart(required = false) MultipartFile profile) {
 
     UserDto userInfo = userService.updateUser(userId, userUpdateRequest, profile);
@@ -78,7 +75,7 @@ public class UserController {
   @ApiResponse(responseCode = "200")
   @PatchMapping(value = "/{userId}/userStatus")
   public ResponseEntity<UserStatusDto> updateUserStatus(@PathVariable UUID userId,
-      @RequestBody UserStatusUpdateRequest userStatusUpdateRequest) {
+      @Valid @RequestBody UserStatusUpdateRequest userStatusUpdateRequest) {
 
     userStatusService.update(userId, userStatusUpdateRequest);
 
@@ -92,50 +89,6 @@ public class UserController {
   public ResponseEntity<Void> deleteUser(@PathVariable UUID userId) {
     userService.delete(userId);
     return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
-  }
-
-  //----------Exception handler-----------------------
-
-  @ExceptionHandler(DiffPasswordException.class)
-  public ResponseEntity<ExceptionDto> diffPasswordHandler(DiffPasswordException e,
-      HttpServletRequest request) {
-
-    ExceptionDto exceptionDto = ExceptionDto.of(
-        HttpStatus.UNAUTHORIZED,
-        e.getMessage(),
-        request.getRequestURI()
-    );
-
-    return ResponseEntity.status(401).body(exceptionDto);
-
-  }
-
-  @ExceptionHandler(DupNameException.class)
-  public ResponseEntity<ExceptionDto> dupNameHandler(DupNameException e,
-      HttpServletRequest request) {
-
-    ExceptionDto exceptionDto = ExceptionDto.of(
-        HttpStatus.CONFLICT,
-        e.getMessage(),
-        request.getRequestURI()
-    );
-
-    return ResponseEntity.status(409).body(exceptionDto);
-  }
-
-
-  @ExceptionHandler(DupEmailException.class)
-  public ResponseEntity<ExceptionDto> dupEmailHandler(DupEmailException e,
-      HttpServletRequest request) {
-
-    ExceptionDto exceptionDto = ExceptionDto.of(
-        HttpStatus.CONFLICT,
-        e.getMessage(),
-        request.getRequestURI()
-    );
-
-    return ResponseEntity.status(409).body(exceptionDto);
-
   }
 
 

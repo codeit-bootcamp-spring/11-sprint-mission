@@ -3,13 +3,14 @@ package com.sprint.mission.discodeit.service.basic;
 import com.sprint.mission.discodeit.dto.binarycontentdto.BinaryContentDto;
 import com.sprint.mission.discodeit.dto.binarycontentdto.request.BinaryContentCreateRequest;
 import com.sprint.mission.discodeit.entity.BinaryContent;
-import com.sprint.mission.discodeit.exception.service.NonExistException;
+import com.sprint.mission.discodeit.exception.service.file.NonExistFileException;
 import com.sprint.mission.discodeit.mapper.BinaryContentMapper;
 import com.sprint.mission.discodeit.repository.JPABinaryContentRepository;
 import com.sprint.mission.discodeit.repository.JPAMessageRepository;
 import com.sprint.mission.discodeit.repository.JPAUserRepository;
 import com.sprint.mission.discodeit.service.BinaryContentService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -18,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class BasicBinaryContentService implements BinaryContentService {
 
@@ -30,6 +32,9 @@ public class BasicBinaryContentService implements BinaryContentService {
   @Override
   @Transactional
   public BinaryContentDto create(BinaryContentCreateRequest binaryContentCreateRequest) {
+
+    log.info("이진 콘텐츠 생성 요청, binaryContentCreateRequest : {}", binaryContentCreateRequest);
+
     BinaryContent content;
     try {
       content = new BinaryContent(
@@ -41,6 +46,8 @@ public class BasicBinaryContentService implements BinaryContentService {
       throw new RuntimeException(e);
     }
     binaryContentRepository.save(content);
+
+    log.info("이진 콘텐츠 생성 완료, content : {}", content);
     return binaryContentMapper.toDto(content);
 
 
@@ -66,12 +73,14 @@ public class BasicBinaryContentService implements BinaryContentService {
   @Override
   @Transactional
   public boolean delete(UUID binaryContentId) {
+    log.info("이진 콘텐츠 삭제 요청, binaryContentId : {}", binaryContentId);
 
     if (!binaryContentRepository.existsById(binaryContentId)) {
-      throw new NonExistException("존재하지 않는 파일입니다.");
+      throw new NonExistFileException(binaryContentId);
     }
 
     binaryContentRepository.deleteById(binaryContentId);
+    log.info("이진 콘텐츠 삭제 완료, binaryContentId : {}", binaryContentId);
 
     return true;
   }

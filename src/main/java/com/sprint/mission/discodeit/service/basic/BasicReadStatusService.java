@@ -6,8 +6,10 @@ import com.sprint.mission.discodeit.dto.readstatusdto.request.ReadStatusUpdateRe
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.entity.User;
-import com.sprint.mission.discodeit.exception.service.AlreadyExistException;
-import com.sprint.mission.discodeit.exception.service.NonExistException;
+import com.sprint.mission.discodeit.exception.service.channel.NonExistChannelException;
+import com.sprint.mission.discodeit.exception.service.readstatus.DupReadStatus;
+import com.sprint.mission.discodeit.exception.service.readstatus.NonExistReadStatusException;
+import com.sprint.mission.discodeit.exception.service.user.NonExistUserException;
 import com.sprint.mission.discodeit.mapper.ReadStatusMapper;
 import com.sprint.mission.discodeit.repository.JPAChannelRepository;
 import com.sprint.mission.discodeit.repository.JPAReadStatusRepository;
@@ -38,14 +40,15 @@ public class BasicReadStatusService implements ReadStatusService {
 
     if (readStatusRepository.existsByUserIdAndChannelId(readStatusCreateRequest.userId(),
         readStatusCreateRequest.channelId())) {
-      throw new AlreadyExistException("이미 존재하는 유저와 채널의 읽기 상태입니다");
+      throw new DupReadStatus(readStatusCreateRequest.userId(),
+          readStatusCreateRequest.channelId());
     }
 
     //유저, 채널 가져오기
     User user = userRepository.findById(readStatusCreateRequest.userId())
-        .orElseThrow(() -> new NonExistException("존재하지 않는 유저 아이디입니다."));
+        .orElseThrow(() -> new NonExistUserException(readStatusCreateRequest.userId()));
     Channel channel = channelRepository.findById(readStatusCreateRequest.channelId())
-        .orElseThrow(() -> new NonExistException("존재하지 않는 채널 아이디 입니다."));
+        .orElseThrow(() -> new NonExistChannelException(readStatusCreateRequest.channelId()));
 
     //ReadStatus 생성
     ReadStatus readStatus = new ReadStatus(
@@ -70,7 +73,7 @@ public class BasicReadStatusService implements ReadStatusService {
   public ReadStatusDto find(UUID readStatusId) {
 
     ReadStatus readStatus = readStatusRepository.findById(readStatusId)
-        .orElseThrow(() -> new NonExistException("존재하지 않는 읽기 상태 아이디입니다."));
+        .orElseThrow(() -> new NonExistReadStatusException(readStatusId));
     return readStatusMapper.toDto(readStatus);
   }
 
@@ -89,7 +92,7 @@ public class BasicReadStatusService implements ReadStatusService {
       ReadStatusUpdateRequest readStatusUpdateRequestDto) {
 
     ReadStatus readStatus = readStatusRepository.findById(readStatusId)
-        .orElseThrow(() -> new NonExistException("존재하는 읽기 상태 아이디가 아닙니다."));
+        .orElseThrow(() -> new NonExistReadStatusException(readStatusId));
 
     readStatus.updateLastReadAt(readStatusUpdateRequestDto.newLastReadAt());
 
@@ -106,7 +109,7 @@ public class BasicReadStatusService implements ReadStatusService {
   public void delete(UUID readStatusId) {
 
     if (!readStatusRepository.existsById(readStatusId)) {
-      throw new NonExistException("존재하지 않는 읽기 상태입니다.");
+      throw new NonExistReadStatusException(readStatusId);
     }
 
     readStatusRepository.deleteById(readStatusId);

@@ -4,8 +4,7 @@ import com.sprint.mission.discodeit.dto.authDto.LoginRequest;
 import com.sprint.mission.discodeit.dto.userdto.UserDto;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.entity.UserStatus;
-import com.sprint.mission.discodeit.exception.service.DiffPasswordException;
-import com.sprint.mission.discodeit.exception.service.NonExistException;
+import com.sprint.mission.discodeit.exception.service.auth.FailLoginException;
 import com.sprint.mission.discodeit.mapper.BinaryContentMapper;
 import com.sprint.mission.discodeit.repository.JPAUserRepository;
 import com.sprint.mission.discodeit.repository.JPAUserStatusRepository;
@@ -25,10 +24,10 @@ public class BasicAuthService implements AuthService {
 
   @Transactional
   @Override
-  public UserDto login(LoginRequest loginRequest) throws DiffPasswordException {
+  public UserDto login(LoginRequest loginRequest) throws FailLoginException {
 
     User user = userRepository.findByUsername(loginRequest.username())
-        .orElseThrow(() -> new NonExistException("유저 이름 또는 비밀번호가 틀립니다."));
+        .orElseThrow(FailLoginException::new);
 
     UserStatus userStatus = userStatusRepository.findByUserId(user.getId())
         .orElseThrow();
@@ -47,7 +46,7 @@ public class BasicAuthService implements AuthService {
       userStatus.updateLastActiveAt(Instant.now());
 
     } else {
-      throw new DiffPasswordException();
+      throw new FailLoginException();
     }
 
     return userInfo;

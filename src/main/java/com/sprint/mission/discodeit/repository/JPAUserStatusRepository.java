@@ -17,6 +17,7 @@ public interface JPAUserStatusRepository extends JpaRepository<UserStatus, UUID>
 
   Optional<UserStatus> findByUserId(UUID userId);
 
+  @Query("SELECT u FROM UserStatus u JOIN FETCH u.user WHERE u.user.id = :userId")
   boolean existsByUserId(UUID userId);
 
 

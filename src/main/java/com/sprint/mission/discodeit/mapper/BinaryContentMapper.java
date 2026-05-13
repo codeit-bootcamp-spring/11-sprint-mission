@@ -1,6 +1,7 @@
 package com.sprint.mission.discodeit.mapper;
 
 import com.sprint.mission.discodeit.dto.binarycontentdto.BinaryContentDto;
+import com.sprint.mission.discodeit.dto.userdto.request.UserCreateRequest;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import java.io.InputStream;
@@ -32,11 +33,11 @@ public class BinaryContentMapper {
         binaryContent.getId(),
         binaryContent.getFileName(),
         binaryContent.getSize(),
-        binaryContent.getContentType(),
-        b
+        binaryContent.getContentType()
 
     );
 
   }
+
 }
 

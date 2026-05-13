@@ -2,7 +2,6 @@ package com.sprint.mission.discodeit.controller.api;
 
 
 import com.sprint.mission.discodeit.dto.binarycontentdto.BinaryContentDto;
-import com.sprint.mission.discodeit.dto.error.ExceptionDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -14,6 +13,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.annotation.PathVariable;
 
 
@@ -37,7 +37,7 @@ public interface BinaryContentApi {
           content = @Content(schema = @Schema(implementation = BinaryContentDto.class))),
 
       @ApiResponse(responseCode = "404", description = "첨부파일을 찾을 수 없음",
-          content = @Content(schema = @Schema(implementation = ExceptionDto.class)))
+          content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
 
   })
   ResponseEntity<BinaryContentDto> findBinaryContent(

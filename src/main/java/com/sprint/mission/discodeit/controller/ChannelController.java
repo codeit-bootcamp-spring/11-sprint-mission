@@ -5,11 +5,10 @@ import com.sprint.mission.discodeit.dto.channeldto.*;
 import com.sprint.mission.discodeit.dto.channeldto.request.PrivateChannelCreateRequest;
 import com.sprint.mission.discodeit.dto.channeldto.request.PublicChanelUpdateRequest;
 import com.sprint.mission.discodeit.dto.channeldto.request.PublicChannelCreateRequest;
-import com.sprint.mission.discodeit.dto.error.ExceptionDto;
-import com.sprint.mission.discodeit.exception.service.WrongChannelTypeException;
+
 import com.sprint.mission.discodeit.service.ChannelService;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -30,7 +29,7 @@ public class ChannelController {
   @ApiResponse(responseCode = "201", description = "공개 채널 생성")
   @PostMapping(value = "public")
   public ResponseEntity<ChannelDto> createPublicChannel(
-      @RequestBody PublicChannelCreateRequest publicChannelCreateRequest) {
+      @Valid @RequestBody PublicChannelCreateRequest publicChannelCreateRequest) {
 
     ChannelDto channelInfo = channelService.createPublic(publicChannelCreateRequest);
 
@@ -47,7 +46,7 @@ public class ChannelController {
   @ApiResponse(responseCode = "201", description = "비공개 채널 생성")
   @PostMapping(value = "private")
   public ResponseEntity<ChannelDto> createPrivateChannel(
-      @RequestBody PrivateChannelCreateRequest privateChannelCreateRequest) {
+      @Valid @RequestBody PrivateChannelCreateRequest privateChannelCreateRequest) {
 
     ChannelDto channelInfo = channelService.createPrivate(privateChannelCreateRequest);
     return ResponseEntity.status(HttpStatus.CREATED).body(channelInfo);
@@ -66,7 +65,7 @@ public class ChannelController {
 
   @PatchMapping(value = "/{channelId}")
   public ResponseEntity<ChannelDto> updatePublicChannel(@PathVariable UUID channelId,
-      @RequestBody PublicChanelUpdateRequest publicChanelUpdateRequest) {
+      @Valid @RequestBody PublicChanelUpdateRequest publicChanelUpdateRequest) {
 
     ChannelDto channelInfoDto = channelService.updateChannel(channelId,
         publicChanelUpdateRequest);
@@ -85,20 +84,5 @@ public class ChannelController {
 
   }
 
-
-  @ExceptionHandler
-  public ResponseEntity<ExceptionDto> wrongChannelTypeHandler(WrongChannelTypeException e,
-      HttpServletRequest request) {
-
-    ExceptionDto exceptionDto = ExceptionDto.of(
-        HttpStatus.BAD_REQUEST,
-        e.getMessage(),
-        request.getRequestURI()
-    );
-
-    return ResponseEntity.status(exceptionDto.code()).body(exceptionDto);
-
-
-  }
 
 }

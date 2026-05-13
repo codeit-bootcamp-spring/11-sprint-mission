@@ -11,7 +11,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Getter
-@Table(name = "channels")
+@Table(name = "channel")
 @Entity
 @NoArgsConstructor
 public class Channel extends BaseUpdatableEntity {

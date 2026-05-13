@@ -15,7 +15,7 @@ public interface UserService {
 
   List<UserDto> findAll();
 
-  UserDto updateUser(UUID userId, UpdateUserDto updateUserDto, MultipartFile file);
+  UserDto updateUser(UUID userId, UserUpdateRequest userUpdateRequest, MultipartFile file);
 
   boolean delete(UUID userId);
 

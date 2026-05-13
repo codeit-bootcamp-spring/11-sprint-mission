@@ -2,18 +2,13 @@ spring:
   application:
     name: discodeit
 
-  datasource:
-    driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://localhost:5432/discodeit
-    username: discodeit_user
-    password: discodeit_1234
-
+  profiles:
+    active: dev
 
   jpa:
-    show-sql: true
     open-in-view: false
     hibernate:
-      ddl-auto: update
+      ddl-auto: create
       show-sql: true
       properties:
         hibernate:
@@ -24,15 +19,13 @@ spring:
 
   logging:
     level:
-
+      root: INFO
       org.hibernate.SQL: DEBUG
-
       org.hibernate.orm.jdbc.bind: TRACE
 
 
 discodeit:
   storage:
-
     type: local
     local:
       root-path: /tmp/discodeit
@@ -43,3 +36,20 @@ springdoc:
   swagger-ui:
     enabled: true
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,loggers
+  info:
+    env:
+      enabled: true # info 블록의 모든 값을 보기 위한 설정
+
+info:
+  app:
+    name: Discodeit
+    version: 1.7.0
+  java:
+    version: 17
+  spring-boot:
+    version: 3.4.0

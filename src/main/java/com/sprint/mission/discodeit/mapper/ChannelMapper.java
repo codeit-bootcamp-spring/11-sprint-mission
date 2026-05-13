@@ -3,11 +3,13 @@ package com.sprint.mission.discodeit.mapper;
 import com.sprint.mission.discodeit.dto.channeldto.ChannelDto;
 import com.sprint.mission.discodeit.entity.Channel;
 
+import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.entity.base.BaseEntity;
 import com.sprint.mission.discodeit.repository.JPAMessageRepository;
 import com.sprint.mission.discodeit.repository.JPAReadStatusRepository;
 
 import java.time.Instant;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -15,11 +17,10 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class ChannelMapper {
 
-  private final JPAMessageRepository messageRepository;
-  private final JPAReadStatusRepository readStatusRepository;
+
   private final UserMapper userMapper;
 
-  public ChannelDto toDto(Channel channel) {
+  public ChannelDto toDto(Channel channel, List<User> participants, Instant lastMessageTime) {
 
     return new ChannelDto(
 
@@ -27,10 +28,8 @@ public class ChannelMapper {
         channel.getType(),
         channel.getName(),
         channel.getDescription(),
-        readStatusRepository.findAllByChannel_Id(channel.getId()).stream()
-            .map(readStatus -> userMapper.toDto(readStatus.getUser())).toList(),
-        messageRepository.findTopByChannel_IdOrderByCreatedAtDesc(channel.getId()).map(
-            BaseEntity::getCreatedAt).orElse(Instant.now().minusSeconds(1))
+        participants.stream().map(userMapper::toDto).toList(),
+        lastMessageTime
     );
   }
 

@@ -11,7 +11,7 @@ import java.time.Instant;
 import lombok.NoArgsConstructor;
 
 @Getter
-@Table(name = "user_statuses")
+@Table(name = "user_status")
 @Entity
 @NoArgsConstructor
 public class UserStatus extends BaseUpdatableEntity {

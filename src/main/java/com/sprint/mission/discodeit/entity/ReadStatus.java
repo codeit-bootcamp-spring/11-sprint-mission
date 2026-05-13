@@ -14,7 +14,7 @@ import java.util.UUID;
 import lombok.NoArgsConstructor;
 
 @Getter
-@Table(name = "read_statues")
+@Table(name = "read_status")
 @Entity
 @NoArgsConstructor
 public class ReadStatus extends BaseUpdatableEntity {

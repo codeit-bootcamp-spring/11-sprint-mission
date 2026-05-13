@@ -1,70 +1,100 @@
 package com.sprint.mission.discodeit.controller;
 
 
-import com.sprint.mission.discodeit.dto.error.ExceptionDto;
-import com.sprint.mission.discodeit.exception.service.AlreadyExistException;
-import com.sprint.mission.discodeit.exception.service.NonExistException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+import com.sprint.mission.discodeit.exception.DiscodeitException;
+import com.sprint.mission.discodeit.exception.ErrorCode;
+import com.sprint.mission.discodeit.exception.ErrorResponse;
+
+import java.time.Instant;
+import java.util.HashMap;
+import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
+@Slf4j
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
 
-  @ExceptionHandler(AlreadyExistException.class)
+  @ExceptionHandler(DiscodeitException.class)
+  public ResponseEntity<ErrorResponse> handleException(DiscodeitException e) {
 
-  public ResponseEntity<ExceptionDto> alreadyExistHandler(AlreadyExistException e,
-      HttpServletRequest request) {
-    ExceptionDto exceptionDto = ExceptionDto.of(
-        HttpStatus.BAD_REQUEST,
-        e.getMessage(),
-        request.getRequestURI()
+    log.warn("Discodeit Exception: {}", e.getMessage());
+
+    ErrorCode errorCode = e.getErrorCode();
+
+    ErrorResponse errorResponse = new ErrorResponse(
+        e.getTimestamp(),
+        "Discodeit Exception",
+        errorCode.getMessage(),
+        e.getDetails(),
+        e.getClass().getSimpleName(),
+        errorCode.getStatus().value()
     );
-    return ResponseEntity.status(400).body(exceptionDto);
-  }
 
-  @ExceptionHandler(NonExistException.class)
-
-  public ResponseEntity<ExceptionDto> NonExistHandler(NonExistException e,
-      HttpServletRequest request) {
-
-    ExceptionDto exceptionDto = ExceptionDto.of(
-        HttpStatus.NOT_FOUND,
-        e.getMessage(),
-        request.getRequestURI()
-    );
-    return ResponseEntity.status(exceptionDto.code()).body(exceptionDto);
+    return ResponseEntity.status(errorCode.getStatus()).body(errorResponse);
   }
 
 
   @ExceptionHandler()
-  public ResponseEntity<ExceptionDto> handleException(IllegalArgumentException e,
-      HttpServletRequest request) {
+  public ResponseEntity<ErrorResponse> handleException(MethodArgumentNotValidException e) {
 
-    ExceptionDto exceptionDto = ExceptionDto.of(
-        HttpStatus.BAD_REQUEST,
+    Map<String, Object> details = new HashMap<>();
+
+    e.getBindingResult().getFieldErrors().forEach(error -> {
+      details.put(error.getField(), error.getDefaultMessage());
+    });
+
+    ErrorResponse errorResponse = new ErrorResponse(
+        Instant.now(),
+        "INVALID_INPUT",
         e.getMessage(),
-        request.getRequestURI()
+        details,
+        e.getClass().getSimpleName(),
+        HttpStatus.BAD_REQUEST.value()
     );
 
-    return ResponseEntity.status(400).body(exceptionDto);
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+
+
+  }
+
+  @ExceptionHandler()
+  public ResponseEntity<ErrorResponse> handleException(IllegalArgumentException e) {
+
+    ErrorResponse errorResponse = new ErrorResponse(
+        Instant.now(),
+        "Illegal Arguments",
+        e.getMessage(),
+        Map.of(),
+        e.getClass().getSimpleName(),
+        HttpStatus.BAD_REQUEST.value()
+    );
+
+    return ResponseEntity.status(400).body(errorResponse);
   }
 
 
   @ExceptionHandler(Exception.class)
-  public ResponseEntity<ExceptionDto> handleException(Exception e, HttpServletRequest request) {
+  public ResponseEntity<ErrorResponse> handleException(Exception e) {
 
-    ExceptionDto exceptionDto = ExceptionDto.of(
-        HttpStatus.INTERNAL_SERVER_ERROR,
+    log.error("예상치 못한 예외", e);
+
+    ErrorResponse errorResponse = new ErrorResponse(
+        Instant.now(),
+        "Internal Server Error",
         e.getMessage(),
-        request.getRequestURI()
+        Map.of(),
+        e.getClass().getSimpleName(),
+        HttpStatus.INTERNAL_SERVER_ERROR.value()
+
     );
 
-    return ResponseEntity.status(500).body(exceptionDto);
+    return ResponseEntity.status(500).body(errorResponse);
   }
 
 

@@ -7,9 +7,9 @@ import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Component;
 
 @Component
-public class PageResponseMapper<T> {
+public class PageResponseMapper {
 
-  public PageResponse<T> fromPage(Page<T> page, Instant nextCursor) {
+  public <T> PageResponse<T> fromPage(Page<T> page, Instant nextCursor) {
 
     return new PageResponse<>(
         page.getContent(),
@@ -21,7 +21,7 @@ public class PageResponseMapper<T> {
 
   }
 
-  public PageResponse<T> fromSlice(Slice<T> slice, Instant nextCursor) {
+  public <T> PageResponse<T> fromSlice(Slice<T> slice, Instant nextCursor) {
 
     return new PageResponse<>(
 

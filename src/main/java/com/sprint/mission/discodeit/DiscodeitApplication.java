@@ -7,7 +7,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 
 @SpringBootApplication
-@EnableJpaAuditing
+
 public class DiscodeitApplication {
 
 
