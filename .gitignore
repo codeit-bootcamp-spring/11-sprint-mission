@@ -40,6 +40,7 @@ bin/
 
 ### Discodeit ###
 .discodeit
-
-### Local Data Files ###
-data/*
+data/
+logs/
+*.log
+*.ser

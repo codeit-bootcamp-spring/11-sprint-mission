@@ -1,8 +1,12 @@
 package com.sprint.mission.discodeit.exception.message;
 
-//존재하지 않는 ID로 메시지를 조회, 수정, 삭제할 때 404
-public class MessageNotFoundException extends RuntimeException {
-    public MessageNotFoundException(String message) {
-        super(message);
+import com.sprint.mission.discodeit.exception.ErrorCode;
+import java.util.Map;
+import java.util.UUID;
+
+public class MessageNotFoundException extends MessageException {
+
+    public MessageNotFoundException(UUID messageId) {
+        super(ErrorCode.MESSAGE_NOT_FOUND, Map.of("messageId", messageId));
     }
 }

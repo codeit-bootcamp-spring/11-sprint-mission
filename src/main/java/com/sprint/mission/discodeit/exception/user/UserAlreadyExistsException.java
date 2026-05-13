@@ -1,9 +1,11 @@
 package com.sprint.mission.discodeit.exception.user;
 
+import com.sprint.mission.discodeit.exception.ErrorCode;
+import java.util.Map;
 
-//가입 시 이미 사용 중인 userName이나 email일 때 409
-public class UserAlreadyExistsException extends RuntimeException {
-    public UserAlreadyExistsException(String message) {
-        super(message);
+public class UserAlreadyExistsException extends UserException {
+
+    public UserAlreadyExistsException(String field, String value) {
+        super(ErrorCode.DUPLICATE_USER, Map.of(field, value));
     }
 }
