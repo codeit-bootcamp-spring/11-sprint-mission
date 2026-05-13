@@ -11,7 +11,7 @@ import java.util.UUID;
 public interface MessageService {
     MessageDto create(MessageCreateRequest request);
     Optional<MessageDto> find(UUID id);
-    PageResponse<MessageDto> findAllByChannelId(UUID channelId, int page);
+    PageResponse<MessageDto> findAllByChannelId(UUID channelId, String cursor, int size);
     MessageDto update(MessageUpdateParam param);
     void delete(UUID id);
 }

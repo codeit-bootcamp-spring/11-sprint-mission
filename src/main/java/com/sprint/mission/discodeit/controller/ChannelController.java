@@ -6,18 +6,16 @@ import com.sprint.mission.discodeit.dto.ChannelUpdateRequest;
 import com.sprint.mission.discodeit.dto.PrivateChannelCreateRequest;
 import com.sprint.mission.discodeit.dto.PublicChannelCreateRequest;
 import com.sprint.mission.discodeit.service.ChannelService;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.RequestParam;
+
+import lombok.extern.slf4j.Slf4j;
+import jakarta.validation.Valid;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.ResponseStatus;
 
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/channels")
 public class ChannelController {
@@ -29,31 +27,39 @@ public class ChannelController {
     }
 
     @ResponseStatus(HttpStatus.CREATED)
-    @RequestMapping(value = "/public", method = RequestMethod.POST)
-    public ChannelDto createPublic(@RequestBody PublicChannelCreateRequest request) {
+    @PostMapping(value = "/public")
+    public ChannelDto createPublic(@Valid @RequestBody PublicChannelCreateRequest request) {
+        log.info("PUBLIC 채널 생성 API 요청: name={}", request.name()
+        );
         return channelService.createPublic(request);
     }
 
     @ResponseStatus(HttpStatus.CREATED)
-    @RequestMapping(value = "/private", method = RequestMethod.POST)
-    public ChannelDto createPrivate(@RequestBody PrivateChannelCreateRequest request) {
+    @PostMapping(value = "/private")
+    public ChannelDto createPrivate(@Valid @RequestBody PrivateChannelCreateRequest request) {
+        log.info("PRIVATE 채널 생성 참여자 목록: participantIds={}",
+                request.participantIds()
+        );
         return channelService.createPrivate(request);
     }
 
-    @RequestMapping(value = "/{channelId}", method = RequestMethod.PATCH)
+    @PatchMapping(value = "/{channelId}")
     public ChannelDto update(@PathVariable UUID channelId,
-                                   @RequestBody ChannelUpdateRequest request) {
+                             @Valid @RequestBody ChannelUpdateRequest request) {
+        log.info("채널 수정 API 요청: channelId={}", channelId);
         return channelService.update(new ChannelUpdateParam(channelId, request));
     }
 
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @RequestMapping(value = "/{channelId}", method = RequestMethod.DELETE)
+    @DeleteMapping(value = "/{channelId}")
     public void delete(@PathVariable UUID channelId) {
+        log.info("채널 삭제 API 요청: channelId={}", channelId);
         channelService.delete(channelId);
     }
 
-    @RequestMapping(method = RequestMethod.GET)
+    @GetMapping
     public List<ChannelDto> findAllByUserId(@RequestParam UUID userId) {
+        log.debug("사용자별 채널 목록 조회 API 요청: userId={}", userId);
         return channelService.findAllByUserId(userId);
     }
 }
