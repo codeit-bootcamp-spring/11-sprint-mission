@@ -10,4 +10,6 @@ spring:
 
 logging:
   level:
-    root: warn
+    root: info
+    com.sprint.mission.discodeit: info
+    org.hibernate.SQL: info

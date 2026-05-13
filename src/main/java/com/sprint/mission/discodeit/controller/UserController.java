@@ -7,6 +7,7 @@ import com.sprint.mission.discodeit.dto.request.BinaryContentCreateRequest;
 import com.sprint.mission.discodeit.dto.request.UserCreateRequest;
 import com.sprint.mission.discodeit.dto.request.UserStatusUpdateRequest;
 import com.sprint.mission.discodeit.dto.request.UserUpdateRequest;
+import com.sprint.mission.discodeit.exception.binarycontent.FileOperationException;
 import com.sprint.mission.discodeit.service.UserService;
 import com.sprint.mission.discodeit.service.UserStatusService;
 import jakarta.validation.Valid;
@@ -116,7 +117,7 @@ public class UserController implements UserApi {
         return Optional.of(binaryContentCreateRequest);
       } catch (IOException e) {
         log.warn("프로필 파일 읽기 실패: {}", profileFile.getOriginalFilename(), e);
-        throw new RuntimeException(e);
+        throw FileOperationException.withFileName(profileFile.getOriginalFilename());
       }
     }
   }

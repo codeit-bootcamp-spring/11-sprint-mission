@@ -14,7 +14,13 @@ public enum ErrorCode {
 
     MESSAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "메시지를 찾을 수 없습니다"),
 
-    READ_STATUS_NOT_FOUND(HttpStatus.NOT_FOUND, "읽기 상태를 찾을 수 없습니다");
+    READ_STATUS_NOT_FOUND(HttpStatus.NOT_FOUND, "읽기 상태를 찾을 수 없습니다"),
+
+    USER_STATUS_NOT_FOUND(HttpStatus.NOT_FOUND, "사용자 상태를 찾을 수 없습니다"),
+    USER_STATUS_DUPLICATE(HttpStatus.CONFLICT, "이미 사용자 상태가 존재합니다"),
+
+    BINARY_CONTENT_NOT_FOUND(HttpStatus.NOT_FOUND, "파일 정보를 찾을 수 없습니다"),
+    FILE_OPERATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "파일 처리 중 오류가 발생했습니다");
 
     private final HttpStatus status;
     private final String message;

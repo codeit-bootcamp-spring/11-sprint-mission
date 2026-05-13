@@ -3,6 +3,8 @@ package com.sprint.mission.discodeit.service;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 import com.sprint.mission.discodeit.dto.data.ChannelDto;
@@ -13,6 +15,7 @@ import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.ChannelType;
 import com.sprint.mission.discodeit.exception.channel.ChannelNotFoundException;
 import com.sprint.mission.discodeit.exception.channel.PrivateChannelUpdateException;
+import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.mapper.ChannelMapper;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
@@ -44,6 +47,21 @@ class BasicChannelServiceTest {
 
   @InjectMocks
   BasicChannelService channelService;
+
+  // find()
+  @Test
+  void createPrivate_존재하지않는참여자_예외발생하고저장하지않음() {
+    UUID participantId = UUID.randomUUID();
+    PrivateChannelCreateRequest request = new PrivateChannelCreateRequest(List.of(participantId));
+    given(userRepository.findAllById(List.of(participantId))).willReturn(List.of());
+
+    assertThatThrownBy(() -> channelService.create(request))
+        .isInstanceOf(UserNotFoundException.class);
+
+    then(channelRepository).should(never()).save(any(Channel.class));
+    then(readStatusRepository).shouldHaveNoInteractions();
+    then(channelMapper).shouldHaveNoInteractions();
+  }
 
   // find()
   @Test

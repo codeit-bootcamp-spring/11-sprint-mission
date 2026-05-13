@@ -2,6 +2,7 @@ package com.sprint.mission.discodeit.exception;
 
 import com.sprint.mission.discodeit.dto.response.ErrorResponse;
 import java.time.Instant;
+import java.util.Map;
 import java.util.stream.Collectors;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,10 +17,12 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleDiscodeitException(DiscodeitException e) {
         ErrorCode errorCode = e.getErrorCode();
         ErrorResponse response = new ErrorResponse(
-                Instant.now(),
+                e.getTimestamp(),
                 errorCode.getStatus().value(),
+                e.getClass().getSimpleName(),
                 errorCode.name(),
-                errorCode.getMessage()
+                errorCode.getMessage(),
+                e.getDetails()
         );
         return ResponseEntity.status(errorCode.getStatus()).body(response);
     }
@@ -32,8 +35,10 @@ public class GlobalExceptionHandler {
         ErrorResponse response = new ErrorResponse(
                 Instant.now(),
                 HttpStatus.BAD_REQUEST.value(),
+                MethodArgumentNotValidException.class.getSimpleName(),
                 "VALIDATION_ERROR",
-                message
+                message,
+                Map.of()
         );
         return ResponseEntity.badRequest().body(response);
     }
@@ -43,8 +48,10 @@ public class GlobalExceptionHandler {
         ErrorResponse response = new ErrorResponse(
                 Instant.now(),
                 500,
+                e.getClass().getSimpleName(),
                 "INTERNAL_SERVER_ERROR",
-                e.getMessage()
+                e.getMessage(),
+                Map.of()
         );
         return ResponseEntity.internalServerError().body(response);
     }
