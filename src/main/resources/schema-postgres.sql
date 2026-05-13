@@ -29,12 +29,13 @@ CREATE TABLE IF NOT EXISTS user_statuses
 
 CREATE TABLE IF NOT EXISTS channels
 (
-    id          UUID PRIMARY KEY,
-    created_at  TIMESTAMPTZ NOT NULL,
-    updated_at  TIMESTAMPTZ,
-    name        VARCHAR(100),
-    description VARCHAR(500),
-    type        VARCHAR(10) NOT NULL
+    id              UUID PRIMARY KEY,
+    created_at      TIMESTAMPTZ NOT NULL,
+    updated_at      TIMESTAMPTZ,
+    name            VARCHAR(100),
+    description     VARCHAR(500),
+    type            VARCHAR(10) NOT NULL,
+    last_message_at TIMESTAMPTZ
 );
 
 CREATE TABLE IF NOT EXISTS messages
@@ -60,6 +61,7 @@ CREATE TABLE IF NOT EXISTS read_statuses
 
 CREATE TABLE IF NOT EXISTS message_attachments
 (
+    id            UUID PRIMARY KEY,
     message_id    UUID NOT NULL REFERENCES messages (id) ON DELETE CASCADE,
     attachment_id UUID NOT NULL REFERENCES binary_contents (id) ON DELETE CASCADE
 );

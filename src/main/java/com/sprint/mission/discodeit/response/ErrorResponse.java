@@ -1,20 +1,26 @@
 package com.sprint.mission.discodeit.response;
 
-import com.sprint.mission.discodeit.exception.ExceptionCode;
-import lombok.Getter;
+import com.sprint.mission.discodeit.exception.DiscodeitException;
+import java.time.Instant;
+import java.util.Map;
 
-@Getter
-public class ErrorResponse {
+public record ErrorResponse(
+    Instant timestamp,
+    String code,
+    String message,
+    Map<String, Object> details,
+    String exceptionType,
+    int status
+) {
 
-  private int status;
-  private String message;
-
-  private ErrorResponse(int status, String message) {
-    this.status = status;
-    this.message = message;
-  }
-
-  public static ErrorResponse of(ExceptionCode exceptionCode) {
-    return new ErrorResponse(exceptionCode.getStatus(), exceptionCode.getMessage());
+  public static ErrorResponse from(DiscodeitException ex) {
+    return new ErrorResponse(
+        ex.getTimestamp(),
+        ex.getErrorCode().name(),
+        ex.getMessage(),
+        ex.getDetails(),
+        ex.getClass().getSimpleName(),
+        ex.getErrorCode().getStatus().value()
+    );
   }
 }

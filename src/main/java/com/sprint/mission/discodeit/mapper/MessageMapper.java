@@ -14,5 +14,9 @@ public abstract class MessageMapper {
 
   @Mapping(source = "message.channel.id", target = "channelId")
   @Mapping(target = "author", expression = "java(message.getAuthor() != null ? userMapper.toDto(message.getAuthor(), message.getAuthor().getStatus()) : null)")
+  @Mapping(target = "attachments", expression = "java(message.getMessageAttachments().stream().map(a -> binaryContentMapper.toDto(a.getBinaryContent())).toList())")
   public abstract MessageDto toDto(Message message);
+
+  @Autowired
+  protected BinaryContentMapper binaryContentMapper;
 }

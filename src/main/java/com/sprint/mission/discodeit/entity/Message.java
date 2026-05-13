@@ -9,6 +9,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.Getter;
 
@@ -33,9 +34,8 @@ public class Message extends BaseUpdatableEntity {
   @Column(columnDefinition = "text")
   private String content;
 
-  @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
-  @JoinTable(name = "message_attachments", joinColumns = @JoinColumn(name = "message_id"), inverseJoinColumns = @JoinColumn(name = "attachment_id"))
-  private List<BinaryContent> attachments = new ArrayList<>();
+  @OneToMany(mappedBy = "message", cascade = CascadeType.ALL, orphanRemoval = true)
+  private List<MessageAttachment> messageAttachments = new ArrayList<>();
 
   public Message(Channel channel, User author, String content) {
     this.channel = channel;
@@ -43,10 +43,9 @@ public class Message extends BaseUpdatableEntity {
     this.content = content;
   }
 
-  public void addAttachment(BinaryContent binaryContentId) {
-    if (binaryContentId != null) {
-      this.attachments.add(binaryContentId);
-    }
+  public void addAttachment(BinaryContent binaryContent) {
+    MessageAttachment attachment = new MessageAttachment(this, binaryContent);
+    this.messageAttachments.add(attachment);
   }
 
   // 필드를 수정하는 update 함수

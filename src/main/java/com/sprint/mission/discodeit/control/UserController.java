@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import jakarta.validation.Valid;
 import java.net.URI;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +23,7 @@ import java.util.List;
 import java.util.UUID;
 import org.springframework.web.multipart.MultipartFile;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
@@ -33,10 +35,14 @@ public class UserController {
   @PostMapping(consumes = "multipart/form-data")
   @ResponseStatus(HttpStatus.CREATED)
   public ResponseEntity<UserDto> createUser(
+      @Parameter(content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE))
       @Valid @RequestPart("userCreateRequest") UserCreateRequest request,
       @RequestPart(value = "profile", required = false) MultipartFile profile) {
+    log.info("사용자 생성 요청 수신 - username: {}, email: {}, hasProfile: {}",
+        request.username(), request.email(), profile != null && !profile.isEmpty());
     UserDto createdUser = userService.createUser(request, profile);
     URI location = URI.create("/api/users/" + createdUser.id());
+    log.info("사용자 생성 응답 완료 - userId: {}, location: {}", createdUser.id(), location);
     return ResponseEntity.created(location).body(createdUser);
   }
 
@@ -49,7 +55,9 @@ public class UserController {
   @DeleteMapping("/{id}")
   @ResponseStatus(HttpStatus.NO_CONTENT)
   public ResponseEntity<Void> deleteUser(@PathVariable UUID id) {
+    log.info("사용자 삭제 요청 수신 - userId: {}", id);
     userService.deleteUser(id);
+    log.info("사용자 삭제 응답 완료 - userId: {}", id);
     return ResponseEntity.noContent().build();
   }
 
@@ -58,15 +66,20 @@ public class UserController {
       @Parameter(content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE))
       @Valid @RequestPart("userUpdateRequest") UserUpdateRequest request,
       @RequestPart(value = "profile", required = false) MultipartFile profile) {
+    log.info("사용자 수정 요청 수신 - userId: {}, hasProfile: {}", id,
+        profile != null && !profile.isEmpty());
     UserDto updatedUser = userService.updateUser(id, request, profile);
+    log.info("사용자 수정 응답 완료 - userId: {}", id);
     return ResponseEntity.ok(updatedUser);
   }
 
   @PatchMapping("/{userId}/userStatus")
   public ResponseEntity<UserStatusDto> updateOnlineStatus(
       @PathVariable UUID userId,
-      @RequestBody UserStatusUpdateDto request
+      @Valid @RequestBody UserStatusUpdateDto request
   ) {
+    log.debug("사용자 온라인 상태 변경 요청 - userId: {}", userId);
+
     UserStatusDto updatedStatus = userStatusService.updateUserIdStatus(userId, request);
     return ResponseEntity.ok(updatedStatus);
   }
