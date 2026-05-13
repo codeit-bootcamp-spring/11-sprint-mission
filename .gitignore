@@ -6,7 +6,7 @@ build/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
 !**/src/test/**/build/
-src/main/generated/
+**/src/main/generated/
 
 ### STS ###
 .apt_generated
@@ -43,14 +43,14 @@ out/
 ### Mac OS ###
 .DS_Store
 
-### LOG Formatter ###
-src/main/resources/logback.xml
-
 ### FILE IO ###
 .discodeit
 
+### LOG ###
+.logs
+
 ### application.yaml ###
-application.yaml
+application*.yaml
 
 ### docs ###
 docs/
