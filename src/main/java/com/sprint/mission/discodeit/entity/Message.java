@@ -1,13 +1,14 @@
 package com.sprint.mission.discodeit.entity;
 
 import com.sprint.mission.discodeit.entity.base.BaseUpdatableEntity;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.util.ArrayList;
 import java.util.List;
@@ -38,12 +39,12 @@ public class Message extends BaseUpdatableEntity {
   @JoinColumn(name = "author_id")
   private User author;
 
-  // N:M 관계(messages:binary_contents)
+  // 1:N 관계(messages:binary_contents)
   // 중계 테이블 message_attachments / 중계 엔티티 Message
   // 의 message_id를 현재 엔티티의 외래키
   // 의 attachment_id는 반대쪽 엔티티(BinaryContent)의 외래키
   // (관계가 양방향일 경우 반대쪽 엔티티에도 @ManyToMany 필요)
-  @ManyToMany(fetch = FetchType.LAZY)
+  @OneToMany(fetch = FetchType.LAZY, orphanRemoval = true, cascade = CascadeType.ALL)
   @JoinTable(name = "message_attachments",
       joinColumns = @JoinColumn(name = "message_id"),
       inverseJoinColumns = @JoinColumn(name = "attachment_id"))

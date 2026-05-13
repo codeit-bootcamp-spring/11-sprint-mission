@@ -4,8 +4,7 @@ create table binary_contents
     created_at   timestamptz  not null,
     file_name    varchar(255) not null,
     size         bigint       not null,
-    content_type varchar(100) not null,
-    bytes        bytea        not null
+    content_type varchar(100) not null
 );
 
 create table users
@@ -35,14 +34,8 @@ create table channels
     updated_at  timestamptz,
     name        varchar(100),
     description varchar(500),
-    type        varchar(10) not null check (type in ('public', 'private'))
+    type        varchar(10) not null check (type in ('PUBLIC', 'PRIVATE'))
 );
-
-alter table channels
-    drop constraint channels_type_check;
-
-alter table channels
-    add constraint channels_type_check check (type in ('PUBLIC', 'PRIVATE'));
 
 create table read_statuses
 (

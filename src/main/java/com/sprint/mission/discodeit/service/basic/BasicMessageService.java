@@ -8,6 +8,8 @@ import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.exception.DiscodeitException;
+import com.sprint.mission.discodeit.exception.ErrorCode;
 import com.sprint.mission.discodeit.mapper.MessageMapper;
 import com.sprint.mission.discodeit.mapper.PageResponseMapper;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
@@ -15,11 +17,13 @@ import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.MessageService;
+import com.sprint.mission.discodeit.storage.BinaryContentStorage;
+import java.io.IOException;
 import java.time.Instant;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -27,6 +31,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class BasicMessageService implements MessageService {
@@ -37,34 +42,65 @@ public class BasicMessageService implements MessageService {
   private final BinaryContentRepository binaryContentRepository;
   private final MessageMapper messageMapper;
   private final PageResponseMapper pageResponseMapper;
+  private final BinaryContentStorage binaryContentStorage;
 
   // Create
   @Override
   @Transactional
   public Message create(MessageCreateRequest dto, List<MultipartFile> attachments) {
+
+    log.debug("[MESSAGE_CREATE_START] 메시지 생성 시작 - 채널 ID={}, 작성자 ID={}, 첨부파일 수={}",
+        dto.channelId(), dto.authorId(), attachments != null ? attachments.size() : 0);
+
     Channel channel = channelRepository.findById(dto.channelId()).orElseThrow(
-        () -> new NoSuchElementException("존재하지 않는 채널입니다. Id : " + dto.channelId())
+        () -> {
+          log.warn("[MESSAGE_CREATE_FAILED] 메시지 생성 실패 - 채널이 존재하지 않음 - 채널 ID={}", dto.channelId());
+          return new DiscodeitException(ErrorCode.CHANNEL_NOT_FOUND);
+        }
     );
 
     User author = userRepository.findById(dto.authorId()).orElseThrow(
-        () -> new NoSuchElementException("존재하지 않는 유저입니다. Id : " + dto.authorId())
+        () -> {
+          log.warn("[MESSAGE_CREATE_FAILED] 메시지 생성 실패 - 유저가 존재하지 않음 - 유저 ID={}", dto.authorId());
+          return new DiscodeitException(ErrorCode.USER_NOT_FOUND);
+        }
     );
 
     Message message = Message.create(dto.content(), channel, author);
 
     // 첨부파일 등록(선택)
     if (attachments != null && !attachments.isEmpty()) {
+
+      log.debug("[MESSAGE_CREATE_ATTACHMENTS_START] 첨부파일 등록 시작 - 파일 수={}",
+          attachments != null ? attachments.size() : 0);
+
       attachments.forEach(file -> {
         BinaryContent binaryContent = BinaryContent.of(
             file.getOriginalFilename(), file.getSize(),
             file.getContentType()
         );
+
+        try {
+          binaryContentStorage.put(binaryContent.getId(), file.getBytes());
+        } catch (IOException e) {
+          log.error("[MESSAGE_CREATE_FAILED] 첨부파일 저장 실패 - 파일명={}, 크기={}",
+              file.getOriginalFilename(), file.getSize(), e);
+          throw new DiscodeitException(ErrorCode.ATTACHMENT_SAVE_FAILED);
+        }
+
         binaryContentRepository.save(binaryContent);
         message.addAttachment(binaryContent); // message.getAttachments().add(binaryContent) 캡슐화
       });
+
+      log.debug("[MESSAGE_CREATE_ATTACHMENTS_SUCCESS] 첨부파일 등록 완료 - 파일 수={}",
+          attachments != null ? attachments.size() : 0);
     }
 
     messageRepository.save(message);
+
+    log.info("[MESSAGE_CREATE_SUCCESS] 메시지 생성 완료 - 메시지 ID={}, 채널 ID={}, 작성자 ID={}, 첨부파일 수={}",
+        message.getId(), channel.getId(), author.getId(),
+        attachments != null ? attachments.size() : 0);
 
     return message;
   }
@@ -87,12 +123,20 @@ public class BasicMessageService implements MessageService {
   @Override
   @Transactional
   public Message update(UUID id, MessageUpdateRequest dto) {
+    log.debug("[MESSAGE_UPDATE_START] 메시지 수정 시작 - 수정할 메시지 ID={}, 요청할 수정 메시지 내용={}",
+        id, dto.newContent());
+
     Message message = messageRepository.findById(id).orElseThrow(
-        () -> new NoSuchElementException("해당 메시지가 존재하지 않습니다. Id : " + id)
+        () -> {
+          log.warn("[MESSAGE_UPDATE_FAILED] 메시지 수정 실패 - 존재하지 않음 - 메시지 ID={}", id);
+          return new DiscodeitException(ErrorCode.MESSAGE_NOT_FOUND);
+        }
     );
     message.updateContent(dto.newContent());
     messageRepository.save(message);
-    System.out.println();
+
+    log.info("[MESSAGE_UPDATE_SUCCESS] 메시지 수정 성공 - 수정한 메시지 ID={}, 수정한 메시지 내용={}", id,
+        dto.newContent());
 
     return message;
   }
@@ -103,13 +147,30 @@ public class BasicMessageService implements MessageService {
   @Override
   @Transactional
   public void delete(UUID id) {
+
+    log.debug("[MESSAGE_DELETE_START] 메시지 삭제 시작 - 메시지 ID={}", id);
+
     Message message = messageRepository.findById(id).orElseThrow(
-        () -> new NoSuchElementException("해당 메시지가 존재하지 않습니다. Id : " + id)
+        () -> {
+          log.warn("[MESSAGE_DELETE_FAILED] 메시지 삭제 실패 - 존재하지 않음 - 메시지 ID={}", id);
+          return new DiscodeitException(ErrorCode.MESSAGE_NOT_FOUND);
+        }
     );
+
     // 특정 메시지에 존재하는 첨부파일 삭제
-    binaryContentRepository.deleteAll(message.getAttachments());
+    if (message.getAttachments() != null && !message.getAttachments().isEmpty()) {
+      log.debug("[MESSAGE_DELETE_ATTACHMENTS_START] 메시지의 첨부파일 삭제 시작 - 메시지 ID={}, 첨부파일 수={}",
+          message.getId(), message.getAttachments() == null ? 0 : message.getAttachments().size());
+
+      binaryContentRepository.deleteAll(message.getAttachments());
+
+      log.debug("[MESSAGE_DELETE_ATTACHMENTS_SUCCESS] 첨부파일 삭제 완료 - 메시지 ID={}, 첨부파일 수={}",
+          message.getId(), message.getAttachments() == null ? 0 : message.getAttachments().size());
+    }
 
     // 메시지 삭제
     messageRepository.deleteById(id);
+
+    log.info("[MESSAGE_DELETE_SUCCESS] 메시지 삭제 완료 - 메시지 ID={}", id);
   }
 }

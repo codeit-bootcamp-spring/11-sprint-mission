@@ -18,10 +18,12 @@ public interface ReadStatusRepository extends JpaRepository<ReadStatus, UUID> {
   Optional<ReadStatus> findByUserAndChannel(User user, Channel channel);
 
   @EntityGraph(attributePaths = {"user"})
-  Optional<ReadStatus> findByChannelId(UUID id);
+  Optional<ReadStatus> findByChannelId(UUID channelIds);
 
   void deleteAllByChannelId(UUID id);
 
   @EntityGraph(attributePaths = {"user", "channel"})
   List<ReadStatus> findAllByUserIdIn(List<UUID> userIds);
+
+  List<ReadStatus> findByChannelIdIn(List<UUID> channelIds);
 }

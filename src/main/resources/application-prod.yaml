@@ -1,0 +1,18 @@
+spring:
+  boot:
+    admin:
+      client:
+        url: ${SPRING_BOOT_ADMIN_CLIENT_URL}
+
+  # To Connect PostgreSQL
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+
+server:
+  port: 80
+
+logging:
+  level:
+    com.sprint.mission.discodeit: info

@@ -24,7 +24,7 @@ public class LocalBinaryContentStorage implements BinaryContentStorage {
   private final Path root;
 
   public LocalBinaryContentStorage(
-      @Value("${discodeit.storage.local.root-path") String rootPath) {
+      @Value("${discodeit.storage.local.root-path}") String rootPath) {
     this.root = Path.of(rootPath);
   }
 
@@ -70,7 +70,7 @@ public class LocalBinaryContentStorage implements BinaryContentStorage {
 
     return ResponseEntity.ok()
         .header(HttpHeaders.CONTENT_DISPOSITION,
-            "attachment : filename=\"" + dto.fileName() + "\"")
+            "attachment; filename=\"" + dto.fileName() + "\"")
         .header(HttpHeaders.CONTENT_TYPE, dto.contentType())
         .header(HttpHeaders.CONTENT_LENGTH, String.valueOf(dto.size()))
         .body(resource);

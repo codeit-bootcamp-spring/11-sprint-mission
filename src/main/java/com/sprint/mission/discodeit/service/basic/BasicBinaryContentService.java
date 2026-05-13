@@ -3,12 +3,13 @@ package com.sprint.mission.discodeit.service.basic;
 import com.sprint.mission.discodeit.dto.request.BinaryContentCreateRequest;
 import com.sprint.mission.discodeit.dto.response.BinaryContentDto;
 import com.sprint.mission.discodeit.entity.BinaryContent;
+import com.sprint.mission.discodeit.exception.DiscodeitException;
+import com.sprint.mission.discodeit.exception.ErrorCode;
 import com.sprint.mission.discodeit.mapper.BinaryContentMapper;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.service.BinaryContentService;
 import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -36,7 +37,7 @@ public class BasicBinaryContentService implements BinaryContentService {
   @Transactional(readOnly = true)
   public BinaryContentDto find(UUID id) {
     BinaryContent binaryContent = binaryContentRepository.findById(id).orElseThrow(
-        () -> new NoSuchElementException("해당 BinaryContent는 존재하지 않습니다. BinaryContent Id : " + id)
+        () -> new DiscodeitException(ErrorCode.BINARY_CONTENT_NOT_FOUND)
     );
     return binaryContentMapper.toDto(binaryContent);
   }
@@ -52,7 +53,7 @@ public class BasicBinaryContentService implements BinaryContentService {
   @Transactional
   public void delete(UUID id) {
     if (!binaryContentRepository.existsById(id)) {
-      throw new NoSuchElementException("해당 BinaryContent는 존재하지 않습니다. BinaryContent Id : " + id);
+      throw new DiscodeitException(ErrorCode.BINARY_CONTENT_NOT_FOUND);
     }
     binaryContentRepository.deleteById(id);
   }

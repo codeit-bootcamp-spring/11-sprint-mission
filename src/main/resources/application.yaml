@@ -10,25 +10,59 @@ discodeit:
     local:
       root-path: ./attachments/download
 
-#logging:
-#  level:
-#    org.springframework: DEBUG
-#    org.springdoc: DEBUG
 spring:
-  # To Connect Postgresql
-  datasource:
-    url: jdbc:postgresql://localhost:5432/discodeit
-    username: discodeit_user
-    password: discodeit1234
-    driver-class-name: org.postgresql.Driver
+  application:
+    name: discodeit
 
-  # To Debug
+  boot:
+    admin:
+      client:
+        instance:
+          name: discodeit
+          service-base-url: http://localhost:8080
+
+  profiles:
+    active: dev # dev, prod test
+
   jpa:
     hibernate:
-      ddl-auto: update # 운영때는 none으로 교체, 개발중에는 update
+      ddl-auto: validate # 운영때는 none으로 교체, 개발중에는 update, 스키마 구조 변경 방어 validate
+
     show-sql: true # 실행쿼리를 확인
     properties:
       hibernate:
         format_sql: true # SQL문 가독성
         use_sql_comments: true # SQL 주석 제공
     open-in-view: false
+
+logging:
+  level:
+    root: info
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, metrics, loggers
+  info:
+    env:
+      enabled: true
+
+info:
+  app:
+    name: Discodeit
+    version: 1.7.0
+    java: 17
+    spring-boot: 3.4.0
+
+  jpa:
+    ddl-auto: validate
+
+  storage:
+    type: local
+    local:
+      root-path: ./attachments/download
+
+  multipart:
+    max-file-size: 10MB
+    max-request-size: 10MB

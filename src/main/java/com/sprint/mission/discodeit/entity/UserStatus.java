@@ -43,6 +43,6 @@ public class UserStatus extends BaseUpdatableEntity {
   }
 
   public void updateLastOnline(Instant lastActiveAt) {
-    this.lastActiveAt = Instant.now();
+    this.lastActiveAt = lastActiveAt;
   }
 }

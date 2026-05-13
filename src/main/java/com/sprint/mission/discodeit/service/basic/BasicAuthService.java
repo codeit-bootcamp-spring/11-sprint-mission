@@ -1,10 +1,13 @@
 package com.sprint.mission.discodeit.service.basic;
 
 import com.sprint.mission.discodeit.dto.request.LoginRequest;
+import com.sprint.mission.discodeit.dto.response.UserDto;
 import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.exception.DiscodeitException;
+import com.sprint.mission.discodeit.exception.ErrorCode;
+import com.sprint.mission.discodeit.mapper.UserMapper;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.AuthService;
-import java.util.NoSuchElementException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -13,15 +16,21 @@ import org.springframework.stereotype.Service;
 public class BasicAuthService implements AuthService {
 
   private final UserRepository userRepository;
+  private final UserMapper userMapper;
 
   @Override
-  public User login(LoginRequest request) {
-    // 조건 -> 탐색 -> 조건에 맞지 않으면
-    return userRepository.findAll().stream()
-        .filter(user -> user.getUsername().equals(request.username()) && user.getPassword()
-            .equals(request.password()))
-        .findFirst()
-        .orElseThrow(() -> new NoSuchElementException("사용자 이름 또는 비밀번호가 일치하지 않습니다."));
+  public UserDto login(LoginRequest request) {
+    String username = request.username();
+    String password = request.password();
+
+    User user = userRepository.findByUsername(username)
+        .orElseThrow(() -> new DiscodeitException(ErrorCode.INVALID_LOGIN));
+
+    if (!user.getPassword().equals(password)) {
+      throw new DiscodeitException(ErrorCode.INVALID_LOGIN);
+    }
+
+    return userMapper.toDto(user);
   }
 
 }

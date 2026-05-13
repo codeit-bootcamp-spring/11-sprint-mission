@@ -6,6 +6,7 @@ build/
 .kotlin
 *.ser
 attachments/
+.logs
 
 ### STS ###
 .apt_generated
