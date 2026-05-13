@@ -1,0 +1,8 @@
+# admin 서버 설정
+server:
+  port: 9090 # 기존 8080 포트와 충돌하지 않도록 포트 설정
+
+spring:
+  application:
+    name: admin
+

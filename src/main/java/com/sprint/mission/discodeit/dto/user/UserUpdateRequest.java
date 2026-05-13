@@ -9,7 +9,7 @@ public record UserUpdateRequest(
     @Email(message = "유효한 이메일 형식(예: user@example.com)이 아닙니다.")
     String newEmail,
 
-    @Size(min = 4, message = "비밀번호는 최소 4자 이상이어야 합니다.")
+    @Size(min = 8, message = "비밀번호는 최소 8자 이상이어야 합니다.")
     String newPassword
 ) {
 

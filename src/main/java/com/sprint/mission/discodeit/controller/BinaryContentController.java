@@ -8,12 +8,14 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @Tag(name = "BinaryContent")
 @RestController
 @RequiredArgsConstructor
@@ -51,7 +53,11 @@ public class BinaryContentController {
   })
   @GetMapping("/{binaryContentId}/download")
   public ResponseEntity<?> download(@PathVariable UUID binaryContentId) {
+    log.debug("download 시작 - 입력값: {}", binaryContentId);
+
     BinaryContentDto binaryContentDto = binaryContentService.find(binaryContentId);
+
+    log.info("파일 다운로드 완료 - binaryContentId: {}", binaryContentId);
     return binaryContentStorage.download(binaryContentDto);
   }
 }
