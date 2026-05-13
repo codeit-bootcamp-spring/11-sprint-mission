@@ -4,6 +4,7 @@ import com.sprint.mission.discodeit.dto.UserDto;
 import com.sprint.mission.discodeit.dto.UserLoginRequest;
 import com.sprint.mission.discodeit.service.AuthService;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -19,7 +20,7 @@ public class AuthController {
   private final AuthService authService;
 
   @PostMapping("/login")
-  public UserDto login(@RequestBody UserLoginRequest request) {
+  public UserDto login(@Valid @RequestBody UserLoginRequest request) {
     return authService.login(request);
   }
 }

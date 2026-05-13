@@ -1,0 +1,17 @@
+#운영 환경 설정
+server:
+  port: 80
+
+spring:
+  boot:
+    admin:
+      client:
+        url: ${SPRING_BOOT_ADMIN_CLIENT_URL}
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+
+logging:
+  level:
+    com.sprint.mission.discodeit: info

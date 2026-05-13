@@ -5,6 +5,7 @@ import com.sprint.mission.discodeit.dto.UserDto;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.ChannelType;
 import com.sprint.mission.discodeit.entity.Message;
+import com.sprint.mission.discodeit.repository.MessageRepository;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
@@ -21,6 +22,9 @@ public abstract class ChannelMapper {
 
   @Autowired
   protected UserMapper userMapper;
+
+  @Autowired
+  protected MessageRepository messageRepository;
 
   @Mapping(target = "participants", source = ".", qualifiedByName = "mapParticipants")
   @Mapping(target = "lastMessageAt", source = ".", qualifiedByName = "mapLastMessageAt")
@@ -48,7 +52,7 @@ public abstract class ChannelMapper {
       return null;
     }
 
-    return channel.getMessages().stream().map(Message::getCreatedAt)
-        .max(Instant::compareTo).orElse(null);
+    return messageRepository.findTopByChannelOrderByCreatedAtDesc(channel)
+        .map(Message::getCreatedAt).orElse(null);
   }
 }

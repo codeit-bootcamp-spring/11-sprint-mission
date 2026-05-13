@@ -1,3 +1,12 @@
+CREATE TABLE IF NOT EXISTS binary_contents
+(
+    id           UUID PRIMARY KEY,
+    created_at   TIMESTAMPTZ  NOT NULL,
+    file_name    VARCHAR(255) NOT NULL,
+    size         BIGINT       NOT NULL,
+    content_type VARCHAR(100) NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS users
 (
     id         UUID PRIMARY KEY,
@@ -62,14 +71,4 @@ CREATE TABLE IF NOT EXISTS message_attachments
     PRIMARY KEY (message_id, attachment_id),
     FOREIGN KEY (message_id) REFERENCES messages (id) ON DELETE CASCADE,
     FOREIGN KEY (attachment_id) REFERENCES binary_contents (id) ON DELETE CASCADE
-);
-
-CREATE TABLE IF NOT EXISTS binary_contents
-(
-    id           UUID PRIMARY KEY,
-    created_at   TIMESTAMPTZ  NOT NULL,
-    file_name    VARCHAR(255) NOT NULL,
-    size         BIGINT       NOT NULL,
-    content_type VARCHAR(100) NOT NULL,
-    bytes        BYTEA        NOT NULL
 );

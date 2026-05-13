@@ -70,4 +70,14 @@ public class LocalBinaryContentStorage implements BinaryContentStorage {
         .header(HttpHeaders.CONTENT_LENGTH, String.valueOf(dto.size()))
         .body(resource);
   }
+
+  @Override
+  public void delete(UUID id) {
+    try {
+      Path filePath = resolvePath(id);
+      Files.deleteIfExists(filePath);
+    } catch (IOException e) {
+      throw new RuntimeException("파일 삭제 중 오류가 발생했습니다.", e);
+    }
+  }
 }
