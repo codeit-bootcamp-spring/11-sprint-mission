@@ -4,8 +4,10 @@ import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.exception.ChannelNotFoundException;
 import com.sprint.mission.discodeit.exception.DiscodeitException;
 import com.sprint.mission.discodeit.exception.ErrorCode;
+import com.sprint.mission.discodeit.exception.UserNotFoundException;
 import com.sprint.mission.discodeit.mapper.MessageMapper;
 import com.sprint.mission.discodeit.mapper.PageResponseMapper;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
@@ -21,9 +23,11 @@ import com.sprint.mission.discodeit.service.dto.message.UpdateMessageRequest;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import java.time.Instant;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
@@ -31,6 +35,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -47,14 +52,16 @@ public class MessageService {
     public MessageDto create(CreateMessageRequest request) {
         validateCreateRequest(request);
         User author = userRepository.findById(request.authorId())
-                .orElseThrow(() -> new DiscodeitException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new UserNotFoundException(request.authorId()));
         Channel channel = getChannel(request.channelId());
 
         // 첨부파일 엔티티 생성 - Message cascade를 통해 함께 저장됨
         List<BinaryContent> attachments = buildAttachments(request.attachments());
         Message message = new Message(author, channel, request.content(), attachments);
 
-        return toDto(messageRepository.save(message));
+        Message saved = messageRepository.save(message);
+        log.info("메시지 생성 완료: id={}, channelId={}", saved.getId(), request.channelId());
+        return toDto(saved);
     }
 
     @Transactional
@@ -93,6 +100,7 @@ public class MessageService {
         Message message = getMessage(request.messageId());
         // 변경 감지(dirty checking)
         message.update(request.content());
+        log.info("메시지 수정 완료: id={}", message.getId());
         return toDto(message);
     }
 
@@ -101,6 +109,7 @@ public class MessageService {
         Message message = getMessage(id);
         // Message의 attachments는 orphanRemoval 설정에 의해 함께 삭제됨
         messageRepository.delete(message);
+        log.info("메시지 삭제 완료: id={}", id);
     }
 
     private Message getMessage(UUID id) {
@@ -108,7 +117,7 @@ public class MessageService {
             throw new DiscodeitException(ErrorCode.MESSAGE_ID_REQUIRED);
         }
         return messageRepository.findById(id)
-                .orElseThrow(() -> new DiscodeitException(ErrorCode.MESSAGE_NOT_FOUND));
+                .orElseThrow(() -> new DiscodeitException(ErrorCode.MESSAGE_NOT_FOUND, Map.of("messageId", id)));
     }
 
     private Channel getChannel(UUID id) {
@@ -116,7 +125,7 @@ public class MessageService {
             throw new DiscodeitException(ErrorCode.CHANNEL_ID_REQUIRED);
         }
         return channelRepository.findById(id)
-                .orElseThrow(() -> new DiscodeitException(ErrorCode.CHANNEL_NOT_FOUND));
+                .orElseThrow(() -> new ChannelNotFoundException(id));
     }
 
     private List<BinaryContent> buildAttachments(List<MessageAttachmentRequest> attachments) {

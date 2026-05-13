@@ -4,6 +4,7 @@ import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.entity.UserStatus;
 import com.sprint.mission.discodeit.exception.DiscodeitException;
 import com.sprint.mission.discodeit.exception.ErrorCode;
+import com.sprint.mission.discodeit.exception.UserNotFoundException;
 import com.sprint.mission.discodeit.mapper.UserStatusMapper;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.repository.UserStatusRepository;
@@ -33,7 +34,7 @@ public class UserStatusService {
     public UserStatusDto create(CreateUserStatusRequest request) {
         validateCreateRequest(request);
         User user = userRepository.findById(request.userId())
-                .orElseThrow(() -> new DiscodeitException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new UserNotFoundException(request.userId()));
 
         if (userStatusRepository.findByUserId(request.userId()).isPresent()) {
             throw new DiscodeitException(ErrorCode.DUPLICATE_USER_STATUS);
@@ -57,7 +58,7 @@ public class UserStatusService {
     public UserStatusDto update(UpdateUserStatusRequest request) {
         validateUpdateRequest(request);
         UserStatus userStatus = getUserStatus(request.userStatusId());
-        userStatus.updateLastActiveAt(request.lastConnectedAt());
+        userStatus.updateLastActiveAt(request.lastActiveAt());
         return toDto(userStatus);
     }
 
@@ -65,11 +66,11 @@ public class UserStatusService {
     public UserStatusDto updateByUserId(UpdateUserStatusByUserIdRequest request) {
         validateUpdateByUserIdRequest(request);
         userRepository.findById(request.userId())
-                .orElseThrow(() -> new DiscodeitException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new UserNotFoundException(request.userId()));
 
         UserStatus userStatus = userStatusRepository.findByUserId(request.userId())
                 .orElseThrow(() -> new DiscodeitException(ErrorCode.USER_STATUS_NOT_FOUND));
-        userStatus.updateLastActiveAt(request.lastConnectedAt());
+        userStatus.updateLastActiveAt(request.lastActiveAt());
         return toDto(userStatus);
     }
 
@@ -113,7 +114,7 @@ public class UserStatusService {
         if (request.userStatusId() == null) {
             throw new DiscodeitException(ErrorCode.USER_STATUS_ID_REQUIRED);
         }
-        if (request.lastConnectedAt() == null) {
+        if (request.lastActiveAt() == null) {
             throw new DiscodeitException(ErrorCode.LAST_CONNECTED_AT_REQUIRED);
         }
     }
@@ -125,7 +126,7 @@ public class UserStatusService {
         if (request.userId() == null) {
             throw new DiscodeitException(ErrorCode.USER_ID_REQUIRED);
         }
-        if (request.lastConnectedAt() == null) {
+        if (request.lastActiveAt() == null) {
             throw new DiscodeitException(ErrorCode.LAST_CONNECTED_AT_REQUIRED);
         }
     }

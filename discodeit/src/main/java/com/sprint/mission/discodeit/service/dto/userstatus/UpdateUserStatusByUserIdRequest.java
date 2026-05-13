@@ -5,6 +5,6 @@ import java.util.UUID;
 
 public record UpdateUserStatusByUserIdRequest(
         UUID userId,
-        Instant lastConnectedAt
+        Instant lastActiveAt
 ) {
 }

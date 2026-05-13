@@ -14,7 +14,7 @@ $$;
 
 CREATE TABLE IF NOT EXISTS binary_contents (
                                                id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    created_at   TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     file_name    VARCHAR(255) NOT NULL,
     size         BIGINT NOT NULL,
     content_type VARCHAR(100) NOT NULL,
@@ -23,8 +23,8 @@ CREATE TABLE IF NOT EXISTS binary_contents (
 
 CREATE TABLE IF NOT EXISTS channels (
                                         id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at   TIMESTAMPTZ,
+    created_at   TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at   TIMESTAMP WITH TIME ZONE,
     name         VARCHAR(100) NOT NULL,
     description  VARCHAR(500),
     type         channel_type NOT NULL
@@ -32,8 +32,8 @@ CREATE TABLE IF NOT EXISTS channels (
 
 CREATE TABLE IF NOT EXISTS users (
                                      id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at   TIMESTAMPTZ,
+    created_at   TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at   TIMESTAMP WITH TIME ZONE,
     username     VARCHAR(50) NOT NULL UNIQUE,
     email        VARCHAR(100) NOT NULL UNIQUE,
     password     VARCHAR(60) NOT NULL,
@@ -46,10 +46,10 @@ CREATE TABLE IF NOT EXISTS users (
 
 CREATE TABLE IF NOT EXISTS user_statuses (
                                              id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at     TIMESTAMPTZ,
+    created_at     TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at     TIMESTAMP WITH TIME ZONE,
     user_id        UUID NOT NULL UNIQUE,
-    last_active_at TIMESTAMPTZ NOT NULL,
+    last_active_at TIMESTAMP WITH TIME ZONE NOT NULL,
     CONSTRAINT fk_user_statuses_user
     FOREIGN KEY (user_id)
     REFERENCES users(id)
@@ -58,11 +58,11 @@ CREATE TABLE IF NOT EXISTS user_statuses (
 
 CREATE TABLE IF NOT EXISTS read_statuses (
                                              id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at   TIMESTAMPTZ,
+    created_at   TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at   TIMESTAMP WITH TIME ZONE,
     user_id      UUID NOT NULL,
     channel_id   UUID NOT NULL,
-    last_read_at TIMESTAMPTZ NOT NULL,
+    last_read_at TIMESTAMP WITH TIME ZONE NOT NULL,
     CONSTRAINT fk_read_statuses_user
     FOREIGN KEY (user_id)
     REFERENCES users(id)
@@ -77,8 +77,8 @@ CREATE TABLE IF NOT EXISTS read_statuses (
 
 CREATE TABLE IF NOT EXISTS messages (
                                         id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at  TIMESTAMPTZ,
+    created_at  TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at  TIMESTAMP WITH TIME ZONE,
     content     TEXT,
     channel_id  UUID NOT NULL,
     author_id   UUID,

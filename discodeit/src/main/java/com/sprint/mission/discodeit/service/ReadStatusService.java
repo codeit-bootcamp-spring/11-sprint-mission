@@ -3,8 +3,10 @@ package com.sprint.mission.discodeit.service;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.exception.ChannelNotFoundException;
 import com.sprint.mission.discodeit.exception.DiscodeitException;
 import com.sprint.mission.discodeit.exception.ErrorCode;
+import com.sprint.mission.discodeit.exception.UserNotFoundException;
 import com.sprint.mission.discodeit.mapper.ReadStatusMapper;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
@@ -13,7 +15,6 @@ import com.sprint.mission.discodeit.service.dto.readstatus.CreateReadStatusReque
 import com.sprint.mission.discodeit.service.dto.readstatus.ReadStatusDto;
 import com.sprint.mission.discodeit.service.dto.readstatus.UpdateReadStatusRequest;
 
-import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -45,11 +46,6 @@ public class ReadStatusService {
         return toDto(readStatusRepository.save(readStatus));
     }
 
-    @Transactional
-    public ReadStatusDto createByChannel(UUID channelId, UUID userId) {
-        return create(new CreateReadStatusRequest(userId, channelId, null));
-    }
-
     public ReadStatusDto find(UUID id) {
         return toDto(getReadStatus(id));
     }
@@ -74,15 +70,6 @@ public class ReadStatusService {
     }
 
     @Transactional
-    public ReadStatusDto updateByChannel(UUID channelId, UUID readStatusId, Instant lastReadAt) {
-        ReadStatus readStatus = getReadStatus(readStatusId);
-        if (!readStatus.getChannel().getId().equals(channelId)) {
-            throw new DiscodeitException(ErrorCode.INVALID_REQUEST, "해당 채널의 메시지 수신 정보가 아니에요.");
-        }
-        return update(new UpdateReadStatusRequest(readStatusId, lastReadAt));
-    }
-
-    @Transactional
     public void delete(UUID id) {
         ReadStatus readStatus = getReadStatus(id);
         readStatusRepository.delete(readStatus);
@@ -98,7 +85,7 @@ public class ReadStatusService {
 
     private User getUser(UUID userId) {
         return userRepository.findById(userId)
-                .orElseThrow(() -> new DiscodeitException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new UserNotFoundException(userId));
     }
 
     private Channel getChannel(UUID channelId) {
@@ -106,7 +93,7 @@ public class ReadStatusService {
             throw new DiscodeitException(ErrorCode.CHANNEL_ID_REQUIRED);
         }
         return channelRepository.findById(channelId)
-                .orElseThrow(() -> new DiscodeitException(ErrorCode.CHANNEL_NOT_FOUND));
+                .orElseThrow(() -> new ChannelNotFoundException(channelId));
     }
 
     private ReadStatusDto toDto(ReadStatus readStatus) {

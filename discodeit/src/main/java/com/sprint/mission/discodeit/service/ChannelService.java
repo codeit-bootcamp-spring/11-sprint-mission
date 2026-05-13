@@ -5,8 +5,11 @@ import com.sprint.mission.discodeit.entity.ChannelType;
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.exception.ChannelNotFoundException;
 import com.sprint.mission.discodeit.exception.DiscodeitException;
 import com.sprint.mission.discodeit.exception.ErrorCode;
+import com.sprint.mission.discodeit.exception.PrivateChannelUpdateException;
+import com.sprint.mission.discodeit.exception.UserNotFoundException;
 import com.sprint.mission.discodeit.mapper.ChannelMapper;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
@@ -21,9 +24,11 @@ import java.util.List;
 import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -41,6 +46,7 @@ public class ChannelService {
         Channel savedChannel = channelRepository.save(
                 Channel.publicChannel(request.name(), request.description())
         );
+        log.info("공개 채널 생성 완료: id={}, name={}", savedChannel.getId(), savedChannel.getName());
         return toDto(savedChannel);
     }
 
@@ -54,12 +60,13 @@ public class ChannelService {
                 .distinct()
                 .forEach(participantId -> {
                     User user = userRepository.findById(participantId)
-                            .orElseThrow(() -> new DiscodeitException(ErrorCode.USER_NOT_FOUND));
+                            .orElseThrow(() -> new UserNotFoundException(participantId));
                     readStatusRepository.save(
                             new ReadStatus(user, savedChannel, savedChannel.getCreatedAt())
                     );
                 });
 
+        log.info("비공개 채널 생성 완료: id={}, 참여자 수={}", savedChannel.getId(), request.participantIds().size());
         return toDto(savedChannel);
     }
 
@@ -72,7 +79,7 @@ public class ChannelService {
             throw new DiscodeitException(ErrorCode.USER_ID_REQUIRED);
         }
         userRepository.findById(userId)
-                .orElseThrow(() -> new DiscodeitException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new UserNotFoundException(userId));
 
         List<UUID> visiblePrivateChannelIds = readStatusRepository.findAllByUserId(userId).stream()
                 .map(readStatus -> readStatus.getChannel().getId())
@@ -91,10 +98,11 @@ public class ChannelService {
 
         Channel channel = getChannel(request.channelId());
         if (channel.getType() == ChannelType.PRIVATE) {
-            throw new DiscodeitException(ErrorCode.PRIVATE_CHANNEL_UPDATE_NOT_ALLOWED);
+            throw new PrivateChannelUpdateException(request.channelId());
         }
 
         channel.update(request.name(), request.description());
+        log.info("채널 수정 완료: id={}", channel.getId());
         return toDto(channel);
     }
 
@@ -109,6 +117,7 @@ public class ChannelService {
 
         readStatusRepository.deleteAllByChannelId(id);
         channelRepository.delete(channel);
+        log.info("채널 삭제 완료: id={}", id);
     }
 
     private Channel getChannel(UUID id) {
@@ -116,7 +125,7 @@ public class ChannelService {
             throw new DiscodeitException(ErrorCode.CHANNEL_ID_REQUIRED);
         }
         return channelRepository.findById(id)
-                .orElseThrow(() -> new DiscodeitException(ErrorCode.CHANNEL_NOT_FOUND));
+                .orElseThrow(() -> new ChannelNotFoundException(id));
     }
 
     private ChannelDto toDto(Channel channel) {
