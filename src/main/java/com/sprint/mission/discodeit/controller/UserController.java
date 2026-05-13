@@ -7,6 +7,7 @@ import com.sprint.mission.discodeit.dto.response.UserDto;
 import com.sprint.mission.discodeit.dto.response.UserStatusDto;
 import com.sprint.mission.discodeit.service.UserService;
 import com.sprint.mission.discodeit.service.UserStatusService;
+import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -39,7 +40,7 @@ public class UserController {
 
   @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<UserDto> create(
-      @RequestPart("userCreateRequest") UserCreateRequest request,
+      @Valid @RequestPart("userCreateRequest") UserCreateRequest request,
       @RequestPart(value = "profile", required = false) MultipartFile profile) {
     UserDto response = userService.create(request, profile);
     return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -48,7 +49,7 @@ public class UserController {
   @PatchMapping(value = "/{userId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<UserDto> update(
       @PathVariable UUID userId,
-      @RequestPart("userUpdateRequest") UserUpdateRequest request,
+      @Valid @RequestPart("userUpdateRequest") UserUpdateRequest request,
       @RequestPart(value = "profile", required = false) MultipartFile profile) {
     UserDto response = userService.update(userId, request, profile);
     return ResponseEntity.ok(response);
@@ -63,7 +64,7 @@ public class UserController {
   @PatchMapping("/{userId}/userStatus")
   public ResponseEntity<UserStatusDto> updateUserStatus(
       @PathVariable UUID userId,
-      @RequestBody UserStatusUpdateRequest request) {
+      @Valid @RequestBody UserStatusUpdateRequest request) {
     UserStatusDto response = userStatusService.update(userId, request);
     return ResponseEntity.ok(response);
   }

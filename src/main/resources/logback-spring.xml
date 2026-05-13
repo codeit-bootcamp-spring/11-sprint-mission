@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+  <appender class="ch.qos.logback.core.ConsoleAppender" name="CONSOLE">
+    <encoder>
+      <pattern>${LOG_PATTERN}</pattern>
+    </encoder>
+  </appender>
+  <appender class="ch.qos.logback.core.rolling.RollingFileAppender" name="FILE">
+    <encoder>
+      <pattern>${LOG_PATTERN}</pattern>
+    </encoder>
+    <file>${LOG_PATH}/discodeit.log</file>
+    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+      <fileNamePattern>${LOG_PATH}/discodeit.%d{yyyy-MM-dd}.log</fileNamePattern>
+      <maxHistory>30</maxHistory>
+    </rollingPolicy>
+  </appender>
+
+  <!-- 콘솔 출력 -->
+  <property name="LOG_PATH" value=".logs"/>
+
+  <!-- 파일 출력 (일별 롤링) -->
+  <property name="LOG_PATTERN"
+    value="%d{yy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %-36logger{36} [%X{requestId} | %X{requestMethod} | %X{requestUrl}] - %msg%n"/>
+
+  <!-- 기본 로그 레벨 -->
+  <root level="INFO">
+    <appender-ref ref="CONSOLE"/>
+    <appender-ref ref="FILE"/>
+  </root>
+
+  <!-- 개발 환경 -->
+  <springProfile name="dev">
+    <logger additivity="false" level="DEBUG" name="com.sprint.mission">
+      <appender-ref ref="CONSOLE"/>
+      <appender-ref ref="FILE"/>
+    </logger>
+    <logger additivity="false" level="DEBUG" name="org.hibernate.SQL">
+      <appender-ref ref="CONSOLE"/>
+      <appender-ref ref="FILE"/>
+    </logger>
+    <logger additivity="false" level="TRACE" name="org.hibernate.orm.jdbc.bind">
+      <appender-ref ref="CONSOLE"/>
+      <appender-ref ref="FILE"/>
+    </logger>
+  </springProfile>
+
+  <!-- 운영 환경 -->
+  <springProfile name="prod">
+    <logger additivity="false" level="INFO" name="com.sprint.mission">
+      <appender-ref ref="CONSOLE"/>
+      <appender-ref ref="FILE"/>
+    </logger>
+    <logger additivity="false" level="DEBUG" name="org.hibernate.SQL">
+      <appender-ref ref="CONSOLE"/>
+      <appender-ref ref="FILE"/>
+    </logger>
+    <logger additivity="false" level="TRACE" name="org.hibernate.orm.jdbc.bind">
+      <appender-ref ref="CONSOLE"/>
+      <appender-ref ref="FILE"/>
+    </logger>
+  </springProfile>
+
+</configuration>

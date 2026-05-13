@@ -5,6 +5,7 @@ import com.sprint.mission.discodeit.dto.request.PublicChannelCreateRequest;
 import com.sprint.mission.discodeit.dto.request.PublicChannelUpdateRequest;
 import com.sprint.mission.discodeit.dto.response.ChannelDto;
 import com.sprint.mission.discodeit.service.ChannelService;
+import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -27,42 +28,36 @@ public class ChannelController {
 
   private final ChannelService channelService;
 
-  // 1. 공개 채널 생성
   @PostMapping("/public")
   public ResponseEntity<ChannelDto> createPublic(
-      @RequestBody PublicChannelCreateRequest request) {
+      @Valid @RequestBody PublicChannelCreateRequest request) {
     ChannelDto response = channelService.createPublic(request);
     return ResponseEntity.status(HttpStatus.CREATED).body(response);
   }
 
-  // 2. 비공개 채널 생성
   @PostMapping("/private")
   public ResponseEntity<ChannelDto> createPrivate(
-      @RequestBody PrivateChannelCreateRequest request) {
+      @Valid @RequestBody PrivateChannelCreateRequest request) {
     ChannelDto response = channelService.createPrivate(request);
     return ResponseEntity.status(HttpStatus.CREATED).body(response);
   }
 
-  // 3. 채널 정보 수정
   @PatchMapping("/{channelId}")
   public ResponseEntity<ChannelDto> update(
       @PathVariable UUID channelId,
-      @RequestBody PublicChannelUpdateRequest request) {
+      @Valid @RequestBody PublicChannelUpdateRequest request) {
     ChannelDto response = channelService.update(channelId, request);
     return ResponseEntity.ok(response);
   }
 
-  // 4. 채널 삭제
   @DeleteMapping("/{channelId}")
   public ResponseEntity<Void> delete(@PathVariable UUID channelId) {
     channelService.delete(channelId);
     return ResponseEntity.noContent().build();
   }
 
-  // 5. 채널 목록 조회
   @GetMapping
-  public ResponseEntity<List<ChannelDto>> findAll(
-      @RequestParam UUID userId) {
+  public ResponseEntity<List<ChannelDto>> findAll(@RequestParam UUID userId) {
     return ResponseEntity.ok(channelService.findAllByUserId(userId));
   }
 }
