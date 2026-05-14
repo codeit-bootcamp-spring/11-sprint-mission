@@ -1,36 +1,51 @@
 package com.sprint.mission.discodeit.exception;
 
-import io.swagger.v3.oas.annotations.Hidden;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.ResponseBody;
-
-import java.util.NoSuchElementException;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import com.sprint.mission.discodeit.dto.response.ErrorResponse;
+import lombok.extern.slf4j.Slf4j;
 
-@Hidden // Swagger 충돌 문제 때문에 Hidden 추가
-@ControllerAdvice
-@ResponseBody
+@Slf4j
+@RestControllerAdvice
 public class GlobalExceptionHandler {
 
-  @ExceptionHandler(IllegalArgumentException.class)
-  public ResponseEntity<String> handleException(IllegalArgumentException e) {
+  // 커스텀 예외
+  @ExceptionHandler(DiscodeitException.class)
+  public ResponseEntity<String> handleDiscodeitException(DiscodeitException e) {
+    log.warn("DiscodeitException 발생: {}", e.getMessage());
+    ErrorResponse response = new ErrorResponse(
+        e.getErrorCode().getStatus(),
+        e.getClass().getSimpleName(),
+        e.getMessage(),
+        e.getDetails()
+    );
     return ResponseEntity
-        .status(HttpStatus.BAD_REQUEST)
+        .status(e.getErrorCode().getStatus())
         .body(e.getMessage());
   }
 
-  @ExceptionHandler(NoSuchElementException.class)
-  public ResponseEntity<String> handleException(NoSuchElementException e) {
+  // Validation 실패 예외
+  @ExceptionHandler(MethodArgumentNotValidException.class)
+  public ResponseEntity<ErrorResponse> handleValidException(MethodArgumentNotValidException e) {
+    log.warn("ValidationException 발생: {}", e.getMessage());
+    ErrorResponse response = new ErrorResponse(
+        HttpStatus.BAD_REQUEST.value(),
+        e.getClass().getSimpleName(),
+        ErrorCode.INVALID_INPUT_VALUE.getMessage(),
+        e.getBindingResult().getAllErrors()
+    );
     return ResponseEntity
-        .status(HttpStatus.NOT_FOUND)
-        .body(e.getMessage());
+        .status(HttpStatus.BAD_REQUEST)
+        .body(response);
   }
 
   @ExceptionHandler(Exception.class)
   public ResponseEntity<String> handleException(Exception e) {
+    e.printStackTrace();
     return ResponseEntity
         .status(HttpStatus.INTERNAL_SERVER_ERROR)
         .body(e.getMessage());
