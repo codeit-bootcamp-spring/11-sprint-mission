@@ -2,10 +2,13 @@ package com.sprint.mission.discodeit.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.sprint.mission.discodeit.config.JpaConfig;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.ChannelType;
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.entity.User;
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -17,13 +20,14 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase.Replace;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
+import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Limit;
-import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 
 @DataJpaTest
 @ActiveProfiles("test")
-@EnableJpaAuditing
+@Import(JpaConfig.class)
 @AutoConfigureTestDatabase(replace = Replace.NONE)
 class MessageRepositoryTest {
 
@@ -37,19 +41,39 @@ class MessageRepositoryTest {
   private User author;
   private Message oldMessage;
   private Message newMessage;
+  @Autowired
+  private JdbcTemplate jdbcTemplate;
 
   @BeforeEach
   void setUp() throws InterruptedException {
     author = em.persistAndFlush(new User("test", "test@test.com", "password123", null));
     channel = em.persistAndFlush(new Channel("public", "public channel", ChannelType.PUBLIC));
 
-    oldMessage = em.persistAndFlush(new Message(channel, author, "첫 메시지"));
-    Thread.sleep(10);
-    newMessage = em.persistAndFlush(new Message(channel, author, "두번째 메시지"));
+    Instant old = Instant.now().minusSeconds(10);
+    Instant recent = Instant.now();
 
-    channel.updateLastMessageAt(newMessage.getCreatedAt());
+    jdbcTemplate.update(
+        "INSERT INTO  messages (id, created_at, updated_at, content, channel_id, author_id) VALUES  (?::uuid, ?, ?, ?, ?::uuid, ?::uuid)",
+        UUID.randomUUID().toString(), Timestamp.from(old), Timestamp.from(old), "첫 메시지",
+        channel.getId().toString(), author.getId().toString()
+    );
+
+    jdbcTemplate.update(
+        "INSERT INTO  messages (id, created_at, updated_at, content, channel_id, author_id) VALUES  (?::uuid, ?, ?, ?, ?::uuid, ?::uuid)",
+        UUID.randomUUID().toString(), Timestamp.from(recent), Timestamp.from(recent), "두번째 메시지",
+        channel.getId().toString(), author.getId().toString()
+    );
+
+    Instant[] times = {old, recent};
+
+    channel.updateLastMessageAt(recent);
     em.flush();
     em.clear();
+
+    oldMessage = messageRepository.findAll().stream()
+        .filter(m -> m.getContent().equals("첫 메시지")).findFirst().orElseThrow();
+    newMessage = messageRepository.findAll().stream()
+        .filter(m -> m.getContent().equals("두번째 메시지")).findFirst().orElseThrow();
   }
 
   // --- findLastestMessageByChannelIds ---

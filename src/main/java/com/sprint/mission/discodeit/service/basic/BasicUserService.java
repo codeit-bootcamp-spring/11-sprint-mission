@@ -69,7 +69,7 @@ public class BasicUserService implements UserService {
         binaryContentStorage.put(savedProfile.getId(), profile.getBytes());
 
         log.debug("프로필 이미지 저장 완료 - binaryContentId: {}", savedProfile.getId());
-      } catch (Exception e) {
+      } catch (IOException e) {
         log.error("사용자 프로필 이미지 저장 중 서버 오류 발생 - username: {}", name, e);
         throw new DiscodeitException(ErrorCode.INTERNAL_SERVER_ERROR,
             Map.of("errorMessage", e.getMessage()));

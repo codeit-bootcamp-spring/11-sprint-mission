@@ -32,6 +32,7 @@ public enum ErrorCode {
   BINARY_CONTENT_NOT_EXISTS(HttpStatus.NOT_FOUND, "Binary Content Not Exists"),
 
   // --- Global & Server (공통 및 서버) ---
+  VALIDATION_ERROR(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR"),
   INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "Internal Server Error");
 
   @Getter

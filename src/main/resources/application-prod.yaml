@@ -32,3 +32,12 @@ logging:
 
     org.hibernate.SQL: off
     com.sprint.mission.discodeit: info
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info
+  info:
+    env:
+      enabled: false
