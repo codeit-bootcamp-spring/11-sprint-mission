@@ -19,6 +19,7 @@ Dockerfile
 
 # Environment variables
 .env
+*.env
 
 # Logs
 *.log

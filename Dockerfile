@@ -1,16 +1,25 @@
+FROM gradle:8.8-jdk17 AS builder
+
+WORKDIR /build
+
+COPY gradlew .
+COPY gradle/ gradle/
+COPY build.gradle settings.gradle ./
+RUN ./gradlew --no-daemon dependencies --configuration runtimeClasspath
+
+COPY src/ src/
+RUN ./gradlew --no-daemon bootJar -x test
+
 FROM amazoncorretto:17
 
 WORKDIR /app
 
-COPY . .
-
-RUN chmod +x gradlew && ./gradlew clean build -x test
+COPY --from=builder /build/build/libs/*.jar app.jar
 
 EXPOSE 80
 
-ENV PROJECT_NAME=discodeit
-ENV PROJECT_VERSION=1.2-M8
+ENV PROJECT_NAME=discodeit \
+    PROJECT_VERSION=1.2-M8 \
+    JVM_OPTS=""
 
-ENV JVM_OPTS=""
-
-CMD ["sh", "-c", "java $JVM_OPTS -jar build/libs/app.jar"]
+ENTRYPOINT ["sh", "-lc", "exec java $JVM_OPTS -jar app.jar"]
