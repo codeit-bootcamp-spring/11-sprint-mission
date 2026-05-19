@@ -75,6 +75,12 @@ jobs:
             --service ${{vars.ECS_SERVICE}} \
             --desired-count 0
 
+      - name: Wait for service to stop
+        run: |
+          aws ecs wait services-stable \
+            --cluster ${{vars.ECS_CLUSTER}} \
+            --services ${{vars.ECS_SERVICE}}
+
       - name: Deploy new task definition to ECS
         run: |
           aws ecs update-service \
