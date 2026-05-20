@@ -7,21 +7,6 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-
-    services:
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_DB: discodeit
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: password
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
     
     steps:
       - name: Checkout code
@@ -37,11 +22,7 @@ jobs:
         run: chmod +x gradlew
 
       - name: Run tests
-        run: ./gradlew test
-        env:
-          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/discodeit
-          SPRING_DATASOURCE_USERNAME: postgres
-          SPRING_DATASOURCE_PASSWORD: password
+        run: ./gradlew test -Dspring.profiles.active=test
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
