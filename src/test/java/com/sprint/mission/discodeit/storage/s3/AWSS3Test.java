@@ -2,6 +2,7 @@ package com.sprint.mission.discodeit.storage.s3;
 
 import java.time.Duration;
 import java.util.UUID;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -19,6 +20,7 @@ import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequest;
 
+@Disabled("CI 환경에서는 실행하지 않음")
 public class AWSS3Test {
 
   private static final String TEST_KEY = UUID.randomUUID().toString();
