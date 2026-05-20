@@ -28,7 +28,7 @@ public class AWSS3Test {
     private static Properties loadEnv() throws IOException {
         Properties props = new Properties();
         props.load(new FileInputStream(
-                "C:/Users/dkskr/Downloads/0-sprint-mission-s8-v1-base/0-sprint-mission-s8-v1-base/.env"
+                "C:/Users/dkskr/Downloads/11-sprint-mission/.env"
         ));
         return props;
     }
