@@ -84,4 +84,5 @@ jobs:
             --cluster ${{vars.ECS_CLUSTER}} \
             --service ${{vars.ECS_SERVICE}} \
             --task-definition ${{steps.update-task-def.outputs.task_def_arn}} \
+            --deployment-configuration "minimumHealthyPercent=0,maximumPercent=200" \
             --desired-count 1
