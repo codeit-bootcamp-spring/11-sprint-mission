@@ -53,6 +53,7 @@ public class S3BinaryContentStorage implements BinaryContentStorage {
             .region(Region.of(region))
             .credentialsProvider(StaticCredentialsProvider.create(
                     AwsBasicCredentials.create(accessKey, secretKey)))
+            .crossRegionAccessEnabled(true)
             .build();
     }
 
