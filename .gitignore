@@ -51,3 +51,6 @@ build/
 
 .logs/
 
+# Local environment files
+/.env
+/discodeit.env

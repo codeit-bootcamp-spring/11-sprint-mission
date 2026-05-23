@@ -1,17 +1,26 @@
 spring:
   datasource:
-    url: ${DB_URL}
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
     driver-class-name: org.postgresql.Driver
 
   boot:
     admin:
       client:
-        url: http://localhost:9090
+        url: ${SPRING_BOOT_ADMIN_CLIENT_URL:http://localhost:9090}
+
+management:
+  endpoint:
+    health:
+      show-details: never
+
+  info:
+    env:
+      enabled: false
 
 server:
-  port: ${PORT:8080}
+  port: ${PORT:80}
 
 logging:
   level:

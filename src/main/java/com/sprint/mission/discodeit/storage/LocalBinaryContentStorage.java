@@ -62,7 +62,7 @@ public class LocalBinaryContentStorage implements BinaryContentStorage {
     }
 
     @Override
-    public ResponseEntity<Resource> download(BinaryContentDto binaryContentDto) {
+    public ResponseEntity<?> download(BinaryContentDto binaryContentDto) {
         Path path = resolvePath(binaryContentDto.id());
 
         if (!Files.exists(path)) {

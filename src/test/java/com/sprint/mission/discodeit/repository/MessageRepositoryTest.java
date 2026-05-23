@@ -1,5 +1,6 @@
 package com.sprint.mission.discodeit.repository;
 
+import com.sprint.mission.discodeit.config.JpaAuditingConfig;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.Message;
@@ -10,10 +11,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
+import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.jdbc.core.JdbcTemplate;
 
+import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -22,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
 @ActiveProfiles("test")
-@EnableJpaAuditing
+@Import(JpaAuditingConfig.class)
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 class MessageRepositoryTest {
 
@@ -41,6 +44,9 @@ class MessageRepositoryTest {
     @Autowired
     TestEntityManager entityManager;
 
+    @Autowired
+    JdbcTemplate jdbcTemplate;
+
     @Test
     @DisplayName("채널 ID 목록으로 각 채널의 마지막 메시지 시간을 조회할 수 있다")
     void findLastMessageTimesByChannelIds_success() throws InterruptedException {
@@ -53,15 +59,19 @@ class MessageRepositoryTest {
                 new Channel("general", "general channel")
         );
 
+        Instant oldTime = Instant.parse("2026-05-09T10:00:00Z");
+        Instant newTime = Instant.parse("2026-05-09T11:00:00Z");
+
         Message oldMessage = messageRepository.saveAndFlush(
                 new Message(author, channel, "old message")
         );
 
-        Thread.sleep(10);
-
         Message newMessage = messageRepository.saveAndFlush(
                 new Message(author, channel, "new message")
         );
+
+        updateMessageCreatedAt(oldMessage.getId(), oldTime);
+        updateMessageCreatedAt(newMessage.getId(), newTime);
 
         // when
         List<Object[]> result = messageRepository.findLastMessageTimesByChannelIds(
@@ -126,17 +136,21 @@ class MessageRepositoryTest {
                 new Channel("general", "general channel")
         );
 
+        Instant oldTime = Instant.parse("2026-05-09T10:00:00Z");
+        Instant newTime = Instant.parse("2026-05-09T11:00:00Z");
+
         Message oldMessage = messageRepository.saveAndFlush(
                 new Message(author, channel, "old message")
         );
-
-        Thread.sleep(10);
 
         Message newMessage = messageRepository.saveAndFlush(
                 new Message(author, channel, "new message")
         );
 
-        Instant cursorCreatedAt = newMessage.getCreatedAt();
+        updateMessageCreatedAt(oldMessage.getId(), oldTime);
+        updateMessageCreatedAt(newMessage.getId(), newTime);
+
+        Instant cursorCreatedAt = newTime;
         UUID cursorId = newMessage.getId();
 
         // when
@@ -189,5 +203,17 @@ class MessageRepositoryTest {
         assertThat(foundMessage.getAuthor().getUsername()).isEqualTo("evan");
         assertThat(foundMessage.getAttachments()).hasSize(1);
         assertThat(foundMessage.getAttachments().get(0).getFileName()).isEqualTo("image.png");
+    }
+
+    private void updateMessageCreatedAt(UUID messageId, Instant createdAt) {
+        jdbcTemplate.update(
+                "update messages set created_at = ?, updated_at = ? where id = ?",
+                Timestamp.from(createdAt),
+                Timestamp.from(createdAt),
+                messageId
+        );
+
+        entityManager.flush();
+        entityManager.clear();
     }
 }

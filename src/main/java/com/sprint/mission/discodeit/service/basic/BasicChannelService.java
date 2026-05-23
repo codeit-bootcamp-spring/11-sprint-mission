@@ -2,6 +2,7 @@ package com.sprint.mission.discodeit.service.basic;
 
 import com.sprint.mission.discodeit.dto.*;
 import com.sprint.mission.discodeit.entity.Channel;
+import com.sprint.mission.discodeit.entity.ChannelType;
 import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.exception.InvalidException;
@@ -168,7 +169,7 @@ public class BasicChannelService implements ChannelService {
                     return new ChannelNotFoundException(param.id());
                 });
 
-        if (channel.getType().name().equals("PRIVATE")) {
+        if (channel.getType() == ChannelType.PRIVATE) {
             log.warn("채널 수정 실패 - PRIVATE 채널 수정 시도: channelId={}", channel.getId());
             throw new PrivateChannelUpdateException(channel.getId());
         }
@@ -180,8 +181,7 @@ public class BasicChannelService implements ChannelService {
 
         log.info("채널 수정 완료: channelId={}", channel.getId());
 
-        return find(channel.getId())
-                .orElseThrow(() -> new NotFoundException("해당 채널이 존재하지 않습니다."));
+        return channelMapper.toDto(channel, List.of(), null);
     }
 
     @Override

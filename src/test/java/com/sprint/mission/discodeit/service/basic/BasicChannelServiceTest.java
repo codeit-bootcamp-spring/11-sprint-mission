@@ -197,7 +197,7 @@ class BasicChannelServiceTest {
         assertThat(channel.getName()).isEqualTo("new");
         assertThat(channel.getDescription()).isEqualTo("new description");
 
-        then(channelRepository).should(times(2)).findById(channel.getId());
+        then(channelRepository).should().findById(channel.getId());
         then(channelMapper).should().toDto(eq(channel), anyList(), isNull());
     }
 
@@ -310,9 +310,6 @@ class BasicChannelServiceTest {
         lastMessageRows.add(new Object[]{channel.getId(), channelDto.lastMessageAt()});
 
         given(channelRepository.findVisibleChannelsByUserId(userId)).willReturn(List.of(channel));
-        given(messageRepository.findLastMessageTimesByChannelIds(List.of(channel.getId())))
-                .willReturn(lastMessageRows);
-        given(readStatusRepository.findAllWithUserByChannelIds(List.of(channel.getId()))).willReturn(List.of());
         given(channelMapper.toDto(eq(channel), anyList(), eq(channelDto.lastMessageAt()))).willReturn(channelDto);
 
         // when
