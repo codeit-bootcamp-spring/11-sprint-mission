@@ -54,3 +54,6 @@ application*.yaml
 
 ### docs ###
 docs/
+
+### env ###
+.env
