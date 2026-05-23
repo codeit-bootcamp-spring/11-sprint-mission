@@ -70,7 +70,7 @@ public class BasicReadStatusService implements ReadStatusService {
     List<ReadStatus> readStatuses = this.readStatusRepository.findAllByUserId(userId);
 
     log.info("read-status find-all-by-user-id success: userId={}, count={}",
-        readStatuses.get(0).getUser().getId(), readStatuses.size());
+        userId, readStatuses.size());
     return readStatuses.stream()
         .map(this.mapper::toResponse)
         .toList();

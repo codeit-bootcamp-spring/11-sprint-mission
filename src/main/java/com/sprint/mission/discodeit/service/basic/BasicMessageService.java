@@ -104,7 +104,7 @@ public class BasicMessageService implements MessageService {
     PageResponse<MessageResponse> result = this.pageMapper.fromSlice(slice,
         MessageResponse::createdAt);
     log.info("message find-all-by-channel-id success: channelId={}, size={}, hasNext={}",
-        slice.getContent().get(0).channelId(), result.content().size(), result.hasNext());
+        channelId, result.content().size(), result.hasNext());
     return result;
   }
 
