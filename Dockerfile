@@ -1,8 +1,17 @@
 FROM amazoncorretto:17 AS builder
 
 WORKDIR /app
-COPY . .
-RUN chmod +x gradlew && ./gradlew clean build -x test
+
+COPY gradlew .
+COPY gradle gradle
+COPY build.gradle .
+COPY settings.gradle .
+
+RUN chmod +x gradlew && ./gradlew dependencies --no-daemon
+
+COPY src src
+
+RUN ./gradlew clean build -x test --no-daemon
 
 FROM amazoncorretto:17-alpine3.19 AS runtime
 
