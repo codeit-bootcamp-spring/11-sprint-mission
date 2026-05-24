@@ -24,6 +24,8 @@ services:
       - .env
     environment:
       SPRING_PROFILES_ACTIVE: prod
+      STORAGE_TYPE: ${STORAGE_TYPE:-local}
+      STORAGE_LOCAL_ROOT_PATH: ${STORAGE_LOCAL_ROOT_PATH:-.discodeit/storage}
       DB_URL: jdbc:postgresql://db:5432/discodeit
     volumes:
       - discodeit-storage:/app/.discodeit

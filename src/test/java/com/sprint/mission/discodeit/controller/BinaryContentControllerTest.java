@@ -13,6 +13,7 @@ import com.sprint.mission.discodeit.exception.ErrorCode;
 import com.sprint.mission.discodeit.exception.binarycontent.BinaryContentNotFoundException;
 import com.sprint.mission.discodeit.service.BinaryContentService;
 import com.sprint.mission.discodeit.storage.BinaryContentStorage;
+import com.sprint.mission.discodeit.storage.DownloadResult;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -22,7 +23,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.core.io.ByteArrayResource;
-import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -126,10 +126,12 @@ class BinaryContentControllerTest {
     void download_success() throws Exception {
       // given
       byte[] fileBytes = "fake image content".getBytes();
-      Resource resource = new ByteArrayResource(fileBytes);
+      DownloadResult.Stream streamResult = new DownloadResult.Stream(
+          new ByteArrayResource(fileBytes), fileName, contentType, (long) fileBytes.length
+      );
 
       given(binaryContentService.findById(binaryContentId)).willReturn(binaryContentResponse);
-      given(binaryContentStorage.download(binaryContentResponse)).willReturn(resource);
+      given(binaryContentStorage.download(binaryContentResponse)).willReturn(streamResult);
 
       // when & then
       mockMvc.perform(

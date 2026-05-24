@@ -2,6 +2,7 @@ package com.sprint.mission.discodeit.storage.local;
 
 import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentResponse;
 import com.sprint.mission.discodeit.storage.BinaryContentStorage;
+import com.sprint.mission.discodeit.storage.DownloadResult;
 import com.sprint.mission.discodeit.util.FileLockProvider;
 import jakarta.annotation.PostConstruct;
 import java.io.IOException;
@@ -66,10 +67,10 @@ public class LocalBinaryContentStorage implements BinaryContentStorage {
   }
 
   @Override
-  public Resource download(BinaryContentResponse binaryContentResponse) {
-    InputStream inputStream = this.get(binaryContentResponse.id());
+  public DownloadResult download(BinaryContentResponse dto) {
+    InputStream inputStream = this.get(dto.id());
     Resource resource = new InputStreamResource(inputStream);
-    return resource;
+    return new DownloadResult.Stream(resource, dto.fileName(), dto.contentType(), dto.size());
   }
 
   private Path resolvePath(UUID id) {

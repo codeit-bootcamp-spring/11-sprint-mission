@@ -4,11 +4,12 @@ import com.sprint.mission.discodeit.controller.api.BinaryContentApi;
 import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentResponse;
 import com.sprint.mission.discodeit.service.BinaryContentService;
 import com.sprint.mission.discodeit.storage.BinaryContentStorage;
+import com.sprint.mission.discodeit.exception.common.UnexpectedErrorException;
+import com.sprint.mission.discodeit.storage.DownloadResult;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.core.io.Resource;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -55,22 +56,27 @@ public class BinaryContentController implements BinaryContentApi {
   }
 
   @GetMapping(path = "{binaryContentId}/download")
-  public ResponseEntity<Resource> download(
+  public ResponseEntity<?> download(
       @PathVariable UUID binaryContentId) {
     log.info("binary-content download request: id={}", binaryContentId);
     BinaryContentResponse binaryContent = this.binaryContentService.findById(binaryContentId);
 
-    Resource resource = this.binaryContentStorage.download(binaryContent);
-    log.debug("binary-content download response: fileName={}, content-type={}, content-length={}",
-        binaryContent.fileName(), binaryContent.contentType(), binaryContent.size());
-    return ResponseEntity.ok()
-        .header(HttpHeaders.CONTENT_DISPOSITION,
-            ContentDisposition.attachment()
-                .filename(binaryContent.fileName())
-                .build()
-                .toString())
-        .contentType(MediaType.parseMediaType(binaryContent.contentType()))
-        .contentLength(binaryContent.size())
-        .body(resource);
+    DownloadResult result = this.binaryContentStorage.download(binaryContent);
+    if (result instanceof DownloadResult.Stream s) {
+      log.debug("binary-content download response (stream): fileName={}, content-type={}, content-length={}",
+          s.fileName(), s.contentType(), s.size());
+      return ResponseEntity.ok()
+          .header(HttpHeaders.CONTENT_DISPOSITION,
+              ContentDisposition.attachment().filename(s.fileName()).build().toString())
+          .contentType(MediaType.parseMediaType(s.contentType()))
+          .contentLength(s.size())
+          .body(s.resource());
+    } else if (result instanceof DownloadResult.Redirect r) {
+      log.debug("binary-content download response (redirect): url={}", r.url());
+      return ResponseEntity.status(HttpStatus.FOUND)
+          .header(HttpHeaders.LOCATION, r.url())
+          .build();
+    }
+    throw UnexpectedErrorException.withCause();
   }
 }
