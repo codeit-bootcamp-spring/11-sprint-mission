@@ -14,6 +14,7 @@ out
 
 # 환경 변수 / 시크릿
 .env
+discodeit.env
 
 # OS
 .DS_Store
