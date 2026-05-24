@@ -61,6 +61,7 @@ class MessageRepositoryTest {
 
     newerMessage = new Message("newer", channel, author, List.of());
     entityManager.persistAndFlush(newerMessage);
+    entityManager.refresh(newerMessage);
   }
 
   @Nested
