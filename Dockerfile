@@ -1,15 +1,24 @@
-FROM amazoncorretto:17
+# ════ Stage 1: builder ════════════════════════════════
+FROM amazoncorretto:17 AS builder
+WORKDIR /app
+
+COPY build.gradle settings.gradle gradlew ./
+COPY gradle/ gradle/
+
+RUN ./gradlew dependencies --no-daemon
+
+COPY src/ src/
+RUN ./gradlew bootJar -x test --no-daemon
+
+# ════ Stage 2: runtime ════════════════════════════════
+FROM amazoncorretto:17-alpine
 
 WORKDIR /app
 
-COPY . .
-
-RUN ./gradlew bootJar -x test
+COPY --from=builder /app/build/libs/discodeit-1.2-M8.jar app.jar
 
 EXPOSE 80
 
-ENV PROJECT_NAME=discodeit
-ENV PROJECT_VERSION=1.2-M8
 ENV JVM_OPTS=""
 
-CMD ["/bin/sh", "-c", "java $JVM_OPTS -jar build/libs/${PROJECT_NAME}-${PROJECT_VERSION}.jar"]
+CMD ["sh", "-c", "java $JVM_OPTS -jar app.jar"]
