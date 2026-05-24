@@ -54,29 +54,19 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
           aws-region: ${{ vars.AWS_REGION }}
 
-      - name: Download discodeit.env from S3
-        run: |
-          aws s3 cp s3://${{ secrets.AWS_S3_BUCKET }}/config/discodeit.env discodeit.env
-
       - name: Register new task definition revision
         run: |
           NEW_IMAGE=${{ vars.ECR_REPOSITORY_URI }}:${{ github.sha }}
-
-          set -a; source discodeit.env; set +a
-          ENV_JSON=$(grep -v '^\s*#' discodeit.env | grep -v '^\s*$' | \
-            while IFS='=' read -r key rest; do
-              value="${!key}"
-              printf '{"name":"%s","value":"%s"}\n' "$key" "$value"
-            done | jq -s '.')
+          ENV_FILE_ARN="arn:aws:s3:::${{ secrets.AWS_S3_BUCKET }}/config/discodeit.env"
 
           TASK_DEF=$(aws ecs describe-task-definition \
             --task-definition ${{ vars.ECS_TASK_DEFINITION }} \
             --query taskDefinition)
           NEW_TASK_DEF=$(echo $TASK_DEF \
             | jq --arg IMAGE "$NEW_IMAGE" \
-                 --argjson ENV "$ENV_JSON" \
+                 --arg ENV_FILE_ARN "$ENV_FILE_ARN" \
               '.containerDefinitions[0].image = $IMAGE
-               | .containerDefinitions[0].environment = $ENV
+               | .containerDefinitions[0].environmentFiles = [{"value": $ENV_FILE_ARN, "type": "s3"}]
                | del(.taskDefinitionArn, .revision, .status,
                      .requiresAttributes, .compatibilities,
                      .registeredAt, .registeredBy)')
