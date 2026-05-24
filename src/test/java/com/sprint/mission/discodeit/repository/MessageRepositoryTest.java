@@ -21,7 +21,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.util.ReflectionTestUtils;
 
 @EnableJpaAuditing
 @ActiveProfiles("test")
@@ -53,7 +52,12 @@ class MessageRepositoryTest {
 
     olderMessage = new Message("older", channel, author, List.of());
     entityManager.persistAndFlush(olderMessage);
-    ReflectionTestUtils.setField(olderMessage, "createdAt", Instant.now().minusSeconds(1));
+
+    try {
+      Thread.sleep(100);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
 
     newerMessage = new Message("newer", channel, author, List.of());
     entityManager.persistAndFlush(newerMessage);
