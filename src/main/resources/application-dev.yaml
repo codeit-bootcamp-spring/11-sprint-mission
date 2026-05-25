@@ -10,6 +10,15 @@ spring:
       client:
         url: http://localhost:9090
 
+management:
+  endpoint:
+    health:
+      show-details: always
+
+  info:
+    env:
+      enabled: true
+
 server:
   port: 8080
 

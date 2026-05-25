@@ -3,7 +3,7 @@ spring:
     name: discodeit
 
   profiles:
-    default: dev
+    active: ${SPRING_PROFILES_ACTIVE:dev}
 
   boot:
     admin:
@@ -37,23 +37,21 @@ logging:
 
 discodeit:
   storage:
-    type: local
+    type: ${STORAGE_TYPE:local}
     local:
-      root-path: .discodeit/binary-content
+      root-path: ${STORAGE_LOCAL_ROOT_PATH:.discodeit/storage}
+    s3:
+      access-key: ${AWS_S3_ACCESS_KEY:}
+      secret-key: ${AWS_S3_SECRET_KEY:}
+      region: ${AWS_S3_REGION:ap-northeast-2}
+      bucket: ${AWS_S3_BUCKET:}
+      presigned-url-expiration: ${AWS_S3_PRESIGNED_URL_EXPIRATION:600}
 
 management:
   endpoints:
     web:
       exposure:
         include: health,info,metrics,loggers
-
-  endpoint:
-    health:
-      show-details: always
-
-  info:
-    env:
-      enabled: true
 
 info:
   application:
