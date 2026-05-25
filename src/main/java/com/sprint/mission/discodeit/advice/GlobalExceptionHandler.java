@@ -3,11 +3,9 @@ package com.sprint.mission.discodeit.advice;
 import com.sprint.mission.discodeit.exception.DiscodeitException;
 import com.sprint.mission.discodeit.exception.ErrorCode;
 import com.sprint.mission.discodeit.response.ErrorResponse;
-import java.time.Instant;
 import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -34,27 +32,13 @@ public class GlobalExceptionHandler {
             (a, b) -> a));
 
     return ResponseEntity.badRequest()
-        .body(new ErrorResponse(
-            Instant.now(),
-            "VALIDATION_ERROR",
-            "유효성 검사 실패",
-            details,
-            e.getClass().getSimpleName(),
-            400
-        ));
+        .body(ErrorResponse.from(ErrorCode.VALIDATION_ERROR, details, e.getClass()));
   }
 
   @ExceptionHandler(Exception.class)
   public ResponseEntity<ErrorResponse> handleAllExceptions(Exception e) {
     log.error("예상치 못한 예외", e);
     return ResponseEntity.internalServerError()
-        .body(new ErrorResponse(
-            Instant.now(),
-            "INTERNAL_SERVER_ERROR",
-            "서버 오류가 발생했습니다.",
-            Map.of(),
-            e.getClass().getSimpleName(),
-            500
-        ));
+        .body(ErrorResponse.from(ErrorCode.INTERNAL_SERVER_ERROR, Map.of(), e.getClass()));
   }
 }

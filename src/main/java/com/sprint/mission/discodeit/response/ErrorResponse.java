@@ -1,6 +1,7 @@
 package com.sprint.mission.discodeit.response;
 
 import com.sprint.mission.discodeit.exception.DiscodeitException;
+import com.sprint.mission.discodeit.exception.ErrorCode;
 import java.time.Instant;
 import java.util.Map;
 
@@ -21,6 +22,18 @@ public record ErrorResponse(
         ex.getDetails(),
         ex.getClass().getSimpleName(),
         ex.getErrorCode().getStatus().value()
+    );
+  }
+
+  public static ErrorResponse from(ErrorCode errorCode, Map<String, Object> details,
+      Class<? extends Exception> exceptionType) {
+    return new ErrorResponse(
+        Instant.now(),
+        errorCode.name(),
+        errorCode.getMessage(),
+        details,
+        exceptionType.getSimpleName(),
+        errorCode.getStatus().value()
     );
   }
 }
