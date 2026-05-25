@@ -1,0 +1,39 @@
+services:
+
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: discodeit # DB이름
+      POSTGRES_USER: discodeit_user
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      # 컨테이너가 재시작되어도 데이터가 유지되도록 함
+      - db-data:/var/lib/postgresql/data
+      # PostgreSQL 서비스 실행 후 schema.sql이 자동으로 실행되도록 구성
+      - ./src/main/resources/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    ports:
+      - "5433:5432"
+
+  app:
+    # 애플리케이션 서비스를 로컬 Dockerfile에서 빌드하도록 구성
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/discodeit
+      # application.yaml의 ${STORAGE_TYPE}을 s3 로 지정
+      STORAGE_TYPE: s3
+    # 컨테이너가 재시작되어도 BinaryContentStorage 데이터가 유지되도록 함
+    volumes:
+      - ./uploads:/app/uploads
+    ports:
+      - "8080:80"
+    depends_on:
+      - db
+
+# 최상위 볼륨에는 내 로컬 말고 '도커 내부'에 저장할 볼륨을 적는다.
+volumes:
+  db-data:

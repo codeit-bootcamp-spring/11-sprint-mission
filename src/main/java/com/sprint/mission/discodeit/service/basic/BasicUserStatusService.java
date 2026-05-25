@@ -6,7 +6,7 @@ import com.sprint.mission.discodeit.dto.userstatus.UserStatusCreateRequest;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.entity.UserStatus;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
-import com.sprint.mission.discodeit.exception.userstatus.UserStatusAlreadyExists;
+import com.sprint.mission.discodeit.exception.userstatus.UserStatusAlreadyExistsException;
 import com.sprint.mission.discodeit.exception.userstatus.UserStatusNotFoundException;
 import com.sprint.mission.discodeit.mapper.UserStatusMapper;
 import com.sprint.mission.discodeit.repository.UserRepository;
@@ -35,7 +35,7 @@ public class BasicUserStatusService implements UserStatusService {
         .orElseThrow(
             () -> new UserNotFoundException(dto.userId()));
     if (userStatusRepository.existsByUserId(user.getId())) {
-      throw new UserStatusAlreadyExists(user.getId());
+      throw new UserStatusAlreadyExistsException(user.getId());
     }
 
     UserStatus userStatus = new UserStatus(user, dto.lastActiveAt());

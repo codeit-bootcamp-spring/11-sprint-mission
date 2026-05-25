@@ -1,0 +1,86 @@
+name: CD
+
+on:
+  push:
+    branches: [ 'release' ]
+
+jobs:
+  # ════ Job 1: 이미지 빌드 및 ECR 푸시 ═════════════════════════
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. 깃허브 가상 컴퓨터에 소스 코드 다운로드
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. AWS 인증 (ECR)
+      - name: Configure AWS credentials for ECR
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
+          aws-region: us-east-1
+
+      # 3. AWS ECR Public에 로그인 (도커가 접근 가능)
+      - name: Login to Amazon ECR Public
+        run: |
+          aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws
+
+      # 4. 도커 이미지 빌드 및 Push
+      - name: Build, tag, and push image to Amazon ECR
+        env:
+          ECR_REGISTRY: ${{ vars.ECR_REPOSITORY_URI }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t $ECR_REGISTRY:latest -t $ECR_REGISTRY:$IMAGE_TAG .
+          docker push $ECR_REGISTRY:latest
+          docker push $ECR_REGISTRY:$IMAGE_TAG
+
+  # ════ Job 2: ECS 서비스 업데이트 ══════════════════════════════
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build-and-push
+
+    steps:
+      # 1. AWS 인증 (ECS)
+      - name: Configure AWS credentials for ECS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      # 2. 태스크 정의(설계도) 업데이트
+      - name: Download and update Task Definition
+        env:
+          ECR_REGISTRY: ${{ vars.ECR_REPOSITORY_URI }}
+          IMAGE_TAG: ${{ github.sha }}
+          TASK_DEF: ${{ vars.ECS_TASK_DEFINITION }}
+        run: |
+          aws ecs describe-task-definition --task-definition $TASK_DEF | jq '.taskDefinition | .containerDefinitions[0].image = "'$ECR_REGISTRY':'$IMAGE_TAG'" | del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)' > new-task-def.json
+          aws ecs register-task-definition --cli-input-json file://new-task-def.json
+
+      # 3. 프리티어 메모리 확보 (기존 서버 강제 종료)
+      - name: Stop existing tasks (Scale down to 0)
+        env:
+          CLUSTER: ${{ vars.ECS_CLUSTER }}
+          SERVICE: ${{ vars.ECS_SERVICE }}
+        run: |
+          aws ecs update-service --cluster $CLUSTER --service $SERVICE --desired-count 0
+          sleep 30
+
+      # 4. 최신 태스크 정의(설계도)로 새 서버 기동
+      - name: Update ECS service and start new task (Scale up to 1)
+        env:
+          CLUSTER: ${{ vars.ECS_CLUSTER }}
+          SERVICE: ${{ vars.ECS_SERVICE }}
+          TASK_DEF: ${{ vars.ECS_TASK_DEFINITION }}
+        run: |
+          LATEST_REVISION=$(aws ecs describe-task-definition --task-definition $TASK_DEF --query 'taskDefinition.revision' --output text)
+          
+          aws ecs update-service \
+            --cluster $CLUSTER \
+            --service $SERVICE \
+            --task-definition $TASK_DEF:$LATEST_REVISION \
+            --desired-count 1

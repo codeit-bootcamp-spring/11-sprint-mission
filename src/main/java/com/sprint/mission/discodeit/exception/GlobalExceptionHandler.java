@@ -19,7 +19,7 @@ public class GlobalExceptionHandler {
   // 만든 모든 커스텀 예외를 여기서 한 방에 처리 가능
   @ExceptionHandler(DiscodeitException.class)
   public ResponseEntity<ErrorResponse> handle(DiscodeitException ex) {
-    log.error("예외 발생 - {}: {}", ex.getClass().getSimpleName(), ex.getMessage());
+    log.warn("예외 발생 - {}: {}", ex.getClass().getSimpleName(), ex.getMessage());
 
     return ResponseEntity
         .status(ex.getErrorCode().getStatus())

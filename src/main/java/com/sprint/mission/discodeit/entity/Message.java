@@ -14,6 +14,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import java.util.List;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
@@ -39,6 +40,7 @@ public class Message extends BaseUpdatableEntity {
   @Column(columnDefinition = "text")
   private String content;
 
+  @BatchSize(size = 100) // message id 100개까지, 각각의 id가 연관된 첨부파일(attachments)을 조회하여 메모리로 가져온다.
   @ManyToMany(fetch = FetchType.LAZY)
   @JoinTable(
       name = "message_attachments",

@@ -39,7 +39,8 @@
 
   <springProfile name="prod">
     <root level="info">
-      <appender-ref ref="FILE"/> <!--운영 중에는 콘솔에 출력하지 않음-->
+      <appender-ref ref="CONSOLE"/> <!-- ECS 배포 확인용 -->
+      <appender-ref ref="FILE"/>
     </root>
   </springProfile>
 

@@ -6,7 +6,7 @@ plugins {
 }
 
 group = 'com.sprint.mission'
-version = '0.0.1-SNAPSHOT'
+version = '1.2-M8' // 'api-doc버전'-미션8
 description = 'Discode project for Spring Boot'
 
 java {
@@ -48,7 +48,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
 
     // Admin client 의존성 추가
-    implementation 'de.codecentric:spring-boot-admin-starter-client:3.4.5'
+    // implementation 'de.codecentric:spring-boot-admin-starter-client:3.4.5'
 
     // Database & ORM (데이터베이스 연동)
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
@@ -63,6 +63,9 @@ dependencies {
 
     // 핵심: Lombok이 만든 코드를 MapStruct가 읽을 수 있게 연결
     implementation 'org.mapstruct:mapstruct:1.5.5.Final'
+
+    // AWS S3 SDK
+    implementation 'software.amazon.awssdk:s3:2.31.7'
 
     // 컴파일 시 코드 생성기 (반드시 Lombok -> Binding -> MapStruct 순서여야 함!)
     annotationProcessor 'org.projectlombok:lombok'

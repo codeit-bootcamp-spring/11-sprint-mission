@@ -37,7 +37,8 @@ public abstract class ChannelMapper {
   }
 
   protected List<UserDto> resolveParticipants(Channel channel) {
-    return readStatusRepository.findAllByChannelId(channel.getId()).stream()
+    return readStatusRepository.findAllByChannelIdWithUserWithStatusAndProfile(channel.getId())
+        .stream()
         .map(rs -> userMapper.toDto(rs.getUser()))
         .toList();
   }

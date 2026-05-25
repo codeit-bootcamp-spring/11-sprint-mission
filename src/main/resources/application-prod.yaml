@@ -7,11 +7,11 @@ spring:
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
 
-  boot:
-    admin:
-      client:
-        url: ${SPRING_BOOT_ADMIN_CLIENT_URL} # 운영 환경에서는 유연한 주소 변경을 위해 환경 변수로 설정
-
+# admin 설정 (비활성화)
+#  boot:
+#    admin:
+#      client:
+#        url: ${SPRING_BOOT_ADMIN_CLIENT_URL} # 운영 환경에서는 유연한 주소 변경을 위해 환경 변수로 설정
 
 logging:
   level:
