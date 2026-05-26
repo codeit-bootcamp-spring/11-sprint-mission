@@ -44,13 +44,5 @@ bin/
 ### 숨김 파일 ###
 .*
 !.gitignore
-
-### 로컬 분석 문서 ###
-ANALYSIS.md
-TECHNICAL_BREAKDOWN.md
-SCHEDULE.md
-CONCEPTS.md
-CLAUDE.md
-
-### 이전 미션 폴더 ###
-11-sprint-mission3/
+!.dockerignore
+!.env.example

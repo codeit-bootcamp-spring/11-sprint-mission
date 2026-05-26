@@ -1,0 +1,13 @@
+.git
+.gitignore
+.gradle
+build
+.env
+.discodeit
+.idea
+*.iml
+*.iws
+*.ipr
+.vscode
+.DS_Store
+docker-compose.yml
