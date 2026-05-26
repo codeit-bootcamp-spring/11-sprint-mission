@@ -60,21 +60,37 @@ public class BasicMessageService implements MessageService {
         ? fileRequests.stream().map(BinaryContentDto.CreateRequest::toEntity).toList()
         : new ArrayList<>();
 
-    if (!attachments.isEmpty()) {
-      binaryContentRepository.saveAll(attachments);
+    List<UUID> savedFileIds = new ArrayList<>();
 
-      for (int i = 0; i < attachments.size(); i++) {
-        BinaryContent entity = attachments.get(i);
-        BinaryContentDto.CreateRequest fileReq = fileRequests.get(i);
-        binaryContentStorage.put(entity.getId(), fileReq.bytes());
+    try {
+      if (!attachments.isEmpty()) {
+        binaryContentRepository.saveAll(attachments);
+
+        for (int i = 0; i < attachments.size(); i++) {
+          BinaryContent entity = attachments.get(i);
+          BinaryContentDto.CreateRequest fileReq = fileRequests.get(i);
+
+          binaryContentStorage.put(entity.getId(), fileReq.bytes());
+
+          savedFileIds.add(entity.getId());
+        }
       }
+
+      Message message = request.toEntity(channel, author, attachments);
+      messageRepository.save(message);
+
+      log.info("메시지 생성 완료: messageId={}, channelId={}", message.getId(), channel.getId());
+      return messageMapper.toDto(message);
+
+    } catch (RuntimeException e) {
+      if (!savedFileIds.isEmpty()) {
+        log.warn("메시지 저장 중 오류 발생으로 저장된 이미지 삭제: savedFileIds={}", savedFileIds);
+        for (UUID id : savedFileIds) {
+          binaryContentStorage.delete(id);
+        }
+      }
+      throw e;
     }
-
-    Message message = request.toEntity(channel, author, attachments);
-    messageRepository.save(message);
-
-    log.info("메시지 생성 완료: messageId={}, channelId={}", message.getId(), channel.getId());
-    return messageMapper.toDto(message);
   }
 
 

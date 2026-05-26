@@ -5,7 +5,6 @@ import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.exception.channel.ChannelNotFoundException;
-import com.sprint.mission.discodeit.exception.readstatus.DuplicateReadStatusException;
 import com.sprint.mission.discodeit.exception.readstatus.ReadStatusNotFoundException;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.mapper.ReadStatusMapper;
@@ -36,7 +35,7 @@ public class BasicReadStatusService implements ReadStatusService {
   @Override
   @Transactional
   public ReadStatusDto.Response create(ReadStatusDto.CreateRequest request) {
-    log.debug("읽음 상태 생성 시작: userId={}, channelId={}", request.userId(), request.channelId());
+    log.debug("읽음 상태 생성/갱신 시작: userId={}, channelId={}", request.userId(), request.channelId());
 
     User user = userRepository.findById(request.userId())
         .orElseThrow(() -> UserNotFoundException.withId(request.userId()));
@@ -44,15 +43,17 @@ public class BasicReadStatusService implements ReadStatusService {
     Channel channel = channelRepository.findById(request.channelId())
         .orElseThrow(() -> ChannelNotFoundException.withId(request.channelId()));
 
-    // 같은 Channel 및 User 관련 객체 존재 시
-    if (readStatusRepository.existsByUserIdAndChannelId(request.userId(), request.channelId())) {
-      throw DuplicateReadStatusException.withUserIdAndChannelId(request.userId(),
-          request.channelId());
-    }
-    ReadStatus readStatus = request.toEntity(user, channel);
-    readStatusRepository.save(readStatus);
+    ReadStatus readStatus = readStatusRepository.findByUserIdAndChannelId(request.userId(),
+            request.channelId())
+        .orElseGet(() -> {
+          log.info("ReadStatus가 존재하지 않아 지연 생성: userId={}, channelId={}",
+              user.getId(), channel.getId());
+          return readStatusRepository.save(request.toEntity(user, channel));
+        });
 
-    log.info("읽음 상태 생성 완료: readStatusId={}", readStatus.getId());
+    readStatus.update(request.lastReadAt() != null ? request.lastReadAt() : Instant.now());
+
+    log.info("읽음 상태 생성/갱신 완료: readStatusId={}", readStatus.getId());
     return readStatusMapper.toDto(readStatus);
   }
 
@@ -101,7 +102,7 @@ public class BasicReadStatusService implements ReadStatusService {
   @Transactional
   public void delete(UUID id) {
     log.debug("읽음 상태 삭제 시작: id={}", id);
-    
+
     if (!readStatusRepository.existsById(id)) {
       throw ReadStatusNotFoundException.withId(id);
     }

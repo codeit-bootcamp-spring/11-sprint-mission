@@ -18,6 +18,8 @@ public class MDCLoggingInterceptor implements HandlerInterceptor {
 
   public static final String REQUEST_ID_HEADER = "Discodeit-Request-ID";
 
+  private static final String START_TIME_ATTRIBUTE = "startTime";
+
   @Override
   public boolean preHandle(HttpServletRequest request, HttpServletResponse response,
       Object handler) {
@@ -31,6 +33,9 @@ public class MDCLoggingInterceptor implements HandlerInterceptor {
     // 응답 헤더에 요청 ID 추가
     response.setHeader(REQUEST_ID_HEADER, requestId);
 
+    // 요청 시작 시간을 request 객체에 임시 저장
+    request.setAttribute(START_TIME_ATTRIBUTE, System.currentTimeMillis());
+
     log.debug("Request started");
     return true;
   }
@@ -38,7 +43,14 @@ public class MDCLoggingInterceptor implements HandlerInterceptor {
   @Override
   public void afterCompletion(HttpServletRequest request, HttpServletResponse response,
       Object handler, Exception ex) {
-    log.debug("Request completed");
+
+    // 요청 처리 시 계산
+    long startTime = (Long) request.getAttribute(START_TIME_ATTRIBUTE);
+    long elapsedTime = System.currentTimeMillis() - startTime;
+
+    int statusCode = response.getStatus();
+
+    log.info("Request completed: status={}, elapsedTime={}ms", statusCode, elapsedTime);
     MDC.clear();
   }
 }

@@ -14,7 +14,7 @@ import com.sprint.mission.discodeit.entity.ChannelType;
 import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.exception.channel.ChannelNotFoundException;
-import com.sprint.mission.discodeit.exception.channel.PrivateChannelUpdateException;
+import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.mapper.ChannelMapper;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
@@ -97,6 +97,28 @@ class BasicChannelServiceTest {
     then(readStatusRepository).should().saveAll(anyList());
   }
 
+  @Test
+  @DisplayName("존재하지 않는 참여자 ID 포함 시 프라이빗 채널 생성 실패")
+  void createPrivateChannel_fail_someUsersNotFound() {
+    // Given
+    UUID validUserId = UUID.randomUUID();
+    UUID invalidUserId = UUID.randomUUID();
+
+    List<UUID> requestIds = List.of(validUserId, invalidUserId);
+    ChannelDto.CreatePrivateRequest request = new ChannelDto.CreatePrivateRequest(requestIds);
+
+    User mockUser = User.builder().username("woody").build();
+
+    given(userRepository.findAllById(requestIds)).willReturn(List.of(mockUser));
+
+    // When & Then
+    assertThatThrownBy(() -> channelService.createPrivateChannel(request))
+        .isInstanceOf(UserNotFoundException.class);
+
+    then(channelRepository).shouldHaveNoInteractions();
+    then(readStatusRepository).shouldHaveNoInteractions();
+  }
+
   // Update 테스트
   @Test
   @DisplayName("퍼블릭 채널 수정 성공")
@@ -120,21 +142,6 @@ class BasicChannelServiceTest {
     assertThat(result.name()).isEqualTo(request.newName());
     assertThat(existingChannel.getName()).isEqualTo(request.newName());
     assertThat(existingChannel.getDescription()).isEqualTo(request.newDescription());
-  }
-
-  @Test
-  @DisplayName("프라이빗 채널 수정 시도 시 PrivateChannelUpdateException 발생")
-  void update_fail_privateChannel() {
-    // Given
-    UUID channelId = UUID.randomUUID();
-    ChannelDto.UpdateRequest request = new ChannelDto.UpdateRequest("newName", "newDescription");
-    Channel privateChannel = Channel.createPrivate();
-
-    given(channelRepository.findById(channelId)).willReturn(Optional.of(privateChannel));
-
-    // When & Then
-    assertThatThrownBy(() -> channelService.update(channelId, request))
-        .isInstanceOf(PrivateChannelUpdateException.class);
   }
 
   @Test

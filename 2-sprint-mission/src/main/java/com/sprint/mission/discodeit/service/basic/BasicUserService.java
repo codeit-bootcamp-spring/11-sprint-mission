@@ -45,21 +45,32 @@ public class BasicUserService implements UserService {
       throw UserAlreadyExistsException.withEmail(request.email());
     }
 
-    BinaryContent profile = profileImageRequest != null ? profileImageRequest.toEntity() : null;
-    User user = request.toEntity(profile);
+    BinaryContent profile = null;
 
-    UserStatus.builder()
-        .user(user)
-        .build();
+    try {
+      if (profileImageRequest != null) {
+        profile = profileImageRequest.toEntity();
+        binaryContentRepository.save(profile);
+        binaryContentStorage.put(profile.getId(), profileImageRequest.bytes());
+      }
 
-    userRepository.save(user);
+      User user = request.toEntity(profile);
 
-    if (profile != null) {
-      binaryContentStorage.put(profile.getId(), profileImageRequest.bytes());
+      UserStatus.builder()
+          .user(user)
+          .build();
+
+      userRepository.save(user);
+
+      log.info("사용자 생성 완료: userId={}, username={}", user.getId(), user.getUsername());
+      return userMapper.toDto(user);
+    } catch (RuntimeException e) {
+      if (profile != null) {
+        log.warn("사용자 생성 중 오류 발생으로 저장된 프로필 이미지 삭제: imageId={}", profile.getId());
+        binaryContentStorage.delete(profile.getId());
+      }
+      throw e;
     }
-
-    log.info("사용자 생성 완료: userId={}, username={}", user.getId(), user.getUsername());
-    return userMapper.toDto(user);
   }
 
   @Override
@@ -79,7 +90,7 @@ public class BasicUserService implements UserService {
     List<UserDto.Response> responses = userRepository.findAllWithProfileAndStatus().stream()
         .map(userMapper::toDto)
         .toList();
-    
+
     log.info("사용자 전체 조회 완료: 총 {}건", responses.size());
     return responses;
   }
@@ -93,40 +104,50 @@ public class BasicUserService implements UserService {
     User user = userRepository.findById(id)
         .orElseThrow(() -> UserNotFoundException.withId(id));
 
-    if (profileImageRequest != null) {
-      BinaryContent newImage = profileImageRequest.toEntity();
+    BinaryContent newImage = null;
+    try {
+      if (profileImageRequest != null) {
+        newImage = profileImageRequest.toEntity();
 
-      binaryContentRepository.save(newImage);
-      binaryContentStorage.put(newImage.getId(), profileImageRequest.bytes());
+        binaryContentRepository.save(newImage);
+        binaryContentStorage.put(newImage.getId(), profileImageRequest.bytes());
 
-      user.updateProfileImage(newImage);
+        user.updateProfileImage(newImage);
+      }
+
+      // 사용자명 수정
+      Optional.ofNullable(request.newUsername())
+          .filter(newUsername -> !newUsername.equals(user.getUsername()))
+          .ifPresent(newUsername -> {
+            if (userRepository.existsByUsername(newUsername)) {
+              throw UserAlreadyExistsException.withUsername(newUsername);
+            }
+            user.changeUsername(newUsername);
+          });
+
+      // 이메일 수정
+      Optional.ofNullable(request.newEmail())
+          .filter(newEmail -> !newEmail.equals(user.getEmail()))
+          .ifPresent(newEmail -> {
+            if (userRepository.existsByEmail(newEmail)) {
+              throw UserAlreadyExistsException.withEmail(newEmail);
+            }
+            user.changeEmail(newEmail);
+          });
+
+      // 비밀번호 수정
+      Optional.ofNullable(request.newPassword())
+          .ifPresent(user::changePassword);
+
+      log.info("사용자 업데이트 완료: userId={}", id);
+      return userMapper.toDto(user);
+    } catch (RuntimeException e) {
+      if (newImage != null) {
+        log.warn("사용자 업데이트 중 오류 발생으로 저장된 이미지 삭제: imageId={}", newImage.getId());
+        binaryContentStorage.delete(newImage.getId());
+      }
+      throw e;
     }
-    // 사용자명 수정
-    Optional.ofNullable(request.newUsername())
-        .filter(newUsername -> !newUsername.equals(user.getUsername()))
-        .ifPresent(newUsername -> {
-          if (userRepository.existsByUsername(newUsername)) {
-            throw UserAlreadyExistsException.withUsername(newUsername);
-          }
-          user.changeUsername(newUsername);
-        });
-
-    // 이메일 수정
-    Optional.ofNullable(request.newEmail())
-        .filter(newEmail -> !newEmail.equals(user.getEmail()))
-        .ifPresent(newEmail -> {
-          if (userRepository.existsByEmail(newEmail)) {
-            throw UserAlreadyExistsException.withEmail(newEmail);
-          }
-          user.changeEmail(newEmail);
-        });
-
-    // 비밀번호 수정
-    Optional.ofNullable(request.newPassword())
-        .ifPresent(user::changePassword);
-
-    log.info("사용자 업데이트 완료: userId={}", id);
-    return userMapper.toDto(user);
   }
 
   @Override

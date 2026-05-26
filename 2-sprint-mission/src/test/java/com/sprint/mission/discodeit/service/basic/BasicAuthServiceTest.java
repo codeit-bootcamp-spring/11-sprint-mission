@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
-import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.mock;
 
 import com.sprint.mission.discodeit.dto.AuthDto;
@@ -45,6 +44,7 @@ class BasicAuthServiceTest {
 
     given(mockUser.getUsername()).willReturn("testuser");
     given(userRepository.findByUsername(request.username())).willReturn(Optional.of(mockUser));
+    given(mockUser.matchesPassword(request.password())).willReturn(true);
     given(userMapper.toDto(mockUser)).willReturn(mockResponse);
 
     // When
@@ -54,7 +54,7 @@ class BasicAuthServiceTest {
     assertThat(result).isNotNull();
     assertThat(result.username()).isEqualTo(request.username());
 
-    then(mockUser).should().validatePassword(request.password());
+    then(mockUser).should().matchesPassword(request.password());
     then(userRepository).should().findByUsername(request.username());
     then(userMapper).should().toDto(mockUser);
   }
@@ -80,18 +80,19 @@ class BasicAuthServiceTest {
   void login_fail_wrongPassword() {
     // Given
     AuthDto.LoginRequest request = new AuthDto.LoginRequest("testuser", "wrong_password");
-    User mockUser = mock(User.class);
+    User user = User.builder()
+        .username("testuser")
+        .email("test@example.com")
+        .password("Password123!")
+        .build();
 
-    given(userRepository.findByUsername(request.username())).willReturn(Optional.of(mockUser));
-    willThrow(InvalidCredentialsException.wrongPassword())
-        .given(mockUser).validatePassword(request.password());
+    given(userRepository.findByUsername(request.username())).willReturn(Optional.of(user));
 
     // When & Then
     assertThatThrownBy(() -> authService.login(request))
         .isInstanceOf(InvalidCredentialsException.class);
 
     then(userRepository).should().findByUsername(request.username());
-    then(mockUser).should().validatePassword(request.password());
     then(userMapper).shouldHaveNoInteractions();
   }
 }

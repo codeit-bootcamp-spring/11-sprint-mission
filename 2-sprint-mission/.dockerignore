@@ -1,0 +1,10 @@
+.git
+.gitignore
+.gradle
+.idea
+build
+!gradlew
+*.log
+.env
+pgdata/
+storage/

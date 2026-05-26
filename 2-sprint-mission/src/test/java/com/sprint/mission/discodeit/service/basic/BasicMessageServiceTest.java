@@ -103,6 +103,9 @@ class BasicMessageServiceTest {
     // When & Then
     assertThatThrownBy(() -> messageService.create(request, null))
         .isInstanceOf(ChannelNotFoundException.class);
+
+    then(userRepository).shouldHaveNoInteractions();
+    then(messageRepository).shouldHaveNoInteractions();
   }
 
   @Test

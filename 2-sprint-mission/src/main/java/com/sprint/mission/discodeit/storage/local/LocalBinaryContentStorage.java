@@ -1,6 +1,8 @@
 package com.sprint.mission.discodeit.storage.local;
 
 import com.sprint.mission.discodeit.dto.BinaryContentDto;
+import com.sprint.mission.discodeit.exception.binarycontent.BinaryContentNotFoundException;
+import com.sprint.mission.discodeit.exception.binarycontent.FileOperationException;
 import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import jakarta.annotation.PostConstruct;
 import java.io.IOException;
@@ -8,8 +10,8 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.NoSuchElementException;
 import java.util.UUID;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.io.InputStreamResource;
@@ -19,6 +21,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
+@Slf4j
 @Component
 @ConditionalOnProperty(name = "discodeit.storage.type", havingValue = "local")
 public class LocalBinaryContentStorage implements BinaryContentStorage {
@@ -37,7 +40,7 @@ public class LocalBinaryContentStorage implements BinaryContentStorage {
         Files.createDirectories(root);
       }
     } catch (IOException e) {
-      throw new RuntimeException("루트 디렉토리 생성 실패:" + root, e);
+      throw FileOperationException.directoryCreationFailed();
     }
   }
 
@@ -47,12 +50,12 @@ public class LocalBinaryContentStorage implements BinaryContentStorage {
     Path path = resolvePath(id);
     try {
       if (Files.exists(path)) {
-        throw new IllegalArgumentException("이미 존재하는 파일: " + id);
+        throw FileOperationException.alreadyExists();
       }
       Files.write(path, bytes);
       return id;
     } catch (IOException e) {
-      throw new RuntimeException("파일 저장 실패: " + id, e);
+      throw FileOperationException.saveFailed();
     }
   }
 
@@ -60,12 +63,12 @@ public class LocalBinaryContentStorage implements BinaryContentStorage {
   public InputStream get(UUID id) {
     Path path = resolvePath(id);
     if (Files.notExists(path)) {
-      throw new NoSuchElementException("디렉터리 조회 실패: " + id);
+      throw BinaryContentNotFoundException.withId(id);
     }
     try {
       return Files.newInputStream(path);
     } catch (IOException e) {
-      throw new RuntimeException("파일 조회 실패: " + id, e);
+      throw FileOperationException.readFailed();
     }
   }
 
@@ -85,5 +88,15 @@ public class LocalBinaryContentStorage implements BinaryContentStorage {
         .header(HttpHeaders.CONTENT_TYPE, dto.contentType())
         .header(HttpHeaders.CONTENT_LENGTH, String.valueOf(dto.size()))
         .body(resource);
+  }
+
+  @Override
+  public void delete(UUID id) {
+    try {
+      Files.deleteIfExists(resolvePath(id));
+    } catch (IOException e) {
+      log.error("디스크 파일 삭제 실패: id={}", id, e);
+      throw FileOperationException.deleteFailed();
+    }
   }
 }

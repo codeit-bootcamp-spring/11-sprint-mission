@@ -92,7 +92,9 @@ class ChannelControllerTest {
     mockMvc.perform(post("/api/channels/public")
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(invalidRequest)))
-        .andExpect(status().isBadRequest());
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.code").value("COMMON-002"))
+        .andExpect(jsonPath("$.details.name").exists());
   }
 
   // create(Private) 테스트
@@ -185,7 +187,9 @@ class ChannelControllerTest {
     mockMvc.perform(patch("/api/channels/{channelId}", nonExistentChannelId)
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(request)))
-        .andExpect(status().isNotFound());
+        .andExpect(status().isNotFound())
+        .andExpect(jsonPath("$.code").value("CHANNEL-001"))
+        .andExpect(jsonPath("$.message").value("존재하지 않는 채널입니다."));
   }
 
   @Test
@@ -202,7 +206,9 @@ class ChannelControllerTest {
     mockMvc.perform(patch("/api/channels/{channelId}", privateChannelId)
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(request)))
-        .andExpect(status().isForbidden());
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.code").value("CHANNEL-002"))
+        .andExpect(jsonPath("$.message").value("비공개 채널의 정보는 수정할 수 없습니다."));
   }
 
   // delete 테스트
@@ -230,7 +236,9 @@ class ChannelControllerTest {
     // When & Then
     mockMvc.perform(delete("/api/channels/{channelId}", nonExistentChannelId)
             .contentType(MediaType.APPLICATION_JSON))
-        .andExpect(status().isNotFound());
+        .andExpect(status().isNotFound())
+        .andExpect(jsonPath("$.code").value("CHANNEL-001"))
+        .andExpect(jsonPath("$.message").value("존재하지 않는 채널입니다."));
   }
 
   // findAllByUserId 테스트
@@ -285,6 +293,8 @@ class ChannelControllerTest {
     // When & Then
     mockMvc.perform(get("/api/channels")
             .contentType(MediaType.APPLICATION_JSON))
-        .andExpect(status().isBadRequest());
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.code").value("COMMON-006"))
+        .andExpect(jsonPath("$.message").value("필수 요청 파라미터가 누락되었습니다."));
   }
 }

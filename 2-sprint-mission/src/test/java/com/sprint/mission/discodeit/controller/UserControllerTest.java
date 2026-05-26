@@ -10,6 +10,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -109,7 +110,7 @@ class UserControllerTest {
   void create_invalidRequest_returnsBadRequest() throws Exception {
     // Given
     UserDto.CreateRequest invalidRequest = UserDto.CreateRequest.builder()
-        .username("invalid-test")
+        .username("")
         .email("invalid-email")
         .password("short")
         .build();
@@ -125,7 +126,23 @@ class UserControllerTest {
     mockMvc.perform(multipart("/api/users")
             .file(userCreateRequestPart)
             .contentType(MediaType.MULTIPART_FORM_DATA_VALUE))
-        .andExpect(status().isBadRequest());
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.code").value("COMMON-002"))
+        .andExpect(jsonPath("$.details.username").exists())
+        .andExpect(jsonPath("$.details.email").exists())
+        .andExpect(jsonPath("$.details.password").exists());
+  }
+
+  @Test
+  @DisplayName("지원하지 않는 미디어 타입 요청 - 415 Unsupported Media Type 반환")
+  void create_unsupportedMediaType_returnsError() throws Exception {
+    // When & Then
+    mockMvc.perform(post("/api/users")
+            .contentType(MediaType.APPLICATION_XML_VALUE)
+            .content("<xml>test</xml>"))
+        .andExpect(status().isUnsupportedMediaType())
+        .andExpect(jsonPath("$.code").value("COMMON-007"))
+        .andExpect(jsonPath("$.message").value("지원하지 않는 Content-Type입니다."));
   }
 
   // update 테스트
@@ -226,7 +243,9 @@ class UserControllerTest {
               request.setMethod("PATCH");
               return request;
             }))
-        .andExpect(status().isNotFound());
+        .andExpect(status().isNotFound())
+        .andExpect(jsonPath("$.code").value("USER-001"))
+        .andExpect(jsonPath("$.message").value("존재하지 않는 유저입니다."));
   }
 
   // delete 테스트
@@ -254,7 +273,9 @@ class UserControllerTest {
     // When & Then
     mockMvc.perform(delete("/api/users/{userId}", nonExistentUserId)
             .contentType(MediaType.APPLICATION_JSON))
-        .andExpect(status().isNotFound());
+        .andExpect(status().isNotFound())
+        .andExpect(jsonPath("$.code").value("USER-001"))
+        .andExpect(jsonPath("$.message").value("존재하지 않는 유저입니다."));
   }
 
   // findAll 테스트
@@ -331,6 +352,8 @@ class UserControllerTest {
     mockMvc.perform(patch("/api/users/{userId}/userStatus", nonExistentUserId)
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(updateRequest)))
-        .andExpect(status().isNotFound());
+        .andExpect(status().isNotFound())
+        .andExpect(jsonPath("$.code").value("USER-001"))
+        .andExpect(jsonPath("$.message").value("존재하지 않는 유저입니다."));
   }
 }

@@ -1,6 +1,7 @@
 package com.sprint.mission.discodeit.entity;
 
 import com.sprint.mission.discodeit.entity.base.BaseUpdatableEntity;
+import com.sprint.mission.discodeit.exception.channel.PrivateChannelUpdateException;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -50,12 +51,20 @@ public class Channel extends BaseUpdatableEntity {
         .build();
   }
 
-  public void update(String newName, String newDescription) {
+  private void update(String newName, String newDescription) {
     if (newName != null && !newName.equals(this.name)) {
       this.name = newName;
     }
     if (newDescription != null && !newDescription.equals(this.description)) {
       this.description = newDescription;
     }
+  }
+
+  // Public 채널 수정
+  public void updatePublicInfo(String newName, String newDescription) {
+    if (this.type == ChannelType.PRIVATE) {
+      throw PrivateChannelUpdateException.forChannel(getId());
+    }
+    update(newName, newDescription);
   }
 }

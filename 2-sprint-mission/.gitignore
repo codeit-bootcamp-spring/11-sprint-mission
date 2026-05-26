@@ -48,3 +48,10 @@ out/
 ### Logs ###
 /.logs/
 *.log
+
+### Secrets ###
+.env
+
+### Volumes ###
+pgdata/
+storage/

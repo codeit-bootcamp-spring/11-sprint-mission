@@ -6,8 +6,8 @@ plugins {
 }
 
 group = 'com.sprint.mission'
-version = '0.0.1-SNAPSHOT'
-description = 'Sprint Mission3 - discodeit'
+version = '1.2-M8'
+description = 'Sprint Mission - discodeit'
 
 java {
     toolchain {
@@ -32,6 +32,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.mapstruct:mapstruct:1.5.5.Final'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'software.amazon.awssdk:s3:2.31.7'
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok-mapstruct-binding:0.2.0'
@@ -40,7 +41,8 @@ dependencies {
     testImplementation 'com.h2database:h2'
     runtimeOnly 'org.postgresql:postgresql'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-    implementation 'de.codecentric:spring-boot-admin-starter-client:3.4.5'
+    testCompileOnly 'org.projectlombok:lombok'
+    testAnnotationProcessor 'org.projectlombok:lombok'
 }
 
 tasks.named('test') {

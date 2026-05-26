@@ -51,8 +51,11 @@ public enum ErrorCode {
   FILE_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "FILE-005", "파일 업로드 중 오류가 발생했습니다."),
   BINARY_CONTENT_NOT_FOUND(HttpStatus.NOT_FOUND, "FILE-006", "존재하지 않는 파일 콘텐츠입니다."),
   FILE_SIZE_EXCEEDED(HttpStatus.PAYLOAD_TOO_LARGE, "FILE-007", "업로드 가능한 파일 용량을 초과했습니다."),
-  FILE_DIRECTORY_READ_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "FILE-008", "디렉토리를 읽어오는 데 실패했습니다.");
-
+  FILE_DIRECTORY_READ_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "FILE-008", "디렉토리를 읽어오는 데 실패했습니다."),
+  FILE_ALREADY_EXISTS(HttpStatus.CONFLICT, "FILE-009", "이미 존재하는 파일입니다."),
+  PRESIGNED_URL_GENERATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "FILE-010",
+      "Presigned URL 생성에 실패했습니다.");
+  
   private final HttpStatus status;
   private final String code;
   private final String message;

@@ -28,7 +28,9 @@ public class BasicAuthService implements AuthService {
         .orElseThrow(InvalidCredentialsException::wrongPassword);
 
     // 비밀번호 검증
-    user.validatePassword(request.password());
+    if (!user.matchesPassword(request.password())) {
+      throw InvalidCredentialsException.wrongPassword();
+    }
 
     log.info("로그인 성공: userId={}, username={}", user.getId(), user.getUsername());
     return userMapper.toDto(user);

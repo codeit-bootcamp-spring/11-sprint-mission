@@ -141,7 +141,10 @@ class MessageControllerTest {
     mockMvc.perform(multipart("/api/messages")
             .file(messageCreateRequestPart)
             .contentType(MediaType.MULTIPART_FORM_DATA_VALUE))
-        .andExpect(status().isBadRequest());
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.code").value("COMMON-002"))
+        .andExpect(jsonPath("$.details.channelId").exists())
+        .andExpect(jsonPath("$.details.authorId").exists());
   }
 
   // update 테스트
@@ -208,7 +211,9 @@ class MessageControllerTest {
     mockMvc.perform(patch("/api/messages/{messageId}", nonExistentMessageId)
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(updateRequest)))
-        .andExpect(status().isNotFound());
+        .andExpect(status().isNotFound())
+        .andExpect(jsonPath("$.code").value("MESSAGE-001"))
+        .andExpect(jsonPath("$.message").value("존재하지 않는 메시지입니다."));
   }
 
   // delete 테스트
@@ -236,7 +241,9 @@ class MessageControllerTest {
     // When & Then
     mockMvc.perform(delete("/api/messages/{messageId}", nonExistentMessageId)
             .contentType(MediaType.APPLICATION_JSON))
-        .andExpect(status().isNotFound());
+        .andExpect(status().isNotFound())
+        .andExpect(jsonPath("$.code").value("MESSAGE-001"))
+        .andExpect(jsonPath("$.message").value("존재하지 않는 메시지입니다."));
   }
 
   // findAllByChannelId 테스트
@@ -313,6 +320,8 @@ class MessageControllerTest {
     // When & Then
     mockMvc.perform(get("/api/messages")
             .contentType(MediaType.APPLICATION_JSON))
-        .andExpect(status().isBadRequest());
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.code").value("COMMON-006"))
+        .andExpect(jsonPath("$.message").value("필수 요청 파라미터가 누락되었습니다."));
   }
 }
