@@ -40,7 +40,9 @@ bin/
 
 ### Discodeit ###
 .discodeit
-data/
-logs/
-*.log
-*.ser
+
+### 숨김 파일 ###
+.*
+!.gitignore
+!.env.example
+!.dockerignore

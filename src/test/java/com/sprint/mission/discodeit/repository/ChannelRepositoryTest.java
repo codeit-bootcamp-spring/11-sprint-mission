@@ -2,118 +2,95 @@ package com.sprint.mission.discodeit.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.sprint.mission.discodeit.config.TestJpaConfig;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.ChannelType;
-import com.sprint.mission.discodeit.entity.ReadStatus;
-import com.sprint.mission.discodeit.entity.User;
-import com.sprint.mission.discodeit.entity.UserStatus;
-import java.time.Instant;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.context.annotation.Import;
+import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
+import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.test.context.ActiveProfiles;
 
+/**
+ * ChannelRepository 슬라이스 테스트
+ */
 @DataJpaTest
+@EnableJpaAuditing
 @ActiveProfiles("test")
-@Import(TestJpaConfig.class)
 class ChannelRepositoryTest {
 
   @Autowired
   private ChannelRepository channelRepository;
+
   @Autowired
-  private UserRepository userRepository;
-  @Autowired
-  private UserStatusRepository userStatusRepository;
-  @Autowired
-  private ReadStatusRepository readStatusRepository;
+  private TestEntityManager entityManager;
 
-  private Channel publicChannel;
-  private Channel privateChannel;
-  private User user;
-
-  @BeforeEach
-  void setUp() {
-    publicChannel = channelRepository.save(new Channel(ChannelType.PUBLIC, "general", "공개 채널"));
-    privateChannel = channelRepository.save(new Channel(ChannelType.PRIVATE, null, null));
-
-    user = userRepository.save(new User("testuser", "test@example.com", "pass", null));
-    userStatusRepository.save(new UserStatus(user, Instant.now()));
+  /**
+   * TestFixture: 채널 생성용 테스트 픽스처
+   */
+  private Channel createTestChannel(ChannelType type, String name) {
+    Channel channel = new Channel(type, name, "설명: " + name);
+    return channelRepository.save(channel);
   }
 
   @Test
-  void findAllByTypeOrIdIn_byPublicType_succeeds() {
-    List<Channel> result = channelRepository.findAllByTypeOrIdIn(ChannelType.PUBLIC, List.of(UUID.randomUUID()));
+  @DisplayName("타입이 PUBLIC이거나 ID 목록에 포함된 채널을 모두 조회할 수 있다")
+  void findAllByTypeOrIdIn_ReturnsChannels() {
+    // given
+    Channel publicChannel1 = createTestChannel(ChannelType.PUBLIC, "공개채널1");
+    Channel publicChannel2 = createTestChannel(ChannelType.PUBLIC, "공개채널2");
+    Channel privateChannel1 = createTestChannel(ChannelType.PRIVATE, "비공개채널1");
+    Channel privateChannel2 = createTestChannel(ChannelType.PRIVATE, "비공개채널2");
 
-    assertThat(result).hasSize(1);
-    assertThat(result.get(0).getType()).isEqualTo(ChannelType.PUBLIC);
-    assertThat(result.get(0).getName()).isEqualTo("general");
-  }
+    channelRepository.saveAll(
+        Arrays.asList(publicChannel1, publicChannel2, privateChannel1, privateChannel2));
 
-  @Test
-  void findAllByTypeOrIdIn_excludesPrivateChannelsByType() {
-    List<Channel> result = channelRepository.findAllByTypeOrIdIn(ChannelType.PUBLIC, List.of(UUID.randomUUID()));
+    // 영속성 컨텍스트 초기화
+    entityManager.flush();
+    entityManager.clear();
 
-    boolean hasPrivate = result.stream().anyMatch(c -> c.getType() == ChannelType.PRIVATE);
-    assertThat(hasPrivate).isFalse();
-  }
+    // when
+    List<UUID> selectedPrivateIds = List.of(privateChannel1.getId());
+    List<Channel> foundChannels = channelRepository.findAllByTypeOrIdIn(ChannelType.PUBLIC,
+        selectedPrivateIds);
 
-  @Test
-  void findAllByTypeOrIdIn_byPrivateChannelId_succeeds() {
-    List<Channel> result = channelRepository.findAllByTypeOrIdIn(ChannelType.PUBLIC, List.of(privateChannel.getId()));
+    // then
+    assertThat(foundChannels).hasSize(3); // 공개채널 2개 + 선택된 비공개채널 1개
 
-    assertThat(result).hasSize(2);
-    assertThat(result).extracting(Channel::getId)
-        .containsExactlyInAnyOrder(publicChannel.getId(), privateChannel.getId());
-  }
+    // 공개 채널 2개가 모두 포함되어 있는지 확인
+    assertThat(
+        foundChannels.stream().filter(c -> c.getType() == ChannelType.PUBLIC).count()).isEqualTo(2);
 
-  @Test
-  void findAllByTypeOrIdIn_whenNoSubscribedChannels_returnsOnlyPublic() {
-    List<Channel> result = channelRepository.findAllByTypeOrIdIn(ChannelType.PUBLIC, List.of(UUID.randomUUID()));
-
-    assertThat(result).hasSize(1);
-    assertThat(result.get(0).getType()).isEqualTo(ChannelType.PUBLIC);
-  }
-
-  @Test
-  void findAllByTypeOrIdIn_whenNoPublicChannels_returnsOnlyPrivate() {
-    channelRepository.delete(publicChannel);
-
-    List<Channel> result = channelRepository.findAllByTypeOrIdIn(ChannelType.PUBLIC, List.of(privateChannel.getId()));
-
-    assertThat(result).hasSize(1);
-    assertThat(result.get(0).getType()).isEqualTo(ChannelType.PRIVATE);
-  }
-
-  @Test
-  void findAllByTypeOrIdIn_includesSubscribedPrivateChannels() {
-    ReadStatus readStatus = new ReadStatus(user, privateChannel, Instant.now());
-    readStatusRepository.save(readStatus);
-
-    List<UUID> subscribedChannelIds = readStatusRepository.findAllByUserId(user.getId()).stream()
-        .map(rs -> rs.getChannel().getId())
+    // 선택된 비공개 채널만 포함되어 있는지 확인
+    List<Channel> privateChannels = foundChannels.stream()
+        .filter(c -> c.getType() == ChannelType.PRIVATE)
         .toList();
-
-    List<Channel> result = channelRepository.findAllByTypeOrIdIn(ChannelType.PUBLIC, subscribedChannelIds);
-
-    assertThat(result).hasSize(2);
-    assertThat(result).extracting(Channel::getId)
-        .containsExactlyInAnyOrder(publicChannel.getId(), privateChannel.getId());
+    assertThat(privateChannels).hasSize(1);
+    assertThat(privateChannels.get(0).getId()).isEqualTo(privateChannel1.getId());
   }
 
   @Test
-  void findAllByTypeOrIdIn_whenUserHasNoSubscriptions_returnsOnlyPublic() {
-    List<UUID> subscribedChannelIds = readStatusRepository.findAllByUserId(user.getId()).stream()
-        .map(rs -> rs.getChannel().getId())
-        .toList();
+  @DisplayName("타입이 PUBLIC이 아니고 ID 목록이 비어있으면 비어있는 리스트를 반환한다")
+  void findAllByTypeOrIdIn_EmptyList_ReturnsEmptyList() {
+    // given
+    Channel privateChannel1 = createTestChannel(ChannelType.PRIVATE, "비공개채널1");
+    Channel privateChannel2 = createTestChannel(ChannelType.PRIVATE, "비공개채널2");
 
-    List<Channel> result = channelRepository.findAllByTypeOrIdIn(ChannelType.PUBLIC, subscribedChannelIds);
+    channelRepository.saveAll(Arrays.asList(privateChannel1, privateChannel2));
 
-    assertThat(result).hasSize(1);
-    assertThat(result.get(0).getType()).isEqualTo(ChannelType.PUBLIC);
+    // 영속성 컨텍스트 초기화
+    entityManager.flush();
+    entityManager.clear();
+
+    // when
+    List<Channel> foundChannels = channelRepository.findAllByTypeOrIdIn(ChannelType.PUBLIC,
+        List.of());
+
+    // then
+    assertThat(foundChannels).isEmpty();
   }
-}
+} 
