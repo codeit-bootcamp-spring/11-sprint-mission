@@ -45,3 +45,5 @@ out/
 uploads/
 
 .logs/
+
+.env

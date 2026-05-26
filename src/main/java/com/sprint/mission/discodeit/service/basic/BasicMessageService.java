@@ -13,6 +13,7 @@ import com.sprint.mission.discodeit.exception.message.MessageNotFoundException;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.mapper.MessageMapper;
 import com.sprint.mission.discodeit.mapper.PageResponseMapper;
+import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
@@ -40,6 +41,7 @@ public class BasicMessageService implements MessageService {
   private final MessageRepository messageRepository;
   private final UserRepository userRepository;
   private final ChannelRepository channelRepository;
+  private final BinaryContentRepository binaryContentRepository;
   private final MessageMapper messageMapper;
   private final BinaryContentStorage binaryContentStorage;
   private final PageResponseMapper pageResponseMapper;
@@ -61,27 +63,43 @@ public class BasicMessageService implements MessageService {
         });
 
     Message message = new Message(request.content(), author, channel);
+    List<BinaryContent> attachmentContents = new ArrayList<>();
 
     if (attachments != null && !attachments.isEmpty()) {
-      List<BinaryContent> attachmentContents = new ArrayList<>();
       for (MultipartFile file : attachments) {
-        try {
-          BinaryContent content = new BinaryContent(
-              file.getOriginalFilename(), file.getSize(), file.getContentType());
-
-          attachmentContents.add(content);
-
-          binaryContentStorage.put(content.getId(), file.getBytes());
-        } catch (IOException e) {
-          log.error("메시지 첨부파일 처리 중 IO 오류 발생", e);
-          throw new RuntimeException("파일 처리 중 오류 발생", e);
-        }
+        BinaryContent content = new BinaryContent(
+            file.getOriginalFilename(), file.getSize(), file.getContentType());
+        attachmentContents.add(content);
       }
+      binaryContentRepository.saveAll(attachmentContents);
       message.setAttachments(attachmentContents);
     }
-    messageRepository.save(message);
-    log.info("메시지 생성 완료 - messageId: {}", message.getId());
 
+    messageRepository.save(message);
+
+    if (attachments != null && !attachments.isEmpty()) {
+      List<UUID> uploadedFileIds = new ArrayList<>();
+      try {
+        for (int i = 0; i < attachments.size(); i++) {
+          MultipartFile file = attachments.get(i);
+          BinaryContent content = attachmentContents.get(i);
+          binaryContentStorage.put(content.getId(), file.getBytes());
+          uploadedFileIds.add(content.getId());
+        }
+      } catch (Exception e) {
+        log.error("메시지 첨부파일 스토리지 저장 중 오류 발생", e);
+        for (UUID id : uploadedFileIds) {
+          try {
+            binaryContentStorage.delete(id);
+          } catch (Exception deleteEx) {
+            log.error("파일 삭제 실패 - 고아 파일 발생 주의: {}", id, deleteEx);
+          }
+        }
+        throw new RuntimeException("파일 저장 중 오류가 발생하여 메시지 생성이 취소되었습니다.");
+      }
+    }
+
+    log.info("메시지 생성 완료 - messageId: {}", message.getId());
     return messageMapper.toDto(message);
   }
 
@@ -136,6 +154,12 @@ public class BasicMessageService implements MessageService {
   @Transactional
   public void delete(UUID id) {
     log.debug("메시지 삭제 시작 - messageId: {}", id);
+
+    if (!messageRepository.existsById(id)) {
+      log.warn("메시지 삭제 실패(존재하지 않는 메시지) - messageId: {}", id);
+      throw new MessageNotFoundException(id);
+    }
+
     messageRepository.deleteById(id);
     log.info("메시지 삭제 완료 - messageId: {}", id);
   }

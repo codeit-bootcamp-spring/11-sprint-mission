@@ -99,11 +99,6 @@ public class BasicChannelService implements ChannelService {
           return new ChannelNotFoundException(id);
         });
 
-    if (channel.getType() == ChannelType.PRIVATE) {
-      log.warn("채널 수정 실패(PRIVATE 채널 수정 시도) - channelId: {}", id);
-      throw new PrivateChannelUpdateDeniedException(id);
-    }
-
     channel.update(request.newName(), request.newDescription());
     log.info("채널 수정 완료 - channelId: {}", id);
 
@@ -114,6 +109,12 @@ public class BasicChannelService implements ChannelService {
   @Transactional
   public void delete(UUID id) {
     log.debug("채널 삭제 시작 - channelId: {}", id);
+
+    if (!channelRepository.existsById(id)) {
+      log.warn("채널 삭제 실패(존재하지 않는 채널) - channelId: {}", id);
+      throw new ChannelNotFoundException(id);
+    }
+
     channelRepository.deleteById(id);
     log.info("채널 삭제 완료 - channelId: {}", id);
   }

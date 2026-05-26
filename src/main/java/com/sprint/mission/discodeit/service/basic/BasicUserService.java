@@ -131,6 +131,12 @@ public class BasicUserService implements UserService {
   @Transactional
   public void delete(UUID id) {
     log.debug("사용자 삭제 시작 - userId: {}", id);
+
+    if (!userRepository.existsById(id)) {
+      log.warn("사용자 삭제 실패(존재하지 않는 유저) - userId: {}", id);
+      throw new UserNotFoundException(id);
+    }
+
     userRepository.deleteById(id);
     log.info("사용자 삭제 완료 - userId: {}", id);
   }

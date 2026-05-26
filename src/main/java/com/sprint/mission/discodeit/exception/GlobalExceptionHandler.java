@@ -3,11 +3,13 @@ package com.sprint.mission.discodeit.exception;
 import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 
 @Slf4j
 @RestControllerAdvice
@@ -37,9 +39,9 @@ public class GlobalExceptionHandler {
         .body(new ErrorResponse(500, ex.getClass().getSimpleName(), "서버 오류가 발생했습니다.", Map.of()));
   }
 
-  @ExceptionHandler(org.springframework.web.method.annotation.HandlerMethodValidationException.class)
+  @ExceptionHandler(HandlerMethodValidationException.class)
   public ResponseEntity<ErrorResponse> handle(
-      org.springframework.web.method.annotation.HandlerMethodValidationException ex) {
+      HandlerMethodValidationException ex) {
     log.warn("HandlerMethodValidationException: {}", ex.getMessage());
 
     return ResponseEntity.badRequest()
@@ -47,6 +49,20 @@ public class GlobalExceptionHandler {
             400,
             "HandlerMethodValidationException",
             "입력값이 유효하지 않습니다.",
+            Map.of()
+        ));
+  }
+
+  @ExceptionHandler(DataIntegrityViolationException.class)
+  public ResponseEntity<ErrorResponse> handle(
+      DataIntegrityViolationException ex) {
+    log.warn("DataIntegrityViolationException: {}", ex.getMessage());
+
+    return ResponseEntity.status(409)
+        .body(new ErrorResponse(
+            409,
+            "DataIntegrityViolation",
+            "데이터 중복 또는 무결성 제약조건 위반 발생",
             Map.of()
         ));
   }

@@ -161,8 +161,9 @@ public class BasicChannelServiceTest {
   void delete_success() {
     UUID channelId = UUID.randomUUID();
 
-    channelService.delete(channelId);
+    given(channelRepository.existsById(channelId)).willReturn(true);
 
+    channelService.delete(channelId);
     then(channelRepository).should().deleteById(channelId);
   }
 
@@ -171,6 +172,8 @@ public class BasicChannelServiceTest {
   void delete_fail() {
     UUID channelId = UUID.randomUUID();
 
+    given(channelRepository.existsById(channelId)).willReturn(true);
+    
     willThrow(new RuntimeException("DB 접속 오류")).given(channelRepository).deleteById(channelId);
 
     assertThrows(RuntimeException.class, () -> {

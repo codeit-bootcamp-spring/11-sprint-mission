@@ -117,8 +117,9 @@ public class BasicUserServiceTest {
   void delete_success() {
     UUID userId = UUID.randomUUID();
 
-    userService.delete(userId);
+    given(userRepository.existsById(userId)).willReturn(true);
 
+    userService.delete(userId);
     then(userRepository).should().deleteById(userId);
   }
 
@@ -126,6 +127,8 @@ public class BasicUserServiceTest {
   @DisplayName("사용자 삭제 싫패 - 예외 발생 시뮬레이션")
   void delete_fail() {
     UUID userId = UUID.randomUUID();
+
+    given(userRepository.existsById(userId)).willReturn(true);
 
     willThrow(new RuntimeException("DB Error"))
         .given(userRepository).deleteById(userId);

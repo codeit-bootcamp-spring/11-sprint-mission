@@ -1,6 +1,7 @@
 package com.sprint.mission.discodeit.entity;
 
 import com.sprint.mission.discodeit.entity.base.BaseUpdatableEntity;
+import com.sprint.mission.discodeit.exception.channel.PrivateChannelUpdateDeniedException;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -46,6 +47,10 @@ public class Channel extends BaseUpdatableEntity {
   }
 
   public void update(String name, String description) {
+    if (this.type == ChannelType.PRIVATE) {
+      throw new PrivateChannelUpdateDeniedException(this.getId());
+    }
+
     if (name != null) {
       this.name = name;
     }

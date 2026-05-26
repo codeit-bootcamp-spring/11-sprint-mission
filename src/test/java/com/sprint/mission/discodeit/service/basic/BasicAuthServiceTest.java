@@ -1,8 +1,9 @@
 package com.sprint.mission.discodeit.service.basic;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
 
 import com.sprint.mission.discodeit.dto.UserDto;
 import com.sprint.mission.discodeit.dto.UserLoginRequest;
@@ -45,6 +46,8 @@ public class BasicAuthServiceTest {
     UserDto result = authService.login(request);
 
     assertThat(result.username()).isEqualTo("testUser");
+
+    then(userMapper).should().toDto(user);
   }
 
   @Test
@@ -54,9 +57,9 @@ public class BasicAuthServiceTest {
 
     given(userRepository.findByUsername(request.username())).willReturn(Optional.empty());
 
-    assertThrows(UserNotFoundException.class, () -> {
-      authService.login(request);
-    });
+    assertThatThrownBy(() -> authService.login(request)).isInstanceOf(UserNotFoundException.class);
+
+    then(userMapper).shouldHaveNoInteractions();
   }
 
   @Test
@@ -67,8 +70,9 @@ public class BasicAuthServiceTest {
 
     given(userRepository.findByUsername(request.username())).willReturn(Optional.of(user));
 
-    assertThrows(PasswordMismatchException.class, () -> {
-      authService.login(request);
-    });
+    assertThatThrownBy(() -> authService.login(request))
+        .isInstanceOf(PasswordMismatchException.class);
+
+    then(userMapper).shouldHaveNoInteractions();
   }
 }

@@ -160,8 +160,9 @@ public class BasicMessageServiceTest {
   void delete_success() {
     UUID messageId = UUID.randomUUID();
 
+    given(messageRepository.existsById(messageId)).willReturn(true);
+    
     messageService.delete(messageId);
-
     then(messageRepository).should().deleteById(messageId);
   }
 }

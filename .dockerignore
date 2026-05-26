@@ -1,0 +1,15 @@
+#git
+.git
+.gitignore
+
+#IDE
+.idea
+
+#로컬
+build/
+.gradle/
+
+.env
+
+*.log
+.logs/
