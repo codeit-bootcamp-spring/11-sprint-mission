@@ -7,15 +7,12 @@ import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.Channel.ChannelType;
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.entity.User;
-
 import java.time.Instant;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -43,7 +40,7 @@ public class MessageRepositoryTest {
 
   @Test
   @DisplayName("커서 있는 채널 아이디로 메시지 가져오기")
-  void findAllByChannelIdCursorTest() {
+  void findAllByChannelIdCursorTest() throws InterruptedException {
 
     //given
 
@@ -56,8 +53,9 @@ public class MessageRepositoryTest {
     channelRepository.save(channel);
     userRepository.save(user);
 
+    Thread.sleep(50);
     messageRepository.save(message1);
-
+    Thread.sleep(50);
     Instant timing = Instant.now();
     messageRepository.save(message2);
 

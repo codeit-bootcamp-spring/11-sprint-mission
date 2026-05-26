@@ -1,36 +1,37 @@
 <configuration>
 
   <!-- 콘솔 출력 -->
-  <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+  <appender class="ch.qos.logback.core.ConsoleAppender" name="CONSOLE">
     <encoder>
       <pattern>%d{yy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %-36logger{36} - %msg%n</pattern>
     </encoder>
   </appender>
 
   <!-- 파일 출력 (일별 롤링) -->
-  <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+  <appender class="ch.qos.logback.core.rolling.RollingFileAppender" name="FILE">
+    <encoder>
+      <pattern>%d{yy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %-36logger{36} - %msg%n</pattern>
+    </encoder>
     <file>.logs/discodeit.log</file>
     <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
       <fileNamePattern>.logs/discodeit.%d{yyyy-MM-dd}.log</fileNamePattern>
       <maxHistory>30</maxHistory>
     </rollingPolicy>
-    <encoder>
-      <pattern>%d{yy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %-36logger{36} - %msg%n</pattern>
-    </encoder>
   </appender>
 
   <!-- 프로파일별 분기 -->
   <springProfile name="dev">
+    <logger level="debug" name="com.sprint.mission.discodeit"/>
     <root level="info">
       <appender-ref ref="CONSOLE"/>
       <appender-ref ref="FILE"/>
     </root>
-    <logger name="com.sprint.mission.discodeit" level="debug"/>
   </springProfile>
 
   <springProfile name="prod">
     <root level="info">
       <appender-ref ref="FILE"/>
+      <appender-ref ref="CONSOLE"/>
     </root>
   </springProfile>
 

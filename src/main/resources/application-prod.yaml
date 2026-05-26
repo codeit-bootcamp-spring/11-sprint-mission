@@ -3,17 +3,18 @@ server:
 spring:
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://localhost:5432/discodeit
-    username: discodeit_user
-    password: discodeit_1234
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+
 
   jpa:
     hibernate:
       ddl-auto: validate
 
-  logging:
-    level:
-      root: WARN
-      com.sprint.mission.discodeit: INFO
-    file:
-      name: logs/discodeit.log # 운영 환경에서는 콘솔이 아닌 파일로 저장하여 휘발을 방지
+
+logging:
+  level:
+    root: WARN
+    com.sprint.mission.discodeit: INFO
+

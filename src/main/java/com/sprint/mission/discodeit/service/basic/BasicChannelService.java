@@ -12,6 +12,7 @@ import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.entity.base.BaseEntity;
 import com.sprint.mission.discodeit.exception.service.channel.NonExistChannelException;
 import com.sprint.mission.discodeit.exception.service.channel.WrongChannelTypeException;
+import com.sprint.mission.discodeit.exception.service.user.NonExistUserException;
 import com.sprint.mission.discodeit.mapper.ChannelMapper;
 import com.sprint.mission.discodeit.repository.JPAChannelRepository;
 import com.sprint.mission.discodeit.repository.JPAMessageRepository;
@@ -104,7 +105,7 @@ public class BasicChannelService implements ChannelService {
     privateChannelCreateRequest.participantIds().forEach(userId -> {
 
       ReadStatus readStatus = new ReadStatus(
-          userRepository.findById(userId).orElseThrow(),
+          userRepository.findById(userId).orElseThrow(() -> new NonExistUserException(userId)),
           channel,
           Instant.now()
       );
@@ -177,7 +178,8 @@ public class BasicChannelService implements ChannelService {
     log.info("공개 채널 수정, channelId : {}, publicChanelUpdateRequest : {}", channelId,
         publicChanelUpdateRequest);
 
-    Channel channel = channelRepository.findById(channelId).orElseThrow();
+    Channel channel = channelRepository.findById(channelId)
+        .orElseThrow(() -> new NonExistChannelException(channelId));
 
     //public check
     if (channel.getType() == Channel.ChannelType.PRIVATE) {

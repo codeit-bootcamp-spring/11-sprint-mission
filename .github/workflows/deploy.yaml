@@ -1,0 +1,87 @@
+name: CD
+
+on:
+  push:
+    branches:
+      - 최정윤-sprint8
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials for Public ECR
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
+          aws-region: us-east-1
+
+      - uses: aws-actions/amazon-ecr-login@v2
+        with:
+          registry-type: public
+
+      - name: 도커 이미지 빌드 및 푸쉬
+        env:
+          ECR_URI: ${{ vars.ECR_REPOSITORY_URI }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t $ECR_URI:latest -t $ECR_URI:$IMAGE_TAG .
+          docker push $ECR_URI:latest
+          docker push $ECR_URI:$IMAGE_TAG
+
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+
+
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: 태스크 정의 가져오기
+        run: |
+          aws ecs describe-task-definition \
+          --task-definition ${{ vars.ECS_TASK_DEFINITION }} \
+          --query taskDefinition > task-definition.json
+      - name: 새이미지로 교체
+        id: task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: task-definition.json
+          container-name: discodeit-app
+          image: ${{ vars.ECR_REPOSITORY_URI }}:${{ github.sha }}
+
+
+      - name: ecs 서비스 중단
+        run: |
+          echo "Scaling down ECS service to 0..."
+          aws ecs update-service \
+          --cluster ${{ vars.ECS_CLUSTER }} \
+          --service ${{ vars.ECS_SERVICE }} \
+          --desired-count 0
+          sleep 30
+
+
+      - name: Deploy Amazon ECS task definition
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: ${{ steps.task-def.outputs.task-definition }}
+          service: ${{ vars.ECS_SERVICE }}
+          cluster: ${{ vars.ECS_CLUSTER }}
+          wait-for-service-stability: true
+
+
+      - name: desired-count 1로 올리고 서비스 재개
+        run: |
+          aws ecs update-service \
+          --cluster ${{ vars.ECS_CLUSTER }} \
+          --service ${{ vars.ECS_SERVICE }} \
+          --desired-count 1

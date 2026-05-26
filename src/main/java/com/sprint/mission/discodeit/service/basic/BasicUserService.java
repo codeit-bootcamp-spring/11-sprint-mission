@@ -118,7 +118,8 @@ public class BasicUserService implements UserService {
   public UserDto find(UUID userId) {
 
     //유저 가져오기
-    User user = userRepository.findById(userId).orElseThrow();
+    User user = userRepository.findById(userId)
+        .orElseThrow(() -> new NonExistUserException(userId));
     return userMapper.toDto(user);
 
   }
@@ -150,7 +151,7 @@ public class BasicUserService implements UserService {
         .equals(userUpdateRequest.newUsername())) {
 
       if (userRepository.existsByUsername(userUpdateRequest.newUsername())) {
-        throw new DupEmailException(userUpdateRequest.newEmail());
+        throw new DupNameException(userUpdateRequest.newEmail());
       }
       user.updateUsername(userUpdateRequest.newUsername());
     }

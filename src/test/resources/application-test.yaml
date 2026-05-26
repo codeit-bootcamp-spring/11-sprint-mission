@@ -10,7 +10,7 @@ spring:
     show-sql: true
   sql:
     init:
-      mode: always
+      mode: never
 
 logging:
   level:

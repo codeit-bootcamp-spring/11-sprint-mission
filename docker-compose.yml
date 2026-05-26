@@ -1,26 +1,73 @@
-version: '3.8'
-
 services:
-  prometheus:
-    image: prom/prometheus:latest
-    container_name: prometheus
-    volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
-    ports:
-      - "9090:9090"
-    environment:
-      TZ: Asia/Seoul
 
-  grafana:
-    image: grafana/grafana:latest
-    container_name: grafana
-    volumes:
-      - ./grafana-data:/var/lib/grafana
-    ports:
-      - "3000:3000"
-    depends_on:
-      - prometheus
+  db:
+    image: postgres:17
     environment:
-      GF_SECURITY_ADMIN_USER: admin
-      GF_SECURITY_ADMIN_PASSWORD: admin
-      TZ: Asia/Seoul
+      # TODO: DB 이름, 유저, 비밀번호 환경변수를 설정하세요.
+      #       비밀번호는 discodeit.env 파일에서 주입받도록 구성하세요. (${변수명} 문법)
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DATASOURCE_USERNAME}
+      POSTGRES_PASSWORD: ${DATASOURCE_PASSWORD}
+    volumes:
+      # TODO 1: DB 데이터를 영속화하는 볼륨을 마운트하세요.
+      - my_db_volume:/var/lib/postgresql/data
+
+      # TODO 2: schema.sql이 첫 실행 시 자동으로 실행되도록 마운트하세요.
+      #         PostgreSQL 이미지의 자동 실행 경로를 먼저 조사해보세요.
+      - ./src/main/resources/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    ports:
+
+      #       왜 로컬 PostgreSQL 포트(5432)와 다르게 설정하는지 생각해보세요.
+      - "5433:5432"
+
+  app:
+    build:
+      # TODO: 로컬 Dockerfile로 빌드하도록 설정하세요.
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      # TODO: discodeit.env 파일의 변수들을 환경변수로 주입하세요.
+      - discodeit.env
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILE}
+      # TODO: DB 연결 URL을 설정하세요.
+      #       힌트: Compose 내부에서 다른 서비스는 서비스 이름으로 접근합니다.
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${DB_NAME}
+    volumes:
+      # TODO: BinaryContentStorage 경로를 볼륨에 마운트하세요.
+      - my_app_storage:/app/storage
+    ports:
+      - "8080:80"
+    depends_on:
+      # TODO: db 서비스가 먼저 시작되도록 의존성을 선언하세요.
+      - db
+
+# TODO: 위에서 사용한 볼륨들을 최상위에 선언하세요.
+volumes:
+  my_db_volume:
+  my_app_storage:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
