@@ -25,7 +25,7 @@ CREATE TABLE user_statuses
     id             UUID PRIMARY KEY,
     created_at     TIMESTAMP WITH TIME ZONE NOT NULL,
     updated_at     TIMESTAMP WITH TIME ZONE,
-    user_id        UUID UNIQUE,
+    user_id        UUID UNIQUE              NOT NULL,
     last_active_at TIMESTAMP WITH TIME ZONE NOT NULL,
     CONSTRAINT fk_user_statuses_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
 );
@@ -59,8 +59,8 @@ CREATE TABLE messages
     id         UUID PRIMARY KEY,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE,
-    content    TEXT,
-    channel_id UUID                     NOT NULL,
+    content    TEXT                     NOT NULL,
+    channel_id UUID,
     author_id  UUID,
     CONSTRAINT fk_messages_channel FOREIGN KEY (channel_id) REFERENCES channels (id) ON DELETE CASCADE,
     CONSTRAINT fk_messages_user FOREIGN KEY (author_id) REFERENCES users (id) ON DELETE SET NULL

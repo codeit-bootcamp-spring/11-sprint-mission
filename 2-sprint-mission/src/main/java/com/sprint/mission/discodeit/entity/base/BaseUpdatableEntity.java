@@ -11,6 +11,6 @@ import org.springframework.data.annotation.LastModifiedDate;
 public abstract class BaseUpdatableEntity extends BaseEntity {
 
   @LastModifiedDate
-  @Column
+  @Column(columnDefinition = "timestamp with time zone")
   private Instant updatedAt;
 }
