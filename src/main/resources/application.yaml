@@ -1,20 +1,21 @@
 spring:
+  config:
+    import: optional:file:.env[.properties]
   application:
     name: discodeit
-  profiles:
-    active: dev
   servlet:
     multipart:
-      maxFileSize: 10MB
-      maxRequestSize: 30MB
+      maxFileSize: 10MB # 파일 하나의 최대 크기
+      maxRequestSize: 30MB  # 한 번에 최대 업로드 가능 용량
   datasource:
     driver-class-name: org.postgresql.Driver
   jpa:
-    properties:
-      hibernate:
-        format_sql: true
-    #        default_batch_fetch_size: 100
+    hibernate:
+      ddl-auto: validate
     open-in-view: false
+  profiles:
+    active:
+      - dev
 
 management:
   endpoints:
@@ -24,14 +25,10 @@ management:
   endpoint:
     health:
       show-details: always
-  info:
-    env:
-      enabled: true
 
 info:
-  app:
-    name: Discodeit
-    version: 1.7.0
+  name: Discodeit
+  version: 1.7.0
   java:
     version: 17
   spring-boot:
@@ -51,6 +48,16 @@ info:
 
 discodeit:
   storage:
-    type: local
+    type: ${STORAGE_TYPE:local}
     local:
-      root-path: .discodeit/storage
+      root-path: ${STORAGE_LOCAL_ROOT_PATH:.discodeit/storage}
+    s3:
+      access-key: ${AWS_S3_ACCESS_KEY:}
+      secret-key: ${AWS_S3_SECRET_KEY:}
+      region: ${AWS_S3_REGION:ap-northeast-2}
+      bucket: ${AWS_S3_BUCKET:}
+      presigned-url-expiration: ${AWS_S3_PRESIGNED_URL_EXPIRATION:600}
+
+logging:
+  level:
+    root: info

@@ -1,0 +1,28 @@
+# Gradle
+.gradle/
+build/
+
+# IDE
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+bin/
+.vscode/
+
+# Git
+.git/
+
+# OS
+.DS_Store
+
+# Application data
+.discodeit/
+
+# Environment
+.env
+
+# Docs
+HELP.md
+README.md
