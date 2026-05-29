@@ -266,4 +266,4 @@ class ChannelApiIntegrationTest {
     mockMvc.perform(delete("/api/channels/{channelId}", nonExistentChannelId))
         .andExpect(status().isNotFound());
   }
-}
+} 

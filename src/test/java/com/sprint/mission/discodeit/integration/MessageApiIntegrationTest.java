@@ -304,4 +304,4 @@ class MessageApiIntegrationTest {
     mockMvc.perform(delete("/api/messages/{messageId}", nonExistentMessageId))
         .andExpect(status().isNotFound());
   }
-}
+} 

@@ -169,4 +169,4 @@ class BasicBinaryContentServiceTest {
     assertThatThrownBy(() -> binaryContentService.delete(binaryContentId))
         .isInstanceOf(BinaryContentNotFoundException.class);
   }
-}
+} 

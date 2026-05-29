@@ -146,4 +146,4 @@ class BinaryContentControllerTest {
     mockMvc.perform(get("/api/binaryContents/{binaryContentId}/download", nonExistentId))
         .andExpect(status().isNotFound());
   }
-}
+} 

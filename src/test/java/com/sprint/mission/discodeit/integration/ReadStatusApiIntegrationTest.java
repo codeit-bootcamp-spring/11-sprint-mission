@@ -263,4 +263,4 @@ class ReadStatusApiIntegrationTest {
         .andExpect(jsonPath("$[*].channelId",
             hasItems(channel1.id().toString(), channel2.id().toString())));
   }
-}
+} 

@@ -206,4 +206,4 @@ class BinaryContentApiIntegrationTest {
             get("/api/binaryContents/{binaryContentId}/download", nonExistentBinaryContentId))
         .andExpect(status().isNotFound());
   }
-}
+} 

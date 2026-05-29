@@ -93,4 +93,4 @@ class ChannelRepositoryTest {
     // then
     assertThat(foundChannels).isEmpty();
   }
-}
+} 

@@ -25,7 +25,7 @@ public class BasicAuthService implements AuthService {
   @Override
   public UserDto login(LoginRequest loginRequest) {
     log.debug("로그인 시도: username={}", loginRequest.username());
-
+    
     String username = loginRequest.username();
     String password = loginRequest.password();
 

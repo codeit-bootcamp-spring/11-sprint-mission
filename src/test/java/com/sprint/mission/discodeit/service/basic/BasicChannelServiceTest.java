@@ -225,4 +225,4 @@ class BasicChannelServiceTest {
     assertThatThrownBy(() -> channelService.delete(channelId))
         .isInstanceOf(ChannelNotFoundException.class);
   }
-}
+} 

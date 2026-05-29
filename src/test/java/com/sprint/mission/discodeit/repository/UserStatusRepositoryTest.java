@@ -115,4 +115,4 @@ class UserStatusRepositoryTest {
     assertThat(foundStatus).isPresent();
     assertThat(foundStatus.get().isOnline()).isFalse();
   }
-}
+} 

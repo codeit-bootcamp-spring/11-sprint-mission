@@ -52,7 +52,7 @@ public class BasicReadStatusService implements ReadStatusService {
           return readStatusRepository.save(new ReadStatus(user, channel, lastReadAt));
         });
 
-    log.info("읽음 상태 생성 완료: id={}, userId={}, channelId={}",
+    log.info("읽음 상태 생성 완료: id={}, userId={}, channelId={}", 
         readStatus.getId(), userId, channelId);
     return readStatusMapper.toDto(readStatus);
   }
@@ -81,11 +81,11 @@ public class BasicReadStatusService implements ReadStatusService {
   @Override
   public ReadStatusDto update(UUID readStatusId, ReadStatusUpdateRequest request) {
     log.debug("읽음 상태 수정 시작: id={}, newLastReadAt={}", readStatusId, request.newLastReadAt());
-
+    
     ReadStatus readStatus = readStatusRepository.findById(readStatusId)
         .orElseThrow(() -> ReadStatusNotFoundException.withId(readStatusId));
     readStatus.update(request.newLastReadAt());
-
+    
     log.info("읽음 상태 수정 완료: id={}", readStatusId);
     return readStatusMapper.toDto(readStatus);
   }

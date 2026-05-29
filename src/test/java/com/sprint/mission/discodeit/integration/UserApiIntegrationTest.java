@@ -296,4 +296,4 @@ class UserApiIntegrationTest {
             .content(requestBody))
         .andExpect(status().isNotFound());
   }
-}
+} 

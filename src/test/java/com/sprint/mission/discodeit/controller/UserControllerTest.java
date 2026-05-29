@@ -340,4 +340,4 @@ class UserControllerTest {
             .content(objectMapper.writeValueAsString(updateRequest)))
         .andExpect(status().isNotFound());
   }
-}
+} 
