@@ -1,0 +1,91 @@
+name: CD
+
+on:
+  push:
+    branches:
+      - release
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: discodeit
+
+    steps:
+      - name: 코드 체크아웃
+        uses: actions/checkout@v4
+
+      - name: AWS 자격증명 설정 (Public ECR은 us-east-1 필수)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
+          aws-region: us-east-1
+
+      - name: Public ECR 로그인
+        uses: aws-actions/amazon-ecr-login@v2
+        with:
+          registry-type: public
+
+      - name: Docker 이미지 빌드 및 ECR 푸시
+        env:
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build \
+            -t ${{ vars.ECR_REPOSITORY_URI }}:latest \
+            -t ${{ vars.ECR_REPOSITORY_URI }}:$IMAGE_TAG \
+            .
+          docker push ${{ vars.ECR_REPOSITORY_URI }}:latest
+          docker push ${{ vars.ECR_REPOSITORY_URI }}:$IMAGE_TAG
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build-and-push
+
+    steps:
+      - name: AWS 자격증명 설정
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: ECS 태스크 정의 다운로드
+        run: |
+          aws ecs describe-task-definition \
+            --task-definition ${{ vars.ECS_TASK_DEFINITION }} \
+            --query taskDefinition > task-definition.json
+
+      - name: 새 이미지로 태스크 정의 업데이트
+        id: render-task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: task-definition.json
+          container-name: discodeit
+          image: ${{ vars.ECR_REPOSITORY_URI }}:${{ github.sha }}
+
+      - name: 기존 ECS 서비스 중단 (프리티어 리소스 고려)
+        run: |
+          aws ecs update-service \
+            --cluster ${{ vars.ECS_CLUSTER }} \
+            --service ${{ vars.ECS_SERVICE }} \
+            --desired-count 0
+          aws ecs wait services-stable \
+            --cluster ${{ vars.ECS_CLUSTER }} \
+            --services ${{ vars.ECS_SERVICE }}
+
+      - name: 새 태스크 정의 등록 및 ECS 서비스 업데이트
+        run: |
+          NEW_TASK_DEF_ARN=$(aws ecs register-task-definition \
+            --cli-input-json file://${{ steps.render-task-def.outputs.task-definition }} \
+            --query taskDefinition.taskDefinitionArn \
+            --output text)
+          aws ecs update-service \
+            --cluster ${{ vars.ECS_CLUSTER }} \
+            --service ${{ vars.ECS_SERVICE }} \
+            --task-definition $NEW_TASK_DEF_ARN \
+            --desired-count 1
+          aws ecs wait services-stable \
+            --cluster ${{ vars.ECS_CLUSTER }} \
+            --services ${{ vars.ECS_SERVICE }}

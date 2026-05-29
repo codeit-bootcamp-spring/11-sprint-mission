@@ -5,8 +5,9 @@ import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.entity.UserStatus;
 import com.sprint.mission.discodeit.exception.DiscodeitException;
+import com.sprint.mission.discodeit.exception.DuplicateEmailException;
+import com.sprint.mission.discodeit.exception.DuplicateUsernameException;
 import com.sprint.mission.discodeit.exception.ErrorCode;
-import com.sprint.mission.discodeit.exception.UserAlreadyExistsException;
 import com.sprint.mission.discodeit.exception.UserNotFoundException;
 import com.sprint.mission.discodeit.mapper.UserMapper;
 import com.sprint.mission.discodeit.repository.UserRepository;
@@ -180,7 +181,7 @@ public class UserService {
         userRepository.findByUsername(username)
                 .filter(foundUser -> !foundUser.getId().equals(userId))
                 .ifPresent(user -> {
-                    throw new UserAlreadyExistsException(ErrorCode.DUPLICATE_USERNAME);
+                    throw new DuplicateUsernameException(username);
                 });
     }
 
@@ -189,7 +190,7 @@ public class UserService {
             throw new DiscodeitException(ErrorCode.USERNAME_REQUIRED);
         }
         if (userRepository.existsByUsername(username)) {
-            throw new UserAlreadyExistsException(ErrorCode.DUPLICATE_USERNAME);
+            throw new DuplicateUsernameException(username);
         }
     }
 
@@ -198,7 +199,7 @@ public class UserService {
             throw new DiscodeitException(ErrorCode.EMAIL_REQUIRED);
         }
         if (userRepository.existsByEmail(email)) {
-            throw new UserAlreadyExistsException(ErrorCode.DUPLICATE_EMAIL);
+            throw new DuplicateEmailException(email);
         }
     }
 
@@ -209,7 +210,7 @@ public class UserService {
         userRepository.findByEmail(email)
                 .filter(foundUser -> !foundUser.getId().equals(userId))
                 .ifPresent(user -> {
-                    throw new UserAlreadyExistsException(ErrorCode.DUPLICATE_EMAIL);
+                    throw new DuplicateEmailException(email);
                 });
     }
 

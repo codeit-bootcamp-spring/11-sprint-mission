@@ -1,0 +1,8 @@
+.git
+.gitignore
+.DS_Store
+.logs
+build
+*.md
+data
+admin

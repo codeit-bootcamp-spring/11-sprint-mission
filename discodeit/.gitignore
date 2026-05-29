@@ -38,3 +38,6 @@ out/
 
 *.md
 /.claude/
+
+### Docker ###
+.env

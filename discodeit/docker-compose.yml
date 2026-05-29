@@ -1,0 +1,48 @@
+services:
+  app:
+    build: .
+    ports:
+      - "8080:80"
+    env_file:
+      - .env
+    environment:
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
+      - DB_URL=jdbc:postgresql://db:5432/${POSTGRES_DB}
+      - DB_USERNAME=${POSTGRES_USER}
+      - DB_PASSWORD=${POSTGRES_PASSWORD}
+      - SPRING_BOOT_ADMIN_CLIENT_URL=${SPRING_BOOT_ADMIN_CLIENT_URL}
+      - JVM_OPTS=${JVM_OPTS}
+      - STORAGE_TYPE=${STORAGE_TYPE}
+      - AWS_S3_ACCESS_KEY=${AWS_S3_ACCESS_KEY}
+      - AWS_S3_SECRET_KEY=${AWS_S3_SECRET_KEY}
+      - AWS_S3_REGION=${AWS_S3_REGION}
+      - AWS_S3_BUCKET=${AWS_S3_BUCKET}
+      - AWS_S3_PRESIGNED_URL_EXPIRATION=${AWS_S3_PRESIGNED_URL_EXPIRATION}
+    volumes:
+      - discodeit-storage:/app/.discodeit/storage
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:16
+    ports:
+      - "5432:5432"
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./src/main/resources/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  discodeit-storage:
+  postgres-data:
