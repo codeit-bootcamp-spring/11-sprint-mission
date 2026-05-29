@@ -54,3 +54,7 @@ application*.yaml
 
 ### docs ###
 docs/
+
+### env ###
+.env
+discodeit.env

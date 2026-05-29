@@ -1,0 +1,32 @@
+# 버전 관리 / IDE
+.git
+.idea
+*.iml
+
+# 빌드 산출물
+.gradle
+build
+out
+
+# 로그
+*.log
+.logs
+
+# 환경 변수 / 시크릿
+.env
+discodeit.env
+
+# OS
+.DS_Store
+
+# 런타임 데이터
+.discodeit
+
+# 문서 / CI
+docs
+.github
+*.md
+
+# 기타
+.claude
+gradlew.bat
