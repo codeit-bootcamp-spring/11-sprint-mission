@@ -53,8 +53,8 @@ public class MessageRepositoryTest {
   }
 
   @Test
-  @DisplayName("채널 메시지 조회 실패(메시지 생성X)")
-  void findMessages_fail() {
+  @DisplayName("채널 메시지 조회 실패(채널에 메시지가 없음)")
+  void findMessages_fail_emptyMessages() {
     // given
     Channel channel = Channel.createPublic("공개", "공개 채널입니다.");
     Pageable pageable = PageRequest.of(0, 50);
@@ -68,7 +68,7 @@ public class MessageRepositoryTest {
 
   @Test
   @DisplayName("채널들의 마지막 메시지 조회 성공")
-  void findLastMessages_success() {
+  void findLastMessages_success() throws InterruptedException {
     // given
     User user = userRepository.save(User.create("test", "test@naver.com", "12345678"));
 
@@ -77,9 +77,11 @@ public class MessageRepositoryTest {
 
     // message 1,2는 channel1 / message 3은 channel2에
     Message message1 = messageRepository.save(Message.create("메시지1", channel1, user));
+    Thread.sleep(1); // 메시지 생성 시간이 같음을 방지(간혹 실패.. 방지)
 
     // 채널1 마지막 메시지
     Message message2 = messageRepository.save(Message.create("메시지2", channel1, user));
+    Thread.sleep(1); // 메시지 생성 시간이 같음을 방지(간혹 실패.. 방지)
 
     // 채널2 마지막 메시지
     Message message3 = messageRepository.save(Message.create("메시지3", channel2, user));
@@ -94,7 +96,7 @@ public class MessageRepositoryTest {
 
   @Test
   @DisplayName("채널들의 마지막 메시지 조회 실패(채널에 메시지가 없음)")
-  void findLastMessages_fail() {
+  void findLastMessages_fail_emptyMessages() {
     // given : 메시지 생성X
     Channel channel = channelRepository.save(Channel.createPublic("공개", "공개 채널입니다."));
 
@@ -108,12 +110,13 @@ public class MessageRepositoryTest {
 
   @Test
   @DisplayName("채널의 마지막 메시지 조회 성공")
-  void findTopByChannelIdOrderByCreatedAtDesc_success() {
+  void findTopByChannelIdOrderByCreatedAtDesc_success() throws InterruptedException {
     // given
     User user = userRepository.save(User.create("test", "test@naver.com", "12345678"));
     Channel channel = channelRepository.save(Channel.createPublic("공개", "공개 채널입니다."));
 
     Message firstMessage = messageRepository.save(Message.create("첫 메시지", channel, user));
+    Thread.sleep(1); // 메시지 생성 시간이 같음을 방지(간혹 실패.. 방지)
     Message lastMessage = messageRepository.save(Message.create("마지막 메시지", channel, user));
 
     // when
@@ -126,8 +129,8 @@ public class MessageRepositoryTest {
   }
 
   @Test
-  @DisplayName("채널의 마지막 메시지 조회 실패(채널에 메시지 없음)")
-  void findTopByChannelIdOrderByCreatedAtDesc_fail() {
+  @DisplayName("채널의 마지막 메시지 조회 실패(채널에 메시지가 없음)")
+  void findTopByChannelIdOrderByCreatedAtDesc_fail_emptyMessages() {
     // given
     Channel channel = channelRepository.save(Channel.createPublic("공개", "공개 채널입니다."));
 
@@ -160,7 +163,7 @@ public class MessageRepositoryTest {
 
   @Test
   @DisplayName("채널의 모든 메시지 삭제 실패(채널이 존재하지 않음)")
-  void deleteAllByChannelId_fail() {
+  void deleteAllByChannelId_fail_notfound_channel() {
     // given
     User user = userRepository.save(User.create("test", "test@naver.com", "12345678"));
     Channel channel = channelRepository.save(Channel.createPublic("공개", "공개 채널입니다."));

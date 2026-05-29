@@ -8,8 +8,8 @@ import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.entity.User;
-import com.sprint.mission.discodeit.exception.DiscodeitException;
-import com.sprint.mission.discodeit.exception.ErrorCode;
+import com.sprint.mission.discodeit.exception.channel.ChannelNotFoundException;
+import com.sprint.mission.discodeit.exception.channel.PrivateChannelUpdateException;
 import com.sprint.mission.discodeit.mapper.ChannelMapper;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
@@ -39,7 +39,7 @@ public class BasicChannelService implements ChannelService {
 
   @Override
   @Transactional
-  public Channel createPublic(ChannelCreatePublicRequest dto) {
+  public ChannelDto createPublic(ChannelCreatePublicRequest dto) {
     log.debug("[CHANNEL_CREATE_PUBLIC_START] PUBLIC 채널 생성 시작 - 생성할 채널 이름={}, 생성할 채널 설명={}",
         dto.name(), dto.description());
 
@@ -48,12 +48,12 @@ public class BasicChannelService implements ChannelService {
     log.info("[CHANNEL_CREATE_PUBLIC_SUCCESS] PUBLIC 채널 생성 완료 - 채널 ID={}, 채널 이름={}",
         channel.getId(), channel.getName());
 
-    return channel;
+    return channelMapper.toDto(channel, List.of(), null);
   }
 
   @Override
   @Transactional
-  public Channel createPrivate(ChannelCreatePrivateRequest dto) {
+  public ChannelDto createPrivate(ChannelCreatePrivateRequest dto) {
     // 기존 - channel Entity의 participantIds(참여자 Id, List<UUID>)를 사용하여 참여자들을 addAll
     // 수정 - userRepository를 사용
     log.debug("[CHANNEL_CREATE_PRIVATE_START] PRIVATE 채널 생성 시작 - 참여자 수={}, 참여자 ID 목록={}",
@@ -74,7 +74,7 @@ public class BasicChannelService implements ChannelService {
     log.info("[CHANNEL_CREATE_PRIVATE_SUCCESS] PRIVATE 채널 생성 완료 - 채널 ID={}, 참여자 수={}",
         channel.getId(), users.size());
 
-    return channel;
+    return channelMapper.toDto(channel, users, null);
   }
 
 
@@ -83,7 +83,7 @@ public class BasicChannelService implements ChannelService {
   @Transactional(readOnly = true)
   public ChannelDto find(UUID id) {
     Channel channel = channelRepository.findById(id).orElseThrow(
-        () -> new DiscodeitException(ErrorCode.CHANNEL_NOT_FOUND)
+        () -> new ChannelNotFoundException(id)
     );
 
     // 가장 최근 메시지 시간을 조회
@@ -152,14 +152,14 @@ public class BasicChannelService implements ChannelService {
   // Update
   @Override
   @Transactional
-  public Channel update(UUID id, ChannelUpdateRequest dto) {
+  public ChannelDto update(UUID id, ChannelUpdateRequest dto) {
     log.debug("[CHANNEL_UPDATE_START] 채널 수정 시작 - 수정할 채널 ID={}, 요청한 채널 이름={}, 요청한 채널 설명={}",
         id, dto.newName(), dto.newDescription());
 
     Channel channel = channelRepository.findById(id).orElseThrow(
         () -> {
           log.warn("[CHANNEL_UPDATE_FAILED] 채널 수정 실패 - 존재하지 않음 - 수정할 채널 ID={}", id);
-          return new DiscodeitException(ErrorCode.CHANNEL_NOT_FOUND);
+          return new ChannelNotFoundException(id);
         }
     );
 
@@ -167,7 +167,7 @@ public class BasicChannelService implements ChannelService {
     if (channel.getType() == Channel.ChannelType.PRIVATE) {
       log.warn("[CHANNEL_UPDATE_FAILED] 채널 수정 실패 - PRIVATE 채널 수정 불가 - 수정할 채널 ID={}, 수정할 채널 타입={}",
           id, channel.getType());
-      throw new DiscodeitException(ErrorCode.PRIVATE_CHANNEL_UPDATE);
+      throw new PrivateChannelUpdateException(id);
     }
 
     if (dto.newName() != null) {
@@ -181,7 +181,7 @@ public class BasicChannelService implements ChannelService {
 
     log.info("[CHANNEL_UPDATE_SUCCESS] 채널 수정 완료 - 수정한 채널 ID={}", id);
 
-    return channel;
+    return channelMapper.toDto(channel, List.of(), null);
   }
 
   // Delete
@@ -195,7 +195,7 @@ public class BasicChannelService implements ChannelService {
     channelRepository.findById(id).orElseThrow(
         () -> {
           log.warn("[CHANNEL_DELETE_FAILED] 채널 삭제 실패 - 존재하지 않음 - 채널 ID={}", id);
-          return new DiscodeitException(ErrorCode.CHANNEL_NOT_FOUND);
+          return new ChannelNotFoundException(id);
         }
     );
 

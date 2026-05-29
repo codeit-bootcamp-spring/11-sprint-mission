@@ -4,7 +4,6 @@ import com.sprint.mission.discodeit.dto.request.MessageCreateRequest;
 import com.sprint.mission.discodeit.dto.request.MessageUpdateRequest;
 import com.sprint.mission.discodeit.dto.response.MessageDto;
 import com.sprint.mission.discodeit.dto.response.PageResponse;
-import com.sprint.mission.discodeit.entity.Message;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -36,7 +35,7 @@ public interface MessageApi {
       @ApiResponse(responseCode = "404", description = "Channel 또는 User를 찾을 수 없음")
   })
   @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-  ResponseEntity<Message> create(
+  ResponseEntity<MessageDto> create(
       @Parameter(description = "Message 생성 정보")
       @RequestPart("messageCreateRequest") MessageCreateRequest dto,
       @Parameter(description = "Message 첨부 파일들")
@@ -48,7 +47,7 @@ public interface MessageApi {
       @ApiResponse(responseCode = "404", description = "Message를 찾을 수 없음")
   })
   @PatchMapping(value = "/{messageId}")
-  ResponseEntity<Message> update(
+  ResponseEntity<MessageDto> update(
       @Parameter(description = "수정할 Message ID")
       @PathVariable("messageId") UUID id,
       @RequestBody MessageUpdateRequest dto);

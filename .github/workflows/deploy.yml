@@ -1,0 +1,96 @@
+name: Deploy
+
+on:
+  push:
+    branches: [ "release" ]
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+
+    outputs:
+      image_tag: ${{ steps.prepare.outputs.tag }} # 깃 커밋 해시 7자리
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: AWS CLI 설정(ECR)
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
+          aws-region: us-east-1
+
+      - name: ECR 로그인
+        run: |
+          aws ecr-public get-login-password --region us-east-1 \
+          | docker login --username AWS --password-stdin public.ecr.aws/i8g5e2o3
+
+      - name: 이미지 태그 생성
+        id: prepare
+        run: |
+          echo "tag=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
+
+      - name: Docker 이미지 빌드
+        run: |
+          docker build -t ${{ vars.ECR_REPOSITORY_URI }}:${{ steps.prepare.outputs.tag }} .
+          docker build -t ${{ vars.ECR_REPOSITORY_URI }}:latest .
+
+      - name: Docker 이미지 Push
+        run: |
+          docker push ${{ vars.ECR_REPOSITORY_URI }}:${{ steps.prepare.outputs.tag }}
+          docker push ${{ vars.ECR_REPOSITORY_URI }}:latest
+  ecs:
+    runs-on: ubuntu-latest
+    needs: docker # docker 작업 후 ecs 작업 실행
+    steps:
+      - name: AWS CLI 설정
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Task Definition 가져오기
+        run: |
+          aws ecs describe-task-definition --task-definition ${{ vars.ECS_TASK_DEFINITION }} \
+          --query taskDefinition > task-definition.json
+
+      - name: Task Definition 수정 # needs.docker.outputs.image_tag : docker 작업의 image_tag -> 깃 커밋 해시 7자리
+        run: |
+          jq --arg IMAGE "${{ vars.ECR_REPOSITORY_URI }}:${{ needs.docker.outputs.image_tag }}" '
+          .containerDefinitions[0].image = $IMAGE
+          | del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)
+          ' task-definition.json > new-task-definition.json
+
+      - name: 새 Task Definition 등록
+        id: register-task
+        run: |
+          TASK_DEF_ARN=$(aws ecs register-task-definition \
+          --cli-input-json file://new-task-definition.json \
+          --query 'taskDefinition.taskDefinitionArn' \
+          --output text)
+          
+          echo "new_task_definition=$TASK_DEF_ARN" >> $GITHUB_OUTPUT
+
+      - name: 기존 서비스 중단
+        run: |
+          aws ecs update-service \
+          --cluster ${{ vars.ECS_CLUSTER }} \
+          --service ${{ vars.ECS_SERVICE }} \
+          --desired-count 0
+
+      - name: 안정화 대기
+        run: |
+          aws ecs wait services-stable \
+            --cluster ${{ vars.ECS_CLUSTER }} \
+            --services ${{ vars.ECS_SERVICE }}
+
+      - name: 새 Task Definition으로 ECS 업데이트
+        run: |
+          aws ecs update-service \
+          --cluster ${{ vars.ECS_CLUSTER }} \
+          --service ${{ vars.ECS_SERVICE }} \
+          --task-definition ${{ steps.register-task.outputs.new_task_definition }} \
+          --desired-count 1 \
+          --force-new-deployment

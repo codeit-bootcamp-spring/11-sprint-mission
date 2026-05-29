@@ -39,7 +39,7 @@ public class UserIntegrationTest {
 
   @Test
   @DisplayName("사용자 생성 성공")
-  void create_success() throws Exception {
+  void create_success_user() throws Exception {
     // given
     UserCreateRequest request = new UserCreateRequest("test", "test@naver.com", "12345678");
 
@@ -57,7 +57,7 @@ public class UserIntegrationTest {
 
   @Test
   @DisplayName("사용자 생성 실패(사용자 이름 중복)")
-  void create_fail_duplicate_Username() throws Exception {
+  void create_fail_user_duplicate_Username() throws Exception {
     // given
     UserCreateRequest request1 = new UserCreateRequest("test", "test@naver.com", "12345678");
 
@@ -83,7 +83,7 @@ public class UserIntegrationTest {
 
   @Test
   @DisplayName("사용자 생성 실패(Email 중복)")
-  void create_fail_duplicate_Email() throws Exception {
+  void create_fail_user_duplicate_Email() throws Exception {
     // given
     UserCreateRequest request1 = new UserCreateRequest("test1", "test@naver.com", "12345678");
 
@@ -109,7 +109,7 @@ public class UserIntegrationTest {
 
   @Test
   @DisplayName("유저 수정 성공")
-  void update_success() throws Exception {
+  void update_success_user() throws Exception {
     // given
     User savedUser = userRepository.save(User.create("test", "test@naver.com", "12345678"));
     UUID userId = savedUser.getId();
@@ -133,7 +133,7 @@ public class UserIntegrationTest {
 
   @Test
   @DisplayName("유저 수정 실패(유저가 존재하지 않음)")
-  void update_fail() throws Exception {
+  void update_fail_user_notfound_user() throws Exception {
     // given
     UUID userId = UUID.randomUUID();
 
@@ -155,7 +155,7 @@ public class UserIntegrationTest {
 
   @Test
   @DisplayName("유저 삭제 성공")
-  void delete_success() throws Exception {
+  void delete_success_user() throws Exception {
     // given
     User savedUser = userRepository.save(User.create("test", "test@naver.com", "12345678"));
     UUID userId = savedUser.getId();
@@ -167,7 +167,7 @@ public class UserIntegrationTest {
 
   @Test
   @DisplayName("유저 삭제 실패(유저가 존재하지 않음")
-  void delete_fail() throws Exception {
+  void delete_fail_user_notfound_user() throws Exception {
     // given
     UUID userId = UUID.randomUUID();
 
@@ -178,7 +178,7 @@ public class UserIntegrationTest {
 
   @Test
   @DisplayName("유저 조회 성공")
-  void findAll_success() throws Exception {
+  void findAll_success_user() throws Exception {
     // given
     User user1 = userRepository.save(User.create("test1", "test1@naver.com", "12345678"));
     User user2 = userRepository.save(User.create("test2", "test2@naver.com", "12345678"));
@@ -191,7 +191,7 @@ public class UserIntegrationTest {
 
   @Test
   @DisplayName("유저 조회 실패(유저가 존재하지 않음")
-  void findAll_fail() throws Exception {
+  void findAll_fail_user_notfound_user() throws Exception {
     // given : List 크기가 0을 유도하도록 User 생성X
 
     // when & then

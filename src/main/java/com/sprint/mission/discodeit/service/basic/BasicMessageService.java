@@ -8,8 +8,10 @@ import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.entity.User;
-import com.sprint.mission.discodeit.exception.DiscodeitException;
-import com.sprint.mission.discodeit.exception.ErrorCode;
+import com.sprint.mission.discodeit.exception.binarycontent.AttachmentSaveFailedException;
+import com.sprint.mission.discodeit.exception.channel.ChannelNotFoundException;
+import com.sprint.mission.discodeit.exception.message.MessageNotFoundException;
+import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.mapper.MessageMapper;
 import com.sprint.mission.discodeit.mapper.PageResponseMapper;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
@@ -47,7 +49,7 @@ public class BasicMessageService implements MessageService {
   // Create
   @Override
   @Transactional
-  public Message create(MessageCreateRequest dto, List<MultipartFile> attachments) {
+  public MessageDto create(MessageCreateRequest dto, List<MultipartFile> attachments) {
 
     log.debug("[MESSAGE_CREATE_START] 메시지 생성 시작 - 채널 ID={}, 작성자 ID={}, 첨부파일 수={}",
         dto.channelId(), dto.authorId(), attachments != null ? attachments.size() : 0);
@@ -55,14 +57,14 @@ public class BasicMessageService implements MessageService {
     Channel channel = channelRepository.findById(dto.channelId()).orElseThrow(
         () -> {
           log.warn("[MESSAGE_CREATE_FAILED] 메시지 생성 실패 - 채널이 존재하지 않음 - 채널 ID={}", dto.channelId());
-          return new DiscodeitException(ErrorCode.CHANNEL_NOT_FOUND);
+          return new ChannelNotFoundException(dto.channelId());
         }
     );
 
     User author = userRepository.findById(dto.authorId()).orElseThrow(
         () -> {
           log.warn("[MESSAGE_CREATE_FAILED] 메시지 생성 실패 - 유저가 존재하지 않음 - 유저 ID={}", dto.authorId());
-          return new DiscodeitException(ErrorCode.USER_NOT_FOUND);
+          return new UserNotFoundException(dto.authorId());
         }
     );
 
@@ -80,15 +82,15 @@ public class BasicMessageService implements MessageService {
             file.getContentType()
         );
 
+        binaryContentRepository.save(binaryContent);
         try {
           binaryContentStorage.put(binaryContent.getId(), file.getBytes());
         } catch (IOException e) {
           log.error("[MESSAGE_CREATE_FAILED] 첨부파일 저장 실패 - 파일명={}, 크기={}",
               file.getOriginalFilename(), file.getSize(), e);
-          throw new DiscodeitException(ErrorCode.ATTACHMENT_SAVE_FAILED);
+          throw new AttachmentSaveFailedException(file.getOriginalFilename());
         }
 
-        binaryContentRepository.save(binaryContent);
         message.addAttachment(binaryContent); // message.getAttachments().add(binaryContent) 캡슐화
       });
 
@@ -98,11 +100,12 @@ public class BasicMessageService implements MessageService {
 
     messageRepository.save(message);
 
-    log.info("[MESSAGE_CREATE_SUCCESS] 메시지 생성 완료 - 메시지 ID={}, 채널 ID={}, 작성자 ID={}, 첨부파일 수={}",
-        message.getId(), channel.getId(), author.getId(),
+    log.info(
+        "[MESSAGE_CREATE_SUCCESS] 메시지 생성 완료 - 메시지 ID={}, 메시지 생성 시각={}, 채널 ID={}, 작성자 ID={}, 첨부파일 수={}",
+        message.getId(), message.getCreatedAt(), channel.getId(), author.getId(),
         attachments != null ? attachments.size() : 0);
 
-    return message;
+    return messageMapper.toDto(message);
   }
 
   // Read
@@ -110,7 +113,10 @@ public class BasicMessageService implements MessageService {
   @Transactional(readOnly = true)
   public PageResponse<MessageDto> findAllByChannelId(UUID channelId, Instant cursor) {
     Pageable pageable = PageRequest.of(0, 50); // 50개씩
-    Slice<Message> slice = messageRepository.findMessages(channelId, cursor, pageable);
+    Slice<Message> slice = cursor == null
+        ? messageRepository.findByChannelIdOrderByCreatedAtDesc(channelId, pageable)
+        : messageRepository.findMessages(channelId, cursor, pageable);
+
     Instant nextCursor = slice.hasNext() && slice.hasContent() ?
         slice.getContent().get(slice.getNumberOfElements() - 1).getCreatedAt() : null;
 
@@ -122,14 +128,14 @@ public class BasicMessageService implements MessageService {
   // Update
   @Override
   @Transactional
-  public Message update(UUID id, MessageUpdateRequest dto) {
+  public MessageDto update(UUID id, MessageUpdateRequest dto) {
     log.debug("[MESSAGE_UPDATE_START] 메시지 수정 시작 - 수정할 메시지 ID={}, 요청할 수정 메시지 내용={}",
         id, dto.newContent());
 
     Message message = messageRepository.findById(id).orElseThrow(
         () -> {
           log.warn("[MESSAGE_UPDATE_FAILED] 메시지 수정 실패 - 존재하지 않음 - 메시지 ID={}", id);
-          return new DiscodeitException(ErrorCode.MESSAGE_NOT_FOUND);
+          return new MessageNotFoundException(id);
         }
     );
     message.updateContent(dto.newContent());
@@ -138,7 +144,7 @@ public class BasicMessageService implements MessageService {
     log.info("[MESSAGE_UPDATE_SUCCESS] 메시지 수정 성공 - 수정한 메시지 ID={}, 수정한 메시지 내용={}", id,
         dto.newContent());
 
-    return message;
+    return messageMapper.toDto(message);
   }
 
   // Delete
@@ -153,7 +159,7 @@ public class BasicMessageService implements MessageService {
     Message message = messageRepository.findById(id).orElseThrow(
         () -> {
           log.warn("[MESSAGE_DELETE_FAILED] 메시지 삭제 실패 - 존재하지 않음 - 메시지 ID={}", id);
-          return new DiscodeitException(ErrorCode.MESSAGE_NOT_FOUND);
+          return new MessageNotFoundException(id);
         }
     );
 

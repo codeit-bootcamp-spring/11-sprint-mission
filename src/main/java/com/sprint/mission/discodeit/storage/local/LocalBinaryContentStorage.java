@@ -1,6 +1,7 @@
-package com.sprint.mission.discodeit.storage;
+package com.sprint.mission.discodeit.storage.local;
 
 import com.sprint.mission.discodeit.dto.response.BinaryContentDto;
+import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import jakarta.annotation.PostConstruct;
 import java.io.IOException;
 import java.io.InputStream;
@@ -65,7 +66,7 @@ public class LocalBinaryContentStorage implements BinaryContentStorage {
 
   // 다운로드 API
   @Override
-  public ResponseEntity<?> download(BinaryContentDto dto) {
+  public ResponseEntity<Resource> download(BinaryContentDto dto) {
     Resource resource = new InputStreamResource(get(dto.id()));
 
     return ResponseEntity.ok()

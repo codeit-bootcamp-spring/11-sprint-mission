@@ -6,8 +6,7 @@ import com.sprint.mission.discodeit.dto.request.UserCreateRequest;
 import com.sprint.mission.discodeit.dto.request.UserStatusUpdateRequest;
 import com.sprint.mission.discodeit.dto.request.UserUpdateRequest;
 import com.sprint.mission.discodeit.dto.response.UserDto;
-import com.sprint.mission.discodeit.entity.User;
-import com.sprint.mission.discodeit.entity.UserStatus;
+import com.sprint.mission.discodeit.dto.response.UserStatusDto;
 import com.sprint.mission.discodeit.service.UserService;
 import com.sprint.mission.discodeit.service.UserStatusService;
 import jakarta.validation.Valid;
@@ -43,12 +42,12 @@ public class UserController implements UserApi {
   @Override
   @ResponseStatus(HttpStatus.CREATED)
   @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-  public ResponseEntity<User> create(
+  public ResponseEntity<UserDto> create(
       @Valid @RequestPart("userCreateRequest") UserCreateRequest dto,
       @RequestPart(value = "profile", required = false) MultipartFile profile) {
     log.info("[USER_CREATE_REQUEST] 유저 생성 요청 - 유저 이름={}, 유저 이메일={}", dto.username(), dto.email());
-    User user = userService.create(dto, profile);
-    log.info("[USER_CREATE_RESPONSE] 유저 생성 응답 - 유저 ID={}", user.getId());
+    UserDto user = userService.create(dto, profile);
+    log.info("[USER_CREATE_RESPONSE] 유저 생성 응답 - 유저 ID={}", user.id());
     return ResponseEntity.status(HttpStatus.CREATED).body(user);
   }
 
@@ -56,12 +55,12 @@ public class UserController implements UserApi {
   @Override
   @ResponseStatus(HttpStatus.OK)
   @PatchMapping(value = "/{userId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-  public ResponseEntity<User> update(
+  public ResponseEntity<UserDto> update(
       @PathVariable("userId") UUID id,
       @Valid @RequestPart("userUpdateRequest") UserUpdateRequest dto,
       @RequestPart(value = "profile", required = false) MultipartFile profile) {
     log.info("[USER_UPDATE_REQUEST] 유저 수정 요청 - 유저 ID={}", id);
-    User user = userService.update(id, dto, profile);
+    UserDto user = userService.update(id, dto, profile);
     log.info("[USER_UPDATE_RESPONSE] 유저 수정 응답 - 유저 ID={}", id);
     return ResponseEntity.ok(user);
   }
@@ -94,7 +93,7 @@ public class UserController implements UserApi {
   @Override
   @ResponseStatus(HttpStatus.OK)
   @PatchMapping("/{userId}/userStatus")
-  public ResponseEntity<UserStatus> updateStatus(
+  public ResponseEntity<UserStatusDto> updateStatus(
       @PathVariable("userId") UUID id,
       @RequestBody UserStatusUpdateRequest dto) {
     return ResponseEntity.ok(userStatusService.updateByUserId(id, dto));

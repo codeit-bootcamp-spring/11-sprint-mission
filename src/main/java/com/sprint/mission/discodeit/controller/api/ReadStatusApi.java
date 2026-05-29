@@ -3,7 +3,6 @@ package com.sprint.mission.discodeit.controller.api;
 import com.sprint.mission.discodeit.dto.request.ReadStatusCreateRequest;
 import com.sprint.mission.discodeit.dto.request.ReadStatusUpdateRequest;
 import com.sprint.mission.discodeit.dto.response.ReadStatusDto;
-import com.sprint.mission.discodeit.entity.ReadStatus;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -28,7 +27,7 @@ public interface ReadStatusApi {
       @ApiResponse(responseCode = "400", description = "이미 읽음 상태가 존재함")
   })
   @PostMapping
-  ResponseEntity<ReadStatus> create(@RequestBody ReadStatusCreateRequest dto);
+  ResponseEntity<ReadStatusDto> create(@RequestBody ReadStatusCreateRequest dto);
 
   @Operation(summary = "Message 읽음 상태 수정")
   @ApiResponses(value = {
@@ -36,7 +35,7 @@ public interface ReadStatusApi {
       @ApiResponse(responseCode = "404", description = "Message 읽음 상태를 찾을 수 없음")
   })
   @PatchMapping("/{readStatusId}")
-  ResponseEntity<ReadStatus> update(
+  ResponseEntity<ReadStatusDto> update(
       @Parameter(description = "수정할 읽음 상태 ID")
       @PathVariable("readStatusId") UUID id,
       @RequestBody ReadStatusUpdateRequest dto);

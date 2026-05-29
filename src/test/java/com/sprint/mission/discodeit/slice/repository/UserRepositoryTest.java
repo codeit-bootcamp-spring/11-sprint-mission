@@ -63,13 +63,13 @@ public class UserRepositoryTest {
   }
 
   @Test
-  @DisplayName("유저ID로 유저 조회 실패")
-  void findById_fail() {
-    // given : DB에 저장 없이 유저 생성
-    User user = User.create("test", "test@naver.com", "12345678");
+  @DisplayName("유저ID로 유저 조회 실패(유저가 존재하지 않음)")
+  void findById_fail_emptyUsers() {
+    // given : userId만 생성하여 가짜 유저 생성
+    UUID userId = UUID.randomUUID();
 
     // when : DB에 유저ID가 존재하는가
-    Optional<User> result = userRepository.findById(user.getId());
+    Optional<User> result = userRepository.findById(userId);
 
     // then : false
     assertThat(result).isEmpty();
@@ -89,8 +89,8 @@ public class UserRepositoryTest {
   }
 
   @Test
-  @DisplayName("Username 존재 여부 조회 실패")
-  void existsByUsername_fail() {
+  @DisplayName("Username 존재 여부 조회 실패(유저가 존재하지 않음)")
+  void existsByUsername_fail_emptyUsers() {
     // given : 유저 생성 X
 
     // when
@@ -115,7 +115,7 @@ public class UserRepositoryTest {
   }
 
   @Test
-  @DisplayName("Email 존재 여부 조회 실패")
+  @DisplayName("Email 존재 여부 조회 실패(유저가 존재하지 않음)")
   void existsByEmail_fail() {
     // given : test@naver.com 이메일이 존재하지 않도록 유저 생성X
 
@@ -141,7 +141,7 @@ public class UserRepositoryTest {
   }
 
   @Test
-  @DisplayName("중복 이름이 존재하는지 조회 실패")
+  @DisplayName("중복 이름이 존재하는지 조회 실패(my라는 User만 test라는 Username을 가지고 있음")
   void existsByUsernameAndIdNot_fail() {
     // given
     User my = userRepository.save(User.create("test", "test@naver.com", "12345678"));
@@ -168,7 +168,7 @@ public class UserRepositoryTest {
   }
 
   @Test
-  @DisplayName("중복된 이메일이 존재하는지 조회 실패")
+  @DisplayName("중복된 이메일이 존재하는지 조회 실패(my라는 User만 test@naver.com email을 가지고 있음")
   void existsByEmailAndIdNot_fail() {
     // given
     User my = userRepository.save(User.create("test", "test@naver.com", "12345678"));
@@ -197,7 +197,7 @@ public class UserRepositoryTest {
   }
 
   @Test
-  @DisplayName("존재하지 않는 Username으로 조회 실패")
+  @DisplayName("Username으로 조회 실패(존재하지 않는 Username)")
   void findByUsername_fail() {
     // given : 유저를 생성하지 않아 실패 유도
     // userRepository.save(User.create("test", "test@naver.com", "12345678"));

@@ -5,7 +5,6 @@ import com.sprint.mission.discodeit.controller.api.ReadStatusApi;
 import com.sprint.mission.discodeit.dto.request.ReadStatusCreateRequest;
 import com.sprint.mission.discodeit.dto.request.ReadStatusUpdateRequest;
 import com.sprint.mission.discodeit.dto.response.ReadStatusDto;
-import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.service.ReadStatusService;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -32,14 +31,14 @@ public class ReadStatusController implements ReadStatusApi {
   // 특정 채널의 메시지 수신 정보 생성
   @Override
   @PostMapping
-  public ResponseEntity<ReadStatus> create(@Valid @RequestBody ReadStatusCreateRequest dto) {
+  public ResponseEntity<ReadStatusDto> create(@Valid @RequestBody ReadStatusCreateRequest dto) {
     return ResponseEntity.status(HttpStatus.CREATED).body(readStatusService.create(dto));
   }
 
   // 특정 채널의 메시지 수신 정보 수정
   @Override
   @PatchMapping("/{readStatusId}")
-  public ResponseEntity<ReadStatus> update(
+  public ResponseEntity<ReadStatusDto> update(
       @PathVariable("readStatusId") UUID id,
       @Valid @RequestBody ReadStatusUpdateRequest dto) {
     return ResponseEntity.ok(readStatusService.update(id, dto));

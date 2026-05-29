@@ -1,38 +1,22 @@
 #spring.application.name=discodeit
-
-discodeit:
-  repository:
-    type: file
-    file-directory: .discodeit
-
-  storage:
-    type: local
-    local:
-      root-path: ./attachments/download
-
 spring:
   application:
     name: discodeit
 
-  boot:
-    admin:
-      client:
-        instance:
-          name: discodeit
-          service-base-url: http://localhost:8080
+  servlet:
+    multipart:
+      max-file-size: 10MB # 파일 당 최대 파일 크기
+      max-request-size: 30MB # 한 번에 최대 업로드 가능 용량
 
   profiles:
     active: dev # dev, prod test
 
+  datasource:
+    driver-class-name: org.postgresql.Driver
+
   jpa:
     hibernate:
       ddl-auto: validate # 운영때는 none으로 교체, 개발중에는 update, 스키마 구조 변경 방어 validate
-
-    show-sql: true # 실행쿼리를 확인
-    properties:
-      hibernate:
-        format_sql: true # SQL문 가독성
-        use_sql_comments: true # SQL 주석 제공
     open-in-view: false
 
 logging:
@@ -44,9 +28,9 @@ management:
     web:
       exposure:
         include: health, info, metrics, loggers
-  info:
-    env:
-      enabled: true
+  endpoint:
+    health:
+      show-details: always
 
 info:
   app:
@@ -55,14 +39,30 @@ info:
     java: 17
     spring-boot: 3.4.0
 
+  datasource:
+    url: ${spring.datasource.url}
+    driver-class-name: ${spring.datasource.driver-class-name}
+
   jpa:
-    ddl-auto: validate
+    ddl-auto: ${spring.jpa.hibernate.ddl-auto}
 
   storage:
-    type: local
-    local:
-      root-path: ./attachments/download
+    type: ${discodeit.storage.type}
+    path: ${discodeit.storage.local.root-path}
 
   multipart:
-    max-file-size: 10MB
-    max-request-size: 10MB
+    max-file-size: ${spring.servlet.multipart.max-file-size}
+    max-request-size: ${spring.servlet.multipart.max-request-size}
+
+
+discodeit:
+  storage:
+    type: ${STORAGE_TYPE:local} # local | s3 (기본값: local)
+    local:
+      root-path: ${STORAGE_LOCAL_ROOT_PATH:.discodeit/storage}
+    s3:
+      access-key: ${AWS_S3_ACCESS_KEY}
+      secret-key: ${AWS_S3_SECRET_KEY}
+      region: ${AWS_S3_REGION}
+      bucket: ${AWS_S3_BUCKET}
+      presigned-url-expiration: ${AWS_S3_PRESIGNED_URL_EXPIRATION:600} # 기본값 600(10분)

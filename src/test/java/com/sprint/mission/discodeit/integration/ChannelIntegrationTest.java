@@ -62,7 +62,7 @@ public class ChannelIntegrationTest {
 
   @Test
   @DisplayName("비공개 채널 생성 성공")
-  void createPrivate_success() throws Exception {
+  void createPrivate_success_channel() throws Exception {
     // given
     User user1 = userRepository.save(User.create("test1", "test1@naver.com", "1234"));
     User user2 = userRepository.save(User.create("test2", "test2@naver.com", "1234"));
@@ -80,7 +80,7 @@ public class ChannelIntegrationTest {
 
   @Test
   @DisplayName("채널 수정 성공")
-  void update_success() throws Exception {
+  void update_success_channel() throws Exception {
     // given
     Channel channel = channelRepository.save(Channel.createPublic("공개", "공개 채널입니다."));
 
@@ -98,7 +98,7 @@ public class ChannelIntegrationTest {
 
   @Test
   @DisplayName("채널 수정 실패(채널이 존재하지 않음)")
-  void update_fail() throws Exception {
+  void update_fail_channel_notfound_channel() throws Exception {
     // given
     UUID channelId = UUID.randomUUID();
 
@@ -113,7 +113,7 @@ public class ChannelIntegrationTest {
 
   @Test
   @DisplayName("채널 삭제 성공")
-  void delete_success() throws Exception {
+  void delete_success_channel() throws Exception {
     // given
     Channel channel = channelRepository.save(Channel.createPublic("공개", "공개 채널입니다."));
 
@@ -126,7 +126,7 @@ public class ChannelIntegrationTest {
 
   @Test
   @DisplayName("채널 삭제 실패(채널이 존재하지 않음)")
-  void delete_fail() throws Exception {
+  void delete_fail_channel_notfound_channel() throws Exception {
     // given
     UUID channelId = UUID.randomUUID();
 

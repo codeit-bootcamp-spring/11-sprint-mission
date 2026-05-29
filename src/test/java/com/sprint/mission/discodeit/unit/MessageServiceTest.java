@@ -12,8 +12,10 @@ import static org.mockito.Mockito.never;
 
 import com.sprint.mission.discodeit.dto.request.MessageCreateRequest;
 import com.sprint.mission.discodeit.dto.request.MessageUpdateRequest;
+import com.sprint.mission.discodeit.dto.response.BinaryContentDto;
 import com.sprint.mission.discodeit.dto.response.MessageDto;
 import com.sprint.mission.discodeit.dto.response.PageResponse;
+import com.sprint.mission.discodeit.dto.response.UserDto;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.Message;
@@ -84,12 +86,25 @@ public class MessageServiceTest {
     given(userRepository.findById(userId)).willReturn(Optional.of(user));
     given(messageRepository.save(any(Message.class))).willAnswer(i -> i.getArgument(0));
 
+    given(messageMapper.toDto(any(Message.class))).willAnswer(i -> {
+      Message m = i.getArgument(0);
+
+      return new MessageDto(
+          m.getId(),
+          m.getCreatedAt(),
+          m.getUpdatedAt(),
+          m.getContent(),
+          channelId,
+          new UserDto(userId, "test", "test@naver.com", null, true),
+          List.of()
+      );
+    });
     // when
-    Message result = messageService.create(request, null);
+    MessageDto result = messageService.create(request, null);
 
     // then
     assertThat(result).isNotNull();
-    assertThat(result.getContent()).isEqualTo("메시지");
+    assertThat(result.content()).isEqualTo("메시지");
     then(messageRepository).should().save(any(Message.class));
     then(binaryContentRepository).should(never()).save(any());
   }
@@ -102,6 +117,7 @@ public class MessageServiceTest {
     UUID userId = UUID.randomUUID();
     Channel channel = mock(Channel.class);
     User user = mock(User.class);
+    BinaryContentDto binaryContentDto = mock(BinaryContentDto.class);
 
     MessageCreateRequest request = new MessageCreateRequest("메시지", channelId, userId);
 
@@ -117,16 +133,29 @@ public class MessageServiceTest {
     given(messageRepository.save(any(Message.class))).willAnswer(i -> i.getArgument(0));
 
     given(binaryContentStorage.put(any(), any())).willReturn(null);
-
     given(binaryContentRepository.save(any())).willAnswer(i -> i.getArgument(0));
 
+    given(messageMapper.toDto(any(Message.class))).willAnswer(i -> {
+      Message m = i.getArgument(0);
+
+      return new MessageDto(
+          m.getId(),
+          m.getCreatedAt(),
+          m.getUpdatedAt(),
+          m.getContent(),
+          channelId,
+          new UserDto(userId, "test", "test@naver.com", null, true),
+          List.of(binaryContentDto)
+      );
+    });
+
     // when
-    Message result = messageService.create(request, List.of(file));
+    MessageDto result = messageService.create(request, List.of(file));
 
     // then
     assertThat(result).isNotNull();
-    assertThat(result.getContent()).isEqualTo("메시지");
-    assertThat(result.getAttachments()).hasSize(1);
+    assertThat(result.content()).isEqualTo("메시지");
+    assertThat(result.attachments()).hasSize(1);
 
     then(messageRepository).should().save(any(Message.class));
     then(binaryContentRepository).should().save(any());
@@ -176,38 +205,54 @@ public class MessageServiceTest {
 
   @Test
   @DisplayName("메시지 수정 성공")
-  void update_success() {
+  void update_success_message() {
     // given
 //    Message message = mock(Message.class);
-    Message message = Message.create("메시지", mock(Channel.class), mock(User.class));
-
+    UUID channelId = UUID.randomUUID();
+    UUID userId = UUID.randomUUID();
+    Channel channel = mock(Channel.class);
+    User user = mock(User.class);
+    Message message = Message.create("메시지", channel, user);
     MessageUpdateRequest request = new MessageUpdateRequest("수정 메시지");
     given(messageRepository.findById(message.getId())).willReturn(Optional.of(message));
 
+    given(messageMapper.toDto(any(Message.class))).willAnswer(i -> {
+      Message m = i.getArgument(0);
+
+      return new MessageDto(
+          m.getId(),
+          m.getCreatedAt(),
+          m.getUpdatedAt(),
+          m.getContent(),
+          channelId,
+          new UserDto(userId, "test", "test@naver.com", null, true),
+          List.of()
+      );
+    });
     // when
-    Message result = messageService.update(message.getId(), request);
+    MessageDto result = messageService.update(message.getId(), request);
 
     // then
-    assertThat(result.getContent()).isEqualTo("수정 메시지");
+    assertThat(result.content()).isEqualTo("수정 메시지");
     then(messageRepository).should().save(any(Message.class));
 
   }
 
   @Test
   @DisplayName("메시지 수정 실패(메시지가 존재하지 않음)")
-  void update_fail() {
+  void update_fail_notfound_message() {
     // given
-    Message message = Message.create("메시지", mock(Channel.class), mock(User.class));
+    UUID messageId = UUID.randomUUID();
 
     MessageUpdateRequest request = new MessageUpdateRequest("수정 메시지");
 
     // 메시지ID로 메시지를 조회 했지만 없음
-    given(messageRepository.findById(message.getId())).willReturn(Optional.empty());
+    given(messageRepository.findById(messageId)).willReturn(Optional.empty());
 
     // when & then
     assertThatThrownBy(
         () ->
-            messageService.update(message.getId(), request)).isInstanceOf(DiscodeitException.class);
+            messageService.update(messageId, request)).isInstanceOf(DiscodeitException.class);
 
     then(messageRepository).should(never()).save(any(Message.class));
 
@@ -215,7 +260,7 @@ public class MessageServiceTest {
 
   @Test
   @DisplayName("메시지 삭제 성공(첨부파일 없음)")
-  void delete_success() {
+  void delete_success_message() {
     // given
     Message message = mock(Message.class);
     given(messageRepository.findById(message.getId())).willReturn(Optional.of(message));
@@ -229,7 +274,7 @@ public class MessageServiceTest {
 
   @Test
   @DisplayName("메시지 삭제 성공(첨부파일 있음)")
-  void delete_success_withAttachments() {
+  void delete_success_message_withAttachments() {
     // given
     UUID messageId = UUID.randomUUID();
 
@@ -251,19 +296,19 @@ public class MessageServiceTest {
 
   @Test
   @DisplayName("메시지 삭제 실패(메시지가 존재하지 않음)")
-  void delete_fail() {
+  void delete_fail_notfound_message() {
     // given
-    Message message = mock(Message.class);
+    UUID messageId = UUID.randomUUID();
 
     // 메시지ID로 메시지를 조회했지만 없음
-    given(messageRepository.findById(message.getId())).willReturn(Optional.empty());
+    given(messageRepository.findById(messageId)).willReturn(Optional.empty());
 
     // when & then
     assertThatThrownBy(
         () ->
-            messageService.delete(message.getId())).isInstanceOf(DiscodeitException.class);
+            messageService.delete(messageId)).isInstanceOf(DiscodeitException.class);
 
-    then(messageRepository).should(never()).deleteById(message.getId());
+    then(messageRepository).should(never()).deleteById(messageId);
   }
 
   @Test

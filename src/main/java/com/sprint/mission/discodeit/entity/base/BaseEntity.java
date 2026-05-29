@@ -2,6 +2,8 @@ package com.sprint.mission.discodeit.entity.base;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.EntityListeners;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.MappedSuperclass;
 import java.time.Instant;
@@ -17,16 +19,12 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 public abstract class BaseEntity {
 
   @Id
-//  @GeneratedValue(strategy = GenerationType.UUID)
+  @GeneratedValue(strategy = GenerationType.UUID)
   @Column(columnDefinition = "uuid", updatable = false, nullable = false) // Not Null
   private UUID id;
 
   @CreatedDate
-  @Column(updatable = false, nullable = false) // Not Null
+  @Column(columnDefinition = "timestamp with time zone", updatable = false, nullable = false)
+  // Not Null
   private Instant createdAt;
-
-  // protected : 같은 패키지거나 상속받은 클래스에서만
-  protected BaseEntity() {
-    this.id = UUID.randomUUID();
-  }
 }

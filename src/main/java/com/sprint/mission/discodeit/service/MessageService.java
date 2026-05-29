@@ -4,7 +4,6 @@ import com.sprint.mission.discodeit.dto.request.MessageCreateRequest;
 import com.sprint.mission.discodeit.dto.request.MessageUpdateRequest;
 import com.sprint.mission.discodeit.dto.response.MessageDto;
 import com.sprint.mission.discodeit.dto.response.PageResponse;
-import com.sprint.mission.discodeit.entity.Message;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -14,7 +13,7 @@ public interface MessageService {
 
   // Create
 //    Message create(String content, UUID channelId, UUID userId);
-  Message create(MessageCreateRequest dto, List<MultipartFile> attachment);
+  MessageDto create(MessageCreateRequest dto, List<MultipartFile> attachment);
 
   // Read
 //    Message readAll(UUID id);
@@ -22,7 +21,7 @@ public interface MessageService {
 
   // Update
 //    Message updateContent(UUID id, String newContent);
-  Message update(UUID id, MessageUpdateRequest dto);
+  MessageDto update(UUID id, MessageUpdateRequest dto);
 
   // Delete
   void delete(UUID id);

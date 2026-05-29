@@ -1,0 +1,10 @@
+#!/usr/bin/env sh
+
+./gradlew test
+
+if [ $? -ne 0 ]; then
+  echo "테스트 실패"
+  exit 1
+fi
+
+echo "테스트 성공"

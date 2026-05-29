@@ -14,6 +14,7 @@ import com.sprint.mission.discodeit.dto.request.ChannelCreatePrivateRequest;
 import com.sprint.mission.discodeit.dto.request.ChannelCreatePublicRequest;
 import com.sprint.mission.discodeit.dto.request.ChannelUpdateRequest;
 import com.sprint.mission.discodeit.dto.response.ChannelDto;
+import com.sprint.mission.discodeit.dto.response.UserDto;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.entity.ReadStatus;
@@ -65,8 +66,21 @@ public class ChannelServiceTest {
 
     given(channelRepository.save(any(Channel.class))).willAnswer(i -> i.getArgument(0));
 
+    given(channelMapper.toDto(any(Channel.class), anyList(), any())).willAnswer(i -> {
+      Channel c = i.getArgument(0);
+
+      return new ChannelDto(
+          c.getId(),
+          c.getType(),
+          c.getName(),
+          c.getDescription(),
+          List.of(),
+          Instant.now()
+      );
+    });
+
     // when
-    Channel result = channelService.createPublic(request);
+    ChannelDto result = channelService.createPublic(request);
 
     // then
     assertThat(result).isNotNull();
@@ -79,6 +93,8 @@ public class ChannelServiceTest {
     // given
     UUID userId1 = UUID.randomUUID();
     UUID userId2 = UUID.randomUUID();
+    User user1 = mock(User.class);
+    User user2 = mock(User.class);
 
     ChannelCreatePrivateRequest request = new ChannelCreatePrivateRequest(
         List.of(userId1, userId2));
@@ -88,14 +104,32 @@ public class ChannelServiceTest {
         User.create("user2", "test2@naver.com", "1234")
     );
 
+    List<UserDto> dto = List.of(
+        new UserDto(userId1, "user1", "test1@naver.com", null, true),
+        new UserDto(userId1, "user2", "test2@naver.com", null, true)
+    );
+
     given(channelRepository.save(any(Channel.class))).willAnswer(i -> i.getArgument(0));
 
     given(userRepository.findAllById(request.participantIds())).willReturn(users);
 
     given(readStatusRepository.save(any())).willAnswer(i -> i.getArgument(0));
 
+    given(channelMapper.toDto(any(Channel.class), anyList(), any())).willAnswer(i -> {
+      Channel c = i.getArgument(0);
+
+      return new ChannelDto(
+          c.getId(),
+          c.getType(),
+          c.getName(),
+          c.getDescription(),
+          dto,
+          Instant.now()
+      );
+    });
+
     // when
-    Channel result = channelService.createPrivate(request);
+    ChannelDto result = channelService.createPrivate(request);
 
     // then
     assertThat(result).isNotNull();
@@ -107,7 +141,7 @@ public class ChannelServiceTest {
 
   @Test
   @DisplayName("비공개 채널 생성 실패(참여자가 없음)")
-  void createPrivate_fail() {
+  void createPrivate_fail_emptyParticipantIds() {
     // given
     UUID userId = UUID.randomUUID();
     ChannelCreatePrivateRequest request = new ChannelCreatePrivateRequest(List.of(userId));
@@ -117,8 +151,21 @@ public class ChannelServiceTest {
     // 유저 없음
     given(userRepository.findAllById(any())).willReturn(List.of());
 
+    given(channelMapper.toDto(any(Channel.class), anyList(), any())).willAnswer(i -> {
+      Channel c = i.getArgument(0);
+
+      return new ChannelDto(
+          c.getId(),
+          c.getType(),
+          c.getName(),
+          c.getDescription(),
+          List.of(),
+          Instant.now()
+      );
+    });
+
     // when
-    Channel result = channelService.createPrivate(request);
+    ChannelDto result = channelService.createPrivate(request);
 
     // then
     assertThat(result).isNotNull();
@@ -127,7 +174,7 @@ public class ChannelServiceTest {
 
   @Test
   @DisplayName("채널 수정 성공")
-  void update_success() {
+  void update_success_channelNameAndDescription() {
     // given
     UUID channelId = UUID.randomUUID();
 
@@ -139,19 +186,32 @@ public class ChannelServiceTest {
 
     given(channelRepository.save(any(Channel.class))).willAnswer(i -> i.getArgument(0));
 
+    given(channelMapper.toDto(any(Channel.class), anyList(), any())).willAnswer(i -> {
+      Channel c = i.getArgument(0);
+
+      return new ChannelDto(
+          c.getId(),
+          c.getType(),
+          c.getName(),
+          c.getDescription(),
+          List.of(),
+          Instant.now()
+      );
+    });
+
     // when
-    Channel result = channelService.update(channelId, request);
+    ChannelDto result = channelService.update(channelId, request);
 
     // then
-    assertThat(result.getName()).isEqualTo("새 채널");
-    assertThat(result.getDescription()).isEqualTo("새 채널입니다.");
+    assertThat(result.name()).isEqualTo("새 채널");
+    assertThat(result.description()).isEqualTo("새 채널입니다.");
 
     then(channelRepository).should().save(channel);
   }
 
   @Test
   @DisplayName("채널 수정 실패(채널이 존재하지 않음)")
-  void update_fail() {
+  void update_fail_notfound_channel() {
     // given
     UUID channelId = UUID.randomUUID();
 
@@ -169,7 +229,7 @@ public class ChannelServiceTest {
 
   @Test
   @DisplayName("채널 수정 실패(비공개 채널은 수정할 수 없음)")
-  void update_privateChannel_fail() {
+  void update_privateChannel_fail_notallowed_channel() {
     // given
     UUID channelId = UUID.randomUUID();
 
@@ -188,7 +248,7 @@ public class ChannelServiceTest {
 
   @Test
   @DisplayName("채널 삭제 성공")
-  void delete_success() {
+  void delete_success_channel() {
     // given
     UUID channelId = UUID.randomUUID();
 
@@ -207,7 +267,7 @@ public class ChannelServiceTest {
 
   @Test
   @DisplayName("채널 삭제 실패(채널이 존재하지 않음)")
-  void delete_fail() {
+  void delete_fail_notfound_channel() {
     // given
     UUID channelId = UUID.randomUUID();
 
@@ -227,23 +287,33 @@ public class ChannelServiceTest {
   void findAllByUserId_Success() {
     // given
     UUID userId = UUID.randomUUID();
+    User user = mock(User.class);
+    given(user.getId()).willReturn(userId);
 
-    Channel publicChannel = Channel.createPublic("공개 채널", "공개 채널입니다.");
-    Channel privateChannel = Channel.createPrivate();
+    UUID publicChannelId = UUID.randomUUID();
+    UUID privateChannelId = UUID.randomUUID();
+    Channel publicChannel = mock(Channel.class);
+    Channel privateChannel = mock(Channel.class);
+    given(publicChannel.getId()).willReturn(publicChannelId);
+    given(privateChannel.getId()).willReturn(privateChannelId);
 
     given(channelRepository.findAll()).willReturn(List.of(publicChannel, privateChannel));
 
     ReadStatus readStatus = mock(ReadStatus.class);
     given(readStatus.getChannel()).willReturn(privateChannel);
-    given(readStatus.getUser()).willReturn(User.create("user", "test@naver.com", "12345678"));
+    given(readStatus.getUser()).willReturn(user);
 
     given(readStatusRepository.findByChannelIdIn(anyList())).willReturn(List.of(readStatus));
 
-    Message message = mock(Message.class);
-    given(message.getChannel()).willReturn(publicChannel);
-    given(message.getCreatedAt()).willReturn(Instant.now());
+    Message message1 = mock(Message.class);
+    Message message2 = mock(Message.class);
+    given(message1.getChannel()).willReturn(publicChannel);
+    given(message1.getCreatedAt()).willReturn(Instant.now());
+    given(message2.getChannel()).willReturn(privateChannel);
+    given(message2.getCreatedAt()).willReturn(Instant.now());
 
-    given(messageRepository.findLastMessagesByChannelIds(anyList())).willReturn(List.of(message));
+    given(messageRepository.findLastMessagesByChannelIds(anyList()))
+        .willReturn(List.of(message1, message2));
 
     given(channelMapper.toDto(any(), anyList(), any())).willReturn(mock(ChannelDto.class));
 
@@ -260,7 +330,7 @@ public class ChannelServiceTest {
 
   @Test
   @DisplayName("유저ID로 채널 조회 실패(비공개 채널의 참여자가 없음)")
-  void findAllByUserId_fail() {
+  void findAllByUserId_fail_emptyParticipantIds() {
     UUID userId = UUID.randomUUID();
 
     Channel privateChannel = Channel.createPrivate();

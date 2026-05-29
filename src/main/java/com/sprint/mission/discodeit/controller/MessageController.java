@@ -6,7 +6,6 @@ import com.sprint.mission.discodeit.dto.request.MessageCreateRequest;
 import com.sprint.mission.discodeit.dto.request.MessageUpdateRequest;
 import com.sprint.mission.discodeit.dto.response.MessageDto;
 import com.sprint.mission.discodeit.dto.response.PageResponse;
-import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.service.MessageService;
 import jakarta.validation.Valid;
 import java.time.Instant;
@@ -40,24 +39,24 @@ public class MessageController implements MessageApi {
   // 메시지 보내기(생성)
   @Override
   @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-  public ResponseEntity<Message> create(
+  public ResponseEntity<MessageDto> create(
       @Valid @RequestPart("messageCreateRequest") MessageCreateRequest dto,
       @RequestPart(value = "attachments", required = false) List<MultipartFile> attachments) {
     log.info("[MESSAGE_CREATE_REQUEST] 메시지 생성 요청 - 채널 ID={}, 작성자 ID={}, 첨부파일 수={}",
         dto.channelId(), dto.authorId(), attachments != null ? attachments.size() : 0);
-    Message message = messageService.create(dto, attachments);
-    log.info("[MESSAGE_CREATE_RESPONSE] 메시지 생성 응답 - 메시지 ID={}", message.getId());
+    MessageDto message = messageService.create(dto, attachments);
+    log.info("[MESSAGE_CREATE_RESPONSE] 메시지 생성 응답 - 메시지 ID={}", message.id());
     return ResponseEntity.status(HttpStatus.CREATED).body(message);
   }
 
   // 메시지 수정
   @Override
   @PatchMapping(value = "/{messageId}")
-  public ResponseEntity<Message> update(
+  public ResponseEntity<MessageDto> update(
       @PathVariable("messageId") UUID id,
       @Valid @RequestBody MessageUpdateRequest dto) {
     log.info("[MESSAGE_UPDATE_REQUEST] 메시지 수정 요청 - 메시지 ID={}", id);
-    Message message = messageService.update(id, dto);
+    MessageDto message = messageService.update(id, dto);
     log.info("[MESSAGE_UPDATE_RESPONSE] 메시지 수정 응답 - 메시지 ID={}", id);
     return ResponseEntity.ok(message);
   }

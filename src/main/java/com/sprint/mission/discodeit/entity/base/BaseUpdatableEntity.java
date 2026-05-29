@@ -14,6 +14,6 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 public class BaseUpdatableEntity extends BaseEntity {
 
   @LastModifiedDate
-  @Column(nullable = false) // Not Null
+  @Column(columnDefinition = "timestamp with time zone", nullable = false) // Not Null
   private Instant updatedAt;
 }

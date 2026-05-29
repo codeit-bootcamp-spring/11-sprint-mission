@@ -55,7 +55,7 @@ public class MessageIntegrationTest {
 
   @Test
   @DisplayName("메시지 생성 성공")
-  void create_success() throws Exception {
+  void create_success_message() throws Exception {
     // given
     User user = userRepository.save(User.create("test", "test@naver.com", "12345678"));
 
@@ -74,7 +74,7 @@ public class MessageIntegrationTest {
 
   @Test
   @DisplayName("메시지 생성 실패(채널이 존재하지 않음)")
-  void create_fail() throws Exception {
+  void create_fail_message_notfound_channel() throws Exception {
     // given
     User user = userRepository.save(User.create("test", "test@naver.com", "12345678"));
 
@@ -91,7 +91,7 @@ public class MessageIntegrationTest {
 
   @Test
   @DisplayName("메시지 수정 성공")
-  void update_success() throws Exception {
+  void update_success_message() throws Exception {
     // given
     User user = userRepository.save(User.create("test", "test@naver.com", "12345678"));
 
@@ -111,7 +111,7 @@ public class MessageIntegrationTest {
 
   @Test
   @DisplayName("메시지 수정 실패(메시지가 존재하지 않음)")
-  void update_fail() throws Exception {
+  void update_fail_message_notfound_message() throws Exception {
     // given
     UUID messageId = UUID.randomUUID();
 
@@ -126,7 +126,7 @@ public class MessageIntegrationTest {
 
   @Test
   @DisplayName("메시지 삭제 성공")
-  void delete_success() throws Exception {
+  void delete_success_message() throws Exception {
     // given
     User user = userRepository.save(User.create("test", "test@naver.com", "12345678"));
 
@@ -143,7 +143,7 @@ public class MessageIntegrationTest {
 
   @Test
   @DisplayName("메시지 삭제 실패(메시지가 존재하지 않음)")
-  void delete_fail() throws Exception {
+  void delete_fail_message_notfound_message() throws Exception {
     // given
     UUID messageId = UUID.randomUUID();
 
@@ -154,7 +154,7 @@ public class MessageIntegrationTest {
 
   @Test
   @DisplayName("특정 채널의 메시지 조회 성공")
-  void findAllByChannelId_success() throws Exception {
+  void findAllByChannelId_success_message() throws Exception {
 
     // given
     User user = userRepository.save(User.create("test", "test@naver.com", "12345678"));
@@ -172,8 +172,8 @@ public class MessageIntegrationTest {
   }
 
   @Test
-  @DisplayName("특정 채널의 메시지 조회 실패(메시지 없음)")
-  void findAllByChannelId_fail() throws Exception {
+  @DisplayName("특정 채널의 메시지 조회 실패(메시지가 존재하지 않음)")
+  void findAllByChannelId_fail_message_notfound_message() throws Exception {
 
     // given
     UUID channelId = UUID.randomUUID();

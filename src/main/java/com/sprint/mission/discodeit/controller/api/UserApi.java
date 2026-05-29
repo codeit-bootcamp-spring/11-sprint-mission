@@ -4,8 +4,7 @@ import com.sprint.mission.discodeit.dto.request.UserCreateRequest;
 import com.sprint.mission.discodeit.dto.request.UserStatusUpdateRequest;
 import com.sprint.mission.discodeit.dto.request.UserUpdateRequest;
 import com.sprint.mission.discodeit.dto.response.UserDto;
-import com.sprint.mission.discodeit.entity.User;
-import com.sprint.mission.discodeit.entity.UserStatus;
+import com.sprint.mission.discodeit.dto.response.UserStatusDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -33,7 +32,7 @@ public interface UserApi {
       @ApiResponse(responseCode = "400", description = "같은 email 또는 username을 사용하는 User가 이미 존재함")
   })
   @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-  ResponseEntity<User> create(
+  ResponseEntity<UserDto> create(
       @Parameter(description = "User 생성 정보")
       @RequestPart("userCreateRequest") UserCreateRequest dto,
       @Parameter(description = "User 프로필 이미지")
@@ -46,7 +45,7 @@ public interface UserApi {
       @ApiResponse(responseCode = "404", description = "User를 찾을 수 없음")
   })
   @PatchMapping(value = "/{userId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-  ResponseEntity<User> update(
+  ResponseEntity<UserDto> update(
       @Parameter(description = "수정할 User ID")
       @PathVariable("userId") UUID id,
       @Parameter(description = "수정할 User 정보")
@@ -75,7 +74,7 @@ public interface UserApi {
       @ApiResponse(responseCode = "404", description = "해당 User의 UserStatus를 찾을 수 없음")
   })
   @PatchMapping("/{userId}/userStatus")
-  ResponseEntity<UserStatus> updateStatus(
+  ResponseEntity<UserStatusDto> updateStatus(
       @Parameter(description = "상태를 변경할 User ID")
       @PathVariable("userId") UUID id,
       @RequestBody UserStatusUpdateRequest dto);
