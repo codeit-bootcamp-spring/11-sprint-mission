@@ -2,11 +2,10 @@ package com.sprint.mission.discodeit.storage.s3;
 
 import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentDto;
 import com.sprint.mission.discodeit.storage.BinaryContentStorage;
+import jakarta.annotation.PreDestroy;
 import java.io.InputStream;
 import java.net.URI;
-import java.time.Duration;
 import java.util.UUID;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
@@ -26,45 +25,34 @@ import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignReques
 @ConditionalOnProperty(name = "discodeit.storage.type", havingValue = "s3")
 public class S3BinaryContentStorage implements BinaryContentStorage {
 
-  private final String accessKey;
-  private final String secretKey;
-  private final String region;
-  private final String bucket;
-  private final Duration presignedUrlExpiration;
+  private final S3StorageProperties properties;
+  private final S3Client s3Client;
+  private final S3Presigner presigner;
 
-  public S3BinaryContentStorage(
-      @Value("${discodeit.storage.s3.access-key}") String accessKey,
-      @Value("${discodeit.storage.s3.secret-key}") String secretKey,
-      @Value("${discodeit.storage.s3.region}") String region,
-      @Value("${discodeit.storage.s3.bucket}") String bucket,
-      @Value("${discodeit.storage.s3.presigned-url-expiration}") long presignedUrlExpiration) {
-    this.accessKey = accessKey;
-    this.secretKey = secretKey;
-    this.region = region;
-    this.bucket = bucket;
-    this.presignedUrlExpiration = Duration.ofSeconds(presignedUrlExpiration);
-  }
+  public S3BinaryContentStorage(S3StorageProperties properties) {
+    this.properties = properties;
 
-  private S3Client getS3Client() {
-    return S3Client.builder()
-        .region(Region.of(region))
-        .credentialsProvider(
-            StaticCredentialsProvider.create(AwsBasicCredentials.create(accessKey, secretKey)))
+    StaticCredentialsProvider credentialsProvider = StaticCredentialsProvider.create(
+        AwsBasicCredentials.create(properties.accessKey(), properties.secretKey()));
+
+    this.s3Client = S3Client.builder()
+        .region(Region.of(properties.region()))
+        .credentialsProvider(credentialsProvider)
+        .build();
+
+    this.presigner = S3Presigner.builder()
+        .region(Region.of(properties.region()))
+        .credentialsProvider(credentialsProvider)
         .build();
   }
 
   private String generatePresignedUrl(String key, String contentType) {
-    S3Presigner presigner = S3Presigner.builder()
-        .region(Region.of(region))
-        .credentialsProvider(
-            StaticCredentialsProvider.create(AwsBasicCredentials.create(accessKey, secretKey)))
-        .build();
-
     GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
-        .signatureDuration(presignedUrlExpiration)
+        .signatureDuration(properties.presignedUrlExpiration())
         .getObjectRequest(GetObjectRequest.builder()
-            .bucket(bucket)
+            .bucket(properties.bucket())
             .key(key)
+            .responseContentType(contentType)
             .build())
         .build();
 
@@ -74,22 +62,22 @@ public class S3BinaryContentStorage implements BinaryContentStorage {
   @Override
   public UUID put(UUID id, byte[] bytes) {
     PutObjectRequest request = PutObjectRequest.builder()
-        .bucket(bucket)
+        .bucket(properties.bucket())
         .key(id.toString())
         .build();
 
-    getS3Client().putObject(request, RequestBody.fromBytes(bytes));
+    s3Client.putObject(request, RequestBody.fromBytes(bytes));
     return id;
   }
 
   @Override
   public InputStream get(UUID id) {
     GetObjectRequest request = GetObjectRequest.builder()
-        .bucket(bucket)
+        .bucket(properties.bucket())
         .key(id.toString())
         .build();
 
-    return getS3Client().getObject(request);
+    return s3Client.getObject(request);
   }
 
   @Override
@@ -98,5 +86,11 @@ public class S3BinaryContentStorage implements BinaryContentStorage {
     return ResponseEntity.status(HttpStatus.FOUND)
         .location(URI.create(url))
         .build();
+  }
+
+  @PreDestroy
+  public void close() {
+    s3Client.close();
+    presigner.close();
   }
 }
