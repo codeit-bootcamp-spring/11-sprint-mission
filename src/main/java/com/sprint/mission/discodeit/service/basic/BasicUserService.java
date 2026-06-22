@@ -19,6 +19,7 @@ import com.sprint.mission.discodeit.service.UserService;
 import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 import java.io.IOException;
 import lombok.RequiredArgsConstructor;
@@ -41,6 +42,7 @@ public class BasicUserService implements UserService {
   private final BinaryContentStorage binaryContentStorage;
 
   private final UserMapper userMapper;
+  private final PasswordEncoder passwordEncoder;
 
   @Override
   @Transactional
@@ -76,7 +78,8 @@ public class BasicUserService implements UserService {
       }
     }
 
-    User newUser = new User(name, email, password, profileEntity);
+    String encodedPassword = passwordEncoder.encode(password);
+    User newUser = new User(name, email, encodedPassword, profileEntity);
     UserStatus newStatus = new UserStatus(newUser);
 
     newUser.initStatus(newStatus);
@@ -155,7 +158,9 @@ public class BasicUserService implements UserService {
           });
     }
 
-    String password = (request.newPassword() != null) ? request.newPassword() : user.getPassword();
+    String password =
+        (request.newPassword() != null) ? passwordEncoder.encode(request.newPassword())
+            : user.getPassword();
 
     BinaryContent currentProfile = user.getProfile();
     if (profile != null && !profile.isEmpty()) {
