@@ -29,7 +29,6 @@ import com.sprint.mission.discodeit.service.basic.BasicUserService;
 import java.util.List;
 import java.util.UUID;
 
-import static com.sprint.mission.discodeit.JavaApplication.setupUser;
 
 @SpringBootApplication
 public class DiscodeitApplication {
