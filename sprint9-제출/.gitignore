@@ -48,4 +48,3 @@ bin/
 
 ### Github Actions ###
 !.github/
-.env
