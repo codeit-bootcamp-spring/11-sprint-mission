@@ -8,10 +8,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.web.csrf.CsrfToken;
+import org.springframework.web.bind.annotation.*;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -30,5 +28,13 @@ public class AuthController implements AuthApi {
     return ResponseEntity
         .status(HttpStatus.OK)
         .body(user);
+  }
+
+  @GetMapping(path = "csrf-token")
+  public ResponseEntity<Void> csrfToken(CsrfToken csrfToken) {
+    log.debug("CSRF 토큰 발급 요청: token={}", csrfToken.getToken());
+    return ResponseEntity
+            .status(HttpStatus.NO_CONTENT)
+            .build();
   }
 }
