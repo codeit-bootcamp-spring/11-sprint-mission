@@ -26,6 +26,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 @ExtendWith(MockitoExtension.class)
 public class BasicUserServiceTest {
@@ -37,13 +38,10 @@ public class BasicUserServiceTest {
   private UserRepository userRepository;
 
   @Mock
-  private BinaryContentRepository binaryContentRepository;
-
-  @Mock
   private UserMapper userMapper;
-
+  
   @Mock
-  private BinaryContentStorage binaryContentStorage;
+  private PasswordEncoder passwordEncoder;
 
   @Test
   @DisplayName("사용자 생성 성공 - 중복 없는 정상적인 요청")
@@ -56,6 +54,7 @@ public class BasicUserServiceTest {
 
     given(userRepository.existsByUsername(request.username())).willReturn(false);
     given(userRepository.existsByEmail(request.email())).willReturn(false);
+    given(passwordEncoder.encode(request.password())).willReturn("encodedPassword123");
     given(userMapper.toDto(any(User.class))).willReturn(userDto);
 
     UserDto result = userService.create(request, null);

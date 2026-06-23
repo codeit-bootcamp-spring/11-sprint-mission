@@ -2,7 +2,6 @@ package com.sprint.mission.discodeit.service.basic;
 
 import com.sprint.mission.discodeit.dto.UserCreateRequest;
 import com.sprint.mission.discodeit.dto.UserDto;
-import com.sprint.mission.discodeit.dto.UserLoginRequest;
 import com.sprint.mission.discodeit.dto.UserUpdateRequest;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.User;
@@ -143,20 +142,5 @@ public class BasicUserService implements UserService {
 
     userRepository.deleteById(id);
     log.info("사용자 삭제 완료 - userId: {}", id);
-  }
-
-  @Override
-  public UserDto login(UserLoginRequest request) {
-    User user = userRepository.findByUsername(request.username())
-        .orElseThrow(() -> {
-          log.warn("로그인 실패(존재하지 않는 유저) - username: {}", request.username());
-          return new IllegalArgumentException("가입되지 않은 유저이름입니다.");
-        });
-
-    if (!user.getPassword().equals(request.password())) {
-      log.warn("로그인 실패(비밀번호 불일치) - username: {}", request.username());
-      throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
-    }
-    return userMapper.toDto(user);
   }
 }
