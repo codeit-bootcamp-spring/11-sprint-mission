@@ -25,6 +25,7 @@ public abstract class UserMapper {
     boolean isOnline = Optional.ofNullable(status)
         .map(UserStatus::getOnlineStatus).orElse(false);
 
-    return new UserDto(dto.id(), dto.username(), dto.email(), dto.profile(), isOnline);
+    return new UserDto(dto.id(), dto.username(), dto.email(), dto.profile(), isOnline,
+        user.getRole());
   }
 }
