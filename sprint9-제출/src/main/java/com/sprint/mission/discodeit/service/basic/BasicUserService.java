@@ -25,6 +25,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -157,6 +158,7 @@ public class BasicUserService implements UserService {
     log.info("사용자 삭제 완료: id={}", userId);
   }
 
+  @PreAuthorize("hasRole('ADMIN')")
   @Transactional
   @Override
   public UserDto updateRole(UUID userId, Role newRole){
