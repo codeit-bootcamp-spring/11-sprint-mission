@@ -13,13 +13,18 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.mission.discodeit.dto.request.UserCreateRequest;
 import com.sprint.mission.discodeit.dto.request.UserUpdateRequest;
+import com.sprint.mission.discodeit.dto.response.UserDto;
+import com.sprint.mission.discodeit.entity.Role;
 import com.sprint.mission.discodeit.repository.UserRepository;
+import com.sprint.mission.discodeit.security.DiscodeitUserDetails;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -107,6 +112,11 @@ class UserIntegrationTest {
     JsonNode node = objectMapper.readTree(createResult.getResponse().getContentAsString());
     String userId = node.get("id").asText();
 
+    // 실제 생성된 유저 ID로 DiscodeitUserDetails 생성
+    UserDto userDto = new UserDto(UUID.fromString(userId), "jihye", "jihye@test.com", null, false,
+        Role.USER);
+    DiscodeitUserDetails userDetails = new DiscodeitUserDetails(userDto, "password123");
+
     // when - 수정
     UserUpdateRequest updateRequest = new UserUpdateRequest("newJihye", null, null);
     MockMultipartFile updatePart = new MockMultipartFile(
@@ -119,7 +129,8 @@ class UserIntegrationTest {
               req.setMethod("PATCH");
               return req;
             })
-            .with(csrf()).with(user("jihye")))
+            .with(csrf())
+            .with(SecurityMockMvcRequestPostProcessors.user(userDetails)))  // 변경!
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.username").value("newJihye"));
   }
@@ -138,8 +149,14 @@ class UserIntegrationTest {
     JsonNode node = objectMapper.readTree(createResult.getResponse().getContentAsString());
     String userId = node.get("id").asText();
 
-    // when & then - 삭제만 검증
-    mockMvc.perform(delete("/api/users/{userId}", userId).with(csrf()).with(user("jihye")))
+    // 실제 생성된 유저 ID로 DiscodeitUserDetails 생성
+    UserDto userDto = new UserDto(UUID.fromString(userId), "jihye", "jihye@test.com", null, false,
+        Role.USER);
+    DiscodeitUserDetails userDetails = new DiscodeitUserDetails(userDto, "password123");
+
+    mockMvc.perform(delete("/api/users/{userId}", userId)
+            .with(csrf())
+            .with(SecurityMockMvcRequestPostProcessors.user(userDetails)))  // 변경!
         .andExpect(status().isNoContent());
   }
 }

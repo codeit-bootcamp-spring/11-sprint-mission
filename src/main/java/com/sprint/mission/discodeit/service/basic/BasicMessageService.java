@@ -28,6 +28,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
+import org.springframework.security.access.prepost.PostAuthorize;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -124,6 +126,7 @@ public class BasicMessageService implements MessageService {
 
   @Override
   @Transactional
+  @PostAuthorize("returnObject.author != null && returnObject.author.id == authentication.principal.userDto.id")
   public MessageDto update(UUID messageId, MessageUpdateRequest request) {
     log.debug("메시지 수정 요청 - id: {}", messageId);
     Message message = messageRepository.findById(messageId)
@@ -145,6 +148,7 @@ public class BasicMessageService implements MessageService {
 
   @Override
   @Transactional
+  @PreAuthorize("@basicMessageService.isAuthor(#messageId, authentication.principal.userDto.id)")
   public void delete(UUID messageId) {
     log.debug("메시지 삭제 요청 - id: {}", messageId);
     Message message = messageRepository.findById(messageId)
@@ -164,5 +168,11 @@ public class BasicMessageService implements MessageService {
         ? userMapper.toDto(message.getAuthor(), isOnline)
         : null;
     return messageMapper.toDto(message, isOnline, authorDto);
+  }
+
+  public boolean isAuthor(UUID messageId, UUID userId) {
+    return messageRepository.findById(messageId)
+        .map(m -> m.getAuthor() != null && m.getAuthor().getId().equals(userId))
+        .orElse(false);
   }
 }

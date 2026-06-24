@@ -16,6 +16,9 @@ import com.sprint.mission.discodeit.dto.request.MessageCreateRequest;
 import com.sprint.mission.discodeit.dto.request.MessageUpdateRequest;
 import com.sprint.mission.discodeit.dto.request.PublicChannelCreateRequest;
 import com.sprint.mission.discodeit.dto.request.UserCreateRequest;
+import com.sprint.mission.discodeit.dto.response.UserDto;
+import com.sprint.mission.discodeit.entity.Role;
+import com.sprint.mission.discodeit.security.DiscodeitUserDetails;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,6 +27,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -43,6 +47,7 @@ class MessageIntegrationTest {
 
   private UUID channelId;
   private UUID authorId;
+  private DiscodeitUserDetails authorDetails;  // 추가
 
   @BeforeEach
   void setUp() throws Exception {
@@ -57,6 +62,10 @@ class MessageIntegrationTest {
     JsonNode userNode = objectMapper.readTree(userResult.getResponse().getContentAsString());
     authorId = UUID.fromString(userNode.get("id").asText());
 
+    // 작성자 DiscodeitUserDetails 생성  // 추가
+    UserDto authorDto = new UserDto(authorId, "jihye", "jihye@test.com", null, false, Role.USER);
+    authorDetails = new DiscodeitUserDetails(authorDto, "password123");
+
     // 채널 생성
     PublicChannelCreateRequest channelRequest = new PublicChannelCreateRequest("general", "공용 채널");
     MvcResult channelResult = mockMvc.perform(post("/api/channels/public")
@@ -70,84 +79,84 @@ class MessageIntegrationTest {
 
   @Test
   void 메시지_생성_성공() throws Exception {
-    // given
     MessageCreateRequest request = new MessageCreateRequest("안녕하세요", channelId, authorId);
     MockMultipartFile messagePart = new MockMultipartFile(
         "messageCreateRequest", "", MediaType.APPLICATION_JSON_VALUE,
         objectMapper.writeValueAsBytes(request));
 
-    // when & then
-    mockMvc.perform(multipart("/api/messages").file(messagePart).with(csrf()).with(user("jihye")))
+    mockMvc.perform(multipart("/api/messages").file(messagePart).with(csrf())
+            .with(SecurityMockMvcRequestPostProcessors.user(authorDetails)))
         .andExpect(status().isCreated())
         .andExpect(jsonPath("$.content").value("안녕하세요"));
   }
 
   @Test
   void 메시지_생성_실패_존재하지않는채널() throws Exception {
-    // given
     MessageCreateRequest request = new MessageCreateRequest("안녕하세요", UUID.randomUUID(), authorId);
     MockMultipartFile messagePart = new MockMultipartFile(
         "messageCreateRequest", "", MediaType.APPLICATION_JSON_VALUE,
         objectMapper.writeValueAsBytes(request));
 
-    // when & then
-    mockMvc.perform(multipart("/api/messages").file(messagePart).with(csrf()).with(user("jihye")))
+    mockMvc.perform(multipart("/api/messages").file(messagePart).with(csrf())
+            .with(SecurityMockMvcRequestPostProcessors.user(authorDetails)))
         .andExpect(status().isNotFound());
   }
 
   @Test
   void 메시지_목록_조회_성공() throws Exception {
-    // given - 메시지 생성
     MessageCreateRequest request = new MessageCreateRequest("안녕하세요", channelId, authorId);
     MockMultipartFile messagePart = new MockMultipartFile(
         "messageCreateRequest", "", MediaType.APPLICATION_JSON_VALUE,
         objectMapper.writeValueAsBytes(request));
-    mockMvc.perform(multipart("/api/messages").file(messagePart).with(csrf()).with(user("jihye")));
+    mockMvc.perform(multipart("/api/messages").file(messagePart).with(csrf())
+        .with(SecurityMockMvcRequestPostProcessors.user(authorDetails)));
 
-    // when & then
     mockMvc.perform(get("/api/messages")
-            .param("channelId", channelId.toString()).with(user("jihye")))
+            .param("channelId", channelId.toString())
+            .with(SecurityMockMvcRequestPostProcessors.user(authorDetails)))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.content").isArray());
   }
 
   @Test
   void 메시지_수정_성공() throws Exception {
-    // given - 메시지 생성
     MessageCreateRequest createRequest = new MessageCreateRequest("안녕하세요", channelId, authorId);
     MockMultipartFile messagePart = new MockMultipartFile(
         "messageCreateRequest", "", MediaType.APPLICATION_JSON_VALUE,
         objectMapper.writeValueAsBytes(createRequest));
     MvcResult createResult = mockMvc.perform(
-            multipart("/api/messages").file(messagePart).with(csrf()).with(user("jihye")))
+            multipart("/api/messages").file(messagePart).with(csrf())
+                .with(SecurityMockMvcRequestPostProcessors.user(authorDetails)))
         .andReturn();
     JsonNode node = objectMapper.readTree(createResult.getResponse().getContentAsString());
     String messageId = node.get("id").asText();
 
-    // when - 수정
     MessageUpdateRequest updateRequest = new MessageUpdateRequest("수정된 내용");
     mockMvc.perform(patch("/api/messages/{messageId}", messageId)
             .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(updateRequest)).with(csrf()).with(user("jihye")))
+            .content(objectMapper.writeValueAsString(updateRequest))
+            .with(csrf())
+            .with(SecurityMockMvcRequestPostProcessors.user(authorDetails)))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.content").value("수정된 내용"));
   }
 
   @Test
   void 메시지_삭제_성공() throws Exception {
-    // given - 메시지 생성
     MessageCreateRequest createRequest = new MessageCreateRequest("안녕하세요", channelId, authorId);
     MockMultipartFile messagePart = new MockMultipartFile(
         "messageCreateRequest", "", MediaType.APPLICATION_JSON_VALUE,
         objectMapper.writeValueAsBytes(createRequest));
     MvcResult createResult = mockMvc.perform(
-            multipart("/api/messages").file(messagePart).with(csrf()).with(user("jihye")))
+            multipart("/api/messages").file(messagePart).with(csrf())
+                .with(SecurityMockMvcRequestPostProcessors.user(authorDetails)))
         .andReturn();
     JsonNode node = objectMapper.readTree(createResult.getResponse().getContentAsString());
     String messageId = node.get("id").asText();
 
-    // when & then
-    mockMvc.perform(delete("/api/messages/{messageId}", messageId).with(csrf()).with(user("jihye")))
+    mockMvc.perform(delete("/api/messages/{messageId}", messageId)
+            .with(csrf())
+            .with(SecurityMockMvcRequestPostProcessors.user(authorDetails)))
         .andExpect(status().isNoContent());
   }
 }

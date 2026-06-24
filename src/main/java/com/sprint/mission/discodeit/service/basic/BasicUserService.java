@@ -97,6 +97,7 @@ public class BasicUserService implements UserService {
 
   @Override
   @Transactional
+  @PreAuthorize("authentication.principal.userDto.id == #id")
   public UserDto update(UUID id, UserUpdateRequest request, MultipartFile profile) {
     log.debug("사용자 수정 요청 - id: {}", id);
     User user = userRepository.findById(id)
@@ -144,6 +145,7 @@ public class BasicUserService implements UserService {
 
   @Override
   @Transactional
+  @PreAuthorize("authentication.principal.userDto.id == #id")
   public void delete(UUID id) {
     log.debug("사용자 삭제 요청 - id: {}", id);
     User user = userRepository.findById(id)

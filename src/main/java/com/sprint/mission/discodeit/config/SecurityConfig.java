@@ -83,6 +83,11 @@ public class SecurityConfig {
                 .sessionRegistry(sessionRegistry)
             )
         )
+        .rememberMe(rememberMe -> rememberMe  // 추가
+            .rememberMeParameter("remember-me")
+            .tokenValiditySeconds(60 * 60 * 24 * 7)
+            .key("discodeit-remember-me-key")
+        )
         .exceptionHandling(ex -> ex
             .authenticationEntryPoint(customAuthenticationEntryPoint())
             .accessDeniedHandler(customAccessDeniedHandler())
