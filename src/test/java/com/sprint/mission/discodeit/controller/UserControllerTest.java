@@ -13,6 +13,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.mission.discodeit.dto.request.UserCreateRequest;
 import com.sprint.mission.discodeit.dto.response.UserDto;
+import com.sprint.mission.discodeit.entity.Role;
 import com.sprint.mission.discodeit.service.UserService;
 import com.sprint.mission.discodeit.service.UserStatusService;
 import java.util.List;
@@ -45,7 +46,7 @@ class UserControllerTest {
 
   @Test
   void 사용자_목록_조회_성공() throws Exception {
-    UserDto dto = new UserDto(UUID.randomUUID(), "jihye", "jihye@test.com", null, false);
+    UserDto dto = new UserDto(UUID.randomUUID(), "jihye", "jihye@test.com", null, false, Role.USER);
     given(userService.findAll()).willReturn(List.of(dto));
 
     mockMvc.perform(get("/api/users"))
@@ -57,7 +58,7 @@ class UserControllerTest {
   @Test
   void 사용자_생성_성공() throws Exception {
     UUID userId = UUID.randomUUID();
-    UserDto dto = new UserDto(userId, "jihye", "jihye@test.com", null, false);
+    UserDto dto = new UserDto(userId, "jihye", "jihye@test.com", null, false, Role.USER);
     given(userService.create(any(), any())).willReturn(dto);
 
     UserCreateRequest request = new UserCreateRequest("jihye", "jihye@test.com", "password123");

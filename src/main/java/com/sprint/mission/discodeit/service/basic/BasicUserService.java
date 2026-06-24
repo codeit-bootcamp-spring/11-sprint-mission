@@ -1,6 +1,7 @@
 package com.sprint.mission.discodeit.service.basic;
 
 import com.sprint.mission.discodeit.dto.request.UserCreateRequest;
+import com.sprint.mission.discodeit.dto.request.UserRoleUpdateRequest;
 import com.sprint.mission.discodeit.dto.request.UserUpdateRequest;
 import com.sprint.mission.discodeit.dto.response.UserDto;
 import com.sprint.mission.discodeit.entity.BinaryContent;
@@ -21,6 +22,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,6 +40,7 @@ public class BasicUserService implements UserService {
   private final BinaryContentStorage binaryContentStorage;
   private final UserMapper userMapper;
   private final PasswordEncoder passwordEncoder;
+
 
   @Override
   @Transactional
@@ -173,5 +176,15 @@ public class BasicUserService implements UserService {
   private UserDto toDto(User user) {
     UserStatus status = userStatusRepository.findByUserId(user.getId()).orElse(null);
     return userMapper.toDto(user, status);
+  }
+
+  @Override
+  @Transactional
+  @PreAuthorize("hasRole('ADMIN')")
+  public UserDto updateRole(UserRoleUpdateRequest request) {
+    User user = userRepository.findById(request.userId())
+        .orElseThrow(() -> new UserNotFoundException(request.userId()));
+    user.updateRole(request.newRole());
+    return toDto(user);
   }
 }

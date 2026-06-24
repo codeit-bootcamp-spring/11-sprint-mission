@@ -9,6 +9,7 @@ import static org.mockito.BDDMockito.then;
 import com.sprint.mission.discodeit.dto.request.UserCreateRequest;
 import com.sprint.mission.discodeit.dto.request.UserUpdateRequest;
 import com.sprint.mission.discodeit.dto.response.UserDto;
+import com.sprint.mission.discodeit.entity.Role;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.entity.UserStatus;
 import com.sprint.mission.discodeit.exception.UserAlreadyExistsException;
@@ -57,7 +58,7 @@ class BasicUserServiceTest {
     UserCreateRequest request = new UserCreateRequest("jihye", "jihye@test.com", "password123");
     User user = new User("jihye", "jihye@test.com", "password123", null);
     UserStatus status = new UserStatus(user, java.time.Instant.now());
-    UserDto dto = new UserDto(user.getId(), "jihye", "jihye@test.com", null, false);
+    UserDto dto = new UserDto(user.getId(), "jihye", "jihye@test.com", null, false, Role.USER);
 
     given(passwordEncoder.encode("password123")).willReturn("hashed_password");
     given(userRepository.existsByUsername("jihye")).willReturn(false);
@@ -107,7 +108,7 @@ class BasicUserServiceTest {
     UserUpdateRequest request = new UserUpdateRequest("newName", "new@test.com", "newPassword123");
     User user = new User("jihye", "jihye@test.com", "password123", null);
     UserStatus status = new UserStatus(user, java.time.Instant.now());
-    UserDto dto = new UserDto(userId, "newName", "new@test.com", null, false);
+    UserDto dto = new UserDto(userId, "newName", "new@test.com", null, false, Role.USER);
 
     given(userRepository.findById(userId)).willReturn(Optional.of(user));
     given(userRepository.existsByUsername("newName")).willReturn(false);
@@ -168,7 +169,7 @@ class BasicUserServiceTest {
     UUID userId = UUID.randomUUID();
     User user = new User("jihye", "jihye@test.com", "password123", null);
     UserStatus status = new UserStatus(user, java.time.Instant.now());
-    UserDto dto = new UserDto(userId, "jihye", "jihye@test.com", null, false);
+    UserDto dto = new UserDto(userId, "jihye", "jihye@test.com", null, false, Role.USER);
 
     given(userRepository.findById(userId)).willReturn(Optional.of(user));
     given(userStatusRepository.findByUserId(any(UUID.class))).willReturn(Optional.of(status));
@@ -198,7 +199,7 @@ class BasicUserServiceTest {
     // given
     User user = new User("jihye", "jihye@test.com", "password123", null);
     UserStatus status = new UserStatus(user, java.time.Instant.now());
-    UserDto dto = new UserDto(user.getId(), "jihye", "jihye@test.com", null, false);
+    UserDto dto = new UserDto(user.getId(), "jihye", "jihye@test.com", null, false, Role.USER);
 
     given(userRepository.findAll()).willReturn(List.of(user));
     given(userStatusRepository.findAllByUserIdIn(any())).willReturn(List.of(status));

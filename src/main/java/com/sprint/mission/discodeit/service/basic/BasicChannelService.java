@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -47,6 +48,7 @@ public class BasicChannelService implements ChannelService {
 
   @Override
   @Transactional
+  @PreAuthorize("hasRole('CHANNEL_MANAGER')")
   public ChannelDto createPublic(PublicChannelCreateRequest request) {
     log.debug("PUBLIC 채널 생성 요청 - name: {}", request.name());
     Channel channel = new Channel(ChannelType.PUBLIC, request.name(), request.description());
@@ -102,6 +104,7 @@ public class BasicChannelService implements ChannelService {
 
   @Override
   @Transactional
+  @PreAuthorize("hasRole('CHANNEL_MANAGER')")
   public ChannelDto update(UUID channelId, PublicChannelUpdateRequest request) {
     log.debug("채널 수정 요청 - id: {}", channelId);
     Channel channel = channelRepository.findById(channelId)
@@ -120,6 +123,7 @@ public class BasicChannelService implements ChannelService {
 
   @Override
   @Transactional
+  @PreAuthorize("hasRole('CHANNEL_MANAGER')")
   public void delete(UUID id) {
     log.debug("채널 삭제 요청 - id: {}", id);
     Channel channel = channelRepository.findById(id)

@@ -52,7 +52,8 @@ class MessageIntegrationTest {
         "userCreateRequest", "", MediaType.APPLICATION_JSON_VALUE,
         objectMapper.writeValueAsBytes(userRequest));
     MvcResult userResult = mockMvc.perform(
-        multipart("/api/users").file(userPart).with(csrf()).with(user("jihye"))).andReturn();
+        multipart("/api/users").file(userPart).with(csrf())
+            .with(user("jihye").roles("CHANNEL_MANAGER"))).andReturn();
     JsonNode userNode = objectMapper.readTree(userResult.getResponse().getContentAsString());
     authorId = UUID.fromString(userNode.get("id").asText());
 
@@ -60,7 +61,8 @@ class MessageIntegrationTest {
     PublicChannelCreateRequest channelRequest = new PublicChannelCreateRequest("general", "공용 채널");
     MvcResult channelResult = mockMvc.perform(post("/api/channels/public")
             .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(channelRequest)).with(csrf()).with(user("jihye")))
+            .content(objectMapper.writeValueAsString(channelRequest)).with(csrf())
+            .with(user("jihye").roles("CHANNEL_MANAGER")))
         .andReturn();
     JsonNode channelNode = objectMapper.readTree(channelResult.getResponse().getContentAsString());
     channelId = UUID.fromString(channelNode.get("id").asText());
