@@ -15,7 +15,7 @@ import com.sprint.mission.discodeit.dto.request.UserCreateRequest;
 import com.sprint.mission.discodeit.dto.response.UserDto;
 import com.sprint.mission.discodeit.entity.Role;
 import com.sprint.mission.discodeit.service.UserService;
-import com.sprint.mission.discodeit.service.UserStatusService;
+
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -41,9 +41,7 @@ class UserControllerTest {
   @MockitoBean
   private UserService userService;
 
-  @MockitoBean
-  private UserStatusService userStatusService;
-
+  
   @Test
   void 사용자_목록_조회_성공() throws Exception {
     UserDto dto = new UserDto(UUID.randomUUID(), "jihye", "jihye@test.com", null, false, Role.USER);
