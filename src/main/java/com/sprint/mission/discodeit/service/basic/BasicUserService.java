@@ -21,6 +21,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -36,6 +37,7 @@ public class BasicUserService implements UserService {
   private final BinaryContentRepository binaryContentRepository;
   private final BinaryContentStorage binaryContentStorage;
   private final UserMapper userMapper;
+  private final PasswordEncoder passwordEncoder;
 
   @Override
   @Transactional
@@ -68,7 +70,8 @@ public class BasicUserService implements UserService {
       }
     }
 
-    User user = new User(request.username(), request.email(), request.password(), profileContent);
+    User user = new User(request.username(), request.email(), passwordEncoder.encode(
+        request.password()), profileContent);
     userRepository.save(user);
 
     UserStatus userStatus = new UserStatus(user, Instant.now());
