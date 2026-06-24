@@ -2,21 +2,30 @@ package com.sprint.mission.discodeit.controller;
 
 import com.sprint.mission.discodeit.controller.api.AuthApi;
 import com.sprint.mission.discodeit.dto.data.UserDto;
+import com.sprint.mission.discodeit.dto.request.UserRoleUpdateRequest;
 import com.sprint.mission.discodeit.security.DiscodeitUserDetails;
+import com.sprint.mission.discodeit.service.UserService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import lombok.extern.slf4j.Slf4j;
 
+@RequiredArgsConstructor
 @Slf4j
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController implements AuthApi {
+
+  private final UserService userService;
 
   @GetMapping("csrf-token")
   public ResponseEntity<Void> getCsrfToken(CsrfToken csrfToken) {
@@ -29,14 +38,14 @@ public class AuthController implements AuthApi {
   }
 
   @GetMapping("me")
-  public ResponseEntity<String> me(
+  public ResponseEntity<UserDto> getMe(
       @AuthenticationPrincipal DiscodeitUserDetails userDetails
   ) {
     UserDto userDto = userDetails.getUserDto();
 
     return ResponseEntity
         .status(HttpStatus.OK)
-        .body(userDto.username());
+        .body(userDto);
   }
 
   @PostMapping("logout")
@@ -44,5 +53,16 @@ public class AuthController implements AuthApi {
     return ResponseEntity
         .status(HttpStatus.NO_CONTENT)
         .build();
+  }
+
+  @PutMapping("role")
+  public ResponseEntity<UserDto> updateRole(
+      @RequestBody @Valid UserRoleUpdateRequest request
+  ){
+    UserDto userDto = userService.updateRole(request.userId(), request.newRole());
+
+    return ResponseEntity
+        .status(HttpStatus.OK)
+        .body(userDto);
   }
 }
