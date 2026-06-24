@@ -1,5 +1,7 @@
 package com.sprint.mission.discodeit.config;
 
+import com.sprint.mission.discodeit.security.handler.CustomAccessDeniedHandler;
+import com.sprint.mission.discodeit.security.handler.CustomAuthenticationEntryPoint;
 import com.sprint.mission.discodeit.security.handler.LoginFailureHandler;
 import com.sprint.mission.discodeit.security.handler.LoginSuccessHandler;
 import org.springframework.context.annotation.Bean;
@@ -21,11 +23,17 @@ public class SecurityConfig {
 
   private final LoginSuccessHandler loginSuccessHandler;
   private final LoginFailureHandler loginFailureHandler;
+  private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
+  private final CustomAccessDeniedHandler customAccessDeniedHandler;
 
   public SecurityConfig(LoginSuccessHandler loginSuccessHandler,
-      LoginFailureHandler loginFailureHandler) {
+      LoginFailureHandler loginFailureHandler,
+      CustomAuthenticationEntryPoint customAuthenticationEntryPoint,
+      CustomAccessDeniedHandler customAccessDeniedHandler) {
     this.loginSuccessHandler = loginSuccessHandler;
     this.loginFailureHandler = loginFailureHandler;
+    this.customAuthenticationEntryPoint = customAuthenticationEntryPoint;
+    this.customAccessDeniedHandler = customAccessDeniedHandler;
   }
 
   @Bean
@@ -56,6 +64,10 @@ public class SecurityConfig {
                 "/actuator/**"
             ).permitAll()
             .anyRequest().authenticated()
+        )
+        .exceptionHandling(ex -> ex
+            .authenticationEntryPoint(customAuthenticationEntryPoint)
+            .accessDeniedHandler(customAccessDeniedHandler)
         );
     return http.build();
   }

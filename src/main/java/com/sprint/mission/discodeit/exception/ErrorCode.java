@@ -33,7 +33,9 @@ public enum ErrorCode {
 
   // --- Global & Server (공통 및 서버) ---
   VALIDATION_ERROR(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR"),
-  INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "Internal Server Error");
+  INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "Internal Server Error"),
+
+  FORBIDDEN(HttpStatus.FORBIDDEN, "Access Denied");
 
   @Getter
   private final HttpStatus status;
