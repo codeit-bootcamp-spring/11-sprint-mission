@@ -7,7 +7,7 @@ build/
 
 ### IntelliJ IDEA ###
 .idea/modules.xml
-.idea/jarRepositories.xml
+.idea/jarRepositaries.xml
 .idea/compiler.xml
 .idea/libraries/
 *.iws
@@ -39,30 +39,15 @@ bin/
 ### VS Code ###
 .vscode/
 
-<<<<<<< HEAD
 ### Mac OS ###
 .DS_Store
-=======
-###
-*fileHashes*
-*checksums*
-fileHashes
-checksums
-*backup*
 
-=======
+### Local ###
 *.h2.db
 *.db*
 *.bak*
 *.log
-.DS_Store
-/build/
+.env
+discodeit.env
 /out/
 /.idea/
-*build*
-*gradlew*
-*settings*
-*.build.gradle*
-*.md
-*.bat
-.env
