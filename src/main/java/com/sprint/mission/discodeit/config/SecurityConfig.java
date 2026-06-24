@@ -5,6 +5,7 @@ import com.sprint.mission.discodeit.security.handler.LoginSuccessHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -15,6 +16,7 @@ import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 public class SecurityConfig {
 
   private final LoginSuccessHandler loginSuccessHandler;
@@ -42,6 +44,18 @@ public class SecurityConfig {
             .logoutUrl("/api/auth/logout")
             .logoutSuccessHandler(
                 new HttpStatusReturningLogoutSuccessHandler(HttpStatus.NO_CONTENT))
+        )
+        .authorizeHttpRequests(auth -> auth
+            .requestMatchers(
+                "/api/auth/csrf-token",
+                "/api/users",
+                "/api/auth/login",
+                "/api/auth/logout",
+                "/swagger-ui/**",
+                "/v3/api-docs/**",
+                "/actuator/**"
+            ).permitAll()
+            .anyRequest().authenticated()
         );
     return http.build();
   }

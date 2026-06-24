@@ -20,6 +20,7 @@ import com.sprint.mission.discodeit.service.UserService;
 import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 import java.io.IOException;
@@ -192,7 +193,9 @@ public class BasicUserService implements UserService {
     return userMapper.toDto(user, user.getStatus());
   }
 
+  @Override
   @Transactional
+  @PreAuthorize("hasRole('ADMIN')")
   public UserDto updateRole(RoleUpdateRequest request) {
     User user = userRepository.findById(request.userId())
         .orElseThrow(() -> new UserNotFoundException(request.userId()));
