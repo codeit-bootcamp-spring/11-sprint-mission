@@ -18,6 +18,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.Instant;
 import java.util.Optional;
@@ -49,6 +50,9 @@ class BasicUserServiceTest {
     @Mock
     BinaryContentStorage binaryContentStorage;
 
+    @Mock
+    PasswordEncoder passwordEncoder;
+
     @InjectMocks
     BasicUserService userService;
 
@@ -65,7 +69,7 @@ class BasicUserServiceTest {
         User savedUser = new User(
                 request.username(),
                 request.email(),
-                request.password()
+                "encoded-password"
         );
 
         UserStatus savedUserStatus = new UserStatus(savedUser, Instant.now());
@@ -80,6 +84,7 @@ class BasicUserServiceTest {
 
         given(userRepository.existsByUsername(request.username())).willReturn(false);
         given(userRepository.existsByEmail(request.email())).willReturn(false);
+        given(passwordEncoder.encode(request.password())).willReturn("encoded-password");
         given(userRepository.save(any(User.class))).willReturn(savedUser);
         given(userStatusRepository.save(any(UserStatus.class))).willReturn(savedUserStatus);
         given(userMapper.toDto(savedUser)).willReturn(expectedDto);
@@ -92,6 +97,7 @@ class BasicUserServiceTest {
 
         then(userRepository).should().existsByUsername(request.username());
         then(userRepository).should().existsByEmail(request.email());
+        then(passwordEncoder).should().encode(request.password());
         then(userRepository).should().save(any(User.class));
         then(userStatusRepository).should().save(any(UserStatus.class));
         then(userMapper).should().toDto(savedUser);

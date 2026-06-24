@@ -41,7 +41,6 @@ public class UserController {
     )
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @ResponseStatus(HttpStatus.CREATED)
     public UserDto create(
             @Parameter(hidden = true)
             @Valid

@@ -105,7 +105,7 @@ class UserControllerTest {
         mockMvc.perform(multipart("/api/users")
                         .file(userCreateRequest)
                         .contentType(MediaType.MULTIPART_FORM_DATA))
-                .andExpect(status().isCreated())
+                .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(userId.toString()))
                 .andExpect(jsonPath("$.username").value("evan"))
                 .andExpect(jsonPath("$.email").value("evan@test.com"))

@@ -7,8 +7,6 @@ import com.sprint.mission.discodeit.dto.UserUpdateParam;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.entity.UserStatus;
-import com.sprint.mission.discodeit.exception.NotFoundException;
-import com.sprint.mission.discodeit.exception.DuplicatedException;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.repository.UserStatusRepository;
@@ -18,6 +16,7 @@ import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.sprint.mission.discodeit.mapper.UserMapper;
@@ -39,6 +38,7 @@ public class BasicUserService implements UserService {
     private final BinaryContentRepository binaryContentRepository;
     private final UserMapper userMapper;
     private final BinaryContentStorage binaryContentStorage;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     @Transactional
@@ -77,7 +77,7 @@ public class BasicUserService implements UserService {
         User user = new User(
                 request.username(),
                 request.email(),
-                request.password()
+                passwordEncoder.encode(request.password())
         );
 
         if (profile != null) {

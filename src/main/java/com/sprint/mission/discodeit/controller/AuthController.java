@@ -3,10 +3,15 @@ package com.sprint.mission.discodeit.controller;
 import com.sprint.mission.discodeit.dto.LoginRequest;
 import com.sprint.mission.discodeit.dto.UserDto;
 import com.sprint.mission.discodeit.service.AuthService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
@@ -20,5 +25,12 @@ public class AuthController {
     @PostMapping(value = "/login")
     public UserDto login(@Valid @RequestBody LoginRequest request) {
         return authService.login(request);
+    }
+
+    @GetMapping("/csrf-token")
+    public ResponseEntity<Void> getCsrfToken(CsrfToken csrfToken) {
+        String tokenValue = csrfToken.getToken();
+        log.debug("CSRF 토큰 요청: {}", tokenValue);
+        return ResponseEntity.status(HttpStatus.NON_AUTHORITATIVE_INFORMATION).build();
     }
 }
