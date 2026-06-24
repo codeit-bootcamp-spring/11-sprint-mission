@@ -51,3 +51,8 @@ bin/
 discodeit.env
 /out/
 /.idea/
+
+HELP.md
+.github/
+.discodeit/
+Dockerfile.slim
