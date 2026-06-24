@@ -39,10 +39,6 @@ public class User extends BaseUpdatableEntity {
   @Column(nullable = false, length = 20)
   private Role role;
 
-  @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-  private UserStatus status;
-
-
   public User(String username, String email, String password, BinaryContent profile) {
     this.username = username;
     this.email = email;
@@ -62,11 +58,6 @@ public class User extends BaseUpdatableEntity {
   public void updateRole(Role role) {
     this.role = role;
   }
-
-  public void initStatus(UserStatus status) {
-    this.status = status;
-  }
-
 
   @Override
   public String toString() {

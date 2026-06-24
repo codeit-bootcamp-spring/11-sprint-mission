@@ -1,10 +1,8 @@
 package com.sprint.mission.discodeit.security.service;
 
 import com.sprint.mission.discodeit.entity.User;
-import com.sprint.mission.discodeit.entity.UserStatus;
 import com.sprint.mission.discodeit.mapper.UserMapper;
 import com.sprint.mission.discodeit.repository.UserRepository;
-import com.sprint.mission.discodeit.repository.UserStatusRepository;
 import com.sprint.mission.discodeit.security.DiscodeitUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -17,7 +15,6 @@ import org.springframework.stereotype.Service;
 public class DiscodeitUserDetailsService implements UserDetailsService {
 
   private final UserRepository userRepository;
-  private final UserStatusRepository userStatusRepository;
   private final UserMapper userMapper;
 
   @Override
@@ -25,11 +22,8 @@ public class DiscodeitUserDetailsService implements UserDetailsService {
     User user = userRepository.findByUsername(username)
         .orElseThrow(() -> new UsernameNotFoundException(username));
 
-    UserStatus status = userStatusRepository.findByUserId(user.getId())
-        .orElse(null);
-
     return new DiscodeitUserDetails(
-        userMapper.toDto(user, status),
+        userMapper.toDto(user),
         user.getPassword()
     );
   }

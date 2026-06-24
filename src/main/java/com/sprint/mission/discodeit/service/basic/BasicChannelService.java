@@ -85,7 +85,7 @@ public class BasicChannelService implements ChannelService {
       ReadStatus readStatus = new ReadStatus(user, createdChannel, createdChannel.getCreatedAt());
       readStatusRepository.save(readStatus);
 
-      participants.add(userMapper.toDto(user, user.getStatus()));
+      participants.add(userMapper.toDto(user));
     });
 
     log.info("Private 채널 생성 완료 - channelId: {}, participantCount: {}", createdChannel.getId(),
@@ -101,7 +101,7 @@ public class BasicChannelService implements ChannelService {
     List<UserDto> participants = Collections.emptyList();
     if (channel.getType() == ChannelType.PRIVATE) {
       participants = readStatusRepository.findAllByChannelId(channel.getId()).stream()
-          .map(rs -> userMapper.toDto(rs.getUser(), rs.getUser().getStatus()))
+          .map(rs -> userMapper.toDto(rs.getUser()))
           .toList();
     }
 
@@ -142,7 +142,7 @@ public class BasicChannelService implements ChannelService {
             privateChannelIds).stream()
         .collect(Collectors.groupingBy((ReadStatus rs) -> rs.getChannel().getId(),
             Collectors.mapping(
-                (ReadStatus rs) -> userMapper.toDto(rs.getUser(), rs.getUser().getStatus()),
+                (ReadStatus rs) -> userMapper.toDto(rs.getUser()),
                 Collectors.toList()
             )
         ));
