@@ -1,5 +1,7 @@
 package com.sprint.mission.discodeit.integration;
 
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
@@ -49,7 +51,8 @@ class MessageIntegrationTest {
     MockMultipartFile userPart = new MockMultipartFile(
         "userCreateRequest", "", MediaType.APPLICATION_JSON_VALUE,
         objectMapper.writeValueAsBytes(userRequest));
-    MvcResult userResult = mockMvc.perform(multipart("/api/users").file(userPart)).andReturn();
+    MvcResult userResult = mockMvc.perform(
+        multipart("/api/users").file(userPart).with(csrf()).with(user("jihye"))).andReturn();
     JsonNode userNode = objectMapper.readTree(userResult.getResponse().getContentAsString());
     authorId = UUID.fromString(userNode.get("id").asText());
 
@@ -57,7 +60,7 @@ class MessageIntegrationTest {
     PublicChannelCreateRequest channelRequest = new PublicChannelCreateRequest("general", "공용 채널");
     MvcResult channelResult = mockMvc.perform(post("/api/channels/public")
             .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(channelRequest)))
+            .content(objectMapper.writeValueAsString(channelRequest)).with(csrf()).with(user("jihye")))
         .andReturn();
     JsonNode channelNode = objectMapper.readTree(channelResult.getResponse().getContentAsString());
     channelId = UUID.fromString(channelNode.get("id").asText());
@@ -72,7 +75,7 @@ class MessageIntegrationTest {
         objectMapper.writeValueAsBytes(request));
 
     // when & then
-    mockMvc.perform(multipart("/api/messages").file(messagePart))
+    mockMvc.perform(multipart("/api/messages").file(messagePart).with(csrf()).with(user("jihye")))
         .andExpect(status().isCreated())
         .andExpect(jsonPath("$.content").value("안녕하세요"));
   }
@@ -86,7 +89,7 @@ class MessageIntegrationTest {
         objectMapper.writeValueAsBytes(request));
 
     // when & then
-    mockMvc.perform(multipart("/api/messages").file(messagePart))
+    mockMvc.perform(multipart("/api/messages").file(messagePart).with(csrf()).with(user("jihye")))
         .andExpect(status().isNotFound());
   }
 
@@ -97,11 +100,11 @@ class MessageIntegrationTest {
     MockMultipartFile messagePart = new MockMultipartFile(
         "messageCreateRequest", "", MediaType.APPLICATION_JSON_VALUE,
         objectMapper.writeValueAsBytes(request));
-    mockMvc.perform(multipart("/api/messages").file(messagePart));
+    mockMvc.perform(multipart("/api/messages").file(messagePart).with(csrf()).with(user("jihye")));
 
     // when & then
     mockMvc.perform(get("/api/messages")
-            .param("channelId", channelId.toString()))
+            .param("channelId", channelId.toString()).with(user("jihye")))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.content").isArray());
   }
@@ -113,7 +116,8 @@ class MessageIntegrationTest {
     MockMultipartFile messagePart = new MockMultipartFile(
         "messageCreateRequest", "", MediaType.APPLICATION_JSON_VALUE,
         objectMapper.writeValueAsBytes(createRequest));
-    MvcResult createResult = mockMvc.perform(multipart("/api/messages").file(messagePart))
+    MvcResult createResult = mockMvc.perform(
+            multipart("/api/messages").file(messagePart).with(csrf()).with(user("jihye")))
         .andReturn();
     JsonNode node = objectMapper.readTree(createResult.getResponse().getContentAsString());
     String messageId = node.get("id").asText();
@@ -122,7 +126,7 @@ class MessageIntegrationTest {
     MessageUpdateRequest updateRequest = new MessageUpdateRequest("수정된 내용");
     mockMvc.perform(patch("/api/messages/{messageId}", messageId)
             .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(updateRequest)))
+            .content(objectMapper.writeValueAsString(updateRequest)).with(csrf()).with(user("jihye")))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.content").value("수정된 내용"));
   }
@@ -134,13 +138,14 @@ class MessageIntegrationTest {
     MockMultipartFile messagePart = new MockMultipartFile(
         "messageCreateRequest", "", MediaType.APPLICATION_JSON_VALUE,
         objectMapper.writeValueAsBytes(createRequest));
-    MvcResult createResult = mockMvc.perform(multipart("/api/messages").file(messagePart))
+    MvcResult createResult = mockMvc.perform(
+            multipart("/api/messages").file(messagePart).with(csrf()).with(user("jihye")))
         .andReturn();
     JsonNode node = objectMapper.readTree(createResult.getResponse().getContentAsString());
     String messageId = node.get("id").asText();
 
     // when & then
-    mockMvc.perform(delete("/api/messages/{messageId}", messageId))
+    mockMvc.perform(delete("/api/messages/{messageId}", messageId).with(csrf()).with(user("jihye")))
         .andExpect(status().isNoContent());
   }
 }

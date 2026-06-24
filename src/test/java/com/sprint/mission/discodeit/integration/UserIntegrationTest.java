@@ -1,6 +1,8 @@
 package com.sprint.mission.discodeit.integration;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
@@ -47,7 +49,8 @@ class UserIntegrationTest {
         objectMapper.writeValueAsBytes(request));
 
     // when & then
-    mockMvc.perform(multipart("/api/users").file(userPart))
+    mockMvc.perform(multipart("/api/users").file(userPart)
+            .with(csrf()).with(user("jihye")))
         .andExpect(status().isCreated())
         .andExpect(jsonPath("$.username").value("jihye"))
         .andExpect(jsonPath("$.email").value("jihye@test.com"));
@@ -62,7 +65,7 @@ class UserIntegrationTest {
     MockMultipartFile userPart1 = new MockMultipartFile(
         "userCreateRequest", "", MediaType.APPLICATION_JSON_VALUE,
         objectMapper.writeValueAsBytes(request1));
-    mockMvc.perform(multipart("/api/users").file(userPart1));
+    mockMvc.perform(multipart("/api/users").file(userPart1).with(csrf()).with(user("jihye")));
 
     UserCreateRequest request2 = new UserCreateRequest("jihye", "jihye2@test.com", "password123");
     MockMultipartFile userPart2 = new MockMultipartFile(
@@ -70,7 +73,7 @@ class UserIntegrationTest {
         objectMapper.writeValueAsBytes(request2));
 
     // when & then
-    mockMvc.perform(multipart("/api/users").file(userPart2))
+    mockMvc.perform(multipart("/api/users").file(userPart2).with(csrf()).with(user("jihye")))
         .andExpect(status().isConflict());
   }
 
@@ -97,7 +100,8 @@ class UserIntegrationTest {
     MockMultipartFile userPart = new MockMultipartFile(
         "userCreateRequest", "", MediaType.APPLICATION_JSON_VALUE,
         objectMapper.writeValueAsBytes(createRequest));
-    MvcResult createResult = mockMvc.perform(multipart("/api/users").file(userPart))
+    MvcResult createResult = mockMvc.perform(
+            multipart("/api/users").file(userPart).with(csrf()).with(user("jihye")))
         .andReturn();
 
     JsonNode node = objectMapper.readTree(createResult.getResponse().getContentAsString());
@@ -114,7 +118,8 @@ class UserIntegrationTest {
             .with(req -> {
               req.setMethod("PATCH");
               return req;
-            }))
+            })
+            .with(csrf()).with(user("jihye")))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.username").value("newJihye"));
   }
@@ -126,14 +131,15 @@ class UserIntegrationTest {
     MockMultipartFile userPart = new MockMultipartFile(
         "userCreateRequest", "", MediaType.APPLICATION_JSON_VALUE,
         objectMapper.writeValueAsBytes(request));
-    MvcResult createResult = mockMvc.perform(multipart("/api/users").file(userPart))
+    MvcResult createResult = mockMvc.perform(
+            multipart("/api/users").file(userPart).with(csrf()).with(user("jihye")))
         .andReturn();
 
     JsonNode node = objectMapper.readTree(createResult.getResponse().getContentAsString());
     String userId = node.get("id").asText();
 
     // when & then - 삭제만 검증
-    mockMvc.perform(delete("/api/users/{userId}", userId))
+    mockMvc.perform(delete("/api/users/{userId}", userId).with(csrf()).with(user("jihye")))
         .andExpect(status().isNoContent());
   }
 }
