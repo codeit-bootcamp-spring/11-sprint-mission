@@ -15,6 +15,7 @@ import com.sprint.mission.discodeit.dto.UserDto;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.ChannelType;
 import com.sprint.mission.discodeit.entity.ReadStatus;
+import com.sprint.mission.discodeit.entity.Role;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.exception.channel.PrivateChannelUpdateDeniedException;
 import com.sprint.mission.discodeit.mapper.ChannelMapper;
@@ -76,7 +77,7 @@ public class BasicChannelServiceTest {
         "testUser", "test@email.com", "password");
 
     UserDto userDto = new UserDto(userId,
-        "testUser", "test@email.com", null, true);
+        "testUser", "test@email.com", null, true, Role.USER);
     ChannelDto dto = new ChannelDto(UUID.randomUUID(), ChannelType.PRIVATE,
         null, null, List.of(userDto), null);
 
@@ -107,7 +108,7 @@ public class BasicChannelServiceTest {
     given(channelRepository.findAll()).willReturn(List.of(publicChannel, privateChannel));
 
     UserDto userDto = new UserDto(userId, "유저", "이메일",
-        null, true);
+        null, true, Role.USER);
     ChannelDto pubDto = new ChannelDto(publicChannel.getId(),
         ChannelType.PUBLIC, "공용방", "공용입니다",
         List.of(), null);
@@ -173,7 +174,7 @@ public class BasicChannelServiceTest {
     UUID channelId = UUID.randomUUID();
 
     given(channelRepository.existsById(channelId)).willReturn(true);
-    
+
     willThrow(new RuntimeException("DB 접속 오류")).given(channelRepository).deleteById(channelId);
 
     assertThrows(RuntimeException.class, () -> {

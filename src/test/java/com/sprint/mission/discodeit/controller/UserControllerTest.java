@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.mission.discodeit.dto.UserCreateRequest;
 import com.sprint.mission.discodeit.dto.UserDto;
+import com.sprint.mission.discodeit.entity.Role;
 import com.sprint.mission.discodeit.service.UserService;
 import com.sprint.mission.discodeit.service.UserStatusService;
 import java.util.UUID;
@@ -48,7 +49,7 @@ public class UserControllerTest {
     UserCreateRequest request = new UserCreateRequest("woody",
         "woody@test.com", "pass1234", null);
     UserDto response = new UserDto(UUID.randomUUID(), "woody",
-        "woody@test.com", null, false);
+        "woody@test.com", null, false, Role.USER);
 
     given(userService.create(any(), any())).willReturn(response);
 

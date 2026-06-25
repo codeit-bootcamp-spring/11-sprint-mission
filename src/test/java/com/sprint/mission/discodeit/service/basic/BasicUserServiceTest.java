@@ -10,7 +10,9 @@ import static org.mockito.BDDMockito.willThrow;
 
 import com.sprint.mission.discodeit.dto.UserCreateRequest;
 import com.sprint.mission.discodeit.dto.UserDto;
+import com.sprint.mission.discodeit.dto.UserRoleUpdateRequest;
 import com.sprint.mission.discodeit.dto.UserUpdateRequest;
+import com.sprint.mission.discodeit.entity.Role;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.exception.user.UserAlreadyExistsException;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
@@ -39,7 +41,7 @@ public class BasicUserServiceTest {
 
   @Mock
   private UserMapper userMapper;
-  
+
   @Mock
   private PasswordEncoder passwordEncoder;
 
@@ -50,7 +52,7 @@ public class BasicUserServiceTest {
         "test@email.com", "password123", null);
     User savedUser = new User("testUser", "test@email.com", "password123");
     UserDto userDto = new UserDto(UUID.randomUUID(),
-        "testUser", "test@email.com", null, true);
+        "testUser", "test@email.com", null, true, Role.USER);
 
     given(userRepository.existsByUsername(request.username())).willReturn(false);
     given(userRepository.existsByEmail(request.email())).willReturn(false);
@@ -60,6 +62,7 @@ public class BasicUserServiceTest {
     UserDto result = userService.create(request, null);
 
     assertThat(result.username()).isEqualTo("testUser");
+    assertThat(result.role()).isEqualTo(Role.USER);
     then(userRepository).should().save(any(User.class));
   }
 
@@ -87,7 +90,7 @@ public class BasicUserServiceTest {
         "newUsername", null, null);
     User existingUser = new User("oldUsername", "test@email.com", "password");
     UserDto updatedDto = new UserDto(userId, "newUsername",
-        "test@email.com", null, true);
+        "test@email.com", null, true, Role.USER);
 
     given(userRepository.findById(userId)).willReturn(Optional.of(existingUser));
     given(userMapper.toDto(existingUser)).willReturn(updatedDto);
@@ -134,6 +137,37 @@ public class BasicUserServiceTest {
 
     assertThrows(RuntimeException.class, () -> {
       userService.delete(userId);
+    });
+  }
+
+  @Test
+  @DisplayName("사용자 권한 수정 성공")
+  void updateRole_success() {
+    UUID userId = UUID.randomUUID();
+    UserRoleUpdateRequest request = new UserRoleUpdateRequest(userId, Role.CHANNEL_MANAGER);
+    User existingUser = new User("testUser", "test@email.com", "password");
+    UserDto updatedDto = new UserDto(userId, "testUser", "test@email.com", null, true,
+        Role.CHANNEL_MANAGER);
+
+    given(userRepository.findById(userId)).willReturn(Optional.of(existingUser));
+    given(userMapper.toDto(existingUser)).willReturn(updatedDto);
+
+    UserDto result = userService.updateRole(request);
+
+    assertThat(existingUser.getRole()).isEqualTo(Role.CHANNEL_MANAGER);
+    assertThat(result.role()).isEqualTo(Role.CHANNEL_MANAGER);
+  }
+
+  @Test
+  @DisplayName("사용자 권한 수정 실패 - 존재하지 않는 유저")
+  void updateRole_fail_userNotFound() {
+    UUID userId = UUID.randomUUID();
+    UserRoleUpdateRequest request = new UserRoleUpdateRequest(userId, Role.ADMIN);
+
+    given(userRepository.findById(userId)).willReturn(Optional.empty());
+
+    assertThrows(UserNotFoundException.class, () -> {
+      userService.updateRole(request);
     });
   }
 }
