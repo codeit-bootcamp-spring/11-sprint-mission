@@ -4,6 +4,9 @@ import com.sprint.mission.discodeit.security.handler.CustomAccessDeniedHandler;
 import com.sprint.mission.discodeit.security.handler.CustomAuthenticationEntryPoint;
 import com.sprint.mission.discodeit.security.handler.LoginFailureHandler;
 import com.sprint.mission.discodeit.security.handler.LoginSuccessHandler;
+import com.sprint.mission.discodeit.security.service.DiscodeitUserDetailsService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -17,32 +20,30 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.core.session.SessionRegistryImpl;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.RememberMeServices;
 import org.springframework.security.web.authentication.logout.HttpStatusReturningLogoutSuccessHandler;
+import org.springframework.security.web.authentication.rememberme.TokenBasedRememberMeServices;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.session.HttpSessionEventPublisher;
 
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
 
   private final LoginSuccessHandler loginSuccessHandler;
   private final LoginFailureHandler loginFailureHandler;
   private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
   private final CustomAccessDeniedHandler customAccessDeniedHandler;
+  private final DiscodeitUserDetailsService userDetailsService;
 
-  public SecurityConfig(LoginSuccessHandler loginSuccessHandler,
-      LoginFailureHandler loginFailureHandler,
-      CustomAuthenticationEntryPoint customAuthenticationEntryPoint,
-      CustomAccessDeniedHandler customAccessDeniedHandler) {
-    this.loginSuccessHandler = loginSuccessHandler;
-    this.loginFailureHandler = loginFailureHandler;
-    this.customAuthenticationEntryPoint = customAuthenticationEntryPoint;
-    this.customAccessDeniedHandler = customAccessDeniedHandler;
-  }
+  @Value("${discodeit.security.remember-me-key}")
+  private String rememberMeKey;
 
   @Bean
   public SessionRegistry sessionRegistry() {
@@ -79,6 +80,9 @@ public class SecurityConfig {
                 .sessionRegistry(sessionRegistry)
             )
         )
+        .rememberMe(rememberMe -> rememberMe
+            .rememberMeServices(rememberMeServices(userDetailsService))
+        )
         .authorizeHttpRequests(auth -> auth
             .requestMatchers(
                 "/api/auth/csrf-token",
@@ -113,6 +117,15 @@ public class SecurityConfig {
     DefaultMethodSecurityExpressionHandler handler = new DefaultMethodSecurityExpressionHandler();
     handler.setRoleHierarchy(roleHierarchy);
     return handler;
+  }
+
+  @Bean
+  public RememberMeServices rememberMeServices(UserDetailsService userDetailsService) {
+    TokenBasedRememberMeServices rememberMeServices = new TokenBasedRememberMeServices(
+        rememberMeKey, userDetailsService);
+    rememberMeServices.setParameter("remember-me");
+    rememberMeServices.setTokenValiditySeconds(7 * 24 * 60 * 60);
+    return rememberMeServices;
   }
 
   @Bean

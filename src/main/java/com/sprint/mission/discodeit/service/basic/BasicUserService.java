@@ -88,7 +88,7 @@ public class BasicUserService implements UserService {
 
     log.info("사용자 생성 성공 - userId: {}, username: {}", newUser.getId(), newUser.getUsername());
 
-    return userMapper.toDto(newUser);
+    return userMapper.toDto(newUser, false);
   }
 
   @Override
@@ -99,14 +99,14 @@ public class BasicUserService implements UserService {
           return new UserNotFoundException(id);
         });
 
-    return userMapper.toDto(user);
+    return userMapper.toDto(user, isOnline(user.getId()));
   }
 
   @Override
   public List<UserDto> allReadUser() {
     List<User> users = userRepository.findAll();
     return users.stream()
-        .map(user -> userMapper.toDto(user))
+        .map(user -> userMapper.toDto(user, isOnline(user.getId())))
         .collect(Collectors.toList());
   }
 
@@ -189,7 +189,7 @@ public class BasicUserService implements UserService {
 
     log.info("사용자 정보 업데이트 완료 - userId: {}, username: {}, email: {}", id, name, email);
 
-    return userMapper.toDto(user);
+    return userMapper.toDto(user, isOnline(user.getId()));
   }
 
   @Override
@@ -209,6 +209,13 @@ public class BasicUserService implements UserService {
           sessions.forEach(SessionInformation::expireNow);
         });
 
-    return userMapper.toDto(user);
+    return userMapper.toDto(user, isOnline(user.getId()));
+  }
+
+  private boolean isOnline(UUID userId) {
+    return sessionRegistry.getAllPrincipals().stream()
+        .filter(p -> p instanceof DiscodeitUserDetails)
+        .map(p -> (DiscodeitUserDetails) p)
+        .anyMatch(p -> p.getUserDto().id().equals(userId));
   }
 }
