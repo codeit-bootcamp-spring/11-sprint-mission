@@ -4,6 +4,8 @@ import com.sprint.mission.discodeit.entity.base.BaseUpdatableEntity;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
@@ -30,6 +32,10 @@ public class User extends BaseUpdatableEntity {
   @Column(nullable = false, length = 60)
   private String password;
 
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false, length = 20)
+  private Role role;
+
   @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
   @JoinColumn(name = "profile_id", referencedColumnName = "id")
   private BinaryContent profile;
@@ -47,6 +53,7 @@ public class User extends BaseUpdatableEntity {
     this.username = username;
     this.email = email;
     this.password = password;
+    this.role = Role.USER;
   }
 
   public void update(String username) {
@@ -62,5 +69,9 @@ public class User extends BaseUpdatableEntity {
     if (status != null && status.getUser() != this) {
       status.setUser(this);
     }
+  }
+
+  public void updateRole(Role role) {
+    this.role = role;
   }
 }
