@@ -1,37 +1,74 @@
 package com.sprint.mission.discodeit.entity;
 
-import java.io.Serializable;  // 추가
-import java.util.UUID;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.sprint.mission.discodeit.entity.base.BaseUpdatableEntity;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-public class User implements Serializable {  // 추가
+@Entity
+@Table(name = "users")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class User extends BaseUpdatableEntity {
 
-    private final UUID id;
-    private final long createdAt;
-    private long updatedAt;
-    private String name;
+  @Column(length = 50, nullable = false, unique = true)
+  private String username;
 
-    // 기본 생성자 (Serializable 필수)
-    public User() {
-        this.id = null;           // final 필드 초기화
-        this.createdAt = 0L;      // final 필드 초기화
+  @Column(length = 100, nullable = false, unique = true)
+  private String email;
+
+  @Column(length = 60, nullable = false)
+  private String password;
+
+  @Enumerated(EnumType.STRING)
+  @Column(length = 20, nullable = false)
+  private Role role = Role.USER;
+
+  @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+  @JoinColumn(name = "profile_id", columnDefinition = "uuid")
+  private BinaryContent profile;
+
+  @JsonManagedReference
+  @Setter(AccessLevel.PROTECTED)
+  @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+  private UserStatus status;
+
+  public User(String username, String email, String password, BinaryContent profile) {
+    this.username = username;
+    this.email = email;
+    this.password = password;
+    this.profile = profile;
+    this.role = Role.USER;
+  }
+
+  public void update(String newUsername, String newEmail, String newPassword,
+      BinaryContent newProfile) {
+    if (newUsername != null && !newUsername.equals(this.username)) {
+      this.username = newUsername;
     }
-
-    public User(String name) {
-        this.id = UUID.randomUUID();
-        long now = System.currentTimeMillis();
-        this.createdAt = now;
-        this.updatedAt = now;
-        this.name = name;
+    if (newEmail != null && !newEmail.equals(this.email)) {
+      this.email = newEmail;
     }
-
-    // getter들 (전부 있어야 함)
-    public UUID getId() { return id; }
-    public long getCreatedAt() { return createdAt; }
-    public long getUpdatedAt() { return updatedAt; }
-    public String getName() { return name; }
-
-    public void update(String name) {
-        this.name = name;
-        this.updatedAt = System.currentTimeMillis();
+    if (newPassword != null && !newPassword.equals(this.password)) {
+      this.password = newPassword;
     }
+    if (newProfile != null) {
+      this.profile = newProfile;
+    }
+  }
+
+  public void updateRole(Role role) {
+    this.role = role;
+  }
 }
