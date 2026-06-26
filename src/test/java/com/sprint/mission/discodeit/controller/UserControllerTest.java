@@ -20,6 +20,7 @@ import com.sprint.mission.discodeit.dto.data.UserStatusDto;
 import com.sprint.mission.discodeit.dto.request.UserCreateRequest;
 import com.sprint.mission.discodeit.dto.request.UserStatusUpdateRequest;
 import com.sprint.mission.discodeit.dto.request.UserUpdateRequest;
+import com.sprint.mission.discodeit.entity.Role;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.service.UserService;
 import com.sprint.mission.discodeit.service.UserStatusService;
@@ -88,7 +89,8 @@ class UserControllerTest {
         "testuser",
         "test@example.com",
         profileDto,
-        false
+        false,
+        Role.USER
     );
 
     given(userService.create(any(UserCreateRequest.class), any(Optional.class)))
@@ -143,7 +145,8 @@ class UserControllerTest {
         "user1",
         "user1@example.com",
         null,
-        true
+        true,
+            Role.USER
     );
 
     UserDto user2 = new UserDto(
@@ -151,7 +154,8 @@ class UserControllerTest {
         "user2",
         "user2@example.com",
         null,
-        false
+        false,
+            Role.USER
     );
 
     List<UserDto> users = List.of(user1, user2);
@@ -207,7 +211,8 @@ class UserControllerTest {
         "updateduser",
         "updated@example.com",
         profileDto,
-        true
+        true,
+            Role.USER
     );
 
     given(userService.update(eq(userId), any(UserUpdateRequest.class), any(Optional.class)))

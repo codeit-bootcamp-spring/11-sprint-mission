@@ -14,6 +14,10 @@ services:
       - AWS_S3_REGION=${AWS_S3_REGION:-ap-northeast-2}
       - AWS_S3_BUCKET=${AWS_S3_BUCKET:-}
       - AWS_S3_PRESIGNED_URL_EXPIRATION=${AWS_S3_PRESIGNED_URL_EXPIRATION:-600}
+      - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
+      - ADMIN_EMAIL=${ADMIN_EMAIL:-admin@discodeit.com}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-Admin1234!}
+
     volumes:
       - app-storage:/app/.discodeit/storage
     depends_on:
