@@ -6,6 +6,7 @@ import com.sprint.mission.discodeit.security.Http403AccessDeniedHandler;
 import com.sprint.mission.discodeit.security.LoginFailureHandler;
 import com.sprint.mission.discodeit.security.LoginSuccessHandler;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
@@ -36,6 +37,9 @@ public class SecurityConfig {
   private final DiscodeitUserDetailsService userDetailsService;
   private final Http401AuthenticationEntryPoint authenticationEntryPoint;
   private final Http403AccessDeniedHandler accessDeniedHandler;
+
+  @Value("${spring.security.remember-me.key:discodeit-secret-key-for-remember-me}")
+  private String rememberKey;
 
   @Bean
   public PasswordEncoder passwordEncoder() {
@@ -75,6 +79,12 @@ public class SecurityConfig {
         .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
         .csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler()));
 
+    http.authorizeHttpRequests(auth -> auth
+        .requestMatchers("/api/auth/csrf-token", "/api/users/", "/api/auth/login",
+            "api/users/logout")
+        .permitAll().anyRequest().authenticated()
+    );
+
     http.exceptionHandling(ex -> ex
         .authenticationEntryPoint(authenticationEntryPoint)
         .accessDeniedHandler(accessDeniedHandler)
@@ -92,6 +102,13 @@ public class SecurityConfig {
         .loginProcessingUrl("/api/auth/login")
         .successHandler(loginSuccessHandler)
         .failureHandler(loginFailureHandler)
+    );
+
+    http.rememberMe(rememberMe -> rememberMe
+        .rememberMeParameter("remember-me")
+        .tokenValiditySeconds(14 * 24 * 60 * 60)
+        .key(rememberKey)
+        .userDetailsService(userDetailsService)
     );
 
     http.logout(logout -> logout
