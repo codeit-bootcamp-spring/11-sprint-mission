@@ -32,9 +32,6 @@ public class AdminInitializer implements ApplicationRunner {
 
       admin.updateRole(Role.ADMIN);
 
-      UserStatus userStatus = new UserStatus(admin);
-      admin.updateStatus(userStatus);
-
       userRepository.save(admin);
       log.info("어드민 계정 초기화 성공 - username: {}, email: admin@discodeit.com", adminUsername);
     } else {
