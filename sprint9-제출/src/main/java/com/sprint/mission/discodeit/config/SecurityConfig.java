@@ -81,7 +81,7 @@ public class SecurityConfig {
         .sessionManagement(management -> management
             .sessionConcurrency(concurrency -> concurrency
                 .maximumSessions(1)
-                .maxSessionsPreventsLogin(true)
+                .maxSessionsPreventsLogin(false)
                 .sessionRegistry(sessionRegistry)
             )
         )
