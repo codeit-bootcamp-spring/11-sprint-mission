@@ -12,6 +12,7 @@ import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.mapper.UserMapper;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
+import com.sprint.mission.discodeit.security.DiscodeitUserDetails;
 import com.sprint.mission.discodeit.service.UserService;
 import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import java.io.IOException;
@@ -21,6 +22,8 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.session.SessionInformation;
+import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,6 +40,7 @@ public class BasicUserService implements UserService {
   private final UserMapper userMapper;
   private final BinaryContentStorage binaryContentStorage;
   private final PasswordEncoder passwordEncoder;
+  private final SessionRegistry sessionRegistry;
 
   @Override
   @Transactional
@@ -159,6 +163,24 @@ public class BasicUserService implements UserService {
     user.updateRole(request.newRole());
     log.info("사용자 권한 변경 완료 - userId: {}, newRole: {}", user.getId(), request.newRole());
 
+    expireUserSessions(request.userId());
+
     return userMapper.toDto(user);
+  }
+
+  private void expireUserSessions(UUID targetUserId) {
+    log.debug("권한 변경에 따른 세션 만료 처리 시작 - targetUserId: {}", targetUserId);
+
+    for (Object principal : sessionRegistry.getAllPrincipals()) {
+      if (principal instanceof DiscodeitUserDetails userDetails) {
+        if (userDetails.getUserDto().id().equals(targetUserId)) {
+          List<SessionInformation> sessions = sessionRegistry.getAllSessions(principal, false);
+          for (SessionInformation sessionInformation : sessions) {
+            sessionInformation.expireNow();
+            log.info("기존 세션 만료 처리 완료 -  sessionId: {}", sessionInformation.getSessionId());
+          }
+        }
+      }
+    }
   }
 }
