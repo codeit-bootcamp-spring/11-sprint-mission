@@ -28,6 +28,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
+import org.springframework.security.access.prepost.PostAuthorize;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -138,6 +140,7 @@ public class BasicMessageService implements MessageService {
 
   @Override
   @Transactional
+  @PostAuthorize("returnObject.author.id == principal.userDto.id or hasRole('ADMIN')")
   public MessageDto update(UUID id, MessageUpdateRequest request) {
     log.debug("메시지 수정 시작 - messageId: {}", id);
     Message message = messageRepository.findById(id)
@@ -152,6 +155,7 @@ public class BasicMessageService implements MessageService {
 
   @Override
   @Transactional
+  @PreAuthorize("@messageRepository.findById(#id).orElse(null)?.author?.id == principal.userDto.id or hasRole('ADMIN')")
   public void delete(UUID id) {
     log.debug("메시지 삭제 시작 - messageId: {}", id);
 

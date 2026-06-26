@@ -116,6 +116,7 @@ public class BasicUserService implements UserService {
 
   @Override
   @Transactional
+  @PreAuthorize("#id == principal.uesrDto.id or hasRole('ADMIN')")
   public UserDto update(UUID id, UserUpdateRequest request, MultipartFile profile) {
     log.debug("사용자 수정 시작 - userId: {}", id);
 
@@ -148,6 +149,7 @@ public class BasicUserService implements UserService {
 
   @Override
   @Transactional
+  @PreAuthorize("#id == principal.userDto.id or hasRole('ADMIN')")
   public void delete(UUID id) {
     log.debug("사용자 삭제 시작 - userId: {}", id);
 
