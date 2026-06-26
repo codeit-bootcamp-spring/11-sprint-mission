@@ -80,9 +80,18 @@ public class SecurityConfig {
         .csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler()));
 
     http.authorizeHttpRequests(auth -> auth
-        .requestMatchers("/api/auth/csrf-token", "/api/users/", "/api/auth/login",
-            "api/users/logout")
-        .permitAll().anyRequest().authenticated()
+        .requestMatchers(
+            "/",
+            "/index.html",
+            "/assets/**",
+            "/favicon.ico"
+        ).permitAll()
+        .requestMatchers(
+            "/api/auth/**",
+            "/api/users/",
+            "api/users/**"
+        ).permitAll()
+        .anyRequest().authenticated()
     );
 
     http.exceptionHandling(ex -> ex

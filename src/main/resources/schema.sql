@@ -10,11 +10,12 @@ CREATE TABLE IF NOT EXISTS binary_contents
 CREATE TABLE IF NOT EXISTS users
 (
     id         UUID PRIMARY KEY,
-    created_at TIMESTAMPTZ         NOT NULL,
+    created_at TIMESTAMPTZ                NOT NULL,
     updated_at TIMESTAMPTZ,
-    username   VARCHAR(50) UNIQUE  NOT NULL,
-    email      VARCHAR(100) UNIQUE NOT NULL,
-    password   VARCHAR(60)         NOT NULL,
+    username   VARCHAR(50) UNIQUE         NOT NULL,
+    email      VARCHAR(100) UNIQUE        NOT NULL,
+    password   VARCHAR(60)                NOT NULL,
+    role       VARCHAR(20) DEFAULT 'USER' NOT NULL,
     profile_id UUID UNIQUE,
     FOREIGN KEY (profile_id) REFERENCES binary_contents (id) ON DELETE SET NULL
 );
@@ -41,16 +42,6 @@ CREATE TABLE IF NOT EXISTS messages
     FOREIGN KEY (author_id) REFERENCES users (id) ON DELETE SET NULL
 );
 
-CREATE TABLE IF NOT EXISTS user_status
-(
-    id             UUID PRIMARY KEY,
-    created_at     TIMESTAMPTZ NOT NULL,
-    updated_at     TIMESTAMPTZ,
-    user_id        UUID        NOT NULL UNIQUE,
-    last_active_at TIMESTAMPTZ NOT NULL,
-    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
-);
-
 CREATE TABLE IF NOT EXISTS read_statuses
 (
     id           UUID PRIMARY KEY,
@@ -72,3 +63,6 @@ CREATE TABLE IF NOT EXISTS message_attachments
     FOREIGN KEY (message_id) REFERENCES messages (id) ON DELETE CASCADE,
     FOREIGN KEY (attachment_id) REFERENCES binary_contents (id) ON DELETE CASCADE
 );
+
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO discodeit_user;
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO discodeit_user;
