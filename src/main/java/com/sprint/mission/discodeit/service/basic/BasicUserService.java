@@ -78,13 +78,11 @@ public class BasicUserService implements UserService {
       throw new RuntimeException("프로필 이미지 처리 중 오류가 발생했습니다.");
     }
 
-    UserStatus userStatus = new UserStatus(user);
-    user.updateStatus(userStatus);
-
     userRepository.save(user);
     log.info("사용자 생성 완료 - userId: {}", user.getId());
 
-    return userMapper.toDto(user);
+    UserDto dto = userMapper.toDto(user);
+    return new UserDto(dto.id(), dto.username(), dto.email(), dto.profile(), false, dto.role());
   }
 
   @Override
@@ -94,7 +92,9 @@ public class BasicUserService implements UserService {
           log.warn("사용자 조회 실패(존재하지 않는 유저) - userId: {}", id);
           return new UserNotFoundException(id);
         });
-    return userMapper.toDto(user);
+    UserDto dto = userMapper.toDto(user);
+    boolean isOnline = isUserOnline(id);
+    return new UserDto(dto.id(), dto.username(), dto.email(), dto.profile(), isOnline, dto.role());
   }
 
   @Override
@@ -102,6 +102,17 @@ public class BasicUserService implements UserService {
     return userRepository.findAll().stream()
         .map(userMapper::toDto)
         .collect(Collectors.toList());
+  }
+
+  private boolean isUserOnline(UUID userId) {
+    for (Object principal : sessionRegistry.getAllPrincipals()) {
+      if (principal instanceof DiscodeitUserDetails userDetails) {
+        if (userDetails.getUserDto().id().equals(userId)) {
+          return !sessionRegistry.getAllSessions(principal, false).isEmpty();
+        }
+      }
+    }
+    return false;
   }
 
   @Override

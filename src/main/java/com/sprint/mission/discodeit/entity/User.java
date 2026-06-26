@@ -40,9 +40,6 @@ public class User extends BaseUpdatableEntity {
   @JoinColumn(name = "profile_id", referencedColumnName = "id")
   private BinaryContent profile;
 
-  @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-  private UserStatus status;
-
   @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<ReadStatus> readStatuses = new ArrayList<>();
 
@@ -62,13 +59,6 @@ public class User extends BaseUpdatableEntity {
 
   public void updateProfile(BinaryContent profile) {
     this.profile = profile;
-  }
-
-  public void updateStatus(UserStatus status) {
-    this.status = status;
-    if (status != null && status.getUser() != this) {
-      status.setUser(this);
-    }
   }
 
   public void updateRole(Role role) {
