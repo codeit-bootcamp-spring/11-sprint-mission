@@ -2,7 +2,6 @@ package com.sprint.mission.discodeit.config;
 
 import com.sprint.mission.discodeit.entity.Role;
 import com.sprint.mission.discodeit.entity.User;
-import com.sprint.mission.discodeit.entity.UserStatus;
 import com.sprint.mission.discodeit.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -14,8 +13,6 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.Instant;
 
 @Slf4j
 @Component
@@ -43,7 +40,6 @@ public class AdminAccountInitializer implements ApplicationRunner {
         }
         User admin = new User(adminUsername, adminEmail, passwordEncoder.encode(adminPassword), null);
         admin.changeRole(Role.ADMIN);
-        new UserStatus(admin, Instant.now());
         userRepository.save(admin);
         log.info("ADMIN 계정 초기화 완료: username={}", adminUsername);
     }
