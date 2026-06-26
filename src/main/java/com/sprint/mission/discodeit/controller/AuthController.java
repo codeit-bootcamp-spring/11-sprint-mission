@@ -9,6 +9,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.web.bind.annotation.*;
@@ -35,6 +36,7 @@ public class AuthController implements AuthApi {
     return ResponseEntity.ok(principal.getUserDto());
   }
 
+  @PreAuthorize("hasRole('ADMIN')")
   @PutMapping(path = "role")
   public ResponseEntity<UserDto> updateRole(@RequestBody @Valid UserRoleUpdatedRequest request) {
     return ResponseEntity.ok(authService.updateRole(request));

@@ -10,6 +10,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.security.access.AccessDeniedException;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -71,5 +72,13 @@ public class GlobalExceptionHandler {
       case PRIVATE_CHANNEL_UPDATE, INVALID_REQUEST -> HttpStatus.BAD_REQUEST;
       case INTERNAL_SERVER_ERROR -> HttpStatus.INTERNAL_SERVER_ERROR;
     };
+  }
+
+  @ExceptionHandler(AccessDeniedException.class)
+  public ResponseEntity<ErrorResponse>
+  handleAccessDeniedException(AccessDeniedException e) {
+    log.warn("접근 권한 없음: {}", e.getMessage());
+    ErrorResponse response = new ErrorResponse(e, HttpStatus.FORBIDDEN.value());
+    return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
   }
 }
