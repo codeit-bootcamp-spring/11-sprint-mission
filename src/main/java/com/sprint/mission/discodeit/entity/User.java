@@ -48,7 +48,7 @@ public class User extends BaseUpdatableEntity {
   }
 
   public void update(String newUsername, String newEmail, String newPassword,
-      BinaryContent newProfile) {
+                     BinaryContent newProfile) {
     if (newUsername != null && !newUsername.equals(this.username)) {
       this.username = newUsername;
     }
@@ -61,5 +61,9 @@ public class User extends BaseUpdatableEntity {
     if (newProfile != null) {
       this.profile = newProfile;
     }
+  }
+
+  public void changeRole(Role newRole) {
+    this.role = newRole;
   }
 }
