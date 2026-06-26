@@ -20,6 +20,7 @@ import com.sprint.mission.discodeit.mapper.UserMapper;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.storage.BinaryContentStorage;
+import java.util.Collections;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
@@ -28,6 +29,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 @ExtendWith(MockitoExtension.class)
@@ -44,6 +46,9 @@ public class BasicUserServiceTest {
 
   @Mock
   private PasswordEncoder passwordEncoder;
+
+  @Mock
+  private SessionRegistry sessionRegistry;
 
   @Test
   @DisplayName("사용자 생성 성공 - 중복 없는 정상적인 요청")
@@ -151,6 +156,7 @@ public class BasicUserServiceTest {
 
     given(userRepository.findById(userId)).willReturn(Optional.of(existingUser));
     given(userMapper.toDto(existingUser)).willReturn(updatedDto);
+    given(sessionRegistry.getAllPrincipals()).willReturn(Collections.emptyList());
 
     UserDto result = userService.updateRole(request);
 
