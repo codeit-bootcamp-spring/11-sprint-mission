@@ -5,18 +5,14 @@ import com.sprint.mission.discodeit.dto.request.BinaryContentCreateRequest;
 import com.sprint.mission.discodeit.dto.request.UserCreateRequest;
 import com.sprint.mission.discodeit.dto.request.UserUpdateRequest;
 import com.sprint.mission.discodeit.entity.BinaryContent;
-import com.sprint.mission.discodeit.entity.Role;
 import com.sprint.mission.discodeit.entity.User;
-import com.sprint.mission.discodeit.entity.UserStatus;
 import com.sprint.mission.discodeit.exception.user.UserAlreadyExistsException;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.mapper.UserMapper;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
-import com.sprint.mission.discodeit.repository.UserStatusRepository;
 import com.sprint.mission.discodeit.service.UserService;
 import com.sprint.mission.discodeit.storage.BinaryContentStorage;
-import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -33,7 +29,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 public class BasicUserService implements UserService {
 
   private final UserRepository userRepository;
-  private final UserStatusRepository userStatusRepository;
   private final UserMapper userMapper;
   private final BinaryContentRepository binaryContentRepository;
   private final BinaryContentStorage binaryContentStorage;
@@ -70,8 +65,6 @@ public class BasicUserService implements UserService {
     String encodedPassword  = passwordEncoder.encode(userCreateRequest.password());
 
     User user = new User(username, email, encodedPassword, nullableProfile);
-    Instant now = Instant.now();
-    UserStatus userStatus = new UserStatus(user, now);
 
     userRepository.save(user);
     log.info("사용자 생성 완료: id={}, username={}", user.getId(), username);
@@ -93,7 +86,7 @@ public class BasicUserService implements UserService {
   @Override
   public List<UserDto> findAll() {
     log.debug("모든 사용자 조회 시작");
-    List<UserDto> userDtos = userRepository.findAllWithProfileAndStatus()
+    List<UserDto> userDtos = userRepository.findAllWithProfile()
         .stream()
         .map(userMapper::toDto)
         .toList();
@@ -101,6 +94,7 @@ public class BasicUserService implements UserService {
     return userDtos;
   }
 
+  @PreAuthorize("#userId == authentication.principal.userDto.id")
   @Transactional
   @Override
   public UserDto update(UUID userId, UserUpdateRequest userUpdateRequest,
@@ -145,6 +139,7 @@ public class BasicUserService implements UserService {
     return userMapper.toDto(user);
   }
 
+  @PreAuthorize("#userId == authentication.principal.userDto.id")
   @Transactional
   @Override
   public void delete(UUID userId) {
@@ -156,17 +151,5 @@ public class BasicUserService implements UserService {
 
     userRepository.deleteById(userId);
     log.info("사용자 삭제 완료: id={}", userId);
-  }
-
-  @PreAuthorize("hasRole('ADMIN')")
-  @Transactional
-  @Override
-  public UserDto updateRole(UUID userId, Role newRole){
-    User user = userRepository.findById(userId)
-        .orElseThrow(() -> UserNotFoundException.withId(userId));
-
-    user.updateRole(newRole);
-
-    return userMapper.toDto(user);
   }
 }

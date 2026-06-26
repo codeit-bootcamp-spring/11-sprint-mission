@@ -21,6 +21,9 @@ import org.springframework.security.access.expression.method.DefaultMethodSecuri
 import org.springframework.security.access.expression.method.MethodSecurityExpressionHandler;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
+import org.springframework.security.core.session.SessionRegistry;
+import org.springframework.security.core.session.SessionRegistryImpl;
+import org.springframework.security.web.session.HttpSessionEventPublisher;
 
 @Configuration
 @EnableMethodSecurity
@@ -30,9 +33,10 @@ public class SecurityConfig {
   public SecurityFilterChain filterChain(HttpSecurity http,
       LoginSuccessHandler loginSuccessHandler,
       LoginFailureHandler loginFailureHandler,
-      ObjectMapper objectMapper) throws Exception {
+      ObjectMapper objectMapper,
+      SessionRegistry sessionRegistry) throws Exception {
     return http
-        .csrf(csrf-> csrf
+        .csrf(csrf -> csrf
             .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
             .csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler())
         )
@@ -63,10 +67,22 @@ public class SecurityConfig {
             .successHandler(loginSuccessHandler)
             .failureHandler(loginFailureHandler)
         )
+        .rememberMe(rememberMe -> rememberMe
+            .rememberMeParameter("remember-me")
+            .tokenValiditySeconds(60 * 60 * 3)
+            .key("discodeit-remember-me-key")
+        )
         .logout(logout -> logout
             .logoutUrl("/api/auth/logout")
             .logoutSuccessHandler(
                 new HttpStatusReturningLogoutSuccessHandler(HttpStatus.NO_CONTENT)
+            )
+        )
+        .sessionManagement(management -> management
+            .sessionConcurrency(concurrency -> concurrency
+                .maximumSessions(1)
+                .maxSessionsPreventsLogin(true)
+                .sessionRegistry(sessionRegistry)
             )
         )
         .exceptionHandling(ex -> ex
@@ -106,9 +122,9 @@ public class SecurityConfig {
   @Bean
   public RoleHierarchy roleHierarchy() {
     return RoleHierarchyImpl.fromHierarchy("""
-      ROLE_ADMIN > ROLE_CHANNEL_MANAGER
-      ROLE_CHANNEL_MANAGER > ROLE_USER
-      """);
+        ROLE_ADMIN > ROLE_CHANNEL_MANAGER
+        ROLE_CHANNEL_MANAGER > ROLE_USER
+        """);
   }
 
   @Bean
@@ -116,7 +132,17 @@ public class SecurityConfig {
       RoleHierarchy roleHierarchy
   ) {
     DefaultMethodSecurityExpressionHandler handler = new DefaultMethodSecurityExpressionHandler();
-     handler.setRoleHierarchy(roleHierarchy);
-     return handler;
-   }
+    handler.setRoleHierarchy(roleHierarchy);
+    return handler;
+  }
+
+  @Bean
+  public SessionRegistry sessionRegistry() {
+    return new SessionRegistryImpl();
+  }
+
+  @Bean
+  public HttpSessionEventPublisher httpSessionEventPublisher() {
+    return new HttpSessionEventPublisher();
+  }
 }
