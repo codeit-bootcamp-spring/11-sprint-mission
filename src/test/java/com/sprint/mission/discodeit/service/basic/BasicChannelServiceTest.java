@@ -19,6 +19,7 @@ import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
+import com.sprint.mission.discodeit.security.authority.UserRole;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -111,8 +112,8 @@ class BasicChannelServiceTest {
 
         Channel savedChannel = Channel.createPrivateChannel();
 
-        UserDto userDto1 = new UserDto(user1.getId(), user1.getUsername(), user1.getEmail(), null, false);
-        UserDto userDto2 = new UserDto(user2.getId(), user2.getUsername(), user2.getEmail(), null, false);
+        UserDto userDto1 = new UserDto(user1.getId(), user1.getUsername(), user1.getEmail(), null, false, UserRole.USER);
+        UserDto userDto2 = new UserDto(user2.getId(), user2.getUsername(), user2.getEmail(), null, false, UserRole.USER);
 
         ChannelDto expectedDto = new ChannelDto(
                 savedChannel.getId(),
@@ -185,8 +186,6 @@ class BasicChannelServiceTest {
         );
 
         given(channelRepository.findById(channel.getId())).willReturn(Optional.of(channel));
-        given(messageRepository.findLastMessageTimesByChannelIds(List.of(channel.getId()))).willReturn(List.of());
-        given(readStatusRepository.findAllWithUserByChannelIds(List.of(channel.getId()))).willReturn(List.of());
         given(channelMapper.toDto(eq(channel), anyList(), isNull())).willReturn(expectedDto);
 
         // when
@@ -310,6 +309,8 @@ class BasicChannelServiceTest {
         lastMessageRows.add(new Object[]{channel.getId(), channelDto.lastMessageAt()});
 
         given(channelRepository.findVisibleChannelsByUserId(userId)).willReturn(List.of(channel));
+        given(messageRepository.findLastMessageTimesByChannelIds(List.of(channel.getId()))).willReturn(lastMessageRows);
+        given(readStatusRepository.findAllWithUserByChannelIds(List.of(channel.getId()))).willReturn(List.of());
         given(channelMapper.toDto(eq(channel), anyList(), eq(channelDto.lastMessageAt()))).willReturn(channelDto);
 
         // when

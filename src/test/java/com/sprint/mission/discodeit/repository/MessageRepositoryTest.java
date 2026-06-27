@@ -83,8 +83,8 @@ class MessageRepositoryTest {
 
         Object[] row = result.get(0);
         assertThat(row[0]).isEqualTo(channel.getId());
-        assertThat(row[1]).isEqualTo(newMessage.getCreatedAt());
-        assertThat(newMessage.getCreatedAt()).isAfterOrEqualTo(oldMessage.getCreatedAt());
+        assertThat(row[1]).isEqualTo(newTime);
+        assertThat(newTime).isAfterOrEqualTo(oldTime);
     }
 
     @Test

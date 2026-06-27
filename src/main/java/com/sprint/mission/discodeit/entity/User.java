@@ -2,6 +2,7 @@ package com.sprint.mission.discodeit.entity;
 
 import java.util.UUID;
 
+import com.sprint.mission.discodeit.security.authority.UserRole;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -27,14 +28,16 @@ public class User extends MutableBaseEntity {
     @JoinColumn(name = "profile_id")
     private BinaryContent profile;
 
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private UserStatus status;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private UserRole role;
 
     public User(String username, String email, String password) {
         this.id = UUID.randomUUID();
         this.username = username;
         this.email = email;
         this.password = password;
+        this.role = UserRole.USER;
     }
 
     public void update(String newUsername, String newEmail, String newPassword) {
@@ -49,11 +52,17 @@ public class User extends MutableBaseEntity {
         }
     }
 
+    public static User createAdmin(String username, String email, String password) {
+        User user = new User(username, email, password);
+        user.role = UserRole.ADMIN;
+        return user;
+    }
+
     public void updateProfile(BinaryContent profile) {
         this.profile = profile;
     }
 
-    public void updateStatus(UserStatus status) {
-        this.status = status;
+    public void updateRole(UserRole role) {
+        this.role = role;
     }
 }

@@ -4,10 +4,12 @@ import com.sprint.mission.discodeit.dto.MessageDto;
 import com.sprint.mission.discodeit.dto.UserDto;
 import com.sprint.mission.discodeit.dto.response.PageResponse;
 import com.sprint.mission.discodeit.exception.GlobalExceptionHandler;
+import com.sprint.mission.discodeit.security.authority.UserRole;
 import com.sprint.mission.discodeit.service.MessageService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
@@ -34,6 +36,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(MessageController.class)
+@AutoConfigureMockMvc(addFilters = false)
 @Import(GlobalExceptionHandler.class)
 class MessageControllerTest {
 
@@ -56,7 +59,8 @@ class MessageControllerTest {
                 "evan",
                 "evan@test.com",
                 null,
-                true
+                true,
+                UserRole.USER
         );
 
         MessageDto response = new MessageDto(
@@ -142,7 +146,8 @@ class MessageControllerTest {
                 "evan",
                 "evan@test.com",
                 null,
-                true
+                true,
+                UserRole.USER
         );
 
         MessageDto messageDto = new MessageDto(

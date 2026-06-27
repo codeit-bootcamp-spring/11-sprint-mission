@@ -5,13 +5,12 @@ import com.sprint.mission.discodeit.dto.UserDto;
 import com.sprint.mission.discodeit.dto.UserUpdateParam;
 import com.sprint.mission.discodeit.dto.UserUpdateRequest;
 import com.sprint.mission.discodeit.entity.User;
-import com.sprint.mission.discodeit.entity.UserStatus;
 import com.sprint.mission.discodeit.exception.user.UserAlreadyExistsException;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.mapper.UserMapper;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
-import com.sprint.mission.discodeit.repository.UserStatusRepository;
+import com.sprint.mission.discodeit.security.authority.UserRole;
 import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,7 +19,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -37,9 +35,6 @@ class BasicUserServiceTest {
 
     @Mock
     UserRepository userRepository;
-
-    @Mock
-    UserStatusRepository userStatusRepository;
 
     @Mock
     BinaryContentRepository binaryContentRepository;
@@ -72,21 +67,19 @@ class BasicUserServiceTest {
                 "encoded-password"
         );
 
-        UserStatus savedUserStatus = new UserStatus(savedUser, Instant.now());
-
         UserDto expectedDto = new UserDto(
                 savedUser.getId(),
                 savedUser.getUsername(),
                 savedUser.getEmail(),
                 null,
-                true
+                true,
+                UserRole.USER
         );
 
         given(userRepository.existsByUsername(request.username())).willReturn(false);
         given(userRepository.existsByEmail(request.email())).willReturn(false);
         given(passwordEncoder.encode(request.password())).willReturn("encoded-password");
         given(userRepository.save(any(User.class))).willReturn(savedUser);
-        given(userStatusRepository.save(any(UserStatus.class))).willReturn(savedUserStatus);
         given(userMapper.toDto(savedUser)).willReturn(expectedDto);
 
         // when
@@ -99,7 +92,6 @@ class BasicUserServiceTest {
         then(userRepository).should().existsByEmail(request.email());
         then(passwordEncoder).should().encode(request.password());
         then(userRepository).should().save(any(User.class));
-        then(userStatusRepository).should().save(any(UserStatus.class));
         then(userMapper).should().toDto(savedUser);
     }
 
@@ -121,7 +113,7 @@ class BasicUserServiceTest {
 
         then(userRepository).should().existsByUsername(request.username());
         then(userRepository).should(never()).save(any(User.class));
-        verifyNoInteractions(userStatusRepository, userMapper);
+        verifyNoInteractions(userMapper);
     }
 
     @Test
@@ -143,7 +135,8 @@ class BasicUserServiceTest {
                 "newEvan",
                 "new@test.com",
                 null,
-                false
+                false,
+                UserRole.USER
         );
 
         given(userRepository.findById(user.getId())).willReturn(Optional.of(user));
@@ -196,14 +189,11 @@ class BasicUserServiceTest {
         User user = new User("evan", "evan@test.com", "password123");
 
         given(userRepository.findById(user.getId())).willReturn(Optional.of(user));
-        given(userStatusRepository.findByUser_Id(user.getId())).willReturn(Optional.empty());
-
         // when
         userService.delete(user.getId());
 
         // then
         then(userRepository).should().findById(user.getId());
-        then(userStatusRepository).should().findByUser_Id(user.getId());
         then(userRepository).should().deleteById(user.getId());
     }
 

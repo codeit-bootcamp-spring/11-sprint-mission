@@ -1,7 +1,9 @@
 package com.sprint.mission.discodeit.controller;
 
 import com.sprint.mission.discodeit.dto.UserDto;
+import com.sprint.mission.discodeit.dto.UserRoleUpdateRequest;
 import com.sprint.mission.discodeit.security.DiscodeitUserDetails;
+import com.sprint.mission.discodeit.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +16,12 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/auth")
 public class AuthController {
 
+    private final UserService userService;
+
+    public AuthController(UserService userService) {
+        this.userService = userService;
+    }
+
     @GetMapping("/csrf-token")
     public ResponseEntity<Void> getCsrfToken(CsrfToken csrfToken) {
         String tokenValue = csrfToken.getToken();
@@ -25,5 +33,11 @@ public class AuthController {
     public ResponseEntity<UserDto> getMe(
             @AuthenticationPrincipal DiscodeitUserDetails userDetails) {
         return ResponseEntity.ok(userDetails.getUserDto());
+    }
+
+    @PutMapping("/role")
+    public ResponseEntity<UserDto> updateRole(
+            @RequestBody UserRoleUpdateRequest request) {
+        return ResponseEntity.ok(userService.updateRole(request));
     }
 }

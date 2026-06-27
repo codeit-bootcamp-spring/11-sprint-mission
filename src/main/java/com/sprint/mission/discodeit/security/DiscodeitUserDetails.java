@@ -4,10 +4,12 @@ import com.sprint.mission.discodeit.dto.UserDto;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 
 @Getter
 @RequiredArgsConstructor
@@ -18,7 +20,7 @@ public class DiscodeitUserDetails implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of();
+        return List.of(new SimpleGrantedAuthority(userDto.role().name()));
     }
 
     //UserDetails 메서드 구현
@@ -50,5 +52,23 @@ public class DiscodeitUserDetails implements UserDetails {
     @Override
     public boolean isEnabled() {
         return true;
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        if (this == object) {
+            return true;
+        }
+
+        if (!(object instanceof DiscodeitUserDetails that)) {
+            return false;
+        }
+
+        return Objects.equals(userDto.id(), that.userDto.id());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(userDto.id());
     }
 }
