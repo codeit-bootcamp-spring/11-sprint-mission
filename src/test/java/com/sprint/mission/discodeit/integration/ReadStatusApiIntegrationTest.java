@@ -1,5 +1,6 @@
 package com.sprint.mission.discodeit.integration;
 
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -27,6 +28,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -39,6 +41,7 @@ import org.springframework.transaction.annotation.Transactional;
 @ActiveProfiles("test")
 @AutoConfigureMockMvc
 @SpringBootTest
+@WithMockUser(roles = {"CHANNEL_MANAGER"})
 class ReadStatusApiIntegrationTest {
 
   @Autowired
@@ -96,7 +99,8 @@ class ReadStatusApiIntegrationTest {
       // when & then
       mockMvc.perform(post("/api/read-statuses")
               .contentType(MediaType.APPLICATION_JSON)
-              .content(objectMapper.writeValueAsString(request)))
+              .content(objectMapper.writeValueAsString(request))
+              .with(csrf()))
           .andExpect(status().isCreated())
           .andExpect(jsonPath("$.userId").value(userId.toString()))
           .andExpect(jsonPath("$.channelId").value(anotherChannel.id().toString()));
@@ -114,7 +118,8 @@ class ReadStatusApiIntegrationTest {
 
       mockMvc.perform(post("/api/read-statuses")
               .contentType(MediaType.APPLICATION_JSON)
-              .content(objectMapper.writeValueAsString(request)))
+              .content(objectMapper.writeValueAsString(request))
+              .with(csrf()))
           .andExpect(status().is(errorCode.getHttpStatus().value()))
           .andExpect(jsonPath("$.code").value(errorCode.getCode()))
           .andExpect(jsonPath("$.message").value(errorCode.getMessage()))
@@ -138,7 +143,8 @@ class ReadStatusApiIntegrationTest {
       // when & then
       mockMvc.perform(patch("/api/read-statuses/{readStatusId}", readStatusId)
               .contentType(MediaType.APPLICATION_JSON)
-              .content(objectMapper.writeValueAsString(request)))
+              .content(objectMapper.writeValueAsString(request))
+              .with(csrf()))
           .andExpect(status().isOk())
           .andExpect(jsonPath("$.id").value(readStatusId.toString()))
           .andExpect(jsonPath("$.userId").value(userId.toString()))
@@ -157,7 +163,8 @@ class ReadStatusApiIntegrationTest {
 
       mockMvc.perform(patch("/api/read-statuses/{readStatusId}", nonExistentId)
               .contentType(MediaType.APPLICATION_JSON)
-              .content(objectMapper.writeValueAsString(request)))
+              .content(objectMapper.writeValueAsString(request))
+              .with(csrf()))
           .andExpect(status().is(errorCode.getHttpStatus().value()))
           .andExpect(jsonPath("$.code").value(errorCode.getCode()))
           .andExpect(jsonPath("$.details.readStatusId").value(nonExistentId.toString()))

@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.BDDMockito.willThrow;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -31,6 +32,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
@@ -38,6 +40,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(ChannelController.class)
+@WithMockUser
 class ChannelControllerTest {
 
   @Autowired
@@ -82,7 +85,8 @@ class ChannelControllerTest {
       // when & then
       mockMvc.perform(post("/api/channels/public")
               .contentType(MediaType.APPLICATION_JSON)
-              .content(objectMapper.writeValueAsString(request)))
+              .content(objectMapper.writeValueAsString(request))
+              .with(csrf()))
           .andExpect(status().isCreated())
           .andExpect(jsonPath("$.id").value(channelId.toString()))
           .andExpect(jsonPath("$.type").value(ChannelType.PUBLIC.name()))
@@ -103,7 +107,8 @@ class ChannelControllerTest {
 
       mockMvc.perform(post("/api/channels/public")
               .contentType(MediaType.APPLICATION_JSON)
-              .content(objectMapper.writeValueAsString(request)))
+              .content(objectMapper.writeValueAsString(request))
+              .with(csrf()))
           .andExpect(status().is(errorCode.getHttpStatus().value()))
           .andExpect(jsonPath("$.code").value(errorCode.getCode()))
           .andExpect(jsonPath("$.message").value(errorCode.getMessage()))
@@ -128,7 +133,8 @@ class ChannelControllerTest {
       // when & then
       mockMvc.perform(post("/api/channels/private")
               .contentType(MediaType.APPLICATION_JSON)
-              .content(objectMapper.writeValueAsString(request)))
+              .content(objectMapper.writeValueAsString(request))
+              .with(csrf()))
           .andExpect(status().isCreated())
           .andExpect(jsonPath("$.id").value(channelId.toString()))
           .andExpect(jsonPath("$.type").value(ChannelType.PRIVATE.name()));
@@ -150,7 +156,8 @@ class ChannelControllerTest {
 
       mockMvc.perform(post("/api/channels/private")
               .contentType(MediaType.APPLICATION_JSON)
-              .content(objectMapper.writeValueAsString(request)))
+              .content(objectMapper.writeValueAsString(request))
+              .with(csrf()))
           .andExpect(status().is(errorCode.getHttpStatus().value()))
           .andExpect(jsonPath("$.code").value(errorCode.getCode()))
           .andExpect(jsonPath("$.message").value(errorCode.getMessage()))
@@ -178,7 +185,8 @@ class ChannelControllerTest {
       // when & then
       mockMvc.perform(patch("/api/channels/{channelId}", channelId)
               .contentType(MediaType.APPLICATION_JSON)
-              .content(objectMapper.writeValueAsString(request)))
+              .content(objectMapper.writeValueAsString(request))
+              .with(csrf()))
           .andExpect(status().isOk())
           .andExpect(jsonPath("$.id").value(channelId.toString()))
           .andExpect(jsonPath("$.name").value(newName));
@@ -198,7 +206,8 @@ class ChannelControllerTest {
 
       mockMvc.perform(patch("/api/channels/{channelId}", channelId)
               .contentType(MediaType.APPLICATION_JSON)
-              .content(objectMapper.writeValueAsString(request)))
+              .content(objectMapper.writeValueAsString(request))
+              .with(csrf()))
           .andExpect(status().is(errorCode.getHttpStatus().value()))
           .andExpect(jsonPath("$.code").value(errorCode.getCode()))
           .andExpect(jsonPath("$.details.channelId").value(channelId.toString()))
@@ -218,7 +227,8 @@ class ChannelControllerTest {
       willDoNothing().given(channelService).deleteChannel(channelId);
 
       // when & then
-      mockMvc.perform(delete("/api/channels/{channelId}", channelId))
+      mockMvc.perform(delete("/api/channels/{channelId}", channelId)
+              .with(csrf()))
           .andExpect(status().isNoContent());
     }
 
@@ -232,7 +242,8 @@ class ChannelControllerTest {
       // when & then
       ErrorCode errorCode = ErrorCode.CHANNEL_NOT_FOUND;
 
-      mockMvc.perform(delete("/api/channels/{channelId}", channelId))
+      mockMvc.perform(delete("/api/channels/{channelId}", channelId)
+              .with(csrf()))
           .andExpect(status().is(errorCode.getHttpStatus().value()))
           .andExpect(jsonPath("$.code").value(errorCode.getCode()))
           .andExpect(jsonPath("$.details.channelId").value(channelId.toString()))

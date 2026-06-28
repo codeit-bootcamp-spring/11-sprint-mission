@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.BDDMockito.willThrow;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
@@ -17,6 +18,7 @@ import com.sprint.mission.discodeit.dto.message.MessageCreateRequest;
 import com.sprint.mission.discodeit.dto.message.MessageResponse;
 import com.sprint.mission.discodeit.dto.message.MessageUpdateRequest;
 import com.sprint.mission.discodeit.dto.user.UserResponse;
+import com.sprint.mission.discodeit.entity.Role;
 import com.sprint.mission.discodeit.exception.ErrorCode;
 import com.sprint.mission.discodeit.exception.message.MessageNotFoundException;
 import com.sprint.mission.discodeit.exception.message.MessageWithoutChannelAccessException;
@@ -28,6 +30,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
@@ -36,6 +39,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(MessageController.class)
+@WithMockUser
 class MessageControllerTest {
 
   @Autowired
@@ -59,7 +63,7 @@ class MessageControllerTest {
     channelId = UUID.randomUUID();
     authorId = UUID.randomUUID();
     content = "hello";
-    UserResponse author = new UserResponse(authorId, "tester", "tester@example.io", null, true);
+    UserResponse author = new UserResponse(authorId, "tester", "tester@example.io", null, true, Role.USER);
     messageResponse = new MessageResponse(messageId, Instant.now(), Instant.now(), content,
         channelId, author, List.of());
   }
@@ -82,7 +86,8 @@ class MessageControllerTest {
       // when & then
       mockMvc.perform(multipart("/api/messages")
               .file(requestPart)
-              .contentType(MediaType.MULTIPART_FORM_DATA))
+              .contentType(MediaType.MULTIPART_FORM_DATA)
+              .with(csrf()))
           .andExpect(status().isCreated())
           .andExpect(jsonPath("$.id").value(messageId.toString()))
           .andExpect(jsonPath("$.content").value(content))
@@ -106,7 +111,8 @@ class MessageControllerTest {
 
       mockMvc.perform(multipart("/api/messages")
               .file(requestPart)
-              .contentType(MediaType.MULTIPART_FORM_DATA))
+              .contentType(MediaType.MULTIPART_FORM_DATA)
+              .with(csrf()))
           .andExpect(status().is(errorCode.getHttpStatus().value()))
           .andExpect(jsonPath("$.code").value(errorCode.getCode()))
           .andExpect(jsonPath("$.message").value(errorCode.getMessage()))
@@ -142,7 +148,8 @@ class MessageControllerTest {
                 req.setMethod("PATCH");
                 return req;
               })
-              .contentType(MediaType.MULTIPART_FORM_DATA))
+              .contentType(MediaType.MULTIPART_FORM_DATA)
+              .with(csrf()))
           .andExpect(status().isOk())
           .andExpect(jsonPath("$.id").value(messageId.toString()))
           .andExpect(jsonPath("$.content").value(newContent));
@@ -169,7 +176,8 @@ class MessageControllerTest {
                 req.setMethod("PATCH");
                 return req;
               })
-              .contentType(MediaType.MULTIPART_FORM_DATA))
+              .contentType(MediaType.MULTIPART_FORM_DATA)
+              .with(csrf()))
           .andExpect(status().is(errorCode.getHttpStatus().value()))
           .andExpect(jsonPath("$.code").value(errorCode.getCode()))
           .andExpect(jsonPath("$.details.messageId").value(messageId.toString()))
@@ -189,7 +197,8 @@ class MessageControllerTest {
       willDoNothing().given(messageService).deleteMessage(messageId);
 
       // when & then
-      mockMvc.perform(delete("/api/messages/{messageId}", messageId))
+      mockMvc.perform(delete("/api/messages/{messageId}", messageId)
+              .with(csrf()))
           .andExpect(status().isNoContent());
     }
 
@@ -203,7 +212,8 @@ class MessageControllerTest {
       // when & then
       ErrorCode errorCode = ErrorCode.MESSAGE_NOT_FOUND;
 
-      mockMvc.perform(delete("/api/messages/{messageId}", messageId))
+      mockMvc.perform(delete("/api/messages/{messageId}", messageId)
+              .with(csrf()))
           .andExpect(status().is(errorCode.getHttpStatus().value()))
           .andExpect(jsonPath("$.code").value(errorCode.getCode()))
           .andExpect(jsonPath("$.details.messageId").value(messageId.toString()))

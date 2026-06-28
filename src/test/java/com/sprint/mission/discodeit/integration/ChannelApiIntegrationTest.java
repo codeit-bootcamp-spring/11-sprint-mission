@@ -1,5 +1,6 @@
 package com.sprint.mission.discodeit.integration;
 
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -29,6 +30,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -41,6 +43,7 @@ import org.springframework.transaction.annotation.Transactional;
 @ActiveProfiles("test")
 @AutoConfigureMockMvc
 @SpringBootTest
+@WithMockUser(roles = {"CHANNEL_MANAGER"})
 class ChannelApiIntegrationTest {
 
   @Autowired
@@ -88,7 +91,8 @@ class ChannelApiIntegrationTest {
       // when & then
       mockMvc.perform(post("/api/channels/public")
               .contentType(MediaType.APPLICATION_JSON)
-              .content(objectMapper.writeValueAsString(request)))
+              .content(objectMapper.writeValueAsString(request))
+              .with(csrf()))
           .andExpect(status().isCreated())
           .andExpect(jsonPath("$.type").value(ChannelType.PUBLIC.name()))
           .andExpect(jsonPath("$.name").value("new-channel"));
@@ -105,7 +109,8 @@ class ChannelApiIntegrationTest {
 
       mockMvc.perform(post("/api/channels/public")
               .contentType(MediaType.APPLICATION_JSON)
-              .content(objectMapper.writeValueAsString(request)))
+              .content(objectMapper.writeValueAsString(request))
+              .with(csrf()))
           .andExpect(status().is(errorCode.getHttpStatus().value()))
           .andExpect(jsonPath("$.code").value(errorCode.getCode()))
           .andExpect(jsonPath("$.message").value(errorCode.getMessage()))
@@ -128,7 +133,8 @@ class ChannelApiIntegrationTest {
       // when & then
       mockMvc.perform(post("/api/channels/private")
               .contentType(MediaType.APPLICATION_JSON)
-              .content(objectMapper.writeValueAsString(request)))
+              .content(objectMapper.writeValueAsString(request))
+              .with(csrf()))
           .andExpect(status().isCreated())
           .andExpect(jsonPath("$.type").value(ChannelType.PRIVATE.name()));
     }
@@ -146,7 +152,8 @@ class ChannelApiIntegrationTest {
 
       mockMvc.perform(post("/api/channels/private")
               .contentType(MediaType.APPLICATION_JSON)
-              .content(objectMapper.writeValueAsString(request)))
+              .content(objectMapper.writeValueAsString(request))
+              .with(csrf()))
           .andExpect(status().is(errorCode.getHttpStatus().value()))
           .andExpect(jsonPath("$.code").value(errorCode.getCode()))
           .andExpect(jsonPath("$.message").value(errorCode.getMessage()))
@@ -169,7 +176,8 @@ class ChannelApiIntegrationTest {
       // when & then
       mockMvc.perform(patch("/api/channels/{channelId}", channelId)
               .contentType(MediaType.APPLICATION_JSON)
-              .content(objectMapper.writeValueAsString(request)))
+              .content(objectMapper.writeValueAsString(request))
+              .with(csrf()))
           .andExpect(status().isOk())
           .andExpect(jsonPath("$.id").value(channelId.toString()))
           .andExpect(jsonPath("$.name").value(newName));
@@ -188,7 +196,8 @@ class ChannelApiIntegrationTest {
 
       mockMvc.perform(patch("/api/channels/{channelId}", privateChannel.id())
               .contentType(MediaType.APPLICATION_JSON)
-              .content(objectMapper.writeValueAsString(request)))
+              .content(objectMapper.writeValueAsString(request))
+              .with(csrf()))
           .andExpect(status().is(errorCode.getHttpStatus().value()))
           .andExpect(jsonPath("$.code").value(errorCode.getCode()))
           .andExpect(jsonPath("$.details.channelId").value(privateChannel.id().toString()))
@@ -208,7 +217,8 @@ class ChannelApiIntegrationTest {
 
       mockMvc.perform(patch("/api/channels/{channelId}", nonExistentId)
               .contentType(MediaType.APPLICATION_JSON)
-              .content(objectMapper.writeValueAsString(request)))
+              .content(objectMapper.writeValueAsString(request))
+              .with(csrf()))
           .andExpect(status().is(errorCode.getHttpStatus().value()))
           .andExpect(jsonPath("$.code").value(errorCode.getCode()))
           .andExpect(jsonPath("$.details.channelId").value(nonExistentId.toString()))
@@ -225,7 +235,8 @@ class ChannelApiIntegrationTest {
     @DisplayName("success")
     void delete_success() throws Exception {
       // when & then
-      mockMvc.perform(delete("/api/channels/{channelId}", channelId))
+      mockMvc.perform(delete("/api/channels/{channelId}", channelId)
+              .with(csrf()))
           .andExpect(status().isNoContent());
     }
 
@@ -238,7 +249,8 @@ class ChannelApiIntegrationTest {
       // when & then
       ErrorCode errorCode = ErrorCode.CHANNEL_NOT_FOUND;
 
-      mockMvc.perform(delete("/api/channels/{channelId}", nonExistentId))
+      mockMvc.perform(delete("/api/channels/{channelId}", nonExistentId)
+              .with(csrf()))
           .andExpect(status().is(errorCode.getHttpStatus().value()))
           .andExpect(jsonPath("$.code").value(errorCode.getCode()))
           .andExpect(jsonPath("$.details.channelId").value(nonExistentId.toString()))

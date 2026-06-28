@@ -5,10 +5,10 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.BDDMockito.willThrow;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -16,20 +16,18 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.mission.discodeit.dto.user.UserCreateRequest;
 import com.sprint.mission.discodeit.dto.user.UserResponse;
 import com.sprint.mission.discodeit.dto.user.UserUpdateRequest;
-import com.sprint.mission.discodeit.dto.userstatus.UserStatusResponse;
-import com.sprint.mission.discodeit.dto.userstatus.UserStatusUpdateRequest;
+import com.sprint.mission.discodeit.entity.Role;
 import com.sprint.mission.discodeit.exception.ErrorCode;
 import com.sprint.mission.discodeit.exception.user.DuplicateUserException;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.service.UserService;
-import com.sprint.mission.discodeit.service.UserStatusService;
-import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
@@ -38,6 +36,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(UserController.class)
+@WithMockUser
 class UserControllerTest {
 
   @Autowired
@@ -49,9 +48,6 @@ class UserControllerTest {
   @MockitoBean
   private UserService userService;
 
-  @MockitoBean
-  private UserStatusService userStatusService;
-
   private UUID userId;
   private String username;
   private String email;
@@ -62,7 +58,7 @@ class UserControllerTest {
     userId = UUID.randomUUID();
     username = "tester";
     email = "tester@example.io";
-    userResponse = new UserResponse(userId, username, email, null, true);
+    userResponse = new UserResponse(userId, username, email, null, true, Role.USER);
   }
 
   @Nested
@@ -83,7 +79,8 @@ class UserControllerTest {
       // when & then
       mockMvc.perform(multipart("/api/users")
               .file(requestPart)
-              .contentType(MediaType.MULTIPART_FORM_DATA))
+              .contentType(MediaType.MULTIPART_FORM_DATA)
+              .with(csrf()))
           .andExpect(status().isCreated())
           .andExpect(jsonPath("$.id").value(userId.toString()))
           .andExpect(jsonPath("$.username").value(username))
@@ -107,7 +104,8 @@ class UserControllerTest {
 
       mockMvc.perform(multipart("/api/users")
               .file(requestPart)
-              .contentType(MediaType.MULTIPART_FORM_DATA))
+              .contentType(MediaType.MULTIPART_FORM_DATA)
+              .with(csrf()))
           .andExpect(status().is(errorCode.getHttpStatus().value()))
           .andExpect(jsonPath("$.code").value(errorCode.getCode()))
           .andExpect(jsonPath("$.message").value(errorCode.getMessage()))
@@ -130,7 +128,7 @@ class UserControllerTest {
       MockMultipartFile requestPart = new MockMultipartFile(
           "userUpdateRequest", "", MediaType.APPLICATION_JSON_VALUE,
           objectMapper.writeValueAsBytes(request));
-      UserResponse updatedResponse = new UserResponse(userId, newUsername, email, null, true);
+      UserResponse updatedResponse = new UserResponse(userId, newUsername, email, null, true, Role.USER);
 
       given(userService.updateUser(eq(userId), any(), any()))
           .willReturn(updatedResponse);
@@ -142,7 +140,8 @@ class UserControllerTest {
                 req.setMethod("PATCH");
                 return req;
               })
-              .contentType(MediaType.MULTIPART_FORM_DATA))
+              .contentType(MediaType.MULTIPART_FORM_DATA)
+              .with(csrf()))
           .andExpect(status().isOk())
           .andExpect(jsonPath("$.id").value(userId.toString()))
           .andExpect(jsonPath("$.username").value(newUsername));
@@ -169,7 +168,8 @@ class UserControllerTest {
                 req.setMethod("PATCH");
                 return req;
               })
-              .contentType(MediaType.MULTIPART_FORM_DATA))
+              .contentType(MediaType.MULTIPART_FORM_DATA)
+              .with(csrf()))
           .andExpect(status().is(errorCode.getHttpStatus().value()))
           .andExpect(jsonPath("$.code").value(errorCode.getCode()))
           .andExpect(jsonPath("$.details.userId").value(userId.toString()))
@@ -189,7 +189,8 @@ class UserControllerTest {
       willDoNothing().given(userService).deleteUser(userId);
 
       // when & then
-      mockMvc.perform(delete("/api/users/{userId}", userId))
+      mockMvc.perform(delete("/api/users/{userId}", userId)
+              .with(csrf()))
           .andExpect(status().isNoContent());
     }
 
@@ -203,7 +204,8 @@ class UserControllerTest {
       // when & then
       ErrorCode errorCode = ErrorCode.USER_NOT_FOUND;
 
-      mockMvc.perform(delete("/api/users/{userId}", userId))
+      mockMvc.perform(delete("/api/users/{userId}", userId)
+              .with(csrf()))
           .andExpect(status().is(errorCode.getHttpStatus().value()))
           .andExpect(jsonPath("$.code").value(errorCode.getCode()))
           .andExpect(
@@ -221,7 +223,7 @@ class UserControllerTest {
       // given
       List<UserResponse> responses = List.of(
           userResponse,
-          new UserResponse(UUID.randomUUID(), "other", "other@example.io", null, false)
+          new UserResponse(UUID.randomUUID(), "other", "other@example.io", null, false, Role.USER)
       );
       given(userService.findAll()).willReturn(responses);
 
@@ -234,50 +236,4 @@ class UserControllerTest {
     }
   }
 
-  @Nested
-  @DisplayName("updateUserStatus")
-  class UpdateUserStatus {
-
-    @Test
-    @DisplayName("success")
-    void updateUserStatus_success() throws Exception {
-      // given
-      Instant lastActiveAt = Instant.now();
-      UserStatusUpdateRequest request = new UserStatusUpdateRequest(lastActiveAt);
-      UUID statusId = UUID.randomUUID();
-      UserStatusResponse statusResponse = new UserStatusResponse(statusId, userId, lastActiveAt);
-
-      given(userStatusService.updateUserStatusByUserId(eq(userId), any()))
-          .willReturn(statusResponse);
-
-      // when & then
-      mockMvc.perform(patch("/api/users/{userId}/user-status", userId)
-              .contentType(MediaType.APPLICATION_JSON)
-              .content(objectMapper.writeValueAsString(request)))
-          .andExpect(status().isOk())
-          .andExpect(jsonPath("$.id").value(statusId.toString()))
-          .andExpect(jsonPath("$.userId").value(userId.toString()));
-    }
-
-    @Test
-    @DisplayName("fail with user not found")
-    void updateUserStatus_fail_user_not_found_throws_exception() throws Exception {
-      // given
-      UserStatusUpdateRequest request = new UserStatusUpdateRequest(Instant.now());
-
-      given(userStatusService.updateUserStatusByUserId(eq(userId), any()))
-          .willThrow(UserNotFoundException.withId(userId));
-
-      // when & then
-      ErrorCode errorCode = ErrorCode.USER_NOT_FOUND;
-
-      mockMvc.perform(patch("/api/users/{userId}/user-status", userId)
-              .contentType(MediaType.APPLICATION_JSON)
-              .content(objectMapper.writeValueAsString(request)))
-          .andExpect(status().is(errorCode.getHttpStatus().value()))
-          .andExpect(jsonPath("$.code").value(errorCode.getCode()))
-          .andExpect(
-              jsonPath("$.exceptionType").value(UserNotFoundException.class.getSimpleName()));
-    }
-  }
 }

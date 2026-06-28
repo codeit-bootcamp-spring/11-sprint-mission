@@ -5,15 +5,14 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 
-import com.sprint.mission.discodeit.dto.auth.LoginRequest;
+import com.sprint.mission.discodeit.dto.auth.UserRoleUpdateRequest;
 import com.sprint.mission.discodeit.dto.user.UserResponse;
+import com.sprint.mission.discodeit.entity.Role;
 import com.sprint.mission.discodeit.entity.User;
-import com.sprint.mission.discodeit.entity.UserStatus;
-import com.sprint.mission.discodeit.exception.auth.InvalidCredentialsException;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.mapper.UserMapper;
 import com.sprint.mission.discodeit.repository.UserRepository;
-import java.util.Optional;
+import com.sprint.mission.discodeit.security.SessionManager;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -30,6 +29,9 @@ class BasicAuthServiceTest {
 
   @Mock
   private UserRepository userRepository;
+
+  @Mock
+  private SessionManager sessionManager;
 
   @Mock
   private UserMapper mapper;
@@ -51,9 +53,8 @@ class BasicAuthServiceTest {
     email = "tester@example.io";
     password = "qwerty";
     user = new User(username, email, password, null);
-    user.initStatus(new UserStatus(user));
     ReflectionTestUtils.setField(user, "id", userId);
-    response = new UserResponse(userId, username, email, null, true);
+    response = new UserResponse(userId, username, email, null, true, Role.USER);
   }
 
 }

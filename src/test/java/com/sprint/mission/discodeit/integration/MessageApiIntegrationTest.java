@@ -1,5 +1,7 @@
 package com.sprint.mission.discodeit.integration;
 
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
@@ -18,6 +20,7 @@ import com.sprint.mission.discodeit.dto.user.UserResponse;
 import com.sprint.mission.discodeit.exception.ErrorCode;
 import com.sprint.mission.discodeit.exception.message.MessageNotFoundException;
 import com.sprint.mission.discodeit.exception.message.MessageWithoutChannelAccessException;
+import com.sprint.mission.discodeit.security.DiscodeitUserDetails;
 import com.sprint.mission.discodeit.service.ChannelService;
 import com.sprint.mission.discodeit.service.MessageService;
 import com.sprint.mission.discodeit.service.UserService;
@@ -33,6 +36,10 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,6 +48,7 @@ import org.springframework.transaction.annotation.Transactional;
 @ActiveProfiles("test")
 @AutoConfigureMockMvc
 @SpringBootTest
+@WithMockUser(roles = {"CHANNEL_MANAGER"})
 class MessageApiIntegrationTest {
 
   @Autowired
@@ -62,6 +70,7 @@ class MessageApiIntegrationTest {
   private UUID channelId;
   private UUID messageId;
   private String content;
+  private DiscodeitUserDetails testerDetails;
 
   @BeforeEach
   void setUp() {
@@ -70,6 +79,12 @@ class MessageApiIntegrationTest {
         Optional.empty()
     );
     userId = user.id();
+    testerDetails = new DiscodeitUserDetails(user, "irrelevant");
+
+    // Temporarily set CHANNEL_MANAGER context for secured service calls in setUp
+    var tempAuth = new UsernamePasswordAuthenticationToken(
+        "tester", null, List.of(new SimpleGrantedAuthority("ROLE_CHANNEL_MANAGER")));
+    SecurityContextHolder.getContext().setAuthentication(tempAuth);
 
     ChannelResponse channel = channelService.createPublicChannel(
         new PublicChannelCreateRequest("general", "description")
@@ -82,6 +97,8 @@ class MessageApiIntegrationTest {
         List.of()
     );
     messageId = message.id();
+
+    SecurityContextHolder.clearContext();
   }
 
   @Nested
@@ -100,7 +117,9 @@ class MessageApiIntegrationTest {
       // when & then
       mockMvc.perform(multipart("/api/messages")
               .file(requestPart)
-              .contentType(MediaType.MULTIPART_FORM_DATA))
+              .contentType(MediaType.MULTIPART_FORM_DATA)
+              .with(user(testerDetails))
+              .with(csrf()))
           .andExpect(status().isCreated())
           .andExpect(jsonPath("$.content").value("new message"))
           .andExpect(jsonPath("$.channelId").value(channelId.toString()));
@@ -110,6 +129,9 @@ class MessageApiIntegrationTest {
     @DisplayName("fail with message without channel access")
     void create_fail_message_without_channel_access_throws_exception() throws Exception {
       // given - user is not a member of this private channel
+      var tempAuth = new UsernamePasswordAuthenticationToken(
+          "tester", null, List.of(new SimpleGrantedAuthority("ROLE_CHANNEL_MANAGER")));
+      SecurityContextHolder.getContext().setAuthentication(tempAuth);
       UserResponse otherUser = userService.createUser(
           new UserCreateRequest("other", "other@example.io", "password1234"),
           Optional.empty()
@@ -117,6 +139,8 @@ class MessageApiIntegrationTest {
       ChannelResponse privateChannel = channelService.createPrivateChannel(
           new PrivateChannelCreateRequest(List.of(otherUser.id()))
       );
+      SecurityContextHolder.clearContext();
+
       MessageCreateRequest request = new MessageCreateRequest("hello", privateChannel.id(), userId);
       MockMultipartFile requestPart = new MockMultipartFile(
           "messageCreateRequest", "", MediaType.APPLICATION_JSON_VALUE,
@@ -127,7 +151,9 @@ class MessageApiIntegrationTest {
 
       mockMvc.perform(multipart("/api/messages")
               .file(requestPart)
-              .contentType(MediaType.MULTIPART_FORM_DATA))
+              .contentType(MediaType.MULTIPART_FORM_DATA)
+              .with(user(testerDetails))
+              .with(csrf()))
           .andExpect(status().is(errorCode.getHttpStatus().value()))
           .andExpect(jsonPath("$.code").value(errorCode.getCode()))
           .andExpect(jsonPath("$.message").value(errorCode.getMessage()))
@@ -159,7 +185,9 @@ class MessageApiIntegrationTest {
                 req.setMethod("PATCH");
                 return req;
               })
-              .contentType(MediaType.MULTIPART_FORM_DATA))
+              .contentType(MediaType.MULTIPART_FORM_DATA)
+              .with(user(testerDetails))
+              .with(csrf()))
           .andExpect(status().isOk())
           .andExpect(jsonPath("$.id").value(messageId.toString()))
           .andExpect(jsonPath("$.content").value(newContent));
@@ -184,7 +212,9 @@ class MessageApiIntegrationTest {
                 req.setMethod("PATCH");
                 return req;
               })
-              .contentType(MediaType.MULTIPART_FORM_DATA))
+              .contentType(MediaType.MULTIPART_FORM_DATA)
+              .with(user(testerDetails))
+              .with(csrf()))
           .andExpect(status().is(errorCode.getHttpStatus().value()))
           .andExpect(jsonPath("$.code").value(errorCode.getCode()))
           .andExpect(jsonPath("$.details.messageId").value(nonExistentId.toString()))
@@ -201,7 +231,9 @@ class MessageApiIntegrationTest {
     @DisplayName("success")
     void delete_success() throws Exception {
       // when & then
-      mockMvc.perform(delete("/api/messages/{messageId}", messageId))
+      mockMvc.perform(delete("/api/messages/{messageId}", messageId)
+              .with(user(testerDetails))
+              .with(csrf()))
           .andExpect(status().isNoContent());
     }
 
@@ -214,7 +246,9 @@ class MessageApiIntegrationTest {
       // when & then
       ErrorCode errorCode = ErrorCode.MESSAGE_NOT_FOUND;
 
-      mockMvc.perform(delete("/api/messages/{messageId}", nonExistentId))
+      mockMvc.perform(delete("/api/messages/{messageId}", nonExistentId)
+              .with(user(testerDetails))
+              .with(csrf()))
           .andExpect(status().is(errorCode.getHttpStatus().value()))
           .andExpect(jsonPath("$.code").value(errorCode.getCode()))
           .andExpect(jsonPath("$.details.messageId").value(nonExistentId.toString()))
@@ -231,7 +265,9 @@ class MessageApiIntegrationTest {
     @DisplayName("success")
     void findAllByChannelId_success() throws Exception {
       // when & then
-      mockMvc.perform(get("/api/messages").param("channelId", channelId.toString()))
+      mockMvc.perform(get("/api/messages")
+              .with(user(testerDetails))
+              .param("channelId", channelId.toString()))
           .andExpect(status().isOk())
           .andExpect(jsonPath("$.content.length()").value(1))
           .andExpect(jsonPath("$.content[0].id").value(messageId.toString()))

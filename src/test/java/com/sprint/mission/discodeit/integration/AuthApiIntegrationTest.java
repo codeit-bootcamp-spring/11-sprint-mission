@@ -6,18 +6,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.sprint.mission.discodeit.dto.auth.LoginRequest;
 import com.sprint.mission.discodeit.dto.user.UserCreateRequest;
 import com.sprint.mission.discodeit.exception.ErrorCode;
-import com.sprint.mission.discodeit.exception.auth.InvalidCredentialsException;
-import com.sprint.mission.discodeit.exception.common.ValidationErrorException;
-import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.service.UserService;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -30,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 @ActiveProfiles("test")
 @AutoConfigureMockMvc
 @SpringBootTest
+@WithMockUser
 class AuthApiIntegrationTest {
 
   @Autowired
