@@ -60,4 +60,8 @@ public class User extends BaseUpdatableEntity {
   public boolean isOnline() {
     return this.status.getLastActiveAt().isAfter(Instant.now().minusSeconds(5 * 60));
   }
+
+  public void updateRole(Role newRole) {
+    this.role = newRole;
+  }
 }
