@@ -6,6 +6,7 @@ import com.sprint.mission.discodeit.security.DiscodeitAuthenticationEntryPoint;
 import com.sprint.mission.discodeit.security.LoginFailureHandler;
 import com.sprint.mission.discodeit.security.LoginSuccessHandler;
 import com.sprint.mission.discodeit.security.SpaCsrfTokenRequestHandler;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -32,6 +33,15 @@ import org.springframework.security.web.util.matcher.NegatedRequestMatcher;
 @EnableWebSecurity
 @Configuration
 public class SecurityConfig {
+
+  @Value("${discodeit.remember-me.parameter}")
+  private String rememberMeParameter;
+
+  @Value("${discodeit.remember-me.token-validity-seconds}")
+  private int tokenValiditySeconds;
+
+  @Value("${discodeit.remember-me.key}")
+  private String rememberMeKey;
 
   @Bean
   public SecurityFilterChain filterChain(
@@ -76,6 +86,11 @@ public class SecurityConfig {
                 .maxSessionsPreventsLogin(false)
                 .sessionRegistry(sessionRegistry)
             )
+        )
+        .rememberMe(rememberMe -> rememberMe
+            .rememberMeParameter(rememberMeParameter)
+            .tokenValiditySeconds(tokenValiditySeconds)
+            .key(rememberMeKey)
         )
     ;
     return http.build();
