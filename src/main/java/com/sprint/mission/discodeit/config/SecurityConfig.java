@@ -1,9 +1,10 @@
 package com.sprint.mission.discodeit.config;
 
+import com.sprint.mission.discodeit.security.DiscodeitAccessDeniedHandler;
+import com.sprint.mission.discodeit.security.DiscodeitAuthenticationEntryPoint;
 import com.sprint.mission.discodeit.security.LoginFailureHandler;
 import com.sprint.mission.discodeit.security.LoginSuccessHandler;
 import com.sprint.mission.discodeit.security.SpaCsrfTokenRequestHandler;
-import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -21,15 +22,16 @@ import org.springframework.security.web.util.matcher.NegatedRequestMatcher;
 
 @EnableMethodSecurity
 @EnableWebSecurity
-@RequiredArgsConstructor
 @Configuration
 public class SecurityConfig {
 
-  private final LoginSuccessHandler loginSuccessHandler;
-  private final LoginFailureHandler loginFailureHandler;
-
   @Bean
-  public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+  public SecurityFilterChain filterChain(
+      HttpSecurity http,
+      LoginSuccessHandler loginSuccessHandler,
+      LoginFailureHandler loginFailureHandler,
+      DiscodeitAuthenticationEntryPoint authenticationEntryPoint,
+      DiscodeitAccessDeniedHandler accessDeniedHandler) throws Exception {
     http
         .csrf(csrf -> csrf
             .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
@@ -54,6 +56,10 @@ public class SecurityConfig {
                 new NegatedRequestMatcher(AntPathRequestMatcher.antMatcher("/api/**"))
             ).permitAll()
             .anyRequest().authenticated()
+        )
+        .exceptionHandling(exception -> exception
+            .authenticationEntryPoint(authenticationEntryPoint)
+            .accessDeniedHandler(accessDeniedHandler)
         )
     ;
     return http.build();

@@ -7,6 +7,8 @@ public enum ErrorCode {
     // Auth
     INVALID_USER_DETAILS("AUTH_001", "user details is invalid.", HttpStatus.UNAUTHORIZED),
     INVALID_CREDENTIALS("AUTH_002", "password is not matched.", HttpStatus.UNAUTHORIZED),
+    UNAUTHORIZED("AUTH_003", "authentication is required.", HttpStatus.UNAUTHORIZED),
+    FORBIDDEN("AUTH_004", "access is denied.", HttpStatus.FORBIDDEN),
 
     // User
     USER_NOT_FOUND("USER_001", "requested user not found.", HttpStatus.NOT_FOUND),
