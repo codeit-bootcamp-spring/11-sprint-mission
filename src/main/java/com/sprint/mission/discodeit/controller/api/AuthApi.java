@@ -13,9 +13,19 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.web.csrf.CsrfToken;
 
 @Tag(name = "Auth", description = "Authentication API")
 public interface AuthApi {
+
+  @Operation(summary = "Get CSRF Token")
+  @ApiResponses({
+      @ApiResponse(
+          responseCode = "203",
+          description = "CSRF token issued successfully"
+      )
+  })
+  ResponseEntity<Void> getCsrfToken(CsrfToken csrfToken);
 
   @Operation(summary = "Login")
   @ApiResponses({
