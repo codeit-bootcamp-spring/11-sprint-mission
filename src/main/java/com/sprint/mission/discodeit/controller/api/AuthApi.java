@@ -1,6 +1,7 @@
 package com.sprint.mission.discodeit.controller.api;
 
 import com.sprint.mission.discodeit.controller.api.examples.AuthExamples;
+import com.sprint.mission.discodeit.dto.auth.UserRoleUpdateRequest;
 import com.sprint.mission.discodeit.dto.user.UserResponse;
 import com.sprint.mission.discodeit.exception.ErrorResponse;
 import com.sprint.mission.discodeit.security.DiscodeitUserDetails;
@@ -51,4 +52,22 @@ public interface AuthApi {
       )
   })
   ResponseEntity<UserResponse> me(@AuthenticationPrincipal DiscodeitUserDetails userDetails);
+
+  @Operation(summary = "Update user role")
+  @ApiResponses({
+      @ApiResponse(
+          responseCode = "200",
+          description = "User role updated successfully",
+          content = @Content(mediaType = "application/json",
+              schema = @Schema(implementation = UserResponse.class))
+      ),
+      @ApiResponse(
+          responseCode = "404",
+          description = "User not found",
+          content = @Content(mediaType = "application/json",
+              schema = @Schema(implementation = ErrorResponse.class),
+              examples = @ExampleObject(value = AuthExamples.ERROR_404_USER_001))
+      )
+  })
+  ResponseEntity<UserResponse> updateRole(UserRoleUpdateRequest request);
 }
