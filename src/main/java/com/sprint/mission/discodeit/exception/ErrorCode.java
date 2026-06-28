@@ -33,12 +33,6 @@ public enum ErrorCode {
     DUPLICATE_READ_STATUS("READ_STATUS_002",
             "read status already exists with request fields.", HttpStatus.CONFLICT),
 
-    // UserStatus
-    USER_STATUS_NOT_FOUND("USER_STATUS_001", "requested user status not found.",
-            HttpStatus.NOT_FOUND),
-    DUPLICATE_USER_STATUS("USER_STATUS_002", "user status already exists with request fields.",
-            HttpStatus.CONFLICT),
-
     // BinaryContent
     BINARY_CONTENT_NOT_FOUND("BINARY_CONTENT_001", "requested binary content not found.",
             HttpStatus.NOT_FOUND),

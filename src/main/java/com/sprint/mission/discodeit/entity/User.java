@@ -9,7 +9,6 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
-import java.time.Instant;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -32,9 +31,6 @@ public class User extends BaseUpdatableEntity {
   @JoinColumn(name = "profile_id", unique = true)
   private BinaryContent profile;
 
-  @OneToOne(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-  private UserStatus status;
-
   @Enumerated(EnumType.STRING)
   @Column(length = 20, nullable = false)
   private Role role = Role.USER;
@@ -51,14 +47,6 @@ public class User extends BaseUpdatableEntity {
     this.email = email;
     this.password = password;
     this.profile = profile;
-  }
-
-  public void initStatus(UserStatus status) {
-    this.status = status;
-  }
-
-  public boolean isOnline() {
-    return this.status.getLastActiveAt().isAfter(Instant.now().minusSeconds(5 * 60));
   }
 
   public void updateRole(Role newRole) {

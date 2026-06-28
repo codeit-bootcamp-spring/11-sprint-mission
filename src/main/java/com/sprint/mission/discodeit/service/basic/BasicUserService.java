@@ -6,7 +6,6 @@ import com.sprint.mission.discodeit.dto.user.UserResponse;
 import com.sprint.mission.discodeit.dto.user.UserUpdateRequest;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.User;
-import com.sprint.mission.discodeit.entity.UserStatus;
 import com.sprint.mission.discodeit.exception.user.DuplicateUserException;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.mapper.UserMapper;
@@ -14,7 +13,6 @@ import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.UserService;
 import com.sprint.mission.discodeit.storage.BinaryContentStorage;
-import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -62,9 +60,6 @@ public class BasicUserService implements UserService {
         this.passwordEncoder.encode(userCreateRequest.password()),
         profile
     );
-
-    UserStatus status = new UserStatus(user);
-    user.initStatus(status);
 
     this.userRepository.save(user);
 
@@ -133,7 +128,6 @@ public class BasicUserService implements UserService {
     }
 
     user.update(username, email, password, profile);
-    user.getStatus().updateLastActiveAt(Instant.now());
 
     log.info("user update success: id={}, username={}", id, user.getUsername());
     return this.mapper.toResponse(user);
