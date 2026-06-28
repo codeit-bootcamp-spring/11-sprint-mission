@@ -23,20 +23,4 @@ public class BasicAuthService implements AuthService {
   private final UserRepository userRepository;
   private final UserMapper mapper;
 
-  @Transactional
-  @Override
-  public UserResponse login(LoginRequest loginRequest) {
-    log.debug("auth login trial: username={}", loginRequest.username());
-    User user = this.userRepository.findByUsername(loginRequest.username())
-        .orElseThrow(() -> UserNotFoundException.withUsername(loginRequest.username()));
-
-    if (!loginRequest.password().equals(user.getPassword())) {
-      throw InvalidCredentialsException.withWrongPassword();
-    }
-
-    user.getStatus().updateLastActiveAt(Instant.now());
-
-    log.info("auth login success: userId={}, username={}", user.getId(), user.getUsername());
-    return this.mapper.toResponse(user);
-  }
 }

@@ -56,47 +56,4 @@ class BasicAuthServiceTest {
     response = new UserResponse(userId, username, email, null, true);
   }
 
-  @Nested
-  @DisplayName("login")
-  class Login {
-
-    @Test
-    @DisplayName("success")
-    void login_success() {
-      // given
-      LoginRequest request = new LoginRequest(username, password);
-      given(userRepository.findByUsername(username)).willReturn(Optional.of(user));
-      given(mapper.toResponse(any(User.class))).willReturn(response);
-
-      // when
-      UserResponse result = authService.login(request);
-
-      // then
-      assertThat(result).isEqualTo(response);
-    }
-
-    @Test
-    @DisplayName("fail with user not found")
-    void login_fail_user_not_found_throws_exception() {
-      // given
-      LoginRequest request = new LoginRequest(username, password);
-      given(userRepository.findByUsername(username)).willReturn(Optional.empty());
-
-      // when & then
-      assertThatThrownBy(() -> authService.login(request))
-          .isInstanceOf(UserNotFoundException.class);
-    }
-
-    @Test
-    @DisplayName("fail with wrong password")
-    void login_fail_wrong_password_throws_exception() {
-      // given
-      LoginRequest request = new LoginRequest(username, "password");
-      given(userRepository.findByUsername(username)).willReturn(Optional.of(user));
-
-      // when & then
-      assertThatThrownBy(() -> authService.login(request))
-          .isInstanceOf(InvalidCredentialsException.class);
-    }
-  }
 }

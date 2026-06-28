@@ -27,37 +27,4 @@ public interface AuthApi {
   })
   ResponseEntity<Void> getCsrfToken(CsrfToken csrfToken);
 
-  @Operation(summary = "Login")
-  @ApiResponses({
-      @ApiResponse(
-          responseCode = "200",
-          description = "Login successful",
-          content = @Content(mediaType = "application/json",
-              schema = @Schema(implementation = UserResponse.class))
-      ),
-      @ApiResponse(
-          responseCode = "400",
-          description = "Validation error (fields contain details)",
-          content = @Content(mediaType = "application/json",
-              schema = @Schema(implementation = ErrorResponse.class),
-              examples = @ExampleObject(value = AuthExamples.ERROR_400))
-      ),
-      @ApiResponse(
-          responseCode = "401",
-          description = "Invalid credentials",
-          content = @Content(mediaType = "application/json",
-              schema = @Schema(implementation = ErrorResponse.class),
-              examples = @ExampleObject(value = AuthExamples.ERROR_401_AUTH_001))
-      ),
-      @ApiResponse(
-          responseCode = "404",
-          description = "User not found",
-          content = @Content(mediaType = "application/json",
-              schema = @Schema(implementation = ErrorResponse.class),
-              examples = @ExampleObject(value = AuthExamples.ERROR_404_USER_003))
-      )
-  })
-  ResponseEntity<UserResponse> login(
-      @RequestBody(description = "Login request body", required = true) LoginRequest loginRequest
-  );
 }

@@ -29,15 +29,4 @@ public class AuthController implements AuthApi {
                 .build();
     }
 
-    @PostMapping(path = "login")
-    public ResponseEntity<UserResponse> login(
-            @Valid @RequestBody LoginRequest loginRequest) {
-        log.info("auth login request: username={}", loginRequest.username());
-        UserResponse loginUser = this.authService.login(loginRequest);
-
-        log.debug("auth login response: {}", loginUser);
-        return ResponseEntity
-                .status(HttpStatus.OK)
-                .body(loginUser);
-    }
 }
