@@ -1,11 +1,15 @@
 package com.sprint.mission.discodeit.exception;
 
+import com.sprint.mission.discodeit.exception.auth.ForbiddenException;
+import com.sprint.mission.discodeit.exception.auth.UnauthorizedException;
 import com.sprint.mission.discodeit.exception.common.UnexpectedErrorException;
 import com.sprint.mission.discodeit.exception.common.ValidationErrorException;
 import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -37,6 +41,24 @@ public class GlobalExceptionHandler {
     return ResponseEntity
         .status(errorCode.getHttpStatus())
         .body(ErrorResponse.from(e));
+  }
+
+  @ExceptionHandler(AccessDeniedException.class)
+  public ResponseEntity<ErrorResponse> handleAccessDeniedException(AccessDeniedException e) {
+    DiscodeitException exception = ForbiddenException.withAccessDenied();
+    log.warn("Access denied: {}", e.getMessage());
+    return ResponseEntity
+        .status(exception.getErrorCode().getHttpStatus())
+        .body(ErrorResponse.from(exception));
+  }
+
+  @ExceptionHandler(AuthenticationException.class)
+  public ResponseEntity<ErrorResponse> handleAuthenticationException(AuthenticationException e) {
+    DiscodeitException exception = UnauthorizedException.withAuthenticationRequired();
+    log.warn("Authentication required: {}", e.getMessage());
+    return ResponseEntity
+        .status(exception.getErrorCode().getHttpStatus())
+        .body(ErrorResponse.from(exception));
   }
 
   @ExceptionHandler(Exception.class)
