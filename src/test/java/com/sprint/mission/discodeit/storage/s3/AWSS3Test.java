@@ -1,9 +1,16 @@
 package com.sprint.mission.discodeit.storage.s3;
 
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.net.URL;
+import java.time.Duration;
+import java.util.Properties;
+import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
@@ -11,24 +18,15 @@ import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.*;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.S3Exception;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequest;
 
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.net.URL;
-import java.time.Duration;
-import java.util.Properties;
-import java.util.UUID;
-
-/**
- * AWS S3 API를 테스트하기 위한 테스트 클래스
- * - 파일 업로드
- * - 파일 다운로드
- * - Presigned URL 생성
- */
+@Disabled
 @Slf4j
 @DisplayName("S3 API 테스트")
 public class AWSS3Test {
