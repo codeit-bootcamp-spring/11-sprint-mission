@@ -6,6 +6,7 @@ import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.mapper.UserMapper;
 import com.sprint.mission.discodeit.repository.UserRepository;
+import com.sprint.mission.discodeit.security.SessionManager;
 import com.sprint.mission.discodeit.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class BasicAuthService implements AuthService {
 
   private final UserRepository userRepository;
+  private final SessionManager sessionManager;
   private final UserMapper mapper;
 
   @PreAuthorize("hasRole('ADMIN')")
@@ -36,6 +38,7 @@ public class BasicAuthService implements AuthService {
     User user = userRepository.findById(request.userId())
         .orElseThrow(() -> UserNotFoundException.withId(request.userId()));
     user.updateRole(request.newRole());
+    sessionManager.expireSessions(user.getId());
     log.info("auth update-role success: userId={}, newRole={}", user.getId(), user.getRole());
     return mapper.toResponse(user);
   }
