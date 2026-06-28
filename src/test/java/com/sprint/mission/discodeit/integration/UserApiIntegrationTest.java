@@ -95,7 +95,8 @@ class UserApiIntegrationTest {
     @DisplayName("fail with duplicate user")
     void create_fail_duplicate_user_throws_exception() throws Exception {
       // given - same username as setUp already exists
-      UserCreateRequest request = new UserCreateRequest(username, "other@example.io", "password1234");
+      UserCreateRequest request = new UserCreateRequest(username, "other@example.io",
+          "password1234");
       MockMultipartFile requestPart = new MockMultipartFile(
           "userCreateRequest", "", MediaType.APPLICATION_JSON_VALUE,
           objectMapper.writeValueAsBytes(request));

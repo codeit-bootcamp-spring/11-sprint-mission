@@ -82,7 +82,8 @@ class BasicReadStatusServiceTest {
     @DisplayName("success")
     void createReadStatus_success() {
       // given
-      ReadStatusCreateRequest request = new ReadStatusCreateRequest(userId, channelId, Instant.now());
+      ReadStatusCreateRequest request = new ReadStatusCreateRequest(userId, channelId,
+          Instant.now());
       given(userRepository.findById(userId)).willReturn(Optional.of(user));
       given(channelRepository.findById(channelId)).willReturn(Optional.of(channel));
       given(readStatusRepository.existsByUserAndChannel(user, channel)).willReturn(false);
@@ -100,7 +101,8 @@ class BasicReadStatusServiceTest {
     @DisplayName("fail with user not found")
     void createReadStatus_fail_user_not_found_throws_exception() {
       // given
-      ReadStatusCreateRequest request = new ReadStatusCreateRequest(userId, channelId, Instant.now());
+      ReadStatusCreateRequest request = new ReadStatusCreateRequest(userId, channelId,
+          Instant.now());
       given(userRepository.findById(userId)).willReturn(Optional.empty());
 
       // when & then
@@ -112,7 +114,8 @@ class BasicReadStatusServiceTest {
     @DisplayName("fail with channel not found")
     void createReadStatus_fail_channel_not_found_throws_exception() {
       // given
-      ReadStatusCreateRequest request = new ReadStatusCreateRequest(userId, channelId, Instant.now());
+      ReadStatusCreateRequest request = new ReadStatusCreateRequest(userId, channelId,
+          Instant.now());
       given(userRepository.findById(userId)).willReturn(Optional.of(user));
       given(channelRepository.findById(channelId)).willReturn(Optional.empty());
 
@@ -125,7 +128,8 @@ class BasicReadStatusServiceTest {
     @DisplayName("fail with duplicate read status")
     void createReadStatus_fail_duplicate_throws_exception() {
       // given
-      ReadStatusCreateRequest request = new ReadStatusCreateRequest(userId, channelId, Instant.now());
+      ReadStatusCreateRequest request = new ReadStatusCreateRequest(userId, channelId,
+          Instant.now());
       given(userRepository.findById(userId)).willReturn(Optional.of(user));
       given(channelRepository.findById(channelId)).willReturn(Optional.of(channel));
       given(readStatusRepository.existsByUserAndChannel(user, channel)).willReturn(true);

@@ -62,7 +62,8 @@ public class UserController implements UserApi {
       @Valid @RequestPart(value = "userUpdateRequest", required = false) UserUpdateRequest userUpdateRequest,
       @RequestPart(value = "profile", required = false) MultipartFile profile
   ) {
-    log.info("user update request: id={}, request={}, profile={}", userId, userUpdateRequest, profile != null);
+    log.info("user update request: id={}, request={}, profile={}", userId, userUpdateRequest,
+        profile != null);
     Optional<BinaryContentCreateRequest> profileRequest = MultipartFileUtil.toCreateRequest(
         profile);
 
@@ -102,7 +103,8 @@ public class UserController implements UserApi {
       @PathVariable UUID userId,
       @Valid @RequestBody UserStatusUpdateRequest userStatusUpdateRequest
   ) {
-    log.info("user-status update-user-status request: id={}, request={}", userId, userStatusUpdateRequest);
+    log.info("user-status update-user-status request: id={}, request={}", userId,
+        userStatusUpdateRequest);
     UserStatusResponse updatedUserStatus = this.userStatusService.updateUserStatusByUserId(userId,
         userStatusUpdateRequest);
 

@@ -58,7 +58,8 @@ public class BasicMessageService implements MessageService {
         .orElseThrow(() -> ChannelNotFoundException.withId(messageCreateRequest.channelId()));
 
     if (channel.isPrivate() && !this.readStatusRepository.existsByUserAndChannel(author, channel)) {
-      throw MessageWithoutChannelAccessException.withUserAndChannel(author.getId(), channel.getId());
+      throw MessageWithoutChannelAccessException.withUserAndChannel(author.getId(),
+          channel.getId());
     }
 
     List<BinaryContent> attachments = new ArrayList<>();

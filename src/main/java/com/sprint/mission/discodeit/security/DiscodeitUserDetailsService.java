@@ -15,16 +15,16 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class DiscodeitUserDetailsService implements UserDetailsService {
 
-    private final UserRepository userRepository;
-    private final UserMapper mapper;
+  private final UserRepository userRepository;
+  private final UserMapper mapper;
 
-    @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException(username));
-        return new DiscodeitUserDetails(
-                mapper.toResponse(user),
-                user.getPassword()
-        );
-    }
+  @Override
+  public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+    User user = userRepository.findByUsername(username)
+        .orElseThrow(() -> new UsernameNotFoundException(username));
+    return new DiscodeitUserDetails(
+        mapper.toResponse(user),
+        user.getPassword()
+    );
+  }
 }
