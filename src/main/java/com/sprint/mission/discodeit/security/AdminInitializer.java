@@ -35,7 +35,7 @@ public class AdminInitializer implements ApplicationRunner {
     UserCreateRequest request = new UserCreateRequest(username, email, password);
     try {
       UserResponse admin = userService.createUser(request, Optional.empty());
-      authService.updateRole(new UserRoleUpdateRequest(admin.id(), Role.ADMIN));
+      authService.updateRoleInternal(new UserRoleUpdateRequest(admin.id(), Role.ADMIN));
       log.info("admin account initialized: username={}", admin.username());
     } catch (DuplicateUserException e) {
       log.debug("admin account already exists: username={}", username);

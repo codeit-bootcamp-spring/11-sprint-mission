@@ -9,6 +9,7 @@ import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,9 +22,16 @@ public class BasicAuthService implements AuthService {
   private final UserRepository userRepository;
   private final UserMapper mapper;
 
+  @PreAuthorize("hasRole('ADMIN')")
   @Transactional
   @Override
   public UserResponse updateRole(UserRoleUpdateRequest request) {
+    return updateRoleInternal(request);
+  }
+
+  @Transactional
+  @Override
+  public UserResponse updateRoleInternal(UserRoleUpdateRequest request) {
     log.debug("auth update-role trial: userId={}, newRole={}", request.userId(), request.newRole());
     User user = userRepository.findById(request.userId())
         .orElseThrow(() -> UserNotFoundException.withId(request.userId()));
