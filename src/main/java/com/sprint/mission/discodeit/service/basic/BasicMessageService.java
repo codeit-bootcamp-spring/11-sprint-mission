@@ -24,6 +24,7 @@ import com.sprint.mission.discodeit.exception.message.MessageNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -162,6 +163,7 @@ public class BasicMessageService implements MessageService {
 
     @Override
     @Transactional
+    @PreAuthorize("@messageSecurity.isAuthor(#param.id, authentication)")
     public MessageDto update(MessageUpdateParam param) {
         log.info("메시지 수정 시작: messageId={}", param.id());
 
@@ -180,6 +182,7 @@ public class BasicMessageService implements MessageService {
 
     @Override
     @Transactional
+    @PreAuthorize("@messageSecurity.isAuthor(#id, authentication)")
     public void delete(UUID id) {
         log.info("메시지 삭제 시작: messageId={}", id);
 

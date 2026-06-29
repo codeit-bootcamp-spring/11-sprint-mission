@@ -2,7 +2,6 @@ DROP TABLE IF EXISTS message_receipts CASCADE;
 DROP TABLE IF EXISTS read_statuses CASCADE;
 DROP TABLE IF EXISTS message_attachments CASCADE;
 DROP TABLE IF EXISTS messages CASCADE;
-DROP TABLE IF EXISTS user_statuses CASCADE;
 DROP TABLE IF EXISTS channels CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
 DROP TABLE IF EXISTS binary_contents CASCADE;
@@ -31,6 +30,9 @@ CREATE TABLE users
             ON DELETE SET NULL
 );
 
+ALTER TABLE users
+    ADD role VARCHAR(20) NOT NULL;
+
 CREATE TABLE channels(
     id          UUID PRIMARY KEY,
     created_at  TIMESTAMPTZ NOT NULL,
@@ -40,19 +42,6 @@ CREATE TABLE channels(
     type        VARCHAR(10) NOT NULL,
     CONSTRAINT chk_channels_type
         CHECK (type IN ('PUBLIC', 'PRIVATE'))
-);
-
-CREATE TABLE user_statuses
-(
-    id             UUID PRIMARY KEY,
-    created_at     TIMESTAMPTZ NOT NULL,
-    updated_at     TIMESTAMPTZ,
-    user_id        UUID        NOT NULL UNIQUE,
-    last_active_at TIMESTAMPTZ NOT NULL,
-    CONSTRAINT fk_user_statuses_users
-        FOREIGN KEY (user_id)
-            REFERENCES users(id)
-            ON DELETE CASCADE
 );
 
 CREATE TABLE read_statuses

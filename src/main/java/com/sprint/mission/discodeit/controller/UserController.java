@@ -3,7 +3,6 @@ package com.sprint.mission.discodeit.controller;
 import com.sprint.mission.discodeit.dto.*;
 import com.sprint.mission.discodeit.exception.InvalidException;
 import com.sprint.mission.discodeit.service.UserService;
-import com.sprint.mission.discodeit.service.UserStatusService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -24,11 +23,9 @@ import java.util.UUID;
 public class UserController {
 
     private final UserService userService;
-    private final UserStatusService userStatusService;
 
-    public UserController(UserService userService, UserStatusService userStatusService) {
+    public UserController(UserService userService) {
         this.userService = userService;
-        this.userStatusService = userStatusService;
     }
 
     @Operation(
@@ -41,7 +38,6 @@ public class UserController {
     )
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @ResponseStatus(HttpStatus.CREATED)
     public UserDto create(
             @Parameter(hidden = true)
             @Valid
@@ -104,16 +100,6 @@ public class UserController {
     public void delete(@PathVariable UUID userId) {
         log.info("사용자 삭제 API 요청: userId={}", userId);
         userService.delete(userId);
-    }
-
-    @PatchMapping(value = "/{userId}/userStatus")
-    public UserStatusDto updateStatus(@PathVariable UUID userId,
-                                      @Valid @RequestBody UserStatusUpdateRequest request) {
-        log.debug("사용자 상태수정 API 요청: userId={}, newLastActiveAt={}",
-                userId,
-                request.newLastActiveAt()
-        );
-        return userStatusService.updateByUserId(userId, request);
     }
 
     private BinaryContentCreateRequest toBinaryContentCreateRequest(MultipartFile file) {

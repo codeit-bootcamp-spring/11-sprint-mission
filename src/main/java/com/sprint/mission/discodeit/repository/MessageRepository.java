@@ -13,6 +13,10 @@ import java.util.UUID;
 
 public interface MessageRepository extends JpaRepository<Message, UUID> {
 
+    boolean existsByIdAndAuthor_Username(UUID id, String username);
+
+    boolean existsByIdAndAuthor_Id(UUID id, UUID authorId);
+
     @Query("""
         select m.channel.id, max(m.createdAt)
         from Message m
@@ -44,7 +48,6 @@ public interface MessageRepository extends JpaRepository<Message, UUID> {
         from Message m
         left join fetch m.author a
         left join fetch a.profile
-        left join fetch a.status
         left join fetch m.attachments
         where m.id in :ids
         order by m.createdAt desc, m.id desc
@@ -56,7 +59,6 @@ public interface MessageRepository extends JpaRepository<Message, UUID> {
     from Message m
     left join fetch m.author a
     left join fetch a.profile
-    left join fetch a.status
     left join fetch m.attachments
     where m.id = :id
 """)

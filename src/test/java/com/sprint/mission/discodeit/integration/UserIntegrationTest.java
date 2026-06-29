@@ -9,11 +9,15 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -23,7 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
-@AutoConfigureMockMvc
+@AutoConfigureMockMvc(addFilters = false)
 @ActiveProfiles("test")
 @Transactional
 class UserIntegrationTest {
@@ -55,20 +59,21 @@ class UserIntegrationTest {
         mockMvc.perform(multipart("/api/users")
                         .file(userCreateRequest)
                         .contentType(MediaType.MULTIPART_FORM_DATA))
-                .andExpect(status().isCreated())
+                .andExpect(status().isOk())
                 .andExpect(jsonPath("$.username").value("evan"))
                 .andExpect(jsonPath("$.email").value("evan@test.com"));
 
         // when & then - findAll
         mockMvc.perform(get("/api/users"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].username").value("evan"))
-                .andExpect(jsonPath("$[0].email").value("evan@test.com"));
+                .andExpect(jsonPath("$", hasSize(2)))
+                .andExpect(jsonPath("$[?(@.username == 'evan')]", hasSize(1)))
+                .andExpect(jsonPath("$[?(@.email == 'evan@test.com')]", hasSize(1)));
     }
 
     @Test
     @DisplayName("사용자를 수정하고 삭제할 수 있다")
+    @WithMockUser(username = "evan")
     void user_updateAndDelete_success() throws Exception {
         // given
         User user = userRepository.saveAndFlush(
@@ -100,6 +105,14 @@ class UserIntegrationTest {
                 .andExpect(jsonPath("$.id").value(user.getId().toString()))
                 .andExpect(jsonPath("$.username").value("newEvan"))
                 .andExpect(jsonPath("$.email").value("new@test.com"));
+
+        SecurityContextHolder.getContext().setAuthentication(
+                UsernamePasswordAuthenticationToken.authenticated(
+                        "newEvan",
+                        null,
+                        List.of()
+                )
+        );
 
         // when & then - delete
         mockMvc.perform(delete("/api/users/{userId}", user.getId()))
