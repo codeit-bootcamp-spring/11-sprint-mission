@@ -1,45 +1,39 @@
 package com.sprint.mission.discodeit.exception;
 
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 
 @Getter
-@RequiredArgsConstructor
 public enum ErrorCode {
+    // User 관련 에러 코드
+    USER_NOT_FOUND("사용자를 찾을 수 없습니다."),
+    DUPLICATE_USER("이미 존재하는 사용자입니다."),
+    INVALID_USER_CREDENTIALS("잘못된 사용자 인증 정보입니다."),
+    
+    // Channel 관련 에러 코드
+    CHANNEL_NOT_FOUND("채널을 찾을 수 없습니다."),
+    PRIVATE_CHANNEL_UPDATE("비공개 채널은 수정할 수 없습니다."),
+    
+    // Message 관련 에러 코드
+    MESSAGE_NOT_FOUND("메시지를 찾을 수 없습니다."),
+    
+    // BinaryContent 관련 에러 코드
+    BINARY_CONTENT_NOT_FOUND("바이너리 컨텐츠를 찾을 수 없습니다."),
+    
+    // ReadStatus 관련 에러 코드
+    READ_STATUS_NOT_FOUND("읽음 상태를 찾을 수 없습니다."),
+    DUPLICATE_READ_STATUS("이미 존재하는 읽음 상태입니다."),
+    
+    // UserStatus 관련 에러 코드
+    USER_STATUS_NOT_FOUND("사용자 상태를 찾을 수 없습니다."),
+    DUPLICATE_USER_STATUS("이미 존재하는 사용자 상태입니다."),
+    
+    // Server 에러 코드
+    INTERNAL_SERVER_ERROR("서버 내부 오류가 발생했습니다."),
+    INVALID_REQUEST("잘못된 요청입니다.");
 
-    // File IO Error
-    FILE_IO_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "파일 읽기/쓰기 중 오류가 발생했습니다."),
-    FILE_DATA_CORRUPTED(HttpStatus.INTERNAL_SERVER_ERROR, "파일 데이터가 손상되었거나 형식이 맞지 않습니다."),
-
-    // User
-    USER_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 유저를 찾을 수 없습니다."),
-    INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "아이디 또는 비밀번호가 일치하지 않습니다."),
-    USER_EMAIL_DUPLICATE(HttpStatus.BAD_REQUEST, "해당 이메일은 이미 사용중입니다."),
-    USER_USERNAME_DUPLICATE(HttpStatus.BAD_REQUEST, "해당 유저명은 이미 사용중입니다."),
-
-    // UserStatus
-    USER_STATUS_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 유저의 상태 정보를 찾을 수 없습니다."),
-    USER_STATUS_ALREADY_EXIST(HttpStatus.BAD_REQUEST, "해당 유저의 상태 정보가 이미 존재합니다."), // 🌟 추가됨
-
-    // Channel
-    CHANNEL_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 채널을 찾을 수 없습니다."),
-    UNAUTHORIZED_ACCESS(HttpStatus.FORBIDDEN, "권한이 없습니다."),
-    ALREADY_JOIN_CHANNEL(HttpStatus.BAD_REQUEST, "이미 가입된 채널입니다."),
-    MASTER_NOT_LEAVE(HttpStatus.BAD_REQUEST, "방장은 채널을 탈퇴할 수 없습니다. 채널을 삭제하거나, 방장을 위임해주세요."),
-    PRIVATE_NOT_UPDATE(HttpStatus.BAD_REQUEST, "Private 채널은 수정할 수 없습니다."),
-
-    // Message
-    MESSAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 메세지를 찾을 수 없습니다."),
-    NOT_JOINED_CHANNEL(HttpStatus.FORBIDDEN, "가입된 채널에만 메세지를 보낼 수 있습니다."),
-
-    // ReadStatus
-    READ_STATUS_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 읽기 상태 정보를 찾을 수 없습니다."),
-    READ_STATUS_ALREADY_EXIST(HttpStatus.BAD_REQUEST, "해당 유저는 이미 이 채널의 읽기 상태를 가지고 있습니다."),
-
-    // BinaryContent
-    CONTENT_NOT_EXIST(HttpStatus.NOT_FOUND, "해당 파일은 존재하지 않습니다.");
-
-    private final HttpStatus httpStatus;
     private final String message;
-}
+
+    ErrorCode(String message) {
+        this.message = message;
+    }
+} 

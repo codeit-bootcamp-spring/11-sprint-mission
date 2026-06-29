@@ -1,47 +1,47 @@
 package com.sprint.mission.discodeit.entity;
 
-import com.sprint.mission.discodeit.entity.base.BaseEntity;
-import lombok.Getter;
-import lombok.ToString;
-
+import com.sprint.mission.discodeit.entity.base.BaseUpdatableEntity;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import java.time.Instant;
-import java.util.UUID;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
+@Entity
+@Table(
+    name = "read_statuses",
+    uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"user_id", "channel_id"})
+    }
+)
 @Getter
-@ToString(callSuper = true)
-public class ReadStatus extends BaseEntity {
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class ReadStatus extends BaseUpdatableEntity {
 
-    private UUID userId;
-    private UUID channelId;
-    private Instant lastReadAt;
+  @ManyToOne(fetch = FetchType.LAZY, optional = false)
+  @JoinColumn(name = "user_id", columnDefinition = "uuid")
+  private User user;
+  @ManyToOne(fetch = FetchType.LAZY, optional = false)
+  @JoinColumn(name = "channel_id", columnDefinition = "uuid")
+  private Channel channel;
+  @Column(columnDefinition = "timestamp with time zone", nullable = false)
+  private Instant lastReadAt;
 
-    private ReadStatus(UUID userId, UUID channelId, Instant lastReadAt) {
-        super();
-        this.userId = userId;
-        this.channelId = channelId;
-        this.lastReadAt = lastReadAt;
+  public ReadStatus(User user, Channel channel, Instant lastReadAt) {
+    this.user = user;
+    this.channel = channel;
+    this.lastReadAt = lastReadAt;
+  }
+
+  public void update(Instant newLastReadAt) {
+    if (newLastReadAt != null && !newLastReadAt.equals(this.lastReadAt)) {
+      this.lastReadAt = newLastReadAt;
     }
-
-    protected ReadStatus(ReadStatus other) {
-        super(other);
-        this.userId = other.userId;
-        this.channelId = other.channelId;
-        this.lastReadAt = other.lastReadAt;
-    }
-
-    @Override
-    public ReadStatus copy() {
-        return new ReadStatus(this);
-    }
-
-    public static ReadStatus create(UUID userId, UUID channelId) {
-        return new ReadStatus(userId, channelId, Instant.now());
-    }
-
-    // 이하 로직
-    public void updateReadAt() {
-        this.lastReadAt = Instant.now();
-        touch();
-    }
+  }
 }
-

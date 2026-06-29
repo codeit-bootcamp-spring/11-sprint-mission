@@ -1,48 +1,67 @@
 package com.sprint.mission.discodeit.service.basic;
 
-import com.sprint.mission.discodeit.dto.auth.LoginRequestDTO;
-import com.sprint.mission.discodeit.dto.auth.LoginResponseDTO;
+import com.sprint.mission.discodeit.auth.DiscodeitUserDetails;
+import com.sprint.mission.discodeit.dto.data.UserDto;
+import com.sprint.mission.discodeit.dto.request.UserRoleUpdateRequest;
 import com.sprint.mission.discodeit.entity.User;
-import com.sprint.mission.discodeit.entity.UserStatus;
-import com.sprint.mission.discodeit.entity.UserStatusType;
-import com.sprint.mission.discodeit.exception.BusinessException;
 import com.sprint.mission.discodeit.exception.ErrorCode;
+import com.sprint.mission.discodeit.exception.user.UserException;
+import com.sprint.mission.discodeit.mapper.UserMapper;
 import com.sprint.mission.discodeit.repository.UserRepository;
-import com.sprint.mission.discodeit.repository.UserStatusRepository;
 import com.sprint.mission.discodeit.service.AuthService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.session.SessionInformation;
+import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.stereotype.Service;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.transaction.annotation.Transactional;
 
-@Service
+import java.util.List;
+import java.util.UUID;
+
+import static com.sprint.mission.discodeit.auth.PreAuthorizeStaticParam.ROLE_ADMIN;
+import static com.sprint.mission.discodeit.auth.PreAuthorizeStaticParam.ROLE_MANAGER;
+
+@Slf4j
 @RequiredArgsConstructor
+@Service
 public class BasicAuthService implements AuthService {
 
-    private final UserRepository userRepository;
-    private final UserStatusRepository userStatusRepository;
+  private final UserRepository userRepository;
+  private final UserMapper userMapper;
+  private final SessionRegistry sessionRegistry;
 
-    @Override
-    public LoginResponseDTO login(
-            LoginRequestDTO dto
-    ) {
-        // 검증
-        // - username 기반 User가 있는지 확인 (즉, username이 맞는지 검증)
-        User targetUser = userRepository.findByUsername(dto.username())
-                .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_CREDENTIALS));
+  @Override
+  @Transactional
+  @PreAuthorize(ROLE_ADMIN)
+  public UserDto updateUserRole(UserRoleUpdateRequest request) {
+    User foundUser = userRepository.findById(request.userId())
+            .orElseThrow(() -> new UserException(ErrorCode.USER_NOT_FOUND));
 
-        // - 비밀번호 검증
-        targetUser.authenticate(dto.password());
+    foundUser.updateRole(request.newRole());
 
-        // 유저 상태
-        // - 유저 상태 조회
-        UserStatus userStatus = userStatusRepository.findByUserId(targetUser.getId())
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_STATUS_NOT_FOUND));
+    // 권한이 변경된 사용자가 현재 로그인 상태라면 세션 무효화
+    invalidateUserSession(request.userId());
 
-        // - 유저 상태 온라인으로 업데이트
-        userStatus.updateUserStatusType(UserStatusType.ONLINE);
-        userStatusRepository.save(userStatus);
+    return UserDto.from(foundUser);
+  }
 
-        return LoginResponseDTO.from(targetUser, userStatus);
+  private void invalidateUserSession(UUID userId) {
+    List<Object> allPrincipals = sessionRegistry.getAllPrincipals();
+
+    for (Object principal : allPrincipals) {
+      if (principal instanceof DiscodeitUserDetails userDetails) {
+        if (userDetails.getUserDto().id().equals(userId)) {
+          // 해당 유저의 모든 세션 정보를 가져옴(false: 만료된 세션 제외)
+          List<SessionInformation> sessions = sessionRegistry.getAllSessions(userDetails, false);
+          for (SessionInformation session : sessions) {
+            session.expireNow(); // 즉시 세션 만료 처리!
+          }
+        }
+      }
     }
-}
+  }
 
-// 아이디(username) 혹은 비밀번호 둘 중 뭐가 틀렸는지 알려주지 않음 (ErrorCode.INVALID_CREDENTIALS)
+
+}
