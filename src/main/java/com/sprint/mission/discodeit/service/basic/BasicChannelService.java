@@ -15,6 +15,7 @@ import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.ChannelService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -35,6 +36,7 @@ public class BasicChannelService implements ChannelService {
 
   @Override
   @Transactional
+  @PreAuthorize("hasRole('CHANNEL_MANAGER')")
   public ChannelDto createPublicChannel(PublicChannelCreateRequest dto) {
     log.debug("createPublicChannel 시작 - 입력값: {}", dto);
     Channel channel = new Channel(dto.name(), dto.description(), ChannelType.PUBLIC);
@@ -90,19 +92,9 @@ public class BasicChannelService implements ChannelService {
     return channelMapper.toDto(channel);
   }
 
-//  @Override // 사용되는 곳이 없음
-//  public List<UUID> getUserIds(UUID id) {
-//    Channel channel = channelRepository.findById(id)
-//        .orElseThrow(() -> new NoSuchElementException("Channel with id " + id + " not found"));
-//    List<ReadStatus> readStatusList = readStatusRepository.findAllByChannelId(channel.getId());
-//    return readStatusList.stream()
-//        .map(ReadStatus::getUser)
-//        .map(User::getId)
-//        .toList();
-//  }
-
   @Override
   @Transactional
+  @PreAuthorize("hasRole('CHANNEL_MANAGER')")
   public ChannelDto update(UUID id, PublicChannelUpdateRequest dto) {
     log.debug("update 시작 - 입력값: {}", dto);
     Channel channel = channelRepository.findById(id)
@@ -118,6 +110,7 @@ public class BasicChannelService implements ChannelService {
 
   @Override
   @Transactional
+  @PreAuthorize("hasRole('CHANNEL_MANAGER')")
   public void delete(UUID id) {
     log.debug("delete 시작 - 입력값: {}", id);
 

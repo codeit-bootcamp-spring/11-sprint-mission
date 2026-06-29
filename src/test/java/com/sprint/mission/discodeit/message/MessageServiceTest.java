@@ -80,15 +80,11 @@ public class MessageServiceTest {
     User user = new User("이마크", "mark@test.com", "pass1234", null);
     Channel channel = new Channel("공지방", "공지방", ChannelType.PUBLIC);
 
-    // 서비스 로직의 author.getStatus().updateTime()에서 getStatus()가 null을 반환하여 예외 발생 -> 강제로 값 주입
-    UserStatus userStatus = new UserStatus(user, null);
-    ReflectionTestUtils.setField(user, "status", userStatus); // 단위 테스트이므로 실제 DB가 아닌 자바 메모리에 값 주입
-
     given(userRepository.findById(userId)).willReturn(Optional.of(user));
     given(channelRepository.findById(channelId)).willReturn(Optional.of(channel));
     given(messageRepository.save(any(Message.class))).will(returnsFirstArg());
 
-    UserDto userDto = new UserDto(userId, "이마크", "mark@test.com", null, null);
+    UserDto userDto = new UserDto(userId, "이마크", "mark@test.com", null, null, null);
     MessageDto dto = new MessageDto(UUID.randomUUID(), null, null, userDto, channelId, "안녕", null);
     given(messageMapper.toDto(any(Message.class))).willReturn(dto);
 
@@ -125,10 +121,7 @@ public class MessageServiceTest {
     Channel channel = new Channel("공지방", "공지방", ChannelType.PUBLIC);
     Message message = new Message(user, channel, "안녕", null);
 
-    UserStatus userStatus = new UserStatus(user, null);
-    ReflectionTestUtils.setField(user, "status", userStatus);
-
-    UserDto userDto = new UserDto(user.getId(), "이마크", "mark@test.com", null, null);
+    UserDto userDto = new UserDto(user.getId(), "이마크", "mark@test.com", null, null, null);
     MessageDto dto = new MessageDto(message.getId(), null, null, userDto, channel.getId(), "안녕하세요",
         null);
 
@@ -165,7 +158,7 @@ public class MessageServiceTest {
     Slice<Message> messageSlice = new SliceImpl<>(List.of(message), pageable,
         false); // List.of(데이터리스트), 페이징정보, 다음페이지존재여부(hasNext)
 
-    UserDto userDto = new UserDto(user.getId(), "이마크", "mark@test.com", null, null);
+    UserDto userDto = new UserDto(user.getId(), "이마크", "mark@test.com", null, null, null);
     MessageDto dto = new MessageDto(message.getId(), null, null, userDto, channel.getId(), "안녕하세요",
         null);
     PageResponse<MessageDto> dtoPageResponse = new PageResponse<>(List.of(dto), null, 50, false,

@@ -31,7 +31,9 @@ public enum ErrorCode {
   USER_STATUS_ALREADY_EXISTS(HttpStatus.CONFLICT, "이미 존재하는 사용자 상태 정보입니다."),
 
   // Auth
-  AUTHENTICATION_FAILED(HttpStatus.UNAUTHORIZED, "아이디 또는 비밀번호가 일치하지 않습니다.");
+  AUTHENTICATION_FAILED(HttpStatus.UNAUTHORIZED, "아이디 또는 비밀번호가 일치하지 않습니다."),
+  UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "로그인이 필요한 서비스입니다."),
+  ACCESS_DENIED(HttpStatus.FORBIDDEN, "이 기능을 실행할 권한이 부족합니다.");
 
   private final HttpStatus status; // Enum 클래스에서는 상수들을 무조건 최상단에 먼저 선언해야 한다.
   private final String message;

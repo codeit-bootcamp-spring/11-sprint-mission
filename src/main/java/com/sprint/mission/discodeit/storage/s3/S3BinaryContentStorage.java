@@ -91,7 +91,7 @@ public class S3BinaryContentStorage implements BinaryContentStorage {
 
     GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
         .getObjectRequest(request)
-        .signatureDuration(Duration.ofMinutes(presignedUrlExpiration))
+        .signatureDuration(Duration.ofSeconds(presignedUrlExpiration))
         .build();
 
     String signedUrl = s3Presigner.presignGetObject(presignRequest).url().toString();

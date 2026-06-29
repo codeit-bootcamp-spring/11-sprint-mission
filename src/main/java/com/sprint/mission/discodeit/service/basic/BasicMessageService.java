@@ -8,7 +8,6 @@ import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.entity.User;
-import com.sprint.mission.discodeit.entity.UserStatus;
 import com.sprint.mission.discodeit.exception.channel.ChannelNotFoundException;
 import com.sprint.mission.discodeit.exception.message.MessageNotFoundException;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
@@ -27,6 +26,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
+import org.springframework.security.access.prepost.PostAuthorize;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -74,9 +75,6 @@ public class BasicMessageService implements MessageService {
     messageRepository.save(message);
     log.info("메시지 생성 완료 - messageId: {}, 첨부파일 수: {}", message.getId(), attachments.size());
 
-    UserStatus status = author.getStatus();
-    status.updateTime(Instant.now());
-
     return messageMapper.toDto(message);
   }
 
@@ -108,6 +106,7 @@ public class BasicMessageService implements MessageService {
 
   @Override
   @Transactional
+  @PostAuthorize("returnObject.author.id == principal.userDto.id")
   public MessageDto update(UUID id, MessageUpdateRequest dto) {
     log.debug("update 시작 - 입력값: {}", dto);
 
@@ -117,24 +116,25 @@ public class BasicMessageService implements MessageService {
     message.update(dto.newContent());
     log.info("메시지 수정 완료 - messageId: {}", message.getId());
 
-    UserStatus status = message.getAuthor().getStatus();
-    status.updateTime(Instant.now());
-
     return messageMapper.toDto(message);
   }
 
   @Override
   @Transactional
+  @PreAuthorize("@messageSecurity.isAuthor(#id, principal.userDto.id)")
   public void delete(UUID id) {
     log.debug("delete 시작 - 입력값: {}", id);
 
-    Message message = messageRepository.findById(id)
-        .orElseThrow(() -> new MessageNotFoundException(id));
+    // 메시지가 없을 경우 예외를 던지기 보다 멱등성을 보장하는 방향으로 구현
+    var messageOptional = messageRepository.findById(id);
 
-    if (message.getAttachments() != null && !message.getAttachments().isEmpty()) {
-      binaryContentRepository.deleteAll(message.getAttachments());
+    if (messageOptional.isPresent()) {
+      Message message = messageOptional.get();
+      if (message.getAttachments() != null && !message.getAttachments().isEmpty()) {
+        binaryContentRepository.deleteAll(message.getAttachments());
+      }
+      messageRepository.delete(message);
+      log.info("메시지 삭제 완료 - messageId: {}", message.getId());
     }
-    messageRepository.delete(message);
-    log.info("메시지 삭제 완료 - messageId: {}", message.getId());
   }
 }

@@ -2,7 +2,6 @@ package com.sprint.mission.discodeit.repository;
 
 import com.sprint.mission.discodeit.entity.Message;
 import java.time.Instant;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.domain.Pageable;
@@ -15,12 +14,9 @@ public interface MessageRepository extends JpaRepository<Message, UUID> {
 
   Optional<Message> findFirstByChannelIdOrderByCreatedAtDesc(UUID channelId);
 
-  List<Message> findAllByChannelId(UUID id); // 사용되는 곳 없음
-
   @Query("SELECT m FROM Message m "
       + "JOIN m.channel c "
       + "LEFT JOIN FETCH m.author a " // 탈퇴한 유저 존재 가능성 고려
-      + "LEFT JOIN FETCH a.status "
       + "LEFT JOIN FETCH a.profile "
       + "WHERE c.id = :channelId "
       + "ORDER BY m.createdAt DESC")
@@ -30,7 +26,6 @@ public interface MessageRepository extends JpaRepository<Message, UUID> {
   @Query("SELECT m FROM Message m "
       + "JOIN m.channel c "
       + "LEFT JOIN FETCH m.author a "
-      + "LEFT JOIN FETCH a.status "
       + "LEFT JOIN FETCH a.profile "
       + "WHERE c.id = :channelId "
       + "AND m.createdAt < :cursor " // 커서보다 과거 메시지 조회 조건

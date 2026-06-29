@@ -5,6 +5,8 @@ import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -52,6 +54,24 @@ public class GlobalExceptionHandler {
 
     return ResponseEntity.badRequest()
         .body(errorResponse);
+  }
+
+  // 401 미인증 에러
+  @ExceptionHandler(AuthenticationException.class)
+  public ResponseEntity<ErrorResponse> handleAuthenticationException(AuthenticationException ex) {
+    ErrorCode errorCode = ErrorCode.UNAUTHORIZED;
+
+    return ResponseEntity.status(errorCode.getStatus())
+        .body(ErrorResponse.of(errorCode, ex, Map.of()));
+  }
+
+  // 403 권한 없음 에러
+  @ExceptionHandler(AccessDeniedException.class)
+  public ResponseEntity<ErrorResponse> handleAccessDeniedException(AccessDeniedException ex) {
+    ErrorCode errorCode = ErrorCode.ACCESS_DENIED;
+
+    return ResponseEntity.status(errorCode.getStatus())
+        .body(ErrorResponse.of(errorCode, ex, Map.of()));
   }
 
   // 그 외 예상치 못한 모든 런타임 예외 처리

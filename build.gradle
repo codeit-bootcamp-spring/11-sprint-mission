@@ -6,7 +6,7 @@ plugins {
 }
 
 group = 'com.sprint.mission'
-version = '1.2-M8' // 'api-doc버전'-미션8
+version = '2.0-M9' // 'api-doc버전'-미션9
 description = 'Discode project for Spring Boot'
 
 java {
@@ -47,9 +47,6 @@ dependencies {
     // Actuator 의존성 추가
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
 
-    // Admin client 의존성 추가
-    // implementation 'de.codecentric:spring-boot-admin-starter-client:3.4.5'
-
     // Database & ORM (데이터베이스 연동)
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     runtimeOnly 'org.postgresql:postgresql' // PostgreSQL Driver: PostgreSQL과 통신하기 위한 드라이버
@@ -66,6 +63,9 @@ dependencies {
 
     // AWS S3 SDK
     implementation 'software.amazon.awssdk:s3:2.31.7'
+
+    // Spring Security
+    implementation 'org.springframework.boot:spring-boot-starter-security'
 
     // 컴파일 시 코드 생성기 (반드시 Lombok -> Binding -> MapStruct 순서여야 함!)
     annotationProcessor 'org.projectlombok:lombok'

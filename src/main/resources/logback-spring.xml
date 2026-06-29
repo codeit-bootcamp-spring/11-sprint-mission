@@ -4,8 +4,9 @@
   <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
     <encoder>
       <pattern>
-        %d{yy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %-36logger{36} [%X{requestId} | %X{method} |
-        %X{url}] - %msg%n
+        %d{yy-MM-dd HH:mm:ss.SSS} %magenta([%thread]) %highlight(%-5level) %cyan(%logger{36})
+        %green([%X{requestId:-SYSTEM} | IP: %X{clientIp:-LOCAL} | User: %X{userId:-GUEST} |
+        %X{requestMethod:-SYS} %X{requestUrl:-INTERNAL}]) - %msg%n
         <!-- 패턴: {년}-{월}-{일} {시}:{분}:{초}:{밀리초} [{스레드명}] {로그 레벨(5글자로 맞춤)} {로거 이름(최대 36글자)} [{MDC:요청ID} | {MDC:요청 메소드} | {MDC:요청 URL}] - {로그 메시지}{줄바꿈} -->
         <!-- 예시: 25-01-01 10:33:55.740 [main] DEBUG o.s.api.AbstractOpenApiResource [827cbc0b | GET | /v3/api-docs] - Init duration for springdoc-openapi is: 216 ms -->
       </pattern>
@@ -22,8 +23,9 @@
     </rollingPolicy>
     <encoder>
       <pattern>
-        %d{yy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %-36logger{36} [%X{requestId} | %X{method} |
-        %X{url}] - %msg%n
+        %d{yy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} [%X{requestId:-SYSTEM} | IP:
+        %X{clientIp:-LOCAL} | User: %X{userId:-GUEST} | %X{requestMethod:-SYS}
+        %X{requestUrl:-INTERNAL}] - %msg%n
       </pattern>
     </encoder>
   </appender>

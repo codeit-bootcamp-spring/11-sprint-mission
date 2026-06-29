@@ -4,17 +4,12 @@ import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentCreateRequest
 import com.sprint.mission.discodeit.dto.user.UserCreateRequest;
 import com.sprint.mission.discodeit.dto.user.UserDto;
 import com.sprint.mission.discodeit.dto.user.UserUpdateRequest;
-import com.sprint.mission.discodeit.dto.userstatus.UserStatusDto;
-import com.sprint.mission.discodeit.dto.userstatus.UserStatusUpdateRequest;
 import com.sprint.mission.discodeit.service.UserService;
-import com.sprint.mission.discodeit.service.UserStatusService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import java.io.IOException;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -24,7 +19,6 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.server.ResponseStatusException;
 
 @Tag(name = "User")
 @RestController
@@ -33,7 +27,6 @@ import org.springframework.web.server.ResponseStatusException;
 public class UserController {
 
   private final UserService userService;
-  private final UserStatusService userStatusService;
 
   @Operation(summary = "User 등록", operationId = "create")
   @ApiResponses(value = {
@@ -89,18 +82,6 @@ public class UserController {
   public ResponseEntity<List<UserDto>> findAll() {
     List<UserDto> userDtoList = userService.findAll();
     return ResponseEntity.ok(userDtoList);
-  }
-
-  @Operation(summary = "User 온라인 상태 업데이트", operationId = "updateUserStatusByUserId")
-  @ApiResponses(value = {
-      @ApiResponse(responseCode = "200", description = "User 온라인 상태가 성공적으로 업데이트됨"),
-      @ApiResponse(responseCode = "404", description = "해당 User의 UserStatus를 찾을 수 없음")
-  })
-  @PatchMapping("/{userId}/userStatus")
-  public ResponseEntity<UserStatusDto> updateStatus(@Valid @PathVariable UUID userId,
-      @RequestBody UserStatusUpdateRequest dto) {
-    UserStatusDto userStatusDto = userStatusService.update(userId, dto);
-    return ResponseEntity.ok(userStatusDto);
   }
 
   // create()에서 파일을 받아 BinaryContentCreateRequest에 담아주는 메서드

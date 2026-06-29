@@ -11,11 +11,11 @@ import com.sprint.mission.discodeit.controller.UserController;
 import com.sprint.mission.discodeit.dto.user.UserCreateRequest;
 import com.sprint.mission.discodeit.dto.user.UserDto;
 import com.sprint.mission.discodeit.service.UserService;
-import com.sprint.mission.discodeit.service.UserStatusService;
 import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.bean.override.mockito.MockitoBean; // 💡 최신 버전용 import
@@ -26,6 +26,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(UserController.class)
 @ActiveProfiles("test")
+@AutoConfigureMockMvc(addFilters = false)
 public class UserControllerTest {
 
   @Autowired
@@ -37,15 +38,12 @@ public class UserControllerTest {
   @MockitoBean
   private UserService userService;
 
-  @MockitoBean
-  private UserStatusService userStatusService;
-
   @Test
   @DisplayName("사용자 생성 성공 - 201 Created 응답 반환")
   void create_success() throws Exception {
     //given
     UserCreateRequest request = new UserCreateRequest("이마크", "mark@test.com", "pass1234");
-    UserDto userDto = new UserDto(UUID.randomUUID(), "이마크", "mark@test.com", null, null);
+    UserDto userDto = new UserDto(UUID.randomUUID(), "이마크", "mark@test.com", null, null, null);
 
     given(userService.create(any(UserCreateRequest.class), any())).willReturn(
         userDto);

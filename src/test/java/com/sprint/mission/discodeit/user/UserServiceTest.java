@@ -13,12 +13,10 @@ import com.sprint.mission.discodeit.dto.user.UserCreateRequest;
 import com.sprint.mission.discodeit.dto.user.UserDto;
 import com.sprint.mission.discodeit.dto.user.UserUpdateRequest;
 import com.sprint.mission.discodeit.entity.User;
-import com.sprint.mission.discodeit.entity.UserStatus;
 import com.sprint.mission.discodeit.exception.user.UserAlreadyExistsException;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.mapper.UserMapper;
 import com.sprint.mission.discodeit.repository.UserRepository;
-import com.sprint.mission.discodeit.repository.UserStatusRepository;
 import com.sprint.mission.discodeit.service.basic.BasicUserService;
 import java.util.Optional;
 import java.util.UUID;
@@ -28,6 +26,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 @ExtendWith(MockitoExtension.class) // 빠른 처리를 위해 Spring 컨텍스트를 로딩하지 않음
 public class UserServiceTest {
@@ -36,10 +35,10 @@ public class UserServiceTest {
   private UserRepository userRepository;
 
   @Mock
-  private UserStatusRepository userStatusRepository;
+  private UserMapper userMapper;
 
   @Mock
-  private UserMapper userMapper;
+  private PasswordEncoder passwordEncoder;
 
   @InjectMocks
   private BasicUserService userService;
@@ -49,15 +48,15 @@ public class UserServiceTest {
   void create_success() {
     //given
     UserCreateRequest request = new UserCreateRequest("이마크", "mark@test.com", "pass1234");
-    UserDto dto = new UserDto(UUID.randomUUID(), "이마크", "mark@test.com", null, true);
+    UserDto dto = new UserDto(UUID.randomUUID(), "이마크", "mark@test.com", null, true, null);
 
     given(userRepository.existsByUsernameOrEmail("이마크", "mark@test.com")).willReturn(
         false); // 중복 검사 통과 (false 반환)
 
+    given(passwordEncoder.encode(any(String.class))).willReturn("encodedPassword");
+
     given(userRepository.save(any(User.class))).will(
         returnsFirstArg()); // save 시 첫 번째 파라미터(들어온 User)를 그대로 반환해라! (실무 패턴)
-
-    given(userStatusRepository.save(any(UserStatus.class))).will(returnsFirstArg());
 
     given(userMapper.toDto(any(User.class))).willReturn(
         dto); // Mapper는 만들어둔 mockDto를 반환해라! given() 안에서만 any() 사용 가능.
@@ -69,8 +68,7 @@ public class UserServiceTest {
     assertThat(result).isNotNull();
     assertThat(result.username()).isEqualTo("이마크");
 
-    then(userRepository).should().save(any(User.class)); // 검증: User와 UserStatus가 둘 다 save 되었는지 확인
-    then(userStatusRepository).should().save(any(UserStatus.class));
+    then(userRepository).should().save(any(User.class)); // 검증: User에 save 되었는지 확인
   }
 
   @Test
@@ -89,7 +87,6 @@ public class UserServiceTest {
     // 예외가 터졌을 떄 아래 save 로직들이 호출되지 않았는지 검증
     then(userRepository).should(never())
         .save(any(User.class)); // userRepository mock 객체의 특정 메서드(save())가 호출되지 않았는지 검증
-    then(userStatusRepository).shouldHaveNoInteractions(); // 이 객체와 어떠한 상호작용도 없었는지 검증
   }
 
   @Test
@@ -106,8 +103,9 @@ public class UserServiceTest {
         false);
     given(userRepository.existsByEmailAndIdNot(request.newEmail(), userId)).willReturn(
         false);
+    given(passwordEncoder.encode(any(String.class))).willReturn("encodedPassword");
 
-    UserDto updatedDto = new UserDto(userId, "이마크", "mark@test.com", null, true);
+    UserDto updatedDto = new UserDto(userId, "이마크", "mark@test.com", null, true, null);
     given(userMapper.toDto(any(User.class))).willReturn(updatedDto);
 
     //when
@@ -128,7 +126,6 @@ public class UserServiceTest {
 
     given(userRepository.findById(userId)).willReturn(Optional.of(user));
     given(userRepository.existsByUsernameAndIdNot(request.newUsername(), userId)).willReturn(true);
-    //given(userRepository.existsByEmailAndIdNot(request.newEmail(), userId)).willReturn(true);
 
     assertThatThrownBy(() -> userService.update(userId, request, empty()))
         .isInstanceOf(UserAlreadyExistsException.class);

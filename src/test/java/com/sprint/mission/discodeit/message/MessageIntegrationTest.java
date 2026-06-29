@@ -9,12 +9,10 @@ import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.ChannelType;
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.entity.User;
-import com.sprint.mission.discodeit.entity.UserStatus;
 import com.sprint.mission.discodeit.exception.message.MessageNotFoundException;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
-import com.sprint.mission.discodeit.repository.UserStatusRepository;
 import com.sprint.mission.discodeit.response.PageResponse;
 import java.util.List;
 import java.util.UUID;
@@ -52,13 +50,9 @@ public class MessageIntegrationTest {
   @Autowired
   private ChannelRepository channelRepository;
 
-  @Autowired
-  private UserStatusRepository userStatusRepository;
-
   @AfterEach
   void clean_db() {
     messageRepository.deleteAllInBatch();
-    userStatusRepository.deleteAllInBatch();
     channelRepository.deleteAllInBatch();
     userRepository.deleteAllInBatch();
   }
@@ -74,9 +68,6 @@ public class MessageIntegrationTest {
     Channel channel = new Channel("채팅방", "채팅방", ChannelType.PUBLIC);
     channel = channelRepository.save(channel);
     UUID channelId = channel.getId();
-
-    UserStatus userStatus = new UserStatus(user, null);
-    userStatusRepository.save(userStatus); // 통합 테스트이므로 실제 데이터베이스에 저장
 
     MessageCreateRequest request = new MessageCreateRequest(userId, channelId, "안녕");
 
@@ -120,9 +111,6 @@ public class MessageIntegrationTest {
     Message message = new Message(user, channel, "과거메시지", null);
     message = messageRepository.save(message);
     UUID messageId = message.getId();
-
-    UserStatus userStatus = new UserStatus(user, null);
-    userStatusRepository.save(userStatus); // 통합 테스트이므로 실제 데이터베이스에 저장
 
     MessageUpdateRequest request = new MessageUpdateRequest("새메시지");
 

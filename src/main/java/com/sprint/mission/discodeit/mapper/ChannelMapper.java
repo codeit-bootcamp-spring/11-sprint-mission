@@ -12,7 +12,6 @@ import org.mapstruct.Mapping;
 import org.springframework.beans.factory.annotation.Autowired;
 import java.time.Instant;
 
-// 모범 답안을 참고하여 작성했습니다.
 @Mapper(componentModel = "spring", uses = UserMapper.class)
 public abstract class ChannelMapper {
 
@@ -36,8 +35,9 @@ public abstract class ChannelMapper {
         .orElse(Instant.MIN);
   }
 
+  // TODO: N + 1 문제 발생
   protected List<UserDto> resolveParticipants(Channel channel) {
-    return readStatusRepository.findAllByChannelIdWithUserWithStatusAndProfile(channel.getId())
+    return readStatusRepository.findAllByChannelIdWithUserWithProfile(channel.getId())
         .stream()
         .map(rs -> userMapper.toDto(rs.getUser()))
         .toList();

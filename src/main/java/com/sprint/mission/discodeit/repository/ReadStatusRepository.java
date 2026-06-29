@@ -14,10 +14,9 @@ public interface ReadStatusRepository extends JpaRepository<ReadStatus, UUID> {
   @Query("SELECT r FROM ReadStatus r "
       // readStatus는 user가 삭제되면 cascade 조건이므로, readStatus가 존재하면 유저도 존재함.
       + "JOIN FETCH r.user u "
-      + "JOIN FETCH u.status "
       + "LEFT JOIN FETCH u.profile "
       + "WHERE r.channel.id = :channelId")
-  List<ReadStatus> findAllByChannelIdWithUserWithStatusAndProfile(
+  List<ReadStatus> findAllByChannelIdWithUserWithProfile(
       @Param("channelId") UUID channelId);
 
   @EntityGraph(attributePaths = {"channel"})

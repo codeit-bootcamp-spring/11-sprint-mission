@@ -8,7 +8,6 @@ import com.sprint.mission.discodeit.dto.user.UserDto;
 import com.sprint.mission.discodeit.dto.user.UserUpdateRequest;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.repository.UserRepository;
-import com.sprint.mission.discodeit.repository.UserStatusRepository;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
@@ -40,12 +39,8 @@ public class UserIntegrationTest {
   @Autowired
   private UserRepository userRepository;
 
-  @Autowired
-  private UserStatusRepository userStatusRepository;
-
   @AfterEach
   void clean_db() {
-    userStatusRepository.deleteAllInBatch(); // User의 Id를 FK로 참조하는 UserStatus가 고아가 되지 않도록 먼저 삭제
     userRepository.deleteAllInBatch(); // 매 테스트 후 모든 유저 데이터를 깔끔하게 삭제
   }
 

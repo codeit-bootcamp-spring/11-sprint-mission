@@ -1,9 +1,11 @@
 package com.sprint.mission.discodeit.entity;
 
 import com.sprint.mission.discodeit.entity.base.BaseUpdatableEntity;
-import jakarta.persistence.CascadeType;
+import com.sprint.mission.discodeit.security.Role;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
@@ -34,15 +36,17 @@ public class User extends BaseUpdatableEntity {
   @OnDelete(action = OnDeleteAction.SET_NULL)
   private BinaryContent profile;
 
-  @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-  // UserState 엔티티의 user 필드가 FK를 가진 주인이라는 뜻
-  private UserStatus status;
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false, length = 20)
+  private Role role;
 
+  // TODO: 나중에 정적 팩토리 메서드로 리팩토링
   public User(String username, String email, String password, BinaryContent profile) {
     this.username = username;
     this.email = email;
     this.password = password;
     this.profile = profile;
+    this.role = Role.USER;
   }
 
   public void update(String username, String email, String password, BinaryContent profile) {
@@ -50,5 +54,9 @@ public class User extends BaseUpdatableEntity {
     this.email = email;
     this.password = password;
     this.profile = profile;
+  }
+
+  public void updateRole(Role role) {
+    this.role = role;
   }
 }

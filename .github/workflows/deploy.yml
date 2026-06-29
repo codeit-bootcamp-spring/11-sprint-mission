@@ -59,7 +59,9 @@ jobs:
           TASK_DEF: ${{ vars.ECS_TASK_DEFINITION }}
         run: |
           aws ecs describe-task-definition --task-definition $TASK_DEF | jq '.taskDefinition | .containerDefinitions[0].image = "'$ECR_REGISTRY':'$IMAGE_TAG'" | del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)' > new-task-def.json
-          aws ecs register-task-definition --cli-input-json file://new-task-def.json
+          
+          NEW_REVISION=$(aws ecs register-task-definition --cli-input-json file://new-task-def.json --query 'taskDefinition.revision' --output text)
+          echo "NEW_REVISION=$NEW_REVISION" >> $GITHUB_ENV
 
       # 3. 프리티어 메모리 확보 (기존 서버 강제 종료)
       - name: Stop existing tasks (Scale down to 0)
@@ -77,10 +79,8 @@ jobs:
           SERVICE: ${{ vars.ECS_SERVICE }}
           TASK_DEF: ${{ vars.ECS_TASK_DEFINITION }}
         run: |
-          LATEST_REVISION=$(aws ecs describe-task-definition --task-definition $TASK_DEF --query 'taskDefinition.revision' --output text)
-          
           aws ecs update-service \
             --cluster $CLUSTER \
             --service $SERVICE \
-            --task-definition $TASK_DEF:$LATEST_REVISION \
+            --task-definition $TASK_DEF:$NEW_REVISION \
             --desired-count 1
