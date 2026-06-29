@@ -1,43 +1,72 @@
 package com.sprint.mission.discodeit.controller;
 
-import com.sprint.mission.discodeit.dto.request.UserRoleUpdateRequest;
-import com.sprint.mission.discodeit.dto.response.UserDto;
-import com.sprint.mission.discodeit.security.DiscodeitUserDetails;
+import com.sprint.mission.discodeit.dto.response.JwtDto;
+import com.sprint.mission.discodeit.exception.AuthenticationException;
+import com.sprint.mission.discodeit.security.jwt.JwtRegistry;
+import com.sprint.mission.discodeit.security.jwt.JwtTokenProvider;
 import com.sprint.mission.discodeit.service.UserService;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import java.util.Arrays;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.web.csrf.CsrfToken;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @Slf4j
 @RestController
 @RequestMapping("/api/auth")
-@RequiredArgsConstructor  // 추가
+@RequiredArgsConstructor
 public class AuthController {
 
-  private final UserService userService;  // 추가
+  private final JwtTokenProvider jwtTokenProvider;
+  private final JwtRegistry jwtRegistry;
+  private final UserService userService;
 
-  @GetMapping("/csrf-token")
-  public ResponseEntity<Void> getCsrfToken(CsrfToken csrfToken) {
-    String tokenValue = csrfToken.getToken();
-    log.debug("CSRF 토큰 요청: {}", tokenValue);
-    return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+  @PostMapping("/refresh")
+  public ResponseEntity<JwtDto> refresh(HttpServletRequest request,
+      HttpServletResponse response) {
+    String refreshToken = extractRefreshToken(request);
+
+    if (refreshToken == null || !jwtTokenProvider.validateToken(refreshToken)
+        || !jwtRegistry.hasActiveJwtInformationByRefreshToken(refreshToken)) {
+      throw new AuthenticationException("유효하지 않은 리프레시 토큰입니다.");
+    }
+
+    UUID userId = jwtTokenProvider.getUserId(refreshToken);
+    String username = jwtTokenProvider.getUsername(refreshToken);
+    String role = jwtTokenProvider.getRole(refreshToken);
+
+    String newAccessToken = jwtTokenProvider.generateAccessToken(userId, username, role);
+    String newRefreshToken = jwtTokenProvider.generateRefreshToken(userId, username, role);
+
+    // 토큰 로테이션
+    jwtRegistry.rotateJwtInformation(refreshToken, newAccessToken, newRefreshToken,
+        jwtTokenProvider.getExpirationTime(newAccessToken),
+        jwtTokenProvider.getExpirationTime(newRefreshToken));
+
+    // 새 리프레시 토큰 쿠키 갱신
+    Cookie refreshCookie = new Cookie(JwtTokenProvider.REFRESH_TOKEN_COOKIE_NAME, newRefreshToken);
+    refreshCookie.setHttpOnly(true);
+    refreshCookie.setPath("/");
+    refreshCookie.setMaxAge((int) (jwtTokenProvider.getRefreshTokenExpiration() / 1000));
+    response.addCookie(refreshCookie);
+
+    return ResponseEntity.ok(JwtDto.of(newAccessToken));
   }
 
-  @GetMapping("/me")
-  public ResponseEntity<UserDto> getMe(@AuthenticationPrincipal DiscodeitUserDetails userDetails) {
-    return ResponseEntity.ok(userDetails.getUserDto());
-  }
-
-  @PutMapping("/role")
-  public ResponseEntity<UserDto> updateRole(@RequestBody UserRoleUpdateRequest request) {
-    return ResponseEntity.ok(userService.updateRole(request));
+  private String extractRefreshToken(HttpServletRequest request) {
+    if (request.getCookies() == null) {
+      return null;
+    }
+    return Arrays.stream(request.getCookies())
+        .filter(cookie -> cookie.getName().equals(JwtTokenProvider.REFRESH_TOKEN_COOKIE_NAME))
+        .findFirst()
+        .map(Cookie::getValue)
+        .orElse(null);
   }
 }

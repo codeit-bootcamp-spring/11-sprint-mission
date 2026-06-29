@@ -63,3 +63,7 @@ info:
     max-request-size: ${spring.servlet.multipart.max-request-size:unknown}
 server:
   port: 80
+jwt:
+  secret: ${JWT_SECRET:discodeit-jwt-secret-key-must-be-at-least-256-bits-long}
+  access-token-expiration: 3600000       # 1시간 (ms)
+  refresh-token-expiration: 604800000    # 7일 (ms)
