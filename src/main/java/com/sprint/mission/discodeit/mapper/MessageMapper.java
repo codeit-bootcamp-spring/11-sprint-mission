@@ -13,7 +13,7 @@ public abstract class MessageMapper {
   protected UserMapper userMapper;
 
   @Mapping(source = "message.channel.id", target = "channelId")
-  @Mapping(target = "author", expression = "java(message.getAuthor() != null ? userMapper.toDto(message.getAuthor(), message.getAuthor().getStatus()) : null)")
+  @Mapping(target = "author", expression = "java(message.getAuthor() != null ? userMapper.toDto(message.getAuthor(), false) : null)")
   @Mapping(target = "attachments", expression = "java(message.getMessageAttachments().stream().map(a -> binaryContentMapper.toDto(a.getBinaryContent())).toList())")
   public abstract MessageDto toDto(Message message);
 

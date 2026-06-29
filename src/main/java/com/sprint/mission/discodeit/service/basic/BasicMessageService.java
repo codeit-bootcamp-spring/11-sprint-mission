@@ -28,6 +28,7 @@ import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Limit;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -132,6 +133,7 @@ public class BasicMessageService implements MessageService {
 
   @Override
   @Transactional
+  @PreAuthorize("@messageSecurityService.isAuthor(#id, authentication.principal.userDto.id())")
   public void deleteMessage(UUID id) {
     log.debug("메시지 삭제 비즈니스 로직 시작 - messageId: {}", id);
     Message mes = messageRepository.findById(id)
@@ -155,6 +157,7 @@ public class BasicMessageService implements MessageService {
 
   @Override
   @Transactional
+  @PreAuthorize("@messageSecurityService.isAuthor(#id, authentication.principal.userDto.id())")
   public MessageDto updateMessage(UUID id, MessageUpdateRequest request) {
     log.debug("메시지 수정 비즈니스 로직 시작 - messageId: {}", id);
     Message mes = messageRepository.findById(id)

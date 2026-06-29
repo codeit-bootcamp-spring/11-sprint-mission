@@ -14,12 +14,12 @@ FROM amazoncorretto:17
 
 WORKDIR /app
 
-COPY --from=builder /build/build/libs/*.jar app.jar
-
-EXPOSE 80
-
 ENV PROJECT_NAME=discodeit \
     PROJECT_VERSION=1.2-M8 \
     JVM_OPTS=""
+
+COPY --from=builder /build/build/libs/${PROJECT_NAME}-${PROJECT_VERSION}.jar app.jar
+
+EXPOSE 80
 
 ENTRYPOINT ["sh", "-lc", "exec java $JVM_OPTS -jar app.jar"]

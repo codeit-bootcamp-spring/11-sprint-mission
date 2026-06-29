@@ -6,7 +6,9 @@ import com.sprint.mission.discodeit.response.ErrorResponse;
 import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -33,6 +35,13 @@ public class GlobalExceptionHandler {
 
     return ResponseEntity.badRequest()
         .body(ErrorResponse.from(ErrorCode.VALIDATION_ERROR, details, e.getClass()));
+  }
+
+  @ExceptionHandler(AccessDeniedException.class)
+  public ResponseEntity<ErrorResponse> handle(AccessDeniedException e) {
+    return ResponseEntity.status(HttpStatus.FORBIDDEN)
+        .body(ErrorResponse.from(ErrorCode.FORBIDDEN, Map.of("message", e.getMessage()),
+            e.getClass()));
   }
 
   @ExceptionHandler(Exception.class)

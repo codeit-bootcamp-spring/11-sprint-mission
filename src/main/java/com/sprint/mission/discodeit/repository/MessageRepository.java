@@ -28,10 +28,10 @@ public interface MessageRepository extends JpaRepository<Message, UUID> {
 
   Optional<Message> findTopByChannelIdOrderByCreatedAtDesc(UUID channelId);
 
-  @EntityGraph(attributePaths = {"author", "author.status", "author.profile"})
+  @EntityGraph(attributePaths = {"author", "author.profile"})
   List<Message> findByChannelIdOrderByCreatedAtDesc(UUID channelId, Limit limit);
 
-  @EntityGraph(attributePaths = {"author", "author.status", "author.profile"})
+  @EntityGraph(attributePaths = {"author", "author.profile"})
   List<Message> findByChannelIdAndCreatedAtBeforeOrderByCreatedAtDesc(UUID channelId,
       Instant cursor,
       Limit limit);

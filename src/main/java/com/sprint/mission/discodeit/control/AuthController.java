@@ -1,26 +1,45 @@
 package com.sprint.mission.discodeit.control;
 
-import com.sprint.mission.discodeit.dto.LoginRequest;
+import com.sprint.mission.discodeit.dto.user.RoleUpdateRequest;
 import com.sprint.mission.discodeit.dto.user.UserDto;
-import com.sprint.mission.discodeit.service.AuthService;
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
+import com.sprint.mission.discodeit.security.DiscodeitUserDetails;
+import com.sprint.mission.discodeit.service.UserService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.web.csrf.CsrfToken;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/auth")
-@RequiredArgsConstructor
 public class AuthController {
 
-  private final AuthService authService;
+  private final UserService userService;
 
-  @PostMapping("/login")
-  public ResponseEntity<UserDto> login(@Valid @RequestBody LoginRequest request) {
-    UserDto user = authService.login(request);
-    return ResponseEntity.ok(user);
+  public AuthController(UserService userService) {
+    this.userService = userService;
+  }
+
+  @GetMapping("/csrf-token")
+  public ResponseEntity<Void> getCsrfToken(CsrfToken csrfToken) {
+    String tokenValue = csrfToken.getToken();
+    log.debug("CSRF 토큰 요청: {}", tokenValue);
+    return ResponseEntity.noContent().build();
+  }
+
+  @GetMapping("/me")
+  public ResponseEntity<UserDto> me(
+      @AuthenticationPrincipal DiscodeitUserDetails userDetails) {
+    return ResponseEntity.ok(userDetails.getUserDto());
+  }
+
+  @PutMapping("/role")
+  public ResponseEntity<UserDto> updateRole(@RequestBody RoleUpdateRequest request) {
+    return ResponseEntity.ok(userService.updateRole(request));
   }
 }

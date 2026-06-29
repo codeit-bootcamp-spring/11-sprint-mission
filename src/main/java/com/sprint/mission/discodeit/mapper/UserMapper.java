@@ -2,8 +2,6 @@ package com.sprint.mission.discodeit.mapper;
 
 import com.sprint.mission.discodeit.dto.user.UserDto;
 import com.sprint.mission.discodeit.entity.User;
-import com.sprint.mission.discodeit.entity.UserStatus;
-import java.util.Optional;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
@@ -14,17 +12,16 @@ public abstract class UserMapper {
   @Mapping(source = "user.username", target = "username")
   @Mapping(source = "user.email", target = "email")
   @Mapping(source = "user.profile", target = "profile")
+  @Mapping(source = "user.role", target = "role")
   public abstract UserDto toDtoBasic(User user);
 
-  public UserDto toDto(User user, UserStatus status) {
+  public UserDto toDto(User user, boolean isOnline) {
     if (user == null) {
       return null;
     }
     UserDto dto = toDtoBasic(user);
 
-    boolean isOnline = Optional.ofNullable(status)
-        .map(UserStatus::getOnlineStatus).orElse(false);
-
-    return new UserDto(dto.id(), dto.username(), dto.email(), dto.profile(), isOnline);
+    return new UserDto(dto.id(), dto.username(), dto.email(), dto.profile(), isOnline,
+        dto.role());
   }
 }
