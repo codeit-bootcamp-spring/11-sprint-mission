@@ -1,6 +1,7 @@
 package com.sprint.mission.discodeit.controller;
 
 import com.sprint.mission.discodeit.dto.response.JwtDto;
+import com.sprint.mission.discodeit.dto.response.UserDto;
 import com.sprint.mission.discodeit.exception.AuthenticationException;
 import com.sprint.mission.discodeit.security.jwt.JwtRegistry;
 import com.sprint.mission.discodeit.security.jwt.JwtTokenProvider;
@@ -12,7 +13,9 @@ import java.util.Arrays;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -30,7 +33,12 @@ public class AuthController {
   @PostMapping("/refresh")
   public ResponseEntity<JwtDto> refresh(HttpServletRequest request,
       HttpServletResponse response) {
+    log.debug("refresh 요청 수신");
     String refreshToken = extractRefreshToken(request);
+    log.debug("추출된 리프레시 토큰: {}",
+        refreshToken != null ? refreshToken.substring(0, 20) + "..." : "null");
+    log.debug("레지스트리 존재 여부: {}",
+        refreshToken != null && jwtRegistry.hasActiveJwtInformationByRefreshToken(refreshToken));
 
     if (refreshToken == null || !jwtTokenProvider.validateToken(refreshToken)
         || !jwtRegistry.hasActiveJwtInformationByRefreshToken(refreshToken)) {
@@ -56,7 +64,8 @@ public class AuthController {
     refreshCookie.setMaxAge((int) (jwtTokenProvider.getRefreshTokenExpiration() / 1000));
     response.addCookie(refreshCookie);
 
-    return ResponseEntity.ok(JwtDto.of(newAccessToken));
+    UserDto userDto = userService.findById(userId);
+    return ResponseEntity.ok(JwtDto.of(newAccessToken, userDto));
   }
 
   private String extractRefreshToken(HttpServletRequest request) {
@@ -68,5 +77,10 @@ public class AuthController {
         .findFirst()
         .map(Cookie::getValue)
         .orElse(null);
+  }
+
+  @GetMapping("/csrf-token")
+  public ResponseEntity<Void> getCsrfToken() {
+    return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
   }
 }
