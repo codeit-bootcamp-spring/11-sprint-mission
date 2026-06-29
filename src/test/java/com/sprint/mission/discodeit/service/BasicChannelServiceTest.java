@@ -21,6 +21,7 @@ import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
+import com.sprint.mission.discodeit.security.jwt.JwtRegistry;
 import com.sprint.mission.discodeit.service.basic.BasicChannelService;
 import java.util.List;
 import java.util.Optional;
@@ -30,7 +31,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.core.session.SessionRegistry;
 
 @ExtendWith(MockitoExtension.class)
 class BasicChannelServiceTest {
@@ -44,7 +44,7 @@ class BasicChannelServiceTest {
   @Mock
   private UserRepository userRepository;
   @Mock
-  private SessionRegistry sessionRegistry;
+  private JwtRegistry jwtRegistry;
   @Mock
   private ChannelMapper channelMapper;
   @Mock

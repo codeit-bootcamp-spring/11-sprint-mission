@@ -17,9 +17,9 @@ import com.sprint.mission.discodeit.exception.UserNotFoundException;
 import com.sprint.mission.discodeit.mapper.UserMapper;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
+import com.sprint.mission.discodeit.security.jwt.JwtRegistry;
 import com.sprint.mission.discodeit.service.basic.BasicUserService;
 import com.sprint.mission.discodeit.storage.BinaryContentStorage;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -28,7 +28,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 @ExtendWith(MockitoExtension.class)
@@ -45,7 +44,7 @@ class BasicUserServiceTest {
   @Mock
   private PasswordEncoder passwordEncoder;
   @Mock
-  private SessionRegistry sessionRegistry;
+  private JwtRegistry jwtRegistry;
 
   @InjectMocks
   private BasicUserService userService;
@@ -60,7 +59,7 @@ class BasicUserServiceTest {
     given(userRepository.existsByUsername("jihye")).willReturn(false);
     given(userRepository.existsByEmail("jihye@test.com")).willReturn(false);
     given(userRepository.save(any(User.class))).willReturn(user);
-    given(sessionRegistry.getAllSessions(any(), anyBoolean())).willReturn(Collections.emptyList());
+    given(jwtRegistry.hasActiveJwtInformationByUserId(any())).willReturn(false);
     given(userMapper.toDto(any(User.class), anyBoolean())).willReturn(dto);
 
     UserDto result = userService.create(request, null);
@@ -98,7 +97,7 @@ class BasicUserServiceTest {
     given(userRepository.findById(userId)).willReturn(Optional.of(user));
     given(userRepository.existsByUsername("newName")).willReturn(false);
     given(userRepository.existsByEmail("new@test.com")).willReturn(false);
-    given(sessionRegistry.getAllSessions(any(), anyBoolean())).willReturn(Collections.emptyList());
+    given(jwtRegistry.hasActiveJwtInformationByUserId(any())).willReturn(false);
     given(userMapper.toDto(any(User.class), anyBoolean())).willReturn(dto);
 
     UserDto result = userService.update(userId, request, null);
@@ -144,7 +143,7 @@ class BasicUserServiceTest {
     UserDto dto = new UserDto(userId, "jihye", "jihye@test.com", null, false, Role.USER);
 
     given(userRepository.findById(userId)).willReturn(Optional.of(user));
-    given(sessionRegistry.getAllSessions(any(), anyBoolean())).willReturn(Collections.emptyList());
+    given(jwtRegistry.hasActiveJwtInformationByUserId(any())).willReturn(false);
     given(userMapper.toDto(any(User.class), anyBoolean())).willReturn(dto);
 
     UserDto result = userService.findById(userId);
@@ -168,7 +167,7 @@ class BasicUserServiceTest {
     UserDto dto = new UserDto(user.getId(), "jihye", "jihye@test.com", null, false, Role.USER);
 
     given(userRepository.findAll()).willReturn(List.of(user));
-    given(sessionRegistry.getAllSessions(any(), anyBoolean())).willReturn(Collections.emptyList());
+    given(jwtRegistry.hasActiveJwtInformationByUserId(any())).willReturn(false);
     given(userMapper.toDto(any(User.class), anyBoolean())).willReturn(dto);
 
     List<UserDto> result = userService.findAll();
