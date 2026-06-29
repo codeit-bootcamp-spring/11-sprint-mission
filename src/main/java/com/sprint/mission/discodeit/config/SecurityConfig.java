@@ -73,7 +73,8 @@ public class SecurityConfig {
                 "/",
                 "/index.html",
                 "/assets/**",
-                "/favicon.ico"
+                "/favicon.ico",
+                "/api/auth/csrf-token"
             ).permitAll()
             .anyRequest().authenticated()
         )
