@@ -3,8 +3,8 @@ package com.sprint.mission.discodeit.config;
 import com.sprint.mission.discodeit.security.DiscodeitUserDetailsService;
 import com.sprint.mission.discodeit.security.Http401AuthenticationEntryPoint;
 import com.sprint.mission.discodeit.security.Http403AccessDeniedHandler;
+import com.sprint.mission.discodeit.security.JwtLoginSuccessHandler;
 import com.sprint.mission.discodeit.security.LoginFailureHandler;
-import com.sprint.mission.discodeit.security.LoginSuccessHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -17,6 +17,7 @@ import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -32,14 +33,11 @@ import org.springframework.security.web.session.HttpSessionEventPublisher;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-  private final LoginSuccessHandler loginSuccessHandler;
+  private final JwtLoginSuccessHandler jwtLoginSuccessHandler;
   private final LoginFailureHandler loginFailureHandler;
   private final DiscodeitUserDetailsService userDetailsService;
   private final Http401AuthenticationEntryPoint authenticationEntryPoint;
   private final Http403AccessDeniedHandler accessDeniedHandler;
-
-  @Value("${spring.security.remember-me.key:discodeit-secret-key-for-remember-me}")
-  private String rememberKey;
 
   @Bean
   public PasswordEncoder passwordEncoder() {
@@ -63,17 +61,7 @@ public class SecurityConfig {
   }
 
   @Bean
-  public SessionRegistry sessionRegistry() {
-    return new SessionRegistryImpl();
-  }
-
-  @Bean
-  public HttpSessionEventPublisher httpSessionEventPublisher() {
-    return new HttpSessionEventPublisher();
-  }
-
-  @Bean
-  public SecurityFilterChain filterChain(HttpSecurity http, SessionRegistry sessionRegistry)
+  public SecurityFilterChain filterChain(HttpSecurity http)
       throws Exception {
     http.csrf(csrf -> csrf
         .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
@@ -100,24 +88,13 @@ public class SecurityConfig {
     );
 
     http.sessionManagement(management -> management
-        .sessionConcurrency(concurrency -> concurrency
-            .maximumSessions(1)
-            .maxSessionsPreventsLogin(false)
-            .sessionRegistry(sessionRegistry)
-        )
+        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
     );
 
     http.formLogin(login -> login
         .loginProcessingUrl("/api/auth/login")
-        .successHandler(loginSuccessHandler)
+        .successHandler(jwtLoginSuccessHandler)
         .failureHandler(loginFailureHandler)
-    );
-
-    http.rememberMe(rememberMe -> rememberMe
-        .rememberMeParameter("remember-me")
-        .tokenValiditySeconds(14 * 24 * 60 * 60)
-        .key(rememberKey)
-        .userDetailsService(userDetailsService)
     );
 
     http.logout(logout -> logout
