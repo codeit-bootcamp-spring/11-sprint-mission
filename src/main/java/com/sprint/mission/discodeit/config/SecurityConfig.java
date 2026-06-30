@@ -90,11 +90,16 @@ public class SecurityConfig {
                 "/api/auth/logout",
                 "/swagger-ui/**",
                 "/v3/api-docs/**",
-                "/actuator/**"
+                "/actuator/**",
+                "/",
+                "/index.html",
+                "/assets/**",
+                "/*.js",
+                "/*.css",
+                "/*.ico"
             ).permitAll()
             .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
-            .requestMatchers("/api/**").authenticated()
-            .anyRequest().permitAll()
+            .anyRequest().authenticated()
         )
         .exceptionHandling(ex -> ex
             .authenticationEntryPoint(customAuthenticationEntryPoint)
@@ -105,10 +110,10 @@ public class SecurityConfig {
 
   @Bean
   public RoleHierarchy roleHierarchy() {
-    return RoleHierarchyImpl.fromHierarchy("""
-        ROLE_ADMIN > ROLE_CHANNEL_MANAGER
-        ROLE_CHANNEL_MANAGER > ROLE_USER
-        """);
+    return RoleHierarchyImpl.withDefaultRolePrefix()
+        .role("ADMIN").implies("CHANNEL_MANAGER")
+        .role("CHANNEL_MANAGER").implies("USER")
+        .build();
   }
 
   @Bean

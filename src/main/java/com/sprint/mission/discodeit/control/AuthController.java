@@ -4,6 +4,7 @@ import com.sprint.mission.discodeit.dto.user.RoleUpdateRequest;
 import com.sprint.mission.discodeit.dto.user.UserDto;
 import com.sprint.mission.discodeit.security.DiscodeitUserDetails;
 import com.sprint.mission.discodeit.service.UserService;
+import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -35,7 +36,9 @@ public class AuthController {
   @GetMapping("/me")
   public ResponseEntity<UserDto> me(
       @AuthenticationPrincipal DiscodeitUserDetails userDetails) {
-    return ResponseEntity.ok(userDetails.getUserDto());
+    UUID userId = userDetails.getUserDto().id();
+    UserDto userDto = userService.readUser(userId);
+    return ResponseEntity.ok(userDto);
   }
 
   @PutMapping("/role")

@@ -65,16 +65,10 @@ public class UserController {
   public ResponseEntity<UserDto> updateUser(@PathVariable UUID id,
       @Parameter(content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE))
       @Valid @RequestPart("userUpdateRequest") UserUpdateRequest request,
-      @RequestPart(value = "profile", required = false) MultipartFile profile,
-      HttpServletRequest httpRequest,
-      HttpServletResponse httpResponse) {
+      @RequestPart(value = "profile", required = false) MultipartFile profile) {
     log.info("사용자 수정 요청 수신 - userId: {}, hasProfile: {}", id,
         profile != null && !profile.isEmpty());
     UserDto updatedUser = userService.updateUser(id, request, profile);
-
-    if (request.newPassword() != null) {
-      rememberMeServices.loginFail(httpRequest, httpResponse);
-    }
 
     log.info("사용자 수정 응답 완료 - userId: {}", id);
     return ResponseEntity.ok(updatedUser);
