@@ -6,7 +6,7 @@ plugins {
 }
 
 group = 'com.sprint.mission'
-version = '1.2-M8'
+version = '2.1-M10'
 description = 'Demo project for Spring Boot'
 
 java {
@@ -35,7 +35,7 @@ dependencies {
     implementation 'org.mapstruct:mapstruct:1.5.5.Final'
 
     compileOnly 'org.projectlombok:lombok'
-    
+
     runtimeOnly 'org.postgresql:postgresql'
 
     annotationProcessor 'org.projectlombok:lombok'
