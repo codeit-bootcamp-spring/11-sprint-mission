@@ -95,4 +95,17 @@ public class JwtTokenProvider {
       throw new IllegalArgumentException("유효하지 않은 토큰입니다.", e);
     }
   }
+
+  public boolean validateToken(String token) {
+    try {
+      SignedJWT signedJWT = SignedJWT.parse(token);
+      if (!signedJWT.verify(verifier)) {
+        return false;
+      }
+      Date expiration = signedJWT.getJWTClaimsSet().getExpirationTime();
+      return expiration != null && expiration.after(new Date());
+    } catch (JOSEException | ParseException e) {
+      return false;
+    }
+  }
 }

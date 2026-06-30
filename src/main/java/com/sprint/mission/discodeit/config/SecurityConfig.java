@@ -4,7 +4,7 @@ import com.sprint.mission.discodeit.security.handler.CustomAccessDeniedHandler;
 import com.sprint.mission.discodeit.security.handler.CustomAuthenticationEntryPoint;
 import com.sprint.mission.discodeit.security.handler.JwtLoginSuccessHandler;
 import com.sprint.mission.discodeit.security.handler.LoginFailureHandler;
-import com.sprint.mission.discodeit.security.handler.LoginSuccessHandler;
+import com.sprint.mission.discodeit.security.jwt.JwtAuthenticationFilter;
 import com.sprint.mission.discodeit.security.service.DiscodeitUserDetailsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,6 +27,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.RememberMeServices;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.logout.HttpStatusReturningLogoutSuccessHandler;
 import org.springframework.security.web.authentication.rememberme.TokenBasedRememberMeServices;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
@@ -43,6 +44,7 @@ public class SecurityConfig {
   private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
   private final CustomAccessDeniedHandler customAccessDeniedHandler;
   private final DiscodeitUserDetailsService userDetailsService;
+  private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
   @Value("${discodeit.security.remember-me-key}")
   private String rememberMeKey;
@@ -81,6 +83,7 @@ public class SecurityConfig {
         .rememberMe(rememberMe -> rememberMe
             .rememberMeServices(rememberMeServices(userDetailsService))
         )
+        .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
         .authorizeHttpRequests(auth -> auth
             .requestMatchers(
                 "/api/auth/csrf-token",
