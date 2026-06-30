@@ -149,3 +149,16 @@ public class AWSS3Test {
         System.out.println("PresignedUrl: " + url);
     }
 }
+
+/*
+ * 전체 흐름:
+ * .env 파일
+ *     ↓ loadEnv()
+ * AWS 인증 정보 로드
+ *     ↓ buildClient()
+ * S3Client 생성 (AWS S3 연결)
+ *     ↓
+ * upload()       → S3에 파일 저장
+ * download()     → S3에서 파일 가져오기
+ * presignedUrl() → 임시 접근 URL 생성
+ */
