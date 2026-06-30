@@ -56,3 +56,8 @@ info:
     version: 17
   spring-boot:
     version: 3.4.0
+
+jwt:
+  secret: ${JWT_SECRET_KEY}
+  access-token-expiration: ${JWT_ACCESS_EXPIRATION:1800000}
+  refresh-token-expiration: ${JWT_REFRESH_EXPIRATION:604800000}
