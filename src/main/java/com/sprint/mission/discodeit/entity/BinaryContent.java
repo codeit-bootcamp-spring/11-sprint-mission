@@ -1,40 +1,29 @@
 package com.sprint.mission.discodeit.entity;
 
 import com.sprint.mission.discodeit.entity.base.BaseEntity;
-import com.sprint.mission.discodeit.entity.base.ImmutableBaseEntity;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+import lombok.AccessLevel;
 import lombok.Getter;
-import lombok.ToString;
+import lombok.NoArgsConstructor;
 
-import java.util.UUID;
-
+@Entity
+@Table(name = "binary_contents")
 @Getter
-@ToString(callSuper = true)
-public class BinaryContent extends ImmutableBaseEntity {
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class BinaryContent extends BaseEntity {
 
-    private String fileName;
-    private String contentType;
-    private byte[] data;
+  @Column(nullable = false)
+  private String fileName;
+  @Column(nullable = false)
+  private Long size;
+  @Column(length = 100, nullable = false)
+  private String contentType;
 
-    private BinaryContent(String fileName, String contentType, byte[] data) {
-        super();
-        this.fileName = fileName;
-        this.contentType = contentType;
-        this.data = data.clone();
-    }
-
-    private BinaryContent(BinaryContent other) {
-        super(other);
-        this.fileName = other.fileName;
-        this.contentType = other.contentType;
-        this.data = other.data.clone();
-    }
-
-    @Override
-    public BinaryContent copy() {
-        return new BinaryContent(this);
-    }
-
-    public static BinaryContent create(String fileName, String contentType, byte[] data) {
-        return new BinaryContent(fileName, contentType, data);
-    }
+  public BinaryContent(String fileName, Long size, String contentType) {
+    this.fileName = fileName;
+    this.size = size;
+    this.contentType = contentType;
+  }
 }
