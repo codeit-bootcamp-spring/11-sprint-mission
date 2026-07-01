@@ -13,6 +13,7 @@ import com.sprint.mission.discodeit.security.jwt.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler;
 import org.springframework.security.access.expression.method.MethodSecurityExpressionHandler;
@@ -88,6 +89,7 @@ public class SecurityConfig {
             "/api/auth/refresh",
             "/api/auth/**"
         ).permitAll()
+        .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
         .anyRequest().authenticated()
     );
 

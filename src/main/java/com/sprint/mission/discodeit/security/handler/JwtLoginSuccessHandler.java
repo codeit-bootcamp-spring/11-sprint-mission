@@ -12,6 +12,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.Instant;
+import java.util.HashMap;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -51,7 +53,10 @@ public class JwtLoginSuccessHandler implements AuthenticationSuccessHandler {
     response.setContentType(MediaType.APPLICATION_JSON_VALUE);
     response.setCharacterEncoding("UTF-8");
 
-    JwtDto jwtDto = new JwtDto(accessToken);
-    objectMapper.writeValue(response.getWriter(), jwtDto);
+    Map<String, Object> responseData = new HashMap<>();
+    responseData.put("accessToken", accessToken);
+    responseData.put("userDto", userDetails.getUserDto());
+
+    objectMapper.writeValue(response.getWriter(), responseData);
   }
 }
