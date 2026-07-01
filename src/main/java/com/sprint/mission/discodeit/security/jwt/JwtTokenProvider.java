@@ -9,20 +9,21 @@ import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jose.crypto.MACVerifier;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
+import com.sprint.mission.discodeit.security.DiscodeitUserDetails;
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
+import java.time.Instant;
 import java.util.Base64;
 import java.util.Date;
-import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
 public class JwtTokenProvider {
+
+  public static final String REFRESH_TOKEN_COOKIE_NAME = "REFRESH_TOKEN";
 
   private final String secretKey;
   private final long accessTokenExpiration;
@@ -42,34 +43,29 @@ public class JwtTokenProvider {
         .encodeToString(secretKey.getBytes(StandardCharsets.UTF_8));
   }
 
-  // 토큰 발급
-  public String createAccessToken(Authentication authentication) {
-    String authorities = authentication.getAuthorities().stream()
-        .map(GrantedAuthority::getAuthority)
-        .collect(Collectors.joining(","));
-    return createToken(authentication.getName(), authorities, accessTokenExpiration);
+  // access 토큰 생성
+  public String generateAccessToken(DiscodeitUserDetails userDetails) {
+    return createToken(userDetails.getUsername(), accessTokenExpiration);
   }
 
-  // 토큰 갱신
-  public String createRefreshToken(Authentication authentication) {
-    return createToken(authentication.getName(), "", refreshTokenExpiration);
+  // refresh 토큰 생성
+  public String generateRefreshToken(DiscodeitUserDetails userDetails) {
+    return createToken(userDetails.getUsername(), refreshTokenExpiration);
   }
 
-  private String createToken(String subject, String authorities, long expirationTime) {
+  // 토큰 생성
+  private String createToken(String subject, long expirationTime) {
     try {
       byte[] keyBytes = Base64.getDecoder().decode(base64EncodedSecretKey);
       JWSSigner signer = new MACSigner(keyBytes);
 
-      JWTClaimsSet.Builder builder = new JWTClaimsSet.Builder()
+      JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
           .subject(subject)
           .issueTime(new Date())
-          .expirationTime(new Date(System.currentTimeMillis() + expirationTime));
+          .expirationTime(new Date(System.currentTimeMillis() + expirationTime))
+          .build();
 
-      if (authorities != null && !authorities.isEmpty()) {
-        builder.claim("auth", authorities);
-      }
-
-      SignedJWT signedJWT = new SignedJWT(new JWSHeader(JWSAlgorithm.HS256), builder.build());
+      SignedJWT signedJWT = new SignedJWT(new JWSHeader(JWSAlgorithm.HS256), claimsSet);
       signedJWT.sign(signer);
       return signedJWT.serialize();
 
@@ -102,5 +98,37 @@ public class JwtTokenProvider {
       log.warn("지원되지 않거나 잘못된 형식의 JWT 토큰입니다.", e);
       return false;
     }
+  }
+
+  // 토큰 만료 시간 추출
+  public Instant getExpiration(String token) {
+    try {
+      SignedJWT signedJWT = SignedJWT.parse(token);
+      Date expirationTime = signedJWT.getJWTClaimsSet().getExpirationTime();
+      return expirationTime != null ? expirationTime.toInstant() : null;
+    } catch (ParseException e) {
+      log.error("JWT 토큰 파싱 에러 (만료 시간 추출 실패)", e);
+      return null;
+    }
+  }
+
+  // 토큰 Subject 추출
+  public String getSubject(String token) {
+    try {
+      SignedJWT signedJWT = SignedJWT.parse(token);
+      return signedJWT.getJWTClaimsSet().getSubject();
+    } catch (ParseException e) {
+      log.error("JWT 토큰 파싱 에러 (Subject 추출 실패)", e);
+      return null;
+    }
+  }
+
+  // 토큰 갱신
+  public String reissueAccessToken(String refreshToken) {
+    if (!validateToken(refreshToken)) {
+      throw new IllegalStateException("유효하지 않은 Refresh Token 입니다.");
+    }
+    String subject = getSubject(refreshToken);
+    return createToken(subject, accessTokenExpiration);
   }
 }
