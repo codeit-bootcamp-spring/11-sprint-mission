@@ -86,9 +86,7 @@ public class SecurityConfig {
         ).permitAll()
         .requestMatchers(
             "/api/auth/refresh",
-            "/api/auth/**",
-            "/api/users/",
-            "api/users/**"
+            "/api/auth/**"
         ).permitAll()
         .anyRequest().authenticated()
     );
