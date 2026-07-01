@@ -9,21 +9,23 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.mission.discodeit.dto.UserCreateRequest;
 import com.sprint.mission.discodeit.dto.UserDto;
+import com.sprint.mission.discodeit.entity.Role;
 import com.sprint.mission.discodeit.service.UserService;
-import com.sprint.mission.discodeit.service.UserStatusService;
 import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 
 @WebMvcTest(UserController.class)
+@AutoConfigureMockMvc(addFilters = false)
 @ActiveProfiles("test")
 public class UserControllerTest {
 
@@ -37,9 +39,6 @@ public class UserControllerTest {
   private UserService userService;
 
   @MockitoBean
-  private UserStatusService userStatusService;
-
-  @MockitoBean
   private JpaMetamodelMappingContext jpaMappingContext;
 
   @Test
@@ -48,7 +47,7 @@ public class UserControllerTest {
     UserCreateRequest request = new UserCreateRequest("woody",
         "woody@test.com", "pass1234", null);
     UserDto response = new UserDto(UUID.randomUUID(), "woody",
-        "woody@test.com", null, false);
+        "woody@test.com", null, false, Role.USER);
 
     given(userService.create(any(), any())).willReturn(response);
 

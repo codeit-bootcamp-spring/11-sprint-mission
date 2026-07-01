@@ -2,16 +2,16 @@ package com.sprint.mission.discodeit.service.basic;
 
 import com.sprint.mission.discodeit.dto.UserCreateRequest;
 import com.sprint.mission.discodeit.dto.UserDto;
-import com.sprint.mission.discodeit.dto.UserLoginRequest;
+import com.sprint.mission.discodeit.dto.UserRoleUpdateRequest;
 import com.sprint.mission.discodeit.dto.UserUpdateRequest;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.User;
-import com.sprint.mission.discodeit.entity.UserStatus;
 import com.sprint.mission.discodeit.exception.user.UserAlreadyExistsException;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.mapper.UserMapper;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
+import com.sprint.mission.discodeit.security.DiscodeitUserDetails;
 import com.sprint.mission.discodeit.service.UserService;
 import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import java.io.IOException;
@@ -20,6 +20,10 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.session.SessionInformation;
+import org.springframework.security.core.session.SessionRegistry;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -34,6 +38,8 @@ public class BasicUserService implements UserService {
   private final BinaryContentRepository binaryContentRepository;
   private final UserMapper userMapper;
   private final BinaryContentStorage binaryContentStorage;
+  private final PasswordEncoder passwordEncoder;
+  private final SessionRegistry sessionRegistry;
 
   @Override
   @Transactional
@@ -49,7 +55,9 @@ public class BasicUserService implements UserService {
       throw new UserAlreadyExistsException(request.email());
     }
 
-    User user = new User(request.username(), request.email(), request.password());
+    String encodedPassword = passwordEncoder.encode(request.password());
+
+    User user = new User(request.username(), request.email(), encodedPassword);
 
     try {
       if (profile != null && !profile.isEmpty()) {
@@ -69,13 +77,11 @@ public class BasicUserService implements UserService {
       throw new RuntimeException("프로필 이미지 처리 중 오류가 발생했습니다.");
     }
 
-    UserStatus userStatus = new UserStatus(user);
-    user.updateStatus(userStatus);
-
     userRepository.save(user);
     log.info("사용자 생성 완료 - userId: {}", user.getId());
 
-    return userMapper.toDto(user);
+    UserDto dto = userMapper.toDto(user);
+    return new UserDto(dto.id(), dto.username(), dto.email(), dto.profile(), false, dto.role());
   }
 
   @Override
@@ -85,7 +91,9 @@ public class BasicUserService implements UserService {
           log.warn("사용자 조회 실패(존재하지 않는 유저) - userId: {}", id);
           return new UserNotFoundException(id);
         });
-    return userMapper.toDto(user);
+    UserDto dto = userMapper.toDto(user);
+    boolean isOnline = isUserOnline(id);
+    return new UserDto(dto.id(), dto.username(), dto.email(), dto.profile(), isOnline, dto.role());
   }
 
   @Override
@@ -95,8 +103,20 @@ public class BasicUserService implements UserService {
         .collect(Collectors.toList());
   }
 
+  private boolean isUserOnline(UUID userId) {
+    for (Object principal : sessionRegistry.getAllPrincipals()) {
+      if (principal instanceof DiscodeitUserDetails userDetails) {
+        if (userDetails.getUserDto().id().equals(userId)) {
+          return !sessionRegistry.getAllSessions(principal, false).isEmpty();
+        }
+      }
+    }
+    return false;
+  }
+
   @Override
   @Transactional
+  @PreAuthorize("#id == principal.uesrDto.id or hasRole('ADMIN')")
   public UserDto update(UUID id, UserUpdateRequest request, MultipartFile profile) {
     log.debug("사용자 수정 시작 - userId: {}", id);
 
@@ -129,6 +149,7 @@ public class BasicUserService implements UserService {
 
   @Override
   @Transactional
+  @PreAuthorize("#id == principal.userDto.id or hasRole('ADMIN')")
   public void delete(UUID id) {
     log.debug("사용자 삭제 시작 - userId: {}", id);
 
@@ -142,17 +163,36 @@ public class BasicUserService implements UserService {
   }
 
   @Override
-  public UserDto login(UserLoginRequest request) {
-    User user = userRepository.findByUsername(request.username())
-        .orElseThrow(() -> {
-          log.warn("로그인 실패(존재하지 않는 유저) - username: {}", request.username());
-          return new IllegalArgumentException("가입되지 않은 유저이름입니다.");
-        });
+  @Transactional
+  @PreAuthorize("hasRole('ADMIN')")
+  public UserDto updateRole(UserRoleUpdateRequest request) {
+    log.debug("사용자 권한 변경 시작 - userId: {}, newRole: {}", request.userId(), request.newRole());
 
-    if (!user.getPassword().equals(request.password())) {
-      log.warn("로그인 실패(비밀번호 불일치) - username: {}", request.username());
-      throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
-    }
+    User user = userRepository.findById(request.userId()).orElseThrow(() -> {
+      log.warn("사용자 권한 변경 실패(존재하지 않는 유저) - userId: {}", request.userId());
+      return new UserNotFoundException(request.userId());
+    });
+    user.updateRole(request.newRole());
+    log.info("사용자 권한 변경 완료 - userId: {}, newRole: {}", user.getId(), request.newRole());
+
+    expireUserSessions(request.userId());
+
     return userMapper.toDto(user);
+  }
+
+  private void expireUserSessions(UUID targetUserId) {
+    log.debug("권한 변경에 따른 세션 만료 처리 시작 - targetUserId: {}", targetUserId);
+
+    for (Object principal : sessionRegistry.getAllPrincipals()) {
+      if (principal instanceof DiscodeitUserDetails userDetails) {
+        if (userDetails.getUserDto().id().equals(targetUserId)) {
+          List<SessionInformation> sessions = sessionRegistry.getAllSessions(principal, false);
+          for (SessionInformation sessionInformation : sessions) {
+            sessionInformation.expireNow();
+            log.info("기존 세션 만료 처리 완료 -  sessionId: {}", sessionInformation.getSessionId());
+          }
+        }
+      }
+    }
   }
 }

@@ -2,9 +2,8 @@ package com.sprint.mission.discodeit.service;
 
 import com.sprint.mission.discodeit.dto.UserCreateRequest;
 import com.sprint.mission.discodeit.dto.UserDto;
-import com.sprint.mission.discodeit.dto.UserLoginRequest;
+import com.sprint.mission.discodeit.dto.UserRoleUpdateRequest;
 import com.sprint.mission.discodeit.dto.UserUpdateRequest;
-
 import java.util.List;
 import java.util.UUID;
 import org.springframework.web.multipart.MultipartFile;
@@ -21,5 +20,5 @@ public interface UserService {
 
   void delete(UUID id);
 
-  UserDto login(UserLoginRequest request);
+  UserDto updateRole(UserRoleUpdateRequest request);
 }

@@ -5,6 +5,7 @@ import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -30,6 +31,13 @@ public class GlobalExceptionHandler {
             (a, b) -> a));
     return ResponseEntity.badRequest()
         .body(new ErrorResponse(400, "ValidationError", "유효성 검사 실패", details));
+  }
+
+  @ExceptionHandler(AccessDeniedException.class)
+  public ResponseEntity<ErrorResponse> handle(AccessDeniedException ex) {
+    log.warn("AccessDeniedException: {}", ex.getMessage());
+    return ResponseEntity.status(403)
+        .body(new ErrorResponse(403, "AccessDenied", "해당 기능을 사용할 권한이 없습니다.", Map.of()));
   }
 
   @ExceptionHandler(Exception.class)
