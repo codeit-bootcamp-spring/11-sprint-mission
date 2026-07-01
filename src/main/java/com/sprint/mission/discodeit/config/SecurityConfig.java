@@ -84,6 +84,7 @@ public class SecurityConfig {
             "/favicon.ico"
         ).permitAll()
         .requestMatchers(
+            "/api/auth/refresh",
             "/api/auth/**",
             "/api/users/",
             "api/users/**"
