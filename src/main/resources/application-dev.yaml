@@ -25,3 +25,14 @@ management:
   info:
     env:
       enabled: true
+
+discodeit:
+  admin:
+    username: admin
+    email: admin@discoedit.com
+    password: admin1234
+
+jwt:
+  secret: discodeit-jwt-secret-key-must-be-at-least-32-bytes
+  access-token-expiry: 1800000
+  refresh-token-expiry: 604800000

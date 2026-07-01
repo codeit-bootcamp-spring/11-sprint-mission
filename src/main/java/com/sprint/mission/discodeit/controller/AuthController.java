@@ -3,21 +3,30 @@ package com.sprint.mission.discodeit.controller;
 import com.sprint.mission.discodeit.controller.api.AuthApi;
 import com.sprint.mission.discodeit.dto.data.UserDto;
 import com.sprint.mission.discodeit.dto.request.RoleUpdateRequest;
+import com.sprint.mission.discodeit.dto.response.JwtDto;
+import com.sprint.mission.discodeit.exception.user.InvalidCredentialsException;
 import com.sprint.mission.discodeit.security.DiscodeitUserDetails;
+import com.sprint.mission.discodeit.security.jwt.JwtTokenProvider;
 import com.sprint.mission.discodeit.service.AuthService;
 import com.sprint.mission.discodeit.service.UserService;
 import java.util.UUID;
+
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.util.WebUtils;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -27,6 +36,7 @@ public class AuthController implements AuthApi {
 
   private final AuthService authService;
   private final UserService userService;
+  private final JwtTokenProvider jwtTokenProvider;
 
   @GetMapping("csrf-token")
   public ResponseEntity<Void> getCsrfToken(CsrfToken csrfToken) {
@@ -56,4 +66,20 @@ public class AuthController implements AuthApi {
         .status(HttpStatus.OK)
         .body(userDto);
   }
+
+  @PostMapping("refresh")
+  public ResponseEntity<JwtDto> refresh(HttpServletRequest request) {
+    log.info("액세스 토큰 재발급 요청");
+    Cookie refreshCookie = WebUtils.getCookie(request, JwtTokenProvider.REFRESH_TOKEN_COOKIE_NAME);
+    if (refreshCookie == null || !jwtTokenProvider.validateToken(refreshCookie.getValue())) {
+      throw new InvalidCredentialsException();
+    }
+    UserDetails userDetails = jwtTokenProvider.extractUserDetails(refreshCookie.getValue());
+    String accessToken = jwtTokenProvider.issueAccessToken(userDetails);
+
+    return ResponseEntity
+            .status(HttpStatus.OK)
+            .body(new JwtDto(accessToken));
+  }
+
 }
