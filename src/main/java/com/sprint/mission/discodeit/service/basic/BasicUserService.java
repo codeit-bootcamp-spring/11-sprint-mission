@@ -24,7 +24,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.session.SessionInformation;
-import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 import java.io.IOException;
@@ -48,7 +47,6 @@ public class BasicUserService implements UserService {
 
   private final UserMapper userMapper;
   private final PasswordEncoder passwordEncoder;
-  private final SessionRegistry sessionRegistry;
   private final ApplicationEventPublisher eventPublisher;
 
   @Override
@@ -214,24 +212,15 @@ public class BasicUserService implements UserService {
 
     Set<UUID> onlineUserIds = getOnlineUserIds();
 
-    sessionRegistry.getAllPrincipals().stream()
-        .filter(p -> p instanceof DiscodeitUserDetails)
-        .map(p -> (DiscodeitUserDetails) p)
-        .filter(p -> p.getUserDto().id().equals(request.userId()))
-        .forEach(p -> {
-          List<SessionInformation> sessions = sessionRegistry.getAllSessions(p, false);
-          sessions.forEach(SessionInformation::expireNow);
-        });
+    // TODO: JwtRegistry 구현 후 해당 유저의 refresh token 무효화 로직 추가
 
     boolean isOnline = onlineUserIds.contains(user.getId());
     return userMapper.toDto(user, isOnline);
   }
 
   private Set<UUID> getOnlineUserIds() {
-    return sessionRegistry.getAllPrincipals().stream()
-        .filter(p -> p instanceof DiscodeitUserDetails)
-        .map(p -> (DiscodeitUserDetails) p)
-        .map(p -> p.getUserDto().id())
-        .collect(Collectors.toSet());
+    // TODO: JwtRegistry 구현 후 refresh token 등록 여부로 온라인 판단하도록 교체
+
+    return Set.of();
   }
 }

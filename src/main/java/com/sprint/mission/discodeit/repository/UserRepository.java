@@ -13,7 +13,7 @@ public interface UserRepository extends JpaRepository<User, UUID> {
 
   @Override
   @NonNull
-  @EntityGraph(attributePaths = {"status", "profile"})
+  @EntityGraph(attributePaths = {"profile"})
   List<User> findAll();
 
   Optional<User> findByEmail(String email);

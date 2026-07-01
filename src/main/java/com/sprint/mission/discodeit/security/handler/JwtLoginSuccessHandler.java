@@ -33,9 +33,11 @@ public class JwtLoginSuccessHandler implements AuthenticationSuccessHandler {
 
     String accessToken = jwtTokenProvider.createAccessToken(
         userDetails.getUserDto().id(), userDetails.getUsername());
-    String refreshToken = jwtTokenProvider.createRefreshToken(userDetails.getUserDto().id());
+    String refreshToken = jwtTokenProvider.createRefreshToken(userDetails.getUserDto().id(),
+        userDetails.getUsername());
 
-    Cookie refreshTokenCookie = new Cookie("REFRESH_TOKEN", refreshToken);
+    Cookie refreshTokenCookie = new Cookie(JwtTokenProvider.REFRESH_TOKEN_COOKIE_NAME,
+        refreshToken);
     refreshTokenCookie.setHttpOnly(true);
     refreshTokenCookie.setPath("/");
     refreshTokenCookie.setMaxAge((int) refreshTokenValidity);

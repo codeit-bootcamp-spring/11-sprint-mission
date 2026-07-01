@@ -21,17 +21,19 @@ import org.springframework.web.filter.OncePerRequestFilter;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
   private static final String AUTHORIZATION_HEADER = "Authorization";
-  private static final String BEARER_PREFIX = "Bearer";
+  private static final String BEARER_PREFIX = "Bearer ";
 
   private final JwtTokenProvider jwtTokenProvider;
   private final DiscodeitUserDetailsService userDetailsService;
 
+  @Override
   protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
       FilterChain filterChain) throws ServletException, IOException {
 
     String token = resolveToken(request);
 
-    if (StringUtils.hasText(token) && jwtTokenProvider.validateToken(token)) {
+    if (StringUtils.hasText(token) && jwtTokenProvider.validateToken(token)
+        && jwtTokenProvider.isAccessToken(token)) {
       UUID userId = jwtTokenProvider.getUserId(token);
       String username = jwtTokenProvider.getUsername(token);
 

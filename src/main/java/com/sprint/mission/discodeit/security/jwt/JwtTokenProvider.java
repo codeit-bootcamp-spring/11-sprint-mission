@@ -58,8 +58,8 @@ public class JwtTokenProvider {
     return createToken(userId, username, accessTokenValidity, TYPE_ACCESS);
   }
 
-  public String createRefreshToken(UUID userId) {
-    return createToken(userId, null, refreshTokenValidity, TYPE_REFRESH);
+  public String createRefreshToken(UUID userId, String username) {
+    return createToken(userId, username, refreshTokenValidity, TYPE_REFRESH);
   }
 
   private String createToken(UUID userId, String username, long validitySeconds, String type) {
@@ -152,6 +152,16 @@ public class JwtTokenProvider {
       SignedJWT signedJWT = SignedJWT.parse(token);
       String type = signedJWT.getJWTClaimsSet().getStringClaim(CLAIM_TYPE);
       return TYPE_REFRESH.equals(type);
+    } catch (ParseException e) {
+      return false;
+    }
+  }
+
+  public boolean isAccessToken(String token) {
+    try {
+      SignedJWT signedJWT = SignedJWT.parse(token);
+      String type = signedJWT.getJWTClaimsSet().getStringClaim(CLAIM_TYPE);
+      return TYPE_ACCESS.equals(type);
     } catch (ParseException e) {
       return false;
     }
