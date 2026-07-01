@@ -1,5 +1,7 @@
 package com.sprint.mission.discodeit.integration;
 
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
@@ -44,7 +46,8 @@ class ChannelIntegrationTest {
     MockMultipartFile userPart = new MockMultipartFile(
         "userCreateRequest", "", MediaType.APPLICATION_JSON_VALUE,
         objectMapper.writeValueAsBytes(request));
-    MvcResult result = mockMvc.perform(multipart("/api/users").file(userPart)).andReturn();
+    MvcResult result = mockMvc.perform(
+        multipart("/api/users").file(userPart).with(csrf()).with(user(username))).andReturn();
     JsonNode node = objectMapper.readTree(result.getResponse().getContentAsString());
     return node.get("id").asText();
   }
@@ -57,7 +60,8 @@ class ChannelIntegrationTest {
     // when & then
     mockMvc.perform(post("/api/channels/public")
             .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(request)))
+            .content(objectMapper.writeValueAsString(request)).with(csrf())
+            .with(user("jihye").roles("CHANNEL_MANAGER")))
         .andExpect(status().isCreated())
         .andExpect(jsonPath("$.name").value("general"))
         .andExpect(jsonPath("$.type").value("PUBLIC"));
@@ -71,7 +75,8 @@ class ChannelIntegrationTest {
     // when & then
     mockMvc.perform(post("/api/channels/public")
             .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(request)))
+            .content(objectMapper.writeValueAsString(request)).with(csrf())
+            .with(user("jihye").roles("CHANNEL_MANAGER")))
         .andExpect(status().isBadRequest());
   }
 
@@ -86,7 +91,7 @@ class ChannelIntegrationTest {
     // when & then
     mockMvc.perform(post("/api/channels/private")
             .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(request)))
+            .content(objectMapper.writeValueAsString(request)).with(csrf()).with(user("jihye")))
         .andExpect(status().isCreated())
         .andExpect(jsonPath("$.type").value("PRIVATE"));
   }
@@ -97,7 +102,8 @@ class ChannelIntegrationTest {
     PublicChannelCreateRequest createRequest = new PublicChannelCreateRequest("general", "공용 채널");
     MvcResult createResult = mockMvc.perform(post("/api/channels/public")
             .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(createRequest)))
+            .content(objectMapper.writeValueAsString(createRequest)).with(csrf())
+            .with(user("jihye").roles("CHANNEL_MANAGER")))
         .andReturn();
     JsonNode node = objectMapper.readTree(createResult.getResponse().getContentAsString());
     String channelId = node.get("id").asText();
@@ -106,7 +112,8 @@ class ChannelIntegrationTest {
     PublicChannelUpdateRequest updateRequest = new PublicChannelUpdateRequest("newName", "새 설명");
     mockMvc.perform(patch("/api/channels/{channelId}", channelId)
             .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(updateRequest)))
+            .content(objectMapper.writeValueAsString(updateRequest)).with(csrf())
+            .with(user("jihye").roles("CHANNEL_MANAGER")))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.name").value("newName"));
   }
@@ -117,13 +124,15 @@ class ChannelIntegrationTest {
     PublicChannelCreateRequest createRequest = new PublicChannelCreateRequest("general", "공용 채널");
     MvcResult createResult = mockMvc.perform(post("/api/channels/public")
             .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(createRequest)))
+            .content(objectMapper.writeValueAsString(createRequest)).with(csrf())
+            .with(user("jihye").roles("CHANNEL_MANAGER")))
         .andReturn();
     JsonNode node = objectMapper.readTree(createResult.getResponse().getContentAsString());
     String channelId = node.get("id").asText();
 
     // when & then
-    mockMvc.perform(delete("/api/channels/{channelId}", channelId))
+    mockMvc.perform(delete("/api/channels/{channelId}", channelId).with(csrf())
+            .with(user("jihye").roles("CHANNEL_MANAGER")))
         .andExpect(status().isNoContent());
   }
 
@@ -134,11 +143,13 @@ class ChannelIntegrationTest {
     mockMvc.perform(post("/api/channels/public")
         .contentType(MediaType.APPLICATION_JSON)
         .content(objectMapper.writeValueAsString(
-            new PublicChannelCreateRequest("general", "공용 채널"))));
+            new PublicChannelCreateRequest("general", "공용 채널")))
+        .with(csrf()).with(user("jihye").roles("CHANNEL_MANAGER")));
 
     // when & then
     mockMvc.perform(get("/api/channels")
-            .param("userId", userId))
+            .param("userId", userId)
+            .with(user("jihye")))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$").isArray());
   }

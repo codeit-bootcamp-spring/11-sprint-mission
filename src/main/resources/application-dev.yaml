@@ -18,3 +18,4 @@ logging:
     org.hibernate.SQL: DEBUG
     org.hibernate.orm.jdbc.bind: TRACE
     com.sprint.mission: DEBUG
+    org.springframework.security: trace

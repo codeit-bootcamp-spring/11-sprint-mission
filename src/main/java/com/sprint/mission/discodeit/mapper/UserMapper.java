@@ -2,7 +2,6 @@ package com.sprint.mission.discodeit.mapper;
 
 import com.sprint.mission.discodeit.dto.response.UserDto;
 import com.sprint.mission.discodeit.entity.User;
-import com.sprint.mission.discodeit.entity.UserStatus;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
@@ -13,6 +12,7 @@ public interface UserMapper {
   @Mapping(target = "username", source = "user.username")
   @Mapping(target = "email", source = "user.email")
   @Mapping(target = "profile", source = "user.profile")
-  @Mapping(target = "online", expression = "java(userStatus != null && userStatus.isOnline())")
-  UserDto toDto(User user, UserStatus userStatus);
+  @Mapping(target = "online", source = "isOnline")
+  @Mapping(target = "role", source = "user.role")
+  UserDto toDto(User user, boolean isOnline);
 }

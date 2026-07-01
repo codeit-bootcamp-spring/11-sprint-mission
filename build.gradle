@@ -6,7 +6,7 @@ plugins {
 }
 
 group = 'com.sprint.mission'
-version = '1.2-M8'
+version = '1.2-M9'
 description = 'Demo project for Spring Boot'
 
 java {
@@ -32,6 +32,8 @@ dependencies {
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
     implementation 'org.mapstruct:mapstruct:1.5.5.Final'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    testImplementation 'org.springframework.security:spring-security-test'
     annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.5.Final'
     annotationProcessor 'org.projectlombok:lombok-mapstruct-binding:0.2.0'
     runtimeOnly 'org.postgresql:postgresql'

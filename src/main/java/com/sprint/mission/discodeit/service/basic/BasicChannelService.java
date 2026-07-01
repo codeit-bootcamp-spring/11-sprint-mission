@@ -10,7 +10,6 @@ import com.sprint.mission.discodeit.entity.Channel.ChannelType;
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.entity.User;
-import com.sprint.mission.discodeit.entity.UserStatus;
 import com.sprint.mission.discodeit.exception.ChannelNotFoundException;
 import com.sprint.mission.discodeit.exception.ChannelUpdateNotAllowedException;
 import com.sprint.mission.discodeit.exception.UserNotFoundException;
@@ -20,7 +19,6 @@ import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
-import com.sprint.mission.discodeit.repository.UserStatusRepository;
 import com.sprint.mission.discodeit.service.ChannelService;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -28,6 +26,8 @@ import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,12 +41,13 @@ public class BasicChannelService implements ChannelService {
   private final ReadStatusRepository readStatusRepository;
   private final MessageRepository messageRepository;
   private final UserRepository userRepository;
-  private final UserStatusRepository userStatusRepository;
   private final ChannelMapper channelMapper;
   private final UserMapper userMapper;
+  private final SessionRegistry sessionRegistry;
 
   @Override
   @Transactional
+  @PreAuthorize("hasRole('CHANNEL_MANAGER')")
   public ChannelDto createPublic(PublicChannelCreateRequest request) {
     log.debug("PUBLIC 채널 생성 요청 - name: {}", request.name());
     Channel channel = new Channel(ChannelType.PUBLIC, request.name(), request.description());
@@ -102,6 +103,7 @@ public class BasicChannelService implements ChannelService {
 
   @Override
   @Transactional
+  @PreAuthorize("hasRole('CHANNEL_MANAGER')")
   public ChannelDto update(UUID channelId, PublicChannelUpdateRequest request) {
     log.debug("채널 수정 요청 - id: {}", channelId);
     Channel channel = channelRepository.findById(channelId)
@@ -120,6 +122,7 @@ public class BasicChannelService implements ChannelService {
 
   @Override
   @Transactional
+  @PreAuthorize("hasRole('CHANNEL_MANAGER')")
   public void delete(UUID id) {
     log.debug("채널 삭제 요청 - id: {}", id);
     Channel channel = channelRepository.findById(id)
@@ -141,9 +144,11 @@ public class BasicChannelService implements ChannelService {
     if (channel.getType() == ChannelType.PRIVATE) {
       participants = readStatusRepository.findAllByChannelId(channel.getId()).stream()
           .map(rs -> {
-            UserStatus status = userStatusRepository
-                .findByUserId(rs.getUser().getId()).orElse(null);
-            return userMapper.toDto(rs.getUser(), status);
+            User user = rs.getUser();
+            boolean isOnline = !sessionRegistry.getAllSessions(
+                new org.springframework.security.core.userdetails.User(
+                    user.getUsername(), "", List.of()), false).isEmpty();
+            return userMapper.toDto(user, isOnline);
           })
           .toList();
     }

@@ -9,7 +9,6 @@ import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.entity.User;
-import com.sprint.mission.discodeit.entity.UserStatus;
 import com.sprint.mission.discodeit.exception.ChannelNotFoundException;
 import com.sprint.mission.discodeit.exception.MessageNotFoundException;
 import com.sprint.mission.discodeit.exception.UserNotFoundException;
@@ -19,19 +18,19 @@ import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
-import com.sprint.mission.discodeit.repository.UserStatusRepository;
 import com.sprint.mission.discodeit.service.MessageService;
 import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import java.time.Instant;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
+import org.springframework.security.access.prepost.PostAuthorize;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -47,9 +46,9 @@ public class BasicMessageService implements MessageService {
   private final UserRepository userRepository;
   private final BinaryContentRepository binaryContentRepository;
   private final BinaryContentStorage binaryContentStorage;
-  private final UserStatusRepository userStatusRepository;
   private final MessageMapper messageMapper;
   private final UserMapper userMapper;
+  private final SessionRegistry sessionRegistry;
 
   @Override
   @Transactional
@@ -91,9 +90,11 @@ public class BasicMessageService implements MessageService {
     messageRepository.saveAndFlush(message);
     log.info("메시지 생성 완료 - id: {}, channelId: {}", message.getId(), channel.getId());
 
-    UserStatus status = userStatusRepository.findByUserId(author.getId()).orElse(null);
-    UserDto authorDto = userMapper.toDto(author, status);
-    return messageMapper.toDto(message, status, authorDto);
+    boolean isOnline = !sessionRegistry.getAllSessions(
+        new org.springframework.security.core.userdetails.User(
+            author.getUsername(), "", List.of()), false).isEmpty();
+    UserDto authorDto = userMapper.toDto(author, isOnline);
+    return messageMapper.toDto(message, isOnline, authorDto);
   }
 
   @Override
@@ -111,21 +112,8 @@ public class BasicMessageService implements MessageService {
 
     List<Message> messages = slice.getContent();
 
-    List<UUID> authorIds = messages.stream()
-        .filter(m -> m.getAuthor() != null)
-        .map(m -> m.getAuthor().getId())
-        .distinct()
-        .toList();
-
-    Map<UUID, UserStatus> statusMap = userStatusRepository
-        .findAllByUserIdIn(authorIds).stream()
-        .collect(Collectors.toMap(
-            us -> us.getUser().getId(),
-            us -> us
-        ));
-
     List<MessageDto> content = messages.stream()
-        .map(m -> toDto(m, statusMap))
+        .map(this::toDto)
         .toList();
 
     Instant nextCursor = null;
@@ -138,6 +126,7 @@ public class BasicMessageService implements MessageService {
 
   @Override
   @Transactional
+  @PostAuthorize("returnObject.author != null && returnObject.author.id == authentication.principal.userDto.id")
   public MessageDto update(UUID messageId, MessageUpdateRequest request) {
     log.debug("메시지 수정 요청 - id: {}", messageId);
     Message message = messageRepository.findById(messageId)
@@ -148,17 +137,18 @@ public class BasicMessageService implements MessageService {
     message.updateContent(request.newContent());
     log.info("메시지 수정 완료 - id: {}", messageId);
 
-    UserStatus status = message.getAuthor() != null
-        ? userStatusRepository.findByUserId(message.getAuthor().getId()).orElse(null)
-        : null;
+    boolean isOnline = message.getAuthor() != null && !sessionRegistry.getAllSessions(
+        new org.springframework.security.core.userdetails.User(
+            message.getAuthor().getUsername(), "", List.of()), false).isEmpty();
     UserDto authorDto = message.getAuthor() != null
-        ? userMapper.toDto(message.getAuthor(), status)
+        ? userMapper.toDto(message.getAuthor(), isOnline)
         : null;
-    return messageMapper.toDto(message, status, authorDto);
+    return messageMapper.toDto(message, isOnline, authorDto);
   }
 
   @Override
   @Transactional
+  @PreAuthorize("@basicMessageService.isAuthor(#messageId, authentication.principal.userDto.id)")
   public void delete(UUID messageId) {
     log.debug("메시지 삭제 요청 - id: {}", messageId);
     Message message = messageRepository.findById(messageId)
@@ -170,13 +160,19 @@ public class BasicMessageService implements MessageService {
     log.info("메시지 삭제 완료 - id: {}", messageId);
   }
 
-  private MessageDto toDto(Message message, Map<UUID, UserStatus> statusMap) {
-    UserStatus status = message.getAuthor() != null
-        ? statusMap.get(message.getAuthor().getId())
-        : null;
+  private MessageDto toDto(Message message) {
+    boolean isOnline = message.getAuthor() != null && !sessionRegistry.getAllSessions(
+        new org.springframework.security.core.userdetails.User(
+            message.getAuthor().getUsername(), "", List.of()), false).isEmpty();
     UserDto authorDto = message.getAuthor() != null
-        ? userMapper.toDto(message.getAuthor(), status)
+        ? userMapper.toDto(message.getAuthor(), isOnline)
         : null;
-    return messageMapper.toDto(message, status, authorDto);
+    return messageMapper.toDto(message, isOnline, authorDto);
+  }
+
+  public boolean isAuthor(UUID messageId, UUID userId) {
+    return messageRepository.findById(messageId)
+        .map(m -> m.getAuthor() != null && m.getAuthor().getId().equals(userId))
+        .orElse(false);
   }
 }
