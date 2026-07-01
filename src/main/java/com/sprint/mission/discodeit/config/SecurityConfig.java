@@ -5,6 +5,8 @@ import com.sprint.mission.discodeit.security.handler.CustomAuthenticationEntryPo
 import com.sprint.mission.discodeit.security.handler.JwtLoginSuccessHandler;
 import com.sprint.mission.discodeit.security.handler.LoginFailureHandler;
 import com.sprint.mission.discodeit.security.jwt.JwtAuthenticationFilter;
+import com.sprint.mission.discodeit.security.jwt.JwtTokenProvider;
+import com.sprint.mission.discodeit.security.service.DiscodeitUserDetailsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -35,7 +37,13 @@ public class SecurityConfig {
   private final LoginFailureHandler loginFailureHandler;
   private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
   private final CustomAccessDeniedHandler customAccessDeniedHandler;
-  private final JwtAuthenticationFilter jwtAuthenticationFilter;
+  private final JwtTokenProvider jwtTokenProvider;
+  private final DiscodeitUserDetailsService userDetailsService;
+
+  @Bean
+  public JwtAuthenticationFilter jwtAuthenticationFilter() {
+    return new JwtAuthenticationFilter(jwtTokenProvider, userDetailsService);
+  }
 
   @Bean
   public SecurityFilterChain filterChain(HttpSecurity http)
@@ -58,7 +66,7 @@ public class SecurityConfig {
         .sessionManagement(session -> session
             .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
         )
-        .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+        .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
         .authorizeHttpRequests(auth -> auth
             .requestMatchers(
                 "/api/auth/csrf-token",
