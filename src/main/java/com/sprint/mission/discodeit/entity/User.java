@@ -1,59 +1,60 @@
 package com.sprint.mission.discodeit.entity;
 
-import com.fasterxml.jackson.annotation.JsonManagedReference;
-import com.sprint.mission.discodeit.entity.base.BaseUpdatableEntity;
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OneToOne;
-import jakarta.persistence.Table;
-import lombok.AccessLevel;
+import com.sprint.mission.discodeit.entity.base.BaseEntity;
+import com.sprint.mission.discodeit.exception.BusinessException;
+import com.sprint.mission.discodeit.exception.ErrorCode;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.ToString;
 
-@Entity
-@Table(name = "users")
+import java.util.UUID;
+
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)  // JPA를 위한 기본 생성자
-public class User extends BaseUpdatableEntity {
+@ToString(callSuper = true)
+public class User extends BaseEntity {
 
-  @Column(length = 50, nullable = false, unique = true)
-  private String username;
-  @Column(length = 100, nullable = false, unique = true)
-  private String email;
-  @Column(length = 60, nullable = false)
-  private String password;
-  @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-  @JoinColumn(name = "profile_id", columnDefinition = "uuid")
-  private BinaryContent profile;
-  @JsonManagedReference
-  @Setter(AccessLevel.PROTECTED)
-  @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-  private UserStatus status;
+    private String username;
+    private String email;
+    private String password;
+    private UUID profileId;
 
-  public User(String username, String email, String password, BinaryContent profile) {
-    this.username = username;
-    this.email = email;
-    this.password = password;
-    this.profile = profile;
-  }
+    private User(String username, String email, String password, UUID profileId) {
+        super();
+        this.username = username;
+        this.email = email;
+        this.password = password; // BCrypt 해시 추후 적용
+        this.profileId = profileId;
+    }
 
-  public void update(String newUsername, String newEmail, String newPassword,
-      BinaryContent newProfile) {
-    if (newUsername != null && !newUsername.equals(this.username)) {
-      this.username = newUsername;
+    protected User(User other) {
+        super(other);
+        this.username = other.username;
+        this.email = other.email;
+        this.password = other.password;
+        this.profileId = other.profileId;
     }
-    if (newEmail != null && !newEmail.equals(this.email)) {
-      this.email = newEmail;
+
+    @Override
+    public User copy() {
+        return new User(this);
     }
-    if (newPassword != null && !newPassword.equals(this.password)) {
-      this.password = newPassword;
+
+    public static User create(String username, String email, String password, UUID profileId) {
+        return new User(username, email, password, profileId);
     }
-    if (newProfile != null) {
-      this.profile = newProfile;
+
+    // 이하 로직
+    public void authenticate(String rawPassword) {
+        if (!password.equals(rawPassword)) {
+            throw new BusinessException(ErrorCode.INVALID_CREDENTIALS);
+        }
     }
-  }
+
+    public void updateUserInfo(String username, String email, String password, UUID profileId) {
+        this.username = username;
+        this.email = email;
+        this.password = password;
+        this.profileId = profileId;
+        touch();
+    }
+
 }

@@ -1,31 +1,27 @@
 package com.sprint.mission.discodeit.entity.base;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.EntityListeners;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.MappedSuperclass;
-import java.time.Instant;
-import java.util.UUID;
-import lombok.AccessLevel;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
+import java.time.Instant;
 
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
-@MappedSuperclass
-@EntityListeners(AuditingEntityListener.class)
-public abstract class BaseEntity {
+public abstract class BaseEntity extends ImmutableBaseEntity {
 
-  @Id
-  @GeneratedValue(strategy = GenerationType.UUID)
-  @Column(columnDefinition = "uuid", updatable = false, nullable = false)
-  private UUID id;
+    protected Instant updateAt;
 
-  @CreatedDate
-  @Column(columnDefinition = "timestamp with time zone", updatable = false, nullable = false)
-  private Instant createdAt;
+    protected BaseEntity() {
+        super();
+        this.updateAt = createAt;
+    }
+
+    protected BaseEntity(BaseEntity other) {
+        super(other);
+        this.updateAt = other.updateAt;
+    }
+
+    protected void touch() {
+        this.updateAt = Instant.now();
+    }
+
+    public abstract BaseEntity copy();
 }

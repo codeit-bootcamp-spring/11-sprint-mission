@@ -1,39 +1,48 @@
 package com.sprint.mission.discodeit.service.basic;
 
-import com.sprint.mission.discodeit.dto.data.UserDto;
-import com.sprint.mission.discodeit.dto.request.LoginRequest;
+import com.sprint.mission.discodeit.dto.auth.LoginRequestDTO;
+import com.sprint.mission.discodeit.dto.auth.LoginResponseDTO;
 import com.sprint.mission.discodeit.entity.User;
-import com.sprint.mission.discodeit.exception.user.InvalidPasswordException;
-import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
-import com.sprint.mission.discodeit.mapper.UserMapper;
+import com.sprint.mission.discodeit.entity.UserStatus;
+import com.sprint.mission.discodeit.entity.UserStatusType;
+import com.sprint.mission.discodeit.exception.BusinessException;
+import com.sprint.mission.discodeit.exception.ErrorCode;
 import com.sprint.mission.discodeit.repository.UserRepository;
+import com.sprint.mission.discodeit.repository.UserStatusRepository;
 import com.sprint.mission.discodeit.service.AuthService;
-import java.util.NoSuchElementException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-@RequiredArgsConstructor
 @Service
+@RequiredArgsConstructor
 public class BasicAuthService implements AuthService {
 
-  private final UserRepository userRepository;
-  private final UserMapper userMapper;
+    private final UserRepository userRepository;
+    private final UserStatusRepository userStatusRepository;
 
-  @Transactional(readOnly = true)
-  @Override
-  public UserDto login(LoginRequest loginRequest) {
-    String username = loginRequest.username();
-    String password = loginRequest.password();
+    @Override
+    public LoginResponseDTO login(
+            LoginRequestDTO dto
+    ) {
+        // 검증
+        // - username 기반 User가 있는지 확인 (즉, username이 맞는지 검증)
+        User targetUser = userRepository.findByUsername(dto.username())
+                .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_CREDENTIALS));
 
-    User user = userRepository.findByUsername(username)
-        .orElseThrow(
-            () -> new UserNotFoundException(username));
+        // - 비밀번호 검증
+        targetUser.authenticate(dto.password());
 
-    if (!user.getPassword().equals(password)) {
-      throw new InvalidPasswordException();
+        // 유저 상태
+        // - 유저 상태 조회
+        UserStatus userStatus = userStatusRepository.findByUserId(targetUser.getId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_STATUS_NOT_FOUND));
+
+        // - 유저 상태 온라인으로 업데이트
+        userStatus.updateUserStatusType(UserStatusType.ONLINE);
+        userStatusRepository.save(userStatus);
+
+        return LoginResponseDTO.from(targetUser, userStatus);
     }
-
-    return userMapper.toDto(user);
-  }
 }
+
+// 아이디(username) 혹은 비밀번호 둘 중 뭐가 틀렸는지 알려주지 않음 (ErrorCode.INVALID_CREDENTIALS)
