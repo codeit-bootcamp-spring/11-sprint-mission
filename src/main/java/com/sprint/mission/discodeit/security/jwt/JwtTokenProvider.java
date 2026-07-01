@@ -9,13 +9,16 @@ import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jose.crypto.MACVerifier;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
+import com.sprint.mission.discodeit.exception.auth.RefreshTokenInvalidException;
 import jakarta.annotation.PostConstruct;
 import java.text.ParseException;
 import java.time.Instant;
 import java.util.Date;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 @Component
 public class JwtTokenProvider {
@@ -38,6 +41,10 @@ public class JwtTokenProvider {
 
   private JWSSigner signer;
   private JWSVerifier verifier;
+
+  public record TokenPair(String accessToken, String refreshToken) {
+
+  }
 
   @PostConstruct
   public void init() {
@@ -144,19 +151,6 @@ public class JwtTokenProvider {
     }
   }
 
-  private boolean validateRefreshToken(String token) {
-    if (!validateToken(token)) {
-      return false;
-    }
-    try {
-      SignedJWT signedJWT = SignedJWT.parse(token);
-      String type = signedJWT.getJWTClaimsSet().getStringClaim(CLAIM_TYPE);
-      return TYPE_REFRESH.equals(type);
-    } catch (ParseException e) {
-      return false;
-    }
-  }
-
   public boolean isAccessToken(String token) {
     try {
       SignedJWT signedJWT = SignedJWT.parse(token);
@@ -167,15 +161,37 @@ public class JwtTokenProvider {
     }
   }
 
-  // 토큰 갱신
-  public String reissueAccessToken(String refreshToken) {
-    if (!validateRefreshToken(refreshToken)) {
-      throw new IllegalArgumentException("유효하지 않거나 만료된 리프레시 토큰입니다.");
+  public boolean isRefreshToken(String token) {
+    try {
+      SignedJWT signedJWT = SignedJWT.parse(token);
+      String type = signedJWT.getJWTClaimsSet().getStringClaim(CLAIM_TYPE);
+      return TYPE_REFRESH.equals(type);
+    } catch (ParseException e) {
+      return false;
     }
+  }
 
+  // 토큰 갱신
+  public TokenPair reissueTokens(String refreshToken) {
+    if (!StringUtils.hasText(refreshToken)
+        || !validateToken(refreshToken)
+        || !isRefreshToken(refreshToken)) {
+      throw new RefreshTokenInvalidException();
+    }
     UUID userId = getUserId(refreshToken);
     String username = getUsername(refreshToken);
 
-    return createAccessToken(userId, username);
+    String newAccessToken = createAccessToken(userId, username);
+    String newRefreshToken = createRefreshToken(userId, username);
+
+    return new TokenPair(newAccessToken, newRefreshToken);
+  }
+
+  public ResponseCookie createRefreshTokenCookie(String refreshToken) {
+    return ResponseCookie.from(REFRESH_TOKEN_COOKIE_NAME, refreshToken)
+        .httpOnly(true)
+        .path("/")
+        .maxAge(refreshTokenValidity)
+        .build();
   }
 }

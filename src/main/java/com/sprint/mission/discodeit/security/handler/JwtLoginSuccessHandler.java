@@ -5,13 +5,13 @@ import com.sprint.mission.discodeit.dto.auth.JwtDto;
 import com.sprint.mission.discodeit.security.DiscodeitUserDetails;
 import com.sprint.mission.discodeit.security.jwt.JwtTokenProvider;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
@@ -23,9 +23,6 @@ public class JwtLoginSuccessHandler implements AuthenticationSuccessHandler {
   private final JwtTokenProvider jwtTokenProvider;
   private final ObjectMapper objectMapper;
 
-  @Value("${discodeit.security.jwt.refresh-token-validity}")
-  private long refreshTokenValidity;
-
   @Override
   public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
       Authentication authentication) throws IOException, ServletException {
@@ -36,12 +33,8 @@ public class JwtLoginSuccessHandler implements AuthenticationSuccessHandler {
     String refreshToken = jwtTokenProvider.createRefreshToken(userDetails.getUserDto().id(),
         userDetails.getUsername());
 
-    Cookie refreshTokenCookie = new Cookie(JwtTokenProvider.REFRESH_TOKEN_COOKIE_NAME,
-        refreshToken);
-    refreshTokenCookie.setHttpOnly(true);
-    refreshTokenCookie.setPath("/");
-    refreshTokenCookie.setMaxAge((int) refreshTokenValidity);
-    response.addCookie(refreshTokenCookie);
+    ResponseCookie refreshTokenCookie = jwtTokenProvider.createRefreshTokenCookie(refreshToken);
+    response.addHeader(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString());
 
     JwtDto jwtDto = new JwtDto(userDetails.getUserDto(), accessToken);
 
