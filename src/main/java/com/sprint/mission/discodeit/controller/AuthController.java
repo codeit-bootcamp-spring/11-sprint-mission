@@ -6,6 +6,7 @@ import com.sprint.mission.discodeit.dto.request.RoleUpdateRequest;
 import com.sprint.mission.discodeit.dto.response.JwtDto;
 import com.sprint.mission.discodeit.exception.user.InvalidCredentialsException;
 import com.sprint.mission.discodeit.security.DiscodeitUserDetails;
+import com.sprint.mission.discodeit.security.jwt.JwtRegistry;
 import com.sprint.mission.discodeit.security.jwt.JwtTokenProvider;
 import com.sprint.mission.discodeit.service.AuthService;
 import com.sprint.mission.discodeit.service.UserService;
@@ -13,6 +14,7 @@ import java.util.UUID;
 
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -37,6 +39,7 @@ public class AuthController implements AuthApi {
   private final AuthService authService;
   private final UserService userService;
   private final JwtTokenProvider jwtTokenProvider;
+  private final JwtRegistry jwtRegistry;
 
   @GetMapping("csrf-token")
   public ResponseEntity<Void> getCsrfToken(CsrfToken csrfToken) {
@@ -68,14 +71,28 @@ public class AuthController implements AuthApi {
   }
 
   @PostMapping("refresh")
-  public ResponseEntity<JwtDto> refresh(HttpServletRequest request) {
+  public ResponseEntity<JwtDto> refresh(HttpServletRequest request, HttpServletResponse response) {
     log.info("액세스 토큰 재발급 요청");
     Cookie refreshCookie = WebUtils.getCookie(request, JwtTokenProvider.REFRESH_TOKEN_COOKIE_NAME);
     if (refreshCookie == null || !jwtTokenProvider.validateToken(refreshCookie.getValue())) {
       throw new InvalidCredentialsException();
     }
     UserDetails userDetails = jwtTokenProvider.extractUserDetails(refreshCookie.getValue());
+    String username = userDetails.getUsername();
+
+    if (!jwtRegistry.isValidRefreshToken(username, refreshCookie.getValue())) {
+      throw new InvalidCredentialsException();
+    }
+
     String accessToken = jwtTokenProvider.issueAccessToken(userDetails);
+    String newRefreshToken = jwtTokenProvider.issueRefreshToken(userDetails);
+    jwtRegistry.register(username, newRefreshToken);
+
+    Cookie newRefreshCookie = new
+            Cookie(JwtTokenProvider.REFRESH_TOKEN_COOKIE_NAME, newRefreshToken);
+    newRefreshCookie.setHttpOnly(true);
+    newRefreshCookie.setPath("/");
+    response.addCookie(newRefreshCookie);
 
     return ResponseEntity
             .status(HttpStatus.OK)

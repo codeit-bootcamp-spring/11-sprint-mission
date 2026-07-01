@@ -19,6 +19,7 @@ import java.io.IOException;
 public class JwtLoginSuccessHandler implements AuthenticationSuccessHandler {
 
     private final JwtTokenProvider jwtTokenProvider;
+    private final JwtRegistry jwtRegistry;
     private final ObjectMapper objectMapper;
 
     @Override
@@ -28,6 +29,7 @@ public class JwtLoginSuccessHandler implements AuthenticationSuccessHandler {
 
         String accessToken = jwtTokenProvider.issueAccessToken(userDetails);
         String refreshToken = jwtTokenProvider.issueRefreshToken(userDetails);
+        jwtRegistry.register(userDetails.getUsername(), refreshToken);
 
         Cookie refreshCookie = new Cookie(JwtTokenProvider.REFRESH_TOKEN_COOKIE_NAME, refreshToken);
         refreshCookie.setHttpOnly(true);

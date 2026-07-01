@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.web.csrf.CsrfToken;
 
@@ -53,5 +54,7 @@ public interface AuthApi {
           @ApiResponse(responseCode = "401", description = "유효하지 않은 리프레시 토큰")
   })
   ResponseEntity<JwtDto> refresh(@Parameter(hidden = true)
-                                 HttpServletRequest request);
+                                 HttpServletRequest request,
+                                 @Parameter(hidden = true)
+                                 HttpServletResponse response);
 } 
