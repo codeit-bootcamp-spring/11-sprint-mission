@@ -1,5 +1,8 @@
 package com.sprint.mission.discodeit.security.handler;
 
+import com.sprint.mission.discodeit.security.DiscodeitUserDetails;
+import com.sprint.mission.discodeit.security.DiscodeitUserDetailsService;
+import com.sprint.mission.discodeit.security.jwt.JwtRegistry;
 import com.sprint.mission.discodeit.security.jwt.JwtTokenProvider;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -16,7 +19,9 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class JwtLogoutHandler implements LogoutHandler {
 
-  // TODO: JwtRegistry 주입 예정
+  private final JwtTokenProvider jwtTokenProvider;
+  private final JwtRegistry jwtRegistry;
+  private final DiscodeitUserDetailsService userDetailsService;
 
   @Override
   public void logout(HttpServletRequest request, HttpServletResponse response,
@@ -26,7 +31,15 @@ public class JwtLogoutHandler implements LogoutHandler {
           .filter(cookie -> cookie.getName().equals(JwtTokenProvider.REFRESH_TOKEN_COOKIE_NAME))
           .findFirst()
           .ifPresent(cookie -> {
-            // TODO: JwtRegistry를 통해 JwtInformation 무효화 예정
+            String refreshToken = cookie.getValue();
+
+            if (jwtTokenProvider.validateToken(refreshToken)) {
+              String username = jwtTokenProvider.getSubject(refreshToken);
+              DiscodeitUserDetails userDetails = (DiscodeitUserDetails) userDetailsService.loadUserByUsername(
+                  username);
+              jwtRegistry.invalidateJwtInformationByUserId(userDetails.getUserDto().id());
+              log.debug("서버 메모리에서 사용자({})의 토큰 정보 삭제 완료", username);
+            }
 
             Cookie deleteCookie = new Cookie(JwtTokenProvider.REFRESH_TOKEN_COOKIE_NAME, "");
             deleteCookie.setMaxAge(0);

@@ -6,12 +6,15 @@ import com.sprint.mission.discodeit.dto.UserRoleUpdateRequest;
 import com.sprint.mission.discodeit.exception.jwt.RefreshTokenInvalidException;
 import com.sprint.mission.discodeit.security.DiscodeitUserDetails;
 import com.sprint.mission.discodeit.security.DiscodeitUserDetailsService;
+import com.sprint.mission.discodeit.security.jwt.JwtInformation;
+import com.sprint.mission.discodeit.security.jwt.JwtRegistry;
 import com.sprint.mission.discodeit.security.jwt.JwtTokenProvider;
 import com.sprint.mission.discodeit.service.UserService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -34,6 +37,7 @@ public class AuthController {
   private final UserService userService;
   private final JwtTokenProvider jwtTokenProvider;
   private final DiscodeitUserDetailsService userDetailsService;
+  private final JwtRegistry jwtRegistry;
 
   @GetMapping("/csrf-token")
   public ResponseEntity<Void> getCsrfToken(CsrfToken csrfToken) {
@@ -53,7 +57,9 @@ public class AuthController {
   public ResponseEntity<JwtDto> refresh(
       @CookieValue(name = JwtTokenProvider.REFRESH_TOKEN_COOKIE_NAME, required = false) String refreshToken,
       HttpServletResponse response) {
-    if (refreshToken == null || !jwtTokenProvider.validateToken(refreshToken)) {
+    if (refreshToken == null ||
+        !jwtTokenProvider.validateToken(refreshToken) ||
+        !jwtRegistry.hasActiveJwtInformationByRefreshToken(refreshToken)) {
       throw new RefreshTokenInvalidException();
     }
 
@@ -63,6 +69,11 @@ public class AuthController {
 
     String newAccessToken = jwtTokenProvider.generateAccessToken(userDetails);
     String newRefreshToken = jwtTokenProvider.generateRefreshToken(userDetails);
+
+    Instant newExpiration = jwtTokenProvider.getExpiration(newRefreshToken);
+    JwtInformation newJwtInformation = new JwtInformation(userDetails.getUserDto().id(),
+        newAccessToken, newRefreshToken, newExpiration);
+    jwtRegistry.rotateJwtInformation(refreshToken, newJwtInformation);
 
     Cookie refreshTokenCookie = new Cookie(JwtTokenProvider.REFRESH_TOKEN_COOKIE_NAME,
         newRefreshToken);
