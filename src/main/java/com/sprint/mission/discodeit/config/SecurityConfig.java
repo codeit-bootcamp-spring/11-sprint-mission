@@ -2,13 +2,13 @@ package com.sprint.mission.discodeit.config;
 
 import com.sprint.mission.discodeit.security.DiscodeitUserDetailsService;
 import com.sprint.mission.discodeit.security.Http401AuthenticationEntryPoint;
-import com.sprint.mission.discodeit.security.Http403AccessDeniedHandler;
-import com.sprint.mission.discodeit.security.JwtLoginSuccessHandler;
-import com.sprint.mission.discodeit.security.LoginFailureHandler;
+import com.sprint.mission.discodeit.security.handler.Http403AccessDeniedHandler;
+import com.sprint.mission.discodeit.security.handler.JwtLoginSuccessHandler;
+import com.sprint.mission.discodeit.security.handler.JwtLogoutHandler;
+import com.sprint.mission.discodeit.security.handler.LoginFailureHandler;
 import com.sprint.mission.discodeit.security.filter.JwtAuthenticationFilter;
 import com.sprint.mission.discodeit.security.jwt.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
@@ -20,15 +20,12 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.session.SessionRegistry;
-import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.logout.HttpStatusReturningLogoutSuccessHandler;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
-import org.springframework.security.web.session.HttpSessionEventPublisher;
 
 @Configuration
 @EnableWebSecurity
@@ -41,6 +38,7 @@ public class SecurityConfig {
   private final DiscodeitUserDetailsService userDetailsService;
   private final Http401AuthenticationEntryPoint authenticationEntryPoint;
   private final Http403AccessDeniedHandler accessDeniedHandler;
+  private final JwtLogoutHandler jwtLogoutHandler;
 
   @Bean
   public PasswordEncoder passwordEncoder() {
@@ -110,6 +108,7 @@ public class SecurityConfig {
     http.logout(logout -> logout
         .logoutUrl("/api/auth/logout")
         .logoutSuccessHandler(new HttpStatusReturningLogoutSuccessHandler(HttpStatus.NO_CONTENT))
+        .addLogoutHandler(jwtLogoutHandler)
     );
 
     http.userDetailsService(userDetailsService);
