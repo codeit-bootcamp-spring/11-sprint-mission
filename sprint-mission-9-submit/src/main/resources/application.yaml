@@ -61,6 +61,15 @@ discodeit:
     username: ${DISCODEIT_ADMIN_USERNAME}
     email: ${DISCODEIT_ADMIN_EMAIL}
     password: ${DISCODEIT_ADMIN_PASSWORD}
+  jwt:
+    # JWT 서명용 비밀키, 환경변수가 없으면 로컬 개발용 기본값
+    secret: ${JWT_SECRET:dev-secret-key-for-local-test-must-be-at-least-32-bytes}
+
+    # API 인증용 Access Token 만료 시간 기본값 30분
+    access-token-expiration: ${JWT_ACCESS_TOKEN_EXPIRATION:1800000}
+
+    # Access Token 재발급용 Refresh Token 만료 시간 기본값 7일
+    refresh-token-expiration: ${JWT_REFRESH_TOKEN_EXPIRATION:604800000}
 
 logging:
   level:
