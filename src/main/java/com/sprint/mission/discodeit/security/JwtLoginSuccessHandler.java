@@ -25,17 +25,18 @@ public class JwtLoginSuccessHandler implements AuthenticationSuccessHandler {
   @Override
   public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
       Authentication authentication) throws IOException, ServletException {
-    // 엑세스, 리프레시 토큰 발급
-    String accessToken = jwtTokenProvider.createAccessToken(authentication);
-    String refreshToken = jwtTokenProvider.createRefreshToken(authentication);
 
-    // 리프레시 토큰 쿠키에 저장
-    Cookie refreshTokenCookie = new Cookie("REFRESH_TOKEN", refreshToken);
+    DiscodeitUserDetails userDetails = (DiscodeitUserDetails) authentication.getPrincipal();
+
+    String accessToken = jwtTokenProvider.generateAccessToken(userDetails);
+    String refreshToken = jwtTokenProvider.generateRefreshToken(userDetails);
+
+    Cookie refreshTokenCookie = new Cookie(JwtTokenProvider.REFRESH_TOKEN_COOKIE_NAME,
+        refreshToken);
     refreshTokenCookie.setHttpOnly(true);
     refreshTokenCookie.setPath("/");
     response.addCookie(refreshTokenCookie);
 
-    // 엑세스 토큰 응답 body에 포함
     response.setStatus(HttpStatus.OK.value());
     response.setContentType(MediaType.APPLICATION_JSON_VALUE);
     response.setCharacterEncoding("UTF-8");

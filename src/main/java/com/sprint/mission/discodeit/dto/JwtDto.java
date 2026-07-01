@@ -1,11 +1,7 @@
 package com.sprint.mission.discodeit.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
+public record JwtDto(
+    String accessToken
+) {
 
-@Getter
-@AllArgsConstructor
-public class JwtDto {
-
-  private String accessToken;
 }
