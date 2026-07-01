@@ -3,6 +3,7 @@ package com.sprint.mission.discodeit.config;
 import com.sprint.mission.discodeit.security.handler.CustomAccessDeniedHandler;
 import com.sprint.mission.discodeit.security.handler.CustomAuthenticationEntryPoint;
 import com.sprint.mission.discodeit.security.handler.JwtLoginSuccessHandler;
+import com.sprint.mission.discodeit.security.handler.JwtLogoutHandler;
 import com.sprint.mission.discodeit.security.handler.LoginFailureHandler;
 import com.sprint.mission.discodeit.security.jwt.JwtAuthenticationFilter;
 import com.sprint.mission.discodeit.security.jwt.JwtTokenProvider;
@@ -39,6 +40,7 @@ public class SecurityConfig {
   private final CustomAccessDeniedHandler customAccessDeniedHandler;
   private final JwtTokenProvider jwtTokenProvider;
   private final DiscodeitUserDetailsService userDetailsService;
+  private final JwtLogoutHandler jwtLogoutHandler;
 
   @Bean
   public JwtAuthenticationFilter jwtAuthenticationFilter() {
@@ -62,6 +64,7 @@ public class SecurityConfig {
             .logoutUrl("/api/auth/logout")
             .logoutSuccessHandler(
                 new HttpStatusReturningLogoutSuccessHandler(HttpStatus.NO_CONTENT))
+            .addLogoutHandler(jwtLogoutHandler)
         )
         .sessionManagement(session -> session
             .sessionCreationPolicy(SessionCreationPolicy.STATELESS)

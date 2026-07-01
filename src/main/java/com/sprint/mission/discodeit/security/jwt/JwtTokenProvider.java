@@ -194,4 +194,12 @@ public class JwtTokenProvider {
         .maxAge(refreshTokenValidity)
         .build();
   }
+
+  public ResponseCookie expireRefreshTokenCookie() {
+    return ResponseCookie.from(REFRESH_TOKEN_COOKIE_NAME, "")
+        .httpOnly(true)
+        .path("/")
+        .maxAge(0)
+        .build();
+  }
 }
