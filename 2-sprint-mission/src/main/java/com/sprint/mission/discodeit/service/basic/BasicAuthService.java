@@ -1,14 +1,16 @@
 package com.sprint.mission.discodeit.service.basic;
 
-import com.sprint.mission.discodeit.dto.AuthDto;
 import com.sprint.mission.discodeit.dto.UserDto;
+import com.sprint.mission.discodeit.dto.UserRoleUpdateRequest;
 import com.sprint.mission.discodeit.entity.User;
-import com.sprint.mission.discodeit.exception.user.InvalidCredentialsException;
+import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.mapper.UserMapper;
 import com.sprint.mission.discodeit.repository.UserRepository;
+import com.sprint.mission.discodeit.security.SessionManager;
 import com.sprint.mission.discodeit.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,19 +22,29 @@ public class BasicAuthService implements AuthService {
 
   private final UserRepository userRepository;
   private final UserMapper userMapper;
+  private final SessionManager sessionManager;
 
   @Override
-  public UserDto.Response login(AuthDto.LoginRequest request) {
-    log.debug("로그인 시작: username={}", request.username());
-    User user = userRepository.findByUsername(request.username())
-        .orElseThrow(InvalidCredentialsException::wrongPassword);
+  @Transactional
+  @PreAuthorize("hasRole('ADMIN')")
+  public UserDto.Response updateRole(UserRoleUpdateRequest request) {
+    log.debug("권한 수정 요청: userId={}, newRole={}", request.userId(), request.newRole());
+    sessionManager.expireUserSessions(request.userId());
+    return applyRole(request);
+  }
 
-    // 비밀번호 검증
-    if (!user.matchesPassword(request.password())) {
-      throw InvalidCredentialsException.wrongPassword();
-    }
+  @Override
+  @Transactional
+  public UserDto.Response updateRoleInternal(UserRoleUpdateRequest request) {
+    log.debug("내부 권한 수정: userId={}, newRole={}", request.userId(), request.newRole());
+    return applyRole(request);
+  }
 
-    log.info("로그인 성공: userId={}, username={}", user.getId(), user.getUsername());
+  private UserDto.Response applyRole(UserRoleUpdateRequest request) {
+    User user = userRepository.findById(request.userId())
+        .orElseThrow(() -> UserNotFoundException.withId(request.userId()));
+    user.updateRole(request.newRole());
+    log.info("사용자 권한 수정 완료: userId={}, newRole={}", request.userId(), request.newRole());
     return userMapper.toDto(user);
   }
 }

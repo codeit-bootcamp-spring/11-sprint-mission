@@ -13,7 +13,6 @@ import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.entity.User;
-import com.sprint.mission.discodeit.entity.UserStatus;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import jakarta.persistence.EntityManager;
 import java.time.Instant;
@@ -62,13 +61,6 @@ class ChannelIntegrationTest {
         .profile(profile)
         .build();
     entityManager.persist(user);
-
-    UserStatus status = UserStatus.builder()
-        .user(user)
-        .lastActiveAt(Instant.now())
-        .build();
-    entityManager.persist(status);
-
     return user;
   }
 

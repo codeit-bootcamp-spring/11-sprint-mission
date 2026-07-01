@@ -26,9 +26,9 @@ FROM amazoncorretto:17-alpine3.21
 WORKDIR /app
 
 # 환경 변수 설정
-ENV PROJECT_NAME=discodeit
-ENV PROJECT_VERSION=1.2-M8
-ENV JVM_OPTS=""
+ENV PROJECT_NAME=discodeit \
+    PROJECT_VERSION=1.2-M8 \
+    JVM_OPTS=""
 
 # 빌드 스테이지에서 JAR 파일 복사
 COPY --from=builder /app/build/libs/${PROJECT_NAME}-${PROJECT_VERSION}.jar ./

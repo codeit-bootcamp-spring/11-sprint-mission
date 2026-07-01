@@ -4,7 +4,6 @@ import com.sprint.mission.discodeit.dto.BinaryContentDto;
 import com.sprint.mission.discodeit.dto.UserDto;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.User;
-import com.sprint.mission.discodeit.entity.UserStatus;
 import com.sprint.mission.discodeit.exception.user.UserAlreadyExistsException;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.mapper.UserMapper;
@@ -17,6 +16,8 @@ import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,6 +31,8 @@ public class BasicUserService implements UserService {
   private final BinaryContentRepository binaryContentRepository;
   private final UserMapper userMapper;
   private final BinaryContentStorage binaryContentStorage;
+
+  private final PasswordEncoder passwordEncoder;
 
   @Override
   @Transactional
@@ -54,11 +57,8 @@ public class BasicUserService implements UserService {
         binaryContentStorage.put(profile.getId(), profileImageRequest.bytes());
       }
 
-      User user = request.toEntity(profile);
-
-      UserStatus.builder()
-          .user(user)
-          .build();
+      String encodedPassword = passwordEncoder.encode(request.password());
+      User user = request.toEntity(encodedPassword, profile);
 
       userRepository.save(user);
 
@@ -87,7 +87,7 @@ public class BasicUserService implements UserService {
   public List<UserDto.Response> findAll() {
     log.debug("사용자 전체 조회 시작");
 
-    List<UserDto.Response> responses = userRepository.findAllWithProfileAndStatus().stream()
+    List<UserDto.Response> responses = userRepository.findAllWithProfile().stream()
         .map(userMapper::toDto)
         .toList();
 
@@ -97,6 +97,7 @@ public class BasicUserService implements UserService {
 
   @Override
   @Transactional
+  @PreAuthorize("#id == principal.userDto.id")
   public UserDto.Response update(UUID id, UserDto.UpdateRequest request,
       BinaryContentDto.CreateRequest profileImageRequest) {
     log.debug("사용자 업데이트 시작: id={}", id);
@@ -152,6 +153,7 @@ public class BasicUserService implements UserService {
 
   @Override
   @Transactional
+  @PreAuthorize("#id == principal.userDto.id")
   public void delete(UUID id) {
     log.debug("사용자 삭제 시작: id={}", id);
 

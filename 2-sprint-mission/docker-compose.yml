@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   app:
     image: discodeit:local
@@ -14,16 +12,17 @@ services:
       - SPRING_DATASOURCE_USERNAME=${DB_USER}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
       - STORAGE_TYPE=s3
-      - STORAGE_LOCAL_ROOT_PATH=${STORAGE_LOCAL_ROOT_PATH}
+      - STORAGE_LOCAL_ROOT_PATH=$/app/storage
       - AWS_S3_ACCESS_KEY=${AWS_S3_ACCESS_KEY}
       - AWS_S3_SECRET_KEY=${AWS_S3_SECRET_KEY}
       - AWS_S3_REGION=${AWS_S3_REGION}
       - AWS_S3_BUCKET=${AWS_S3_BUCKET}
-      - AWS_S3_PRESIGNED_URL_EXPIRATION
+      - AWS_S3_PRESIGNED_URL_EXPIRATION=600
     volumes:
       - binary-content-storage:/app/storage
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     networks:
       - discodeit-network
 
@@ -41,6 +40,11 @@ services:
       - ./src/main/resources/schema.sql:/docker-entrypoint-initdb.d/schema.sql
     networks:
       - discodeit-network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 volumes:
   postgres-data:

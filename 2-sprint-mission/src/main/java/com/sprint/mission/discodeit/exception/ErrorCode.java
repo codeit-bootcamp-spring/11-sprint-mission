@@ -21,13 +21,10 @@ public enum ErrorCode {
   // ==== User ====
   USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER-001", "존재하지 않는 유저입니다."),
   DUPLICATE_USER(HttpStatus.CONFLICT, "USER-002", "이미 사용 중인 사용자 정보입니다."),
-
-  // ==== UserStatus ====
-  USER_STATUS_NOT_FOUND(HttpStatus.NOT_FOUND, "USER-STATUS-001", "유저 상태 정보를 찾을 수 없습니다."),
-  DUPLICATE_USER_STATUS(HttpStatus.CONFLICT, "USER-STATUS-002", "해당 유저의 상태 정보가 이미 존재합니다."),
-
+  
   // ==== Auth ====
   INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "AUTH-001", "아이디 또는 비밀번호가 일치하지 않습니다."),
+  ACCESS_DENIED(HttpStatus.FORBIDDEN, "AUTH-002", "접근 권한이 없습니다."),
 
   // ==== Channel ====
   CHANNEL_NOT_FOUND(HttpStatus.NOT_FOUND, "CHANNEL-001", "존재하지 않는 채널입니다."),
@@ -55,7 +52,7 @@ public enum ErrorCode {
   FILE_ALREADY_EXISTS(HttpStatus.CONFLICT, "FILE-009", "이미 존재하는 파일입니다."),
   PRESIGNED_URL_GENERATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "FILE-010",
       "Presigned URL 생성에 실패했습니다.");
-  
+
   private final HttpStatus status;
   private final String code;
   private final String message;

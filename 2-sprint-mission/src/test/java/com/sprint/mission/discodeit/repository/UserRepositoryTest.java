@@ -5,8 +5,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.sprint.mission.discodeit.config.JpaConfig;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.User;
-import com.sprint.mission.discodeit.entity.UserStatus;
-import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import org.hibernate.Hibernate;
@@ -44,12 +42,6 @@ class UserRepositoryTest {
         .profile(profile)
         .build();
     entityManager.persist(user);
-
-    UserStatus status = UserStatus.builder()
-        .user(user)
-        .lastActiveAt(Instant.now())
-        .build();
-    entityManager.persist(status);
 
     return user;
   }
@@ -129,7 +121,7 @@ class UserRepositoryTest {
     entityManager.clear();
 
     // When
-    List<User> users = userRepository.findAllWithProfileAndStatus();
+    List<User> users = userRepository.findAllWithProfile();
 
     // Then
     assertThat(users).hasSize(2);
@@ -141,8 +133,6 @@ class UserRepositoryTest {
         .orElseThrow();
 
     assertThat(Hibernate.isInitialized(foundUser1.getProfile())).isTrue();
-    assertThat(Hibernate.isInitialized(foundUser1.getStatus())).isTrue();
     assertThat(Hibernate.isInitialized(foundUser2.getProfile())).isTrue();
-    assertThat(Hibernate.isInitialized(foundUser2.getStatus())).isTrue();
   }
 }

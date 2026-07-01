@@ -17,19 +17,9 @@ CREATE TABLE users
     email      VARCHAR(100)             NOT NULL UNIQUE,
     password   VARCHAR(60)              NOT NULL,
     profile_id UUID UNIQUE,
+    role       varchar(20)              NOT NULL,
     CONSTRAINT fk_users_profile FOREIGN KEY (profile_id) REFERENCES binary_contents (id) ON DELETE SET NULL
 );
-
-CREATE TABLE user_statuses
-(
-    id             UUID PRIMARY KEY,
-    created_at     TIMESTAMP WITH TIME ZONE NOT NULL,
-    updated_at     TIMESTAMP WITH TIME ZONE,
-    user_id        UUID UNIQUE              NOT NULL,
-    last_active_at TIMESTAMP WITH TIME ZONE NOT NULL,
-    CONSTRAINT fk_user_statuses_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
-);
-
 
 CREATE TABLE channels
 (

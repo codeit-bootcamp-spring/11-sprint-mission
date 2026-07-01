@@ -5,11 +5,9 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.BDDMockito.willThrow;
-import static org.mockito.Mockito.mock;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -17,10 +15,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.mission.discodeit.dto.BinaryContentDto;
 import com.sprint.mission.discodeit.dto.UserDto;
-import com.sprint.mission.discodeit.dto.UserStatusDto;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.service.UserService;
-import com.sprint.mission.discodeit.service.UserStatusService;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
@@ -45,9 +41,6 @@ class UserControllerTest {
 
   @MockitoBean
   private UserService userService;
-
-  @MockitoBean
-  private UserStatusService userStatusService;
 
   // create 테스트
   @Test
@@ -316,44 +309,5 @@ class UserControllerTest {
         .andExpect(jsonPath("$[1].id").value(userId2.toString()))
         .andExpect(jsonPath("$[1].username").value("user2"))
         .andExpect(jsonPath("$[1].online").value(false));
-  }
-
-  // updateUserStatus 테스트
-  @Test
-  @DisplayName("사용자 상태 업데이트 요청 - 200 OK 반환")
-  void updateUserStatus_validRequest_returnsUpdatedStatus() throws Exception {
-    // Given
-    UUID userId = UUID.randomUUID();
-    UserStatusDto.UpdateRequest updateRequest = mock(UserStatusDto.UpdateRequest.class);
-    UserStatusDto.Response updatedStatus = mock(UserStatusDto.Response.class);
-
-    given(userStatusService.updateByUserId(eq(userId), any(UserStatusDto.UpdateRequest.class)))
-        .willReturn(updatedStatus);
-
-    // When & Then
-    mockMvc.perform(patch("/api/users/{userId}/userStatus", userId)
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(updateRequest)))
-        .andExpect(status().isOk());
-  }
-
-  @Test
-  @DisplayName("존재하지 않는 사용자 상태 업데이트 요청 - 404 Not Found 반환")
-  void updateUserStatus_nonExistingUser_returnsNotFound() throws Exception {
-    // Given
-    UUID nonExistentUserId = UUID.randomUUID();
-    UserStatusDto.UpdateRequest updateRequest = mock(UserStatusDto.UpdateRequest.class);
-
-    given(userStatusService.updateByUserId(eq(nonExistentUserId),
-        any(UserStatusDto.UpdateRequest.class)))
-        .willThrow(UserNotFoundException.withId(nonExistentUserId));
-
-    // When & Then
-    mockMvc.perform(patch("/api/users/{userId}/userStatus", nonExistentUserId)
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(updateRequest)))
-        .andExpect(status().isNotFound())
-        .andExpect(jsonPath("$.code").value("USER-001"))
-        .andExpect(jsonPath("$.message").value("존재하지 않는 유저입니다."));
   }
 }

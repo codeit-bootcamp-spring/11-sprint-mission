@@ -4,6 +4,8 @@ import com.sprint.mission.discodeit.entity.base.BaseUpdatableEntity;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
@@ -12,7 +14,6 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 @Getter
 @Entity
@@ -33,22 +34,21 @@ public class User extends BaseUpdatableEntity {
   @JoinColumn(name = "profile_id", columnDefinition = "uuid")
   private BinaryContent profile;
 
-  @Setter(AccessLevel.PROTECTED)
-  @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-  private UserStatus status;
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false, length = 20)
+  private Role role;
 
   //  미사용 필드 주석처리
   //  private String nickname;
   //  private String description;
 
   @Builder
-  public User(String username, String email, String password, BinaryContent profile,
-      UserStatus status) {
+  public User(String username, String email, String password, BinaryContent profile, Role role) {
     this.username = username;
     this.email = email;
     this.password = password;
     this.profile = profile;
-    this.status = status;
+    this.role = role;
   }
 
   public void changeUsername(String newUsername) {
@@ -68,6 +68,11 @@ public class User extends BaseUpdatableEntity {
     if (newProfile != null && !newProfile.equals(this.profile)) {
       this.profile = newProfile;
     }
+  }
+
+  // 권한 변경
+  public void updateRole(Role newRole) {
+    this.role = newRole;
   }
 
   // 비밀번호 일치 검증

@@ -1,6 +1,7 @@
 package com.sprint.mission.discodeit.dto;
 
 import com.sprint.mission.discodeit.entity.BinaryContent;
+import com.sprint.mission.discodeit.entity.Role;
 import com.sprint.mission.discodeit.entity.User;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -29,12 +30,13 @@ public class UserDto {
   ) {
 
     // DTO -> Entity
-    public User toEntity(BinaryContent profileImage) {
+    public User toEntity(String encodedPassword, BinaryContent profileImage) {
       return User.builder()
           .username(this.username)
           .email(this.email)
-          .password(this.password)
+          .password(encodedPassword)
           .profile(profileImage)
+          .role(Role.USER)
           .build();
     }
   }
@@ -60,7 +62,8 @@ public class UserDto {
       String username,
       String email,
       BinaryContentDto.Response profile,
-      Boolean online
+      Boolean online,
+      Role role
   ) {
 
   }

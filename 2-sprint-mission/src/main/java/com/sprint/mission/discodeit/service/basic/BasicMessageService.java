@@ -27,6 +27,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -116,6 +117,7 @@ public class BasicMessageService implements MessageService {
 
   @Override
   @Transactional
+  @PreAuthorize("@messageSecurity.isAuthor(#id, principal.userDto.id)")
   public MessageDto.Response update(UUID id, MessageDto.UpdateRequest request) {
     log.debug("메시지 업데이트 시작: messageId={}", id);
     Message message = messageRepository.findById(id)
@@ -128,6 +130,7 @@ public class BasicMessageService implements MessageService {
 
   @Override
   @Transactional
+  @PreAuthorize("@messageSecurity.isAuthor(#id, principal.userDto.id)")
   public void delete(UUID id) {
     log.debug("메시지 삭제 시작: messageId={}", id);
 

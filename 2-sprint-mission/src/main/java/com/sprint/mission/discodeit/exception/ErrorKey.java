@@ -9,7 +9,6 @@ public enum ErrorKey {
   EMAIL("email"),
   CHANNEL_ID("channelId"),
   READ_STATUS_ID("readStatusId"),
-  USER_STATUS_ID("userStatusId"),
   MESSAGE_ID("messageId"),
   BINARY_CONTENT_ID("binaryContentId");
 

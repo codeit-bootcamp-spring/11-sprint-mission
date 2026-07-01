@@ -3,19 +3,15 @@ package com.sprint.mission.discodeit.integration;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.mission.discodeit.dto.UserDto;
-import com.sprint.mission.discodeit.dto.UserStatusDto;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.User;
-import com.sprint.mission.discodeit.entity.UserStatus;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import jakarta.persistence.EntityManager;
-import java.time.Instant;
 import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -61,13 +57,6 @@ class UserIntegrationTest {
         .profile(profile)
         .build();
     entityManager.persist(user);
-
-    UserStatus status = UserStatus.builder()
-        .user(user)
-        .lastActiveAt(Instant.now())
-        .build();
-    entityManager.persist(status);
-
     entityManager.flush();
     entityManager.clear();
     return user;
@@ -276,46 +265,6 @@ class UserIntegrationTest {
 
     // When & Then
     mockMvc.perform(delete("/api/users/{userId}", nonExistentUserId))
-        .andExpect(status().isNotFound());
-  }
-
-  // updateUserStatus 테스트
-  @Test
-  @DisplayName("사용자 상태 업데이트 API 통합 테스트 - 성공")
-  void updateUserStatus_success() throws Exception {
-    // Given
-    User user = saveTestUser("statususer", "status@example.com");
-
-    Instant newLastActiveAt = Instant.now();
-
-    UserStatusDto.UpdateRequest statusUpdateRequest = new UserStatusDto.UpdateRequest(
-        newLastActiveAt
-    );
-
-    String requestBody = objectMapper.writeValueAsString(statusUpdateRequest);
-
-    // When & Then
-    mockMvc.perform(patch("/api/users/{userId}/userStatus", user.getId())
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(requestBody))
-        .andExpect(status().isOk());
-  }
-
-  @Test
-  @DisplayName("사용자 상태 업데이트 실패 API 통합 테스트 - 존재하지 않는 사용자")
-  void updateUserStatus_nonExistingUser_returnsNotFound() throws Exception {
-    // Given
-    UUID nonExistentUserId = UUID.randomUUID();
-    UserStatusDto.UpdateRequest statusUpdateRequest = new UserStatusDto.UpdateRequest(
-        Instant.now()
-    );
-
-    String requestBody = objectMapper.writeValueAsString(statusUpdateRequest);
-
-    // When & Then
-    mockMvc.perform(patch("/api/users/{userId}/userStatus", nonExistentUserId)
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(requestBody))
         .andExpect(status().isNotFound());
   }
 }

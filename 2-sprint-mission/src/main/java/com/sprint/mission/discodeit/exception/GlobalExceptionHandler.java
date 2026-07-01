@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -23,6 +24,15 @@ public class GlobalExceptionHandler {
     return ResponseEntity
         .status(e.getErrorCode().getStatus())
         .body(new ErrorResponse(e));
+  }
+
+  // 접근 권한 없음
+  @ExceptionHandler(AccessDeniedException.class)
+  public ResponseEntity<ErrorResponse> handleAccessDeniedException(AccessDeniedException e) {
+    log.warn("AccessDeniedException 발생: 접근 권한 없음 - {}", e.getMessage());
+    ErrorCode errorCode = ErrorCode.ACCESS_DENIED;
+    return ResponseEntity.status(errorCode.getStatus())
+        .body(new ErrorResponse(errorCode, e));
   }
 
   // 유효성 검사 실패
