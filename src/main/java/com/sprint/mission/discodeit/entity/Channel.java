@@ -1,7 +1,6 @@
 package com.sprint.mission.discodeit.entity;
 
 import com.sprint.mission.discodeit.entity.base.BaseUpdatableEntity;
-import jakarta.annotation.Nullable;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -27,11 +26,6 @@ public class Channel extends BaseUpdatableEntity {
   private String description;
 
 
-  public enum ChannelType {
-    PUBLIC,
-    PRIVATE
-  }
-
   public Channel(String name, String description, ChannelType type) {
     this.name = name;
     this.description = description;
@@ -44,6 +38,11 @@ public class Channel extends BaseUpdatableEntity {
 
   public void updateDescription(String description) {
     this.description = description;
+  }
+
+  public enum ChannelType {
+    PUBLIC,
+    PRIVATE
   }
 
 

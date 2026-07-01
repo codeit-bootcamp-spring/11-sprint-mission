@@ -17,6 +17,7 @@ CREATE TABLE "user"
     username   VARCHAR(50) UNIQUE  NOT NULL,
     email      VARCHAR(100) UNIQUE NOT NULL,
     password   VARCHAR(60)         NOT NULL,
+    role       VARCHAR(20)         NOT NULL,
     profile_id UUID UNIQUE,
 
     FOREIGN KEY (profile_id) REFERENCES binary_content (id) ON DELETE SET NULL
@@ -32,20 +33,6 @@ CREATE TABLE channel
     description VARCHAR(500),
     type        VARCHAR(10) CHECK (type IN ('PRIVATE', 'PUBLIC'))
 
-);
-
-
-
-CREATE TABLE user_status
-(
-
-    id             UUID PRIMARY KEY,
-    created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at     TIMESTAMPTZ,
-    user_id        UUID        NOT NULL UNIQUE,
-    last_active_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-
-    FOREIGN KEY (user_id) REFERENCES "user" (id) ON DELETE CASCADE
 );
 
 

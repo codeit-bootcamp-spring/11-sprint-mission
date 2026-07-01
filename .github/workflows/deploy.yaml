@@ -3,7 +3,7 @@ name: CD
 on:
   push:
     branches:
-      - 최정윤-sprint8
+      - feature/global-cicd
 
 jobs:
   build-and-push:
@@ -13,24 +13,26 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Configure AWS credentials for Public ECR
+      - name: ECR 인증 설정
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
-          aws-region: us-east-1
+          aws-region: ap-northeast-2
 
-      - uses: aws-actions/amazon-ecr-login@v2
+      - name: ECR 로그인
+        uses: aws-actions/amazon-ecr-login@v2
         with:
-          registry-type: public
+          registry-type: private
 
       - name: 도커 이미지 빌드 및 푸쉬
         env:
           ECR_URI: ${{ vars.ECR_REPOSITORY_URI }}
           IMAGE_TAG: ${{ github.sha }}
+          VERSION: ${{ vars.APP_VERSION }}
         run: |
-          docker build -t $ECR_URI:latest -t $ECR_URI:$IMAGE_TAG .
-          docker push $ECR_URI:latest
+          docker build -t $ECR_URI:$VERSION -t $ECR_URI:$IMAGE_TAG .
+          docker push $ECR_URI:$VERSION
           docker push $ECR_URI:$IMAGE_TAG
 
 
@@ -56,7 +58,7 @@ jobs:
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
           task-definition: task-definition.json
-          container-name: discodeit-app
+          container-name: deokhugam-app
           image: ${{ vars.ECR_REPOSITORY_URI }}:${{ github.sha }}
 
 
@@ -70,7 +72,7 @@ jobs:
           sleep 30
 
 
-      - name: Deploy Amazon ECS task definition
+      - name: 태스크 정의로 ECS 배포
         uses: aws-actions/amazon-ecs-deploy-task-definition@v2
         with:
           task-definition: ${{ steps.task-def.outputs.task-definition }}

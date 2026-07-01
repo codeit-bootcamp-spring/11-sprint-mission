@@ -9,8 +9,6 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.Instant;
 import lombok.Getter;
-
-import java.util.UUID;
 import lombok.NoArgsConstructor;
 
 @Getter
@@ -22,9 +20,11 @@ public class ReadStatus extends BaseUpdatableEntity {
   @ManyToOne
   @JoinColumn(nullable = false, updatable = false)
   private Channel channel;
+
   @ManyToOne
-  @JoinColumn(nullable = false, updatable = false)
+  @JoinColumn(name = "user_id", nullable = false, updatable = false)
   private User user;
+
   @Column(nullable = false)
   private Instant lastReadAt;
 

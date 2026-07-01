@@ -1,6 +1,6 @@
 package com.sprint.mission.discodeit.service.basic;
 
-import com.sprint.mission.discodeit.dto.channeldto.*;
+import com.sprint.mission.discodeit.dto.channeldto.ChannelDto;
 import com.sprint.mission.discodeit.dto.channeldto.request.PrivateChannelCreateRequest;
 import com.sprint.mission.discodeit.dto.channeldto.request.PublicChanelUpdateRequest;
 import com.sprint.mission.discodeit.dto.channeldto.request.PublicChannelCreateRequest;
@@ -9,6 +9,7 @@ import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.Channel.ChannelType;
 import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.entity.User.Role;
 import com.sprint.mission.discodeit.entity.base.BaseEntity;
 import com.sprint.mission.discodeit.exception.service.channel.NonExistChannelException;
 import com.sprint.mission.discodeit.exception.service.channel.WrongChannelTypeException;
@@ -18,16 +19,20 @@ import com.sprint.mission.discodeit.repository.JPAChannelRepository;
 import com.sprint.mission.discodeit.repository.JPAMessageRepository;
 import com.sprint.mission.discodeit.repository.JPAReadStatusRepository;
 import com.sprint.mission.discodeit.repository.JPAUserRepository;
+import com.sprint.mission.discodeit.security.DiscodeitUserDetails;
 import com.sprint.mission.discodeit.service.ChannelService;
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
-import java.util.UUID;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
@@ -44,6 +49,7 @@ public class BasicChannelService implements ChannelService {
 
 
   @Override
+  @PreAuthorize("hasRole('CHANNEL_MANAGER')")
   @Transactional
   public ChannelDto createPublic(PublicChannelCreateRequest publicChannelCreateRequest) {
 
@@ -101,6 +107,8 @@ public class BasicChannelService implements ChannelService {
         ChannelType.PRIVATE
     );
 
+    channelRepository.save(channel);
+
     //readStatus 생성
     privateChannelCreateRequest.participantIds().forEach(userId -> {
 
@@ -112,8 +120,6 @@ public class BasicChannelService implements ChannelService {
       readStatusRepository.save(readStatus);
 
     });
-
-    channelRepository.save(channel);
 
     //채널 참여자 뽑아오기
     List<User> participants = readStatusRepository.findAllByChannel_Id(channel.getId()).stream()
@@ -171,6 +177,7 @@ public class BasicChannelService implements ChannelService {
   }
 
   @Override
+  @PreAuthorize("hasRole('CHANNEL_MANAGER')")
   @Transactional
   public ChannelDto updateChannel(UUID channelId,
       PublicChanelUpdateRequest publicChanelUpdateRequest) {
@@ -212,6 +219,15 @@ public class BasicChannelService implements ChannelService {
 
     if (!channelRepository.existsById(channelId)) {
       throw new NonExistChannelException(channelId);
+    }
+
+    Authentication auth = SecurityContextHolder.getContext().getAuthentication(); // 유저 인증정보에서
+    DiscodeitUserDetails principal = (DiscodeitUserDetails) auth.getPrincipal(); //디테일 가져와서
+
+    if (channelRepository.findTypeById(channelId).equals(ChannelType.PUBLIC)
+        // 공개채널을 어드민 권한 없이 삭제하려 할때
+        && !principal.getUserDto().role().equals(Role.ADMIN)) {
+      throw new AccessDeniedException("공개 채널 삭제 권한이 없습니다."); //예외 발생
     }
 
     readStatusRepository.findAllByChannel_Id(channelId)

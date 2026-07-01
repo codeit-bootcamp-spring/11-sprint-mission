@@ -12,8 +12,13 @@ spring:
     console:
       enabled: true
 
+  sql:
+    init:
+      mode: always
+
 logging:
   level:
     com.sprint.mission.discodeit: DEBUG
     org.hibernate.SQL: DEBUG
     org.hibernate.orm.jdbc.bind: TRACE
+    org.springframework.security: TRACE

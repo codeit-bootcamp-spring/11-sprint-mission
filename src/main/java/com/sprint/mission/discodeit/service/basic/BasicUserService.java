@@ -1,28 +1,34 @@
 package com.sprint.mission.discodeit.service.basic;
 
-import com.sprint.mission.discodeit.dto.userdto.*;
+import com.sprint.mission.discodeit.dto.userdto.UserDto;
+import com.sprint.mission.discodeit.dto.userdto.UserUpdateRequest;
 import com.sprint.mission.discodeit.dto.userdto.request.UserCreateRequest;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.Channel.ChannelType;
 import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.entity.User;
-import com.sprint.mission.discodeit.entity.UserStatus;
-
+import com.sprint.mission.discodeit.entity.User.Role;
 import com.sprint.mission.discodeit.exception.service.user.DupEmailException;
 import com.sprint.mission.discodeit.exception.service.user.DupNameException;
 import com.sprint.mission.discodeit.exception.service.user.NonExistUserException;
 import com.sprint.mission.discodeit.mapper.UserMapper;
-import com.sprint.mission.discodeit.repository.*;
+import com.sprint.mission.discodeit.repository.JPABinaryContentRepository;
+import com.sprint.mission.discodeit.repository.JPAChannelRepository;
+import com.sprint.mission.discodeit.repository.JPAReadStatusRepository;
+import com.sprint.mission.discodeit.repository.JPAUserRepository;
+import com.sprint.mission.discodeit.security.DiscodeitUserDetails;
 import com.sprint.mission.discodeit.service.UserService;
-
-
 import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import java.time.Instant;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.session.SessionInformation;
+import org.springframework.security.core.session.SessionRegistry;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -36,10 +42,13 @@ public class BasicUserService implements UserService {
   private final JPABinaryContentRepository binaryContentRepository;
   private final JPAReadStatusRepository readStatusRepository;
   private final JPAChannelRepository channelRepository;
+  private final SessionRegistry sessionRegistry;
 
   private final BinaryContentStorage binaryContentStorage;
 
   private final UserMapper userMapper;
+
+  private final PasswordEncoder passwordEncoder;
 
   @Override
   @Transactional
@@ -57,12 +66,14 @@ public class BasicUserService implements UserService {
       throw new DupEmailException(userCreateRequest.email());
     }
 
+    //비밀번호 인코딩
+    String encodedPassword = passwordEncoder.encode(userCreateRequest.password());
+
     //유저 생성
     User user = new User(
         userCreateRequest.username(),
         userCreateRequest.email(),
-        userCreateRequest.password(),
-        null,
+        encodedPassword,
         null
     );
 
@@ -89,11 +100,6 @@ public class BasicUserService implements UserService {
     } else {
       user.updateProfile(null);
     }
-
-    //유저 스테이터스 생성
-
-    UserStatus userStatus = new UserStatus(user, Instant.now());
-    user.updateStatus(userStatus);
 
     //유저 저장
     userRepository.save(user);
@@ -139,6 +145,7 @@ public class BasicUserService implements UserService {
 
   @Override
   @Transactional
+  @PreAuthorize("#userId == principal.userDto.id")
   public UserDto updateUser(UUID userId, UserUpdateRequest userUpdateRequest, MultipartFile file) {
     log.info("유저 업데이트 요청, userId : {}, updateUserDto : {}", userId, userUpdateRequest);
 
@@ -202,9 +209,32 @@ public class BasicUserService implements UserService {
     return userMapper.toDto(user);
   }
 
+  @Override
+  @PreAuthorize("hasRole('ADMIN')")
+  @Transactional
+  public UserDto updateUserRole(UUID userId, Role role) {
+
+    log.info("유저 역할 변경 시작. userId : {}", userId);
+    User user = userRepository.findById(userId)
+        .orElseThrow(() -> new NonExistUserException(userId));
+
+    user.updateRole(role);
+
+    sessionRegistry.getAllPrincipals().stream()
+        .filter(p -> p instanceof DiscodeitUserDetails)
+        .map(p -> (DiscodeitUserDetails) p)
+        .filter(details -> details.getUserDto().id().equals(userId))
+        .forEach(details ->
+            sessionRegistry.getAllSessions(details, false)
+                .forEach(SessionInformation::expireNow)
+        );
+
+    return userMapper.toDto(user);
+  }
 
   @Override
   @Transactional
+  @PreAuthorize("#userId == principal.userDto.id")
   public boolean delete(UUID userId) {
 
     log.info("유저 삭제 요청, userId : {}", userId);

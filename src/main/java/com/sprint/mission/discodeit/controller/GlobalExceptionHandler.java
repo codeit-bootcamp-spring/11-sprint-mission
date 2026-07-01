@@ -4,13 +4,13 @@ package com.sprint.mission.discodeit.controller;
 import com.sprint.mission.discodeit.exception.DiscodeitException;
 import com.sprint.mission.discodeit.exception.ErrorCode;
 import com.sprint.mission.discodeit.exception.ErrorResponse;
-
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -78,6 +78,20 @@ public class GlobalExceptionHandler {
     return ResponseEntity.status(400).body(errorResponse);
   }
 
+
+  @ExceptionHandler(AccessDeniedException.class)
+  public ResponseEntity<ErrorResponse> handle(AccessDeniedException e) {
+    ErrorResponse errorResponse = new ErrorResponse(
+        Instant.now(),
+        "X",
+        e.getMessage(),
+        Map.of(),
+        e.getClass().getSimpleName(),
+        HttpStatus.FORBIDDEN.value()
+    );
+
+    return ResponseEntity.status(403).body(errorResponse);
+  }
 
   @ExceptionHandler(Exception.class)
   public ResponseEntity<ErrorResponse> handleException(Exception e) {

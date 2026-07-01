@@ -1,7 +1,7 @@
 package com.sprint.mission.discodeit.service.basic;
 
-import com.sprint.mission.discodeit.dto.messagedto.request.MessageCreateRequest;
 import com.sprint.mission.discodeit.dto.messagedto.MessageDto;
+import com.sprint.mission.discodeit.dto.messagedto.request.MessageCreateRequest;
 import com.sprint.mission.discodeit.dto.messagedto.request.MessageUpdateRequest;
 import com.sprint.mission.discodeit.dto.response.PageResponse;
 import com.sprint.mission.discodeit.entity.BinaryContent;
@@ -20,6 +20,8 @@ import com.sprint.mission.discodeit.service.MessageService;
 import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
@@ -27,10 +29,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Direction;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
-import java.util.UUID;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -162,6 +162,7 @@ public class BasicMessageService implements MessageService {
 
   @Override
   @Transactional
+  @PreAuthorize("@messageAuth.isAuthor(#messageId, principal)")
   public MessageDto update(UUID messageId, MessageUpdateRequest messageUpdateRequest) {
 
     log.info("메시지 수정 요청, messageUpdateRequest : {}", messageUpdateRequest);
@@ -181,6 +182,7 @@ public class BasicMessageService implements MessageService {
 
   @Override
   @Transactional
+  @PreAuthorize("@messageAuth.isAuthor(#messageId, principal)")
   public void delete(UUID messageId) {
     log.info("메시지 삭제 요청, messageId : {}", messageId);
 

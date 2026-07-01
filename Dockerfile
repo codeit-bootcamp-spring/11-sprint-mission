@@ -25,10 +25,10 @@ WORKDIR /app
 
 COPY --from=builder /app/build/libs/*.jar app.jar
 
-ENV APP_NAME=discodeit
-ENV PROJECT_VERSION=1.2-M8
+ENV APP_NAME=app
+
 ENV JVM_OPTS=""
 
 EXPOSE 80
 
-ENTRYPOINT ["sh", "-c", "java ${JVM_OPTS} -jar ${APP_NAME}-${PROJECT_VERSION}.jar"]
+ENTRYPOINT ["sh", "-c", "java ${JVM_OPTS} -jar ${APP_NAME}.jar"]

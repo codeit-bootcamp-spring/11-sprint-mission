@@ -8,13 +8,10 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
-import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import java.util.ArrayList;
-import lombok.Getter;
-
 import java.util.List;
-import java.util.UUID;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.BatchSize;
 
@@ -29,7 +26,7 @@ public class Message extends BaseUpdatableEntity {
 
 
   @ManyToOne
-  @JoinColumn(updatable = false)
+  @JoinColumn(name = "author_id", updatable = false)
   private User author;
 
 

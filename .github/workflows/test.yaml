@@ -3,7 +3,7 @@ name: CI
 on:
   pull_request:
     branches:
-      - 최정윤-sprint8
+      - feature/global-cicd
 
 jobs:
   test:

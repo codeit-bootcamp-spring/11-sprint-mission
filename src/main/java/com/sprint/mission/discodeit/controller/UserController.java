@@ -1,25 +1,28 @@
 package com.sprint.mission.discodeit.controller;
 
 
-import com.sprint.mission.discodeit.dto.userdto.*;
+import com.sprint.mission.discodeit.dto.userdto.UserDto;
+import com.sprint.mission.discodeit.dto.userdto.UserUpdateRequest;
 import com.sprint.mission.discodeit.dto.userdto.request.UserCreateRequest;
-import com.sprint.mission.discodeit.dto.userstatusdto.request.UserStatusUpdateRequest;
-import com.sprint.mission.discodeit.dto.userstatusdto.UserStatusDto;
-
 import com.sprint.mission.discodeit.service.UserService;
-import com.sprint.mission.discodeit.service.UserStatusService;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
-
 import java.net.URI;
 import java.util.List;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 @RestController
 @RequestMapping("/api/users")
@@ -28,7 +31,7 @@ public class UserController {
 
 
   private final UserService userService;
-  private final UserStatusService userStatusService;
+
 
   @PostMapping(consumes = "multipart/form-data")
   @ApiResponse(description = "유저 생성", responseCode = "201")
@@ -70,18 +73,6 @@ public class UserController {
     return ResponseEntity.status(HttpStatus.OK).body(userInfo);
   }
 
-
-  //유저 상태 업데이트
-  @ApiResponse(responseCode = "200")
-  @PatchMapping(value = "/{userId}/userStatus")
-  public ResponseEntity<UserStatusDto> updateUserStatus(@PathVariable UUID userId,
-      @Valid @RequestBody UserStatusUpdateRequest userStatusUpdateRequest) {
-
-    userStatusService.update(userId, userStatusUpdateRequest);
-
-    return ResponseEntity.status(HttpStatus.OK).body(userStatusService.find(userId));
-
-  }
 
   //멤버 삭제
   @ApiResponse(responseCode = "204", description = "멤버 삭제")
