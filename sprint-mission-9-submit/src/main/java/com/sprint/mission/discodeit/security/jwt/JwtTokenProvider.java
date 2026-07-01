@@ -18,7 +18,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class JwtTokenProvider {
 
-  public static final String REFRESH_TOKEN_COOKIE_NAME = "refresh_token";
+  public static final String REFRESH_TOKEN_COOKIE_NAME = "REFRESH_TOKEN";
 
   // nimbus-jose-jwt는 MACSigner/MACVerifier에 바이트 배열 형태의 키를 사용
   private final byte[] secretKey;
