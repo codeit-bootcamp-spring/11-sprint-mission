@@ -44,3 +44,9 @@ bin/
 ### 숨김 파일 ###
 .*
 !.gitignore
+!.dockerignore
+!.env.example
+!.github/
+!.github/**
+
+요구사항.txt

@@ -14,6 +14,17 @@ java {
     }
 }
 
+sourceSets {
+    main {
+        java {
+            // 현재 프로젝트는 Spring Data JPA Repository를 사용함
+            // 이전 미션용 JCF/File Repository 구현체는 JpaRepository와 호환되지 않아서 컴파일에서 제외함
+            exclude 'com/sprint/mission/discodeit/repository/jcf/**'
+            exclude 'com/sprint/mission/discodeit/repository/file/**'
+        }
+    }
+}
+
 configurations {
     compileOnly {
         extendsFrom annotationProcessor
@@ -30,6 +41,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
     runtimeOnly 'org.postgresql:postgresql'
 
     compileOnly 'org.projectlombok:lombok'
@@ -38,6 +50,7 @@ dependencies {
     annotationProcessor 'org.mapstruct:mapstruct-processor:1.6.3'
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.security:spring-security-test'
     testImplementation 'com.h2database:h2'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }

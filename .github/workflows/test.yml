@@ -1,0 +1,50 @@
+# GitHub Actions 테스트 CI 워크플로우임
+# main 브랜치로 Pull Request가 생성되면 실행됨
+name: Test
+
+on:
+  pull_request:
+    branches:
+      - main
+
+# 같은 브랜치에서 새 커밋이 올라오면 이전 실행을 취소함
+# 불필요한 중복 CI 실행을 줄이기 위함
+concurrency:
+  group: test-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    # GitHub Actions에서 제공하는 Ubuntu 실행 환경 사용함
+    runs-on: ubuntu-latest
+
+    steps:
+      # 저장소 코드를 runner로 내려받음
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Java 17 환경 설정함
+      # 요구사항과 프로젝트 설정에 맞춰 Corretto 17 사용함
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: corretto
+          java-version: '17'
+
+      # Gradle 의존성 캐시 설정함
+      # 반복 실행 시 빌드 시간을 줄이기 위함
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      # Gradle Wrapper 실행 권한 부여함
+      # Linux runner에서 gradlew 실행 가능하게 하기 위함
+      - name: Grant execute permission for Gradle Wrapper
+        run: chmod +x ./gradlew
+
+      # 테스트 실행함
+      # CI에서는 dev/prod DB가 없으므로 test profile을 명시적으로 사용함
+      # application-test.yaml의 H2 DB 설정을 사용하게 하기 위함
+      - name: Run tests
+        run: ./gradlew test
+        env:
+          SPRING_PROFILES_ACTIVE: test

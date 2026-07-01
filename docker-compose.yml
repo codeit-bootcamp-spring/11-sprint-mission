@@ -1,0 +1,68 @@
+services:
+  # PostgreSQL 데이터베이스 컨테이너임
+  # 애플리케이션이 prod profile에서 사용할 DB 역할임
+  postgres:
+    image: postgres:17-alpine
+    container_name: discodeit-postgres
+
+    # .env 파일에 정의한 PostgreSQL 초기 설정값 사용함
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
+    # 호스트 5432 포트를 컨테이너 5432 포트와 연결함
+    ports:
+      - "5432:5432"
+
+    # DB 데이터와 초기 schema.sql을 컨테이너에 연결함
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./src/main/resources/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
+
+    # PostgreSQL이 실제 연결 가능한 상태인지 확인하는 healthcheck임
+    # pg_isready는 postgres 공식 이미지에 포함된 준비 상태 확인 명령임
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Discodeit Spring Boot 애플리케이션 컨테이너임
+  # 현재 프로젝트 루트의 Dockerfile로 이미지 빌드함
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    container_name: discodeit-app
+
+    # postgres 서비스가 healthy 상태가 된 뒤 app 서비스 시작함
+    # DB 연결 실패로 앱이 먼저 죽는 상황 줄이기 위함
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+    # .env 파일에 정의한 Spring Boot 실행 설정값 사용함
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+      STORAGE_TYPE: ${STORAGE_TYPE}
+      STORAGE_LOCAL_ROOT_PATH: ${STORAGE_LOCAL_ROOT_PATH}
+      JVM_OPTS: ${JVM_OPTS}
+
+    # 호스트 8081 포트를 컨테이너 80 포트와 연결함
+    ports:
+      - "8081:80"
+
+    # 업로드 파일 저장소를 named volume으로 유지함
+    volumes:
+      - binary_storage:/app/.discodeit/storage
+
+# Docker named volume 정의임
+# 컨테이너 재시작/삭제 후에도 데이터 유지하기 위함
+volumes:
+  postgres_data:
+  binary_storage:
