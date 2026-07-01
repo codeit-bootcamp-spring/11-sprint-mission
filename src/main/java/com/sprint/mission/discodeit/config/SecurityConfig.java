@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.mission.discodeit.entity.Role;
 import com.sprint.mission.discodeit.security.Http403ForbiddenAccessDeniedHandler;
 import com.sprint.mission.discodeit.security.LoginFailureHandler;
+import com.sprint.mission.discodeit.security.jwt.JwtLogoutHandler;
 
 import java.util.List;
 import java.util.stream.IntStream;
@@ -45,6 +46,7 @@ public class SecurityConfig {
       JwtLoginSuccessHandler jwtLoginSuccessHandler,
       LoginFailureHandler loginFailureHandler,
       JwtTokenProvider jwtTokenProvider,
+      JwtLogoutHandler jwtLogoutHandler,
       ObjectMapper objectMapper
   ) throws Exception {
     http
@@ -56,6 +58,7 @@ public class SecurityConfig {
         )
         .logout(logout -> logout
             .logoutUrl("/api/auth/logout")
+            .addLogoutHandler(jwtLogoutHandler)
             .logoutSuccessHandler(
                 new HttpStatusReturningLogoutSuccessHandler(HttpStatus.NO_CONTENT))
         )
