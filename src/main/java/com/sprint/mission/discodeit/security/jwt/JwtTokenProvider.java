@@ -11,6 +11,7 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import jakarta.annotation.PostConstruct;
 import java.text.ParseException;
+import java.time.Instant;
 import java.util.Date;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,6 +19,13 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class JwtTokenProvider {
+
+  public static final String REFRESH_TOKEN_COOKIE_NAME = "REFRESH_TOKEN";
+
+  private static final String CLAIM_USERNAME = "username";
+  private static final String CLAIM_TYPE = "type";
+  private static final String TYPE_ACCESS = "access";
+  private static final String TYPE_REFRESH = "refresh";
 
   @Value("${discodeit.security.jwt.secret}")
   private String secretKey;
@@ -33,6 +41,11 @@ public class JwtTokenProvider {
 
   @PostConstruct
   public void init() {
+    byte[] keyBytes = secretKey.getBytes();
+    if (keyBytes.length < 32) {
+      throw new IllegalStateException("JWT secret key는 최소 256비트(32바이트) 이상이어야 합니다. 현재길이: "
+          + keyBytes.length + "바이트");
+    }
     try {
       this.signer = new MACSigner(secretKey.getBytes());
       this.verifier = new MACVerifier(secretKey.getBytes());
@@ -42,24 +55,25 @@ public class JwtTokenProvider {
   }
 
   public String createAccessToken(UUID userId, String username) {
-    return createToken(userId, username, accessTokenValidity);
+    return createToken(userId, username, accessTokenValidity, TYPE_ACCESS);
   }
 
   public String createRefreshToken(UUID userId) {
-    return createToken(userId, null, refreshTokenValidity);
+    return createToken(userId, null, refreshTokenValidity, TYPE_REFRESH);
   }
 
-  private String createToken(UUID userId, String username, long validitySeconds) {
+  private String createToken(UUID userId, String username, long validitySeconds, String type) {
     Date now = new Date();
     Date expiry = new Date(now.getTime() + validitySeconds * 1000);
 
     JWTClaimsSet.Builder claimsBuilder = new JWTClaimsSet.Builder()
         .subject(userId.toString())
         .issueTime(now)
-        .expirationTime(expiry);
+        .expirationTime(expiry)
+        .claim(CLAIM_TYPE, type);
 
     if (username != null) {
-      claimsBuilder.claim("username", username);
+      claimsBuilder.claim(CLAIM_USERNAME, username);
     }
 
     JWTClaimsSet claims = claimsBuilder.build();
@@ -77,6 +91,7 @@ public class JwtTokenProvider {
     }
   }
 
+  // 정보 추출
   public UUID getUserId(String token) {
     try {
       SignedJWT signedJWT = SignedJWT.parse(token);
@@ -87,15 +102,35 @@ public class JwtTokenProvider {
     }
   }
 
-  public String getUsername(String token) {
+  public String getSubject(String token) {
     try {
       SignedJWT signedJWT = SignedJWT.parse(token);
-      return signedJWT.getJWTClaimsSet().getStringClaim("username");
+      return signedJWT.getJWTClaimsSet().getSubject();
     } catch (ParseException e) {
       throw new IllegalArgumentException("유효하지 않은 토큰입니다.", e);
     }
   }
 
+  public String getUsername(String token) {
+    try {
+      SignedJWT signedJWT = SignedJWT.parse(token);
+      return signedJWT.getJWTClaimsSet().getStringClaim(CLAIM_USERNAME);
+    } catch (ParseException e) {
+      throw new IllegalArgumentException("유효하지 않은 토큰입니다.", e);
+    }
+  }
+
+  public Instant getExpiration(String token) {
+    try {
+      SignedJWT signedJWT = SignedJWT.parse(token);
+      Date expiration = signedJWT.getJWTClaimsSet().getExpirationTime();
+      return expiration != null ? expiration.toInstant() : null;
+    } catch (ParseException e) {
+      throw new IllegalArgumentException("유효하지 않은 토큰입니다.", e);
+    }
+  }
+
+  // 유효성 검사
   public boolean validateToken(String token) {
     try {
       SignedJWT signedJWT = SignedJWT.parse(token);
@@ -107,5 +142,30 @@ public class JwtTokenProvider {
     } catch (JOSEException | ParseException e) {
       return false;
     }
+  }
+
+  private boolean validateRefreshToken(String token) {
+    if (!validateToken(token)) {
+      return false;
+    }
+    try {
+      SignedJWT signedJWT = SignedJWT.parse(token);
+      String type = signedJWT.getJWTClaimsSet().getStringClaim(CLAIM_TYPE);
+      return TYPE_REFRESH.equals(type);
+    } catch (ParseException e) {
+      return false;
+    }
+  }
+
+  // 토큰 갱신
+  public String reissueAccessToken(String refreshToken) {
+    if (!validateRefreshToken(refreshToken)) {
+      throw new IllegalArgumentException("유효하지 않거나 만료된 리프레시 토큰입니다.");
+    }
+
+    UUID userId = getUserId(refreshToken);
+    String username = getUsername(refreshToken);
+
+    return createAccessToken(userId, username);
   }
 }
