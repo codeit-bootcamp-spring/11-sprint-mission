@@ -120,9 +120,4 @@ public class SecurityConfig {
 
     return http.build();
   }
-
-  @Bean
-  public JwtRegistry jwtRegistry() {
-    return new InMemoryJwtRegistry(1);
-  }
 }
