@@ -29,6 +29,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
+import org.springframework.security.access.prepost.PostAuthorize;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -58,7 +60,8 @@ public class BasicMessageService implements MessageService {
         .orElseThrow(() -> ChannelNotFoundException.withId(messageCreateRequest.channelId()));
 
     if (channel.isPrivate() && !this.readStatusRepository.existsByUserAndChannel(author, channel)) {
-      throw MessageWithoutChannelAccessException.withUserAndChannel(author.getId(), channel.getId());
+      throw MessageWithoutChannelAccessException.withUserAndChannel(author.getId(),
+          channel.getId());
     }
 
     List<BinaryContent> attachments = new ArrayList<>();
@@ -108,6 +111,7 @@ public class BasicMessageService implements MessageService {
     return result;
   }
 
+  @PostAuthorize("returnObject.author.id == authentication.principal.user.id")
   @Transactional
   @Override
   public MessageResponse updateMessage(UUID id, MessageUpdateRequest messageUpdateRequest,
@@ -143,6 +147,7 @@ public class BasicMessageService implements MessageService {
     return this.mapper.toResponse(message);
   }
 
+  @PreAuthorize("@messageSecurity.isAuthor(#id, authentication.principal.user.id)")
   @Transactional
   @Override
   public void deleteMessage(UUID id) {

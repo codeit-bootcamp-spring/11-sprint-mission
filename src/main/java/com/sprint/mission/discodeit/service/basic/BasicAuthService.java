@@ -1,16 +1,16 @@
 package com.sprint.mission.discodeit.service.basic;
 
-import com.sprint.mission.discodeit.dto.auth.LoginRequest;
+import com.sprint.mission.discodeit.dto.auth.UserRoleUpdateRequest;
 import com.sprint.mission.discodeit.dto.user.UserResponse;
 import com.sprint.mission.discodeit.entity.User;
-import com.sprint.mission.discodeit.exception.auth.InvalidCredentialsException;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.mapper.UserMapper;
 import com.sprint.mission.discodeit.repository.UserRepository;
+import com.sprint.mission.discodeit.security.SessionManager;
 import com.sprint.mission.discodeit.service.AuthService;
-import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,22 +21,25 @@ import org.springframework.transaction.annotation.Transactional;
 public class BasicAuthService implements AuthService {
 
   private final UserRepository userRepository;
+  private final SessionManager sessionManager;
   private final UserMapper mapper;
+
+  @PreAuthorize("hasRole('ADMIN')")
+  @Transactional
+  @Override
+  public UserResponse updateRole(UserRoleUpdateRequest request) {
+    return updateRoleInternal(request);
+  }
 
   @Transactional
   @Override
-  public UserResponse login(LoginRequest loginRequest) {
-    log.debug("auth login trial: username={}", loginRequest.username());
-    User user = this.userRepository.findByUsername(loginRequest.username())
-        .orElseThrow(() -> UserNotFoundException.withUsername(loginRequest.username()));
-
-    if (!loginRequest.password().equals(user.getPassword())) {
-      throw InvalidCredentialsException.withWrongPassword();
-    }
-
-    user.getStatus().updateLastActiveAt(Instant.now());
-
-    log.info("auth login success: userId={}, username={}", user.getId(), user.getUsername());
-    return this.mapper.toResponse(user);
+  public UserResponse updateRoleInternal(UserRoleUpdateRequest request) {
+    log.debug("auth update-role trial: userId={}, newRole={}", request.userId(), request.newRole());
+    User user = userRepository.findById(request.userId())
+        .orElseThrow(() -> UserNotFoundException.withId(request.userId()));
+    user.updateRole(request.newRole());
+    sessionManager.expireSessions(user.getId());
+    log.info("auth update-role success: userId={}, newRole={}", user.getId(), user.getRole());
+    return mapper.toResponse(user);
   }
 }

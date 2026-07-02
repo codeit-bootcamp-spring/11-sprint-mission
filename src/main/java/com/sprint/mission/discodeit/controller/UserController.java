@@ -5,10 +5,7 @@ import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentCreateRequest
 import com.sprint.mission.discodeit.dto.user.UserCreateRequest;
 import com.sprint.mission.discodeit.dto.user.UserResponse;
 import com.sprint.mission.discodeit.dto.user.UserUpdateRequest;
-import com.sprint.mission.discodeit.dto.userstatus.UserStatusResponse;
-import com.sprint.mission.discodeit.dto.userstatus.UserStatusUpdateRequest;
 import com.sprint.mission.discodeit.service.UserService;
-import com.sprint.mission.discodeit.service.UserStatusService;
 import com.sprint.mission.discodeit.util.MultipartFileUtil;
 import java.util.List;
 import java.util.Optional;
@@ -37,7 +34,6 @@ import org.springframework.web.multipart.MultipartFile;
 public class UserController implements UserApi {
 
   private final UserService userService;
-  private final UserStatusService userStatusService;
 
   @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<UserResponse> create(
@@ -62,7 +58,8 @@ public class UserController implements UserApi {
       @Valid @RequestPart(value = "userUpdateRequest", required = false) UserUpdateRequest userUpdateRequest,
       @RequestPart(value = "profile", required = false) MultipartFile profile
   ) {
-    log.info("user update request: id={}, request={}, profile={}", userId, userUpdateRequest, profile != null);
+    log.info("user update request: id={}, request={}, profile={}", userId, userUpdateRequest,
+        profile != null);
     Optional<BinaryContentCreateRequest> profileRequest = MultipartFileUtil.toCreateRequest(
         profile);
 
@@ -97,18 +94,4 @@ public class UserController implements UserApi {
         .body(users);
   }
 
-  @PatchMapping(path = "{userId}/user-status")
-  public ResponseEntity<UserStatusResponse> updateUserStatus(
-      @PathVariable UUID userId,
-      @Valid @RequestBody UserStatusUpdateRequest userStatusUpdateRequest
-  ) {
-    log.info("user-status update-user-status request: id={}, request={}", userId, userStatusUpdateRequest);
-    UserStatusResponse updatedUserStatus = this.userStatusService.updateUserStatusByUserId(userId,
-        userStatusUpdateRequest);
-
-    log.debug("user-status update-user-status response: {}", updatedUserStatus);
-    return ResponseEntity
-        .status(HttpStatus.OK)
-        .body(updatedUserStatus);
-  }
 }

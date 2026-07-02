@@ -3,6 +3,7 @@ package com.sprint.mission.discodeit.controller;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -24,6 +25,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
@@ -31,6 +33,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(ReadStatusController.class)
+@WithMockUser
 class ReadStatusControllerTest {
 
   @Autowired
@@ -72,7 +75,8 @@ class ReadStatusControllerTest {
       // when & then
       mockMvc.perform(post("/api/read-statuses")
               .contentType(MediaType.APPLICATION_JSON)
-              .content(objectMapper.writeValueAsString(request)))
+              .content(objectMapper.writeValueAsString(request))
+              .with(csrf()))
           .andExpect(status().isCreated())
           .andExpect(jsonPath("$.id").value(readStatusId.toString()))
           .andExpect(jsonPath("$.userId").value(userId.toString()))
@@ -93,7 +97,8 @@ class ReadStatusControllerTest {
 
       mockMvc.perform(post("/api/read-statuses")
               .contentType(MediaType.APPLICATION_JSON)
-              .content(objectMapper.writeValueAsString(request)))
+              .content(objectMapper.writeValueAsString(request))
+              .with(csrf()))
           .andExpect(status().is(errorCode.getHttpStatus().value()))
           .andExpect(jsonPath("$.code").value(errorCode.getCode()))
           .andExpect(jsonPath("$.message").value(errorCode.getMessage()))
@@ -123,7 +128,8 @@ class ReadStatusControllerTest {
       // when & then
       mockMvc.perform(patch("/api/read-statuses/{readStatusId}", readStatusId)
               .contentType(MediaType.APPLICATION_JSON)
-              .content(objectMapper.writeValueAsString(request)))
+              .content(objectMapper.writeValueAsString(request))
+              .with(csrf()))
           .andExpect(status().isOk())
           .andExpect(jsonPath("$.id").value(readStatusId.toString()))
           .andExpect(jsonPath("$.userId").value(userId.toString()));
@@ -143,7 +149,8 @@ class ReadStatusControllerTest {
 
       mockMvc.perform(patch("/api/read-statuses/{readStatusId}", readStatusId)
               .contentType(MediaType.APPLICATION_JSON)
-              .content(objectMapper.writeValueAsString(request)))
+              .content(objectMapper.writeValueAsString(request))
+              .with(csrf()))
           .andExpect(status().is(errorCode.getHttpStatus().value()))
           .andExpect(jsonPath("$.code").value(errorCode.getCode()))
           .andExpect(jsonPath("$.details.readStatusId").value(readStatusId.toString()))

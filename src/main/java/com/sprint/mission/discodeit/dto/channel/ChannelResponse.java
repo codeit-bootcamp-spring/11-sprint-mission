@@ -16,7 +16,9 @@ public record ChannelResponse(
 ) {
 
   public interface LastMessageAt {
+
     UUID getChannelId();
+
     Instant getLastMessageAt();
   }
 }

@@ -9,14 +9,15 @@ import static org.mockito.BDDMockito.then;
 import com.sprint.mission.discodeit.dto.user.UserCreateRequest;
 import com.sprint.mission.discodeit.dto.user.UserResponse;
 import com.sprint.mission.discodeit.dto.user.UserUpdateRequest;
+import com.sprint.mission.discodeit.entity.Role;
 import com.sprint.mission.discodeit.entity.User;
-import com.sprint.mission.discodeit.entity.UserStatus;
 import com.sprint.mission.discodeit.exception.user.DuplicateUserException;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.mapper.UserMapper;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import java.util.List;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -41,6 +42,9 @@ class BasicUserServiceTest {
   @Mock
   private UserMapper mapper;
 
+  @Mock
+  private PasswordEncoder passwordEncoder;
+
   @InjectMocks
   private BasicUserService userService;
 
@@ -58,9 +62,8 @@ class BasicUserServiceTest {
     email = "tester@example.io";
     password = "qwerty";
     user = new User(username, email, password, null);
-    user.initStatus(new UserStatus(user));
     ReflectionTestUtils.setField(user, "id", userId);
-    response = new UserResponse(userId, username, email, null, true);
+    response = new UserResponse(userId, username, email, null, true, Role.USER);
   }
 
   @Nested

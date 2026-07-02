@@ -6,7 +6,6 @@ import com.sprint.mission.discodeit.dto.user.UserResponse;
 import com.sprint.mission.discodeit.dto.user.UserUpdateRequest;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.User;
-import com.sprint.mission.discodeit.entity.UserStatus;
 import com.sprint.mission.discodeit.exception.user.DuplicateUserException;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.mapper.UserMapper;
@@ -14,12 +13,13 @@ import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.UserService;
 import com.sprint.mission.discodeit.storage.BinaryContentStorage;
-import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,6 +33,7 @@ public class BasicUserService implements UserService {
   private final ReadStatusRepository readStatusRepository;
   private final UserMapper mapper;
   private final BinaryContentStorage binaryContentStorage;
+  private final PasswordEncoder passwordEncoder;
 
   @Transactional
   @Override
@@ -57,12 +58,9 @@ public class BasicUserService implements UserService {
     User user = new User(
         userCreateRequest.username(),
         userCreateRequest.email(),
-        userCreateRequest.password(),
+        this.passwordEncoder.encode(userCreateRequest.password()),
         profile
     );
-
-    UserStatus status = new UserStatus(user);
-    user.initStatus(status);
 
     this.userRepository.save(user);
 
@@ -91,6 +89,7 @@ public class BasicUserService implements UserService {
         .toList();
   }
 
+  @PreAuthorize("authentication.principal.user.id == #id")
   @Transactional
   @Override
   public UserResponse updateUser(UUID id, UserUpdateRequest userUpdateRequest,
@@ -120,7 +119,7 @@ public class BasicUserService implements UserService {
 
     String password = user.getPassword();
     if (userUpdateRequest.newPassword() != null && !userUpdateRequest.newPassword().isBlank()) {
-      password = userUpdateRequest.newPassword();
+      password = this.passwordEncoder.encode(userUpdateRequest.newPassword());
     }
 
     BinaryContent profile = user.getProfile();
@@ -131,12 +130,12 @@ public class BasicUserService implements UserService {
     }
 
     user.update(username, email, password, profile);
-    user.getStatus().updateLastActiveAt(Instant.now());
 
     log.info("user update success: id={}, username={}", id, user.getUsername());
     return this.mapper.toResponse(user);
   }
 
+  @PreAuthorize("authentication.principal.user.id == #id")
   @Transactional
   @Override
   public void deleteUser(UUID id) {

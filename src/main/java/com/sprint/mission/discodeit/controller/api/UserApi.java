@@ -4,8 +4,6 @@ import com.sprint.mission.discodeit.controller.api.examples.UserExamples;
 import com.sprint.mission.discodeit.dto.user.UserCreateRequest;
 import com.sprint.mission.discodeit.dto.user.UserResponse;
 import com.sprint.mission.discodeit.dto.user.UserUpdateRequest;
-import com.sprint.mission.discodeit.dto.userstatus.UserStatusResponse;
-import com.sprint.mission.discodeit.dto.userstatus.UserStatusUpdateRequest;
 import com.sprint.mission.discodeit.exception.ErrorResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -123,24 +121,4 @@ public interface UserApi {
   })
   ResponseEntity<List<UserResponse>> findAll();
 
-  @Operation(summary = "Update user online status")
-  @ApiResponses({
-      @ApiResponse(
-          responseCode = "200",
-          description = "User status updated successfully",
-          content = @Content(mediaType = "application/json",
-              schema = @Schema(implementation = UserStatusResponse.class))
-      ),
-      @ApiResponse(
-          responseCode = "404",
-          description = "User or status not found",
-          content = @Content(mediaType = "application/json",
-              schema = @Schema(implementation = ErrorResponse.class),
-              examples = @ExampleObject(value = UserExamples.ERROR_404_USER_003))
-      )
-  })
-  ResponseEntity<UserStatusResponse> updateUserStatus(
-      @Parameter(description = "User ID") @PathVariable UUID userId,
-      @RequestBody UserStatusUpdateRequest userStatusUpdateRequest
-  );
 }

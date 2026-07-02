@@ -16,10 +16,10 @@ import org.springframework.data.repository.query.Param;
 
 public interface MessageRepository extends JpaRepository<Message, UUID> {
 
-  @EntityGraph(attributePaths = {"author", "author.profile", "author.status"})
+  @EntityGraph(attributePaths = {"author", "author.profile"})
   Slice<Message> findAllByChannelIdOrderByCreatedAtDesc(UUID channelId, Pageable pageable);
 
-  @EntityGraph(attributePaths = {"author", "author.profile", "author.status"})
+  @EntityGraph(attributePaths = {"author", "author.profile"})
   Slice<Message> findAllByChannelIdAndCreatedAtBeforeOrderByCreatedAtDesc(UUID channelId,
       Instant cursor,
       Pageable pageable);
