@@ -1,6 +1,7 @@
 package com.sprint.mission.discodeit.integration;
 
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -9,6 +10,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.mission.discodeit.dto.data.UserDto;
@@ -26,6 +28,8 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,6 +38,7 @@ import org.springframework.transaction.annotation.Transactional;
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 @Transactional
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 class UserApiIntegrationTest {
 
   @Autowired
@@ -47,6 +52,7 @@ class UserApiIntegrationTest {
 
 
   @Test
+  @WithMockUser(roles = "USER")
   @DisplayName("사용자 생성 API 통합 테스트")
   void createUser_Success() throws Exception {
     // Given
@@ -74,7 +80,8 @@ class UserApiIntegrationTest {
     mockMvc.perform(multipart("/api/users")
             .file(userCreateRequestPart)
             .file(profilePart)
-            .contentType(MediaType.MULTIPART_FORM_DATA_VALUE))
+            .contentType(MediaType.MULTIPART_FORM_DATA_VALUE)
+            .with(csrf()))
         .andExpect(status().isCreated())
         .andExpect(jsonPath("$.id", notNullValue()))
         .andExpect(jsonPath("$.username", is("testuser")))
@@ -84,6 +91,7 @@ class UserApiIntegrationTest {
   }
 
   @Test
+  @WithMockUser(roles = "USER")
   @DisplayName("사용자 생성 실패 API 통합 테스트 - 유효하지 않은 요청")
   void createUser_Failure_InvalidRequest() throws Exception {
     // Given
@@ -103,11 +111,13 @@ class UserApiIntegrationTest {
     // When & Then
     mockMvc.perform(multipart("/api/users")
             .file(userCreateRequestPart)
-            .contentType(MediaType.MULTIPART_FORM_DATA_VALUE))
+            .contentType(MediaType.MULTIPART_FORM_DATA_VALUE)
+            .with(csrf()))
         .andExpect(status().isBadRequest());
   }
 
   @Test
+  @WithMockUser(roles = "USER")
   @DisplayName("모든 사용자 조회 API 통합 테스트")
   void findAllUsers_Success() throws Exception {
     // Given
@@ -131,14 +141,13 @@ class UserApiIntegrationTest {
     mockMvc.perform(get("/api/users")
             .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$", hasSize(2)))
-        .andExpect(jsonPath("$[0].username", is("user1")))
-        .andExpect(jsonPath("$[0].email", is("user1@example.com")))
-        .andExpect(jsonPath("$[1].username", is("user2")))
-        .andExpect(jsonPath("$[1].email", is("user2@example.com")));
+        .andExpect(jsonPath("$", hasSize(3))) // 시스템 사용자 포함하여 3개
+        .andExpect(jsonPath("$[?(@.username == 'user1')].email", hasItems("user1@example.com")))
+        .andExpect(jsonPath("$[?(@.username == 'user2')].email", hasItems("user2@example.com")));
   }
 
   @Test
+  @WithMockUser(roles = "USER")
   @DisplayName("사용자 업데이트 API 통합 테스트")
   void updateUser_Success() throws Exception {
     // Given
@@ -180,7 +189,8 @@ class UserApiIntegrationTest {
             .with(request -> {
               request.setMethod("PATCH");
               return request;
-            }))
+            })
+            .with(csrf()))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.id", is(userId.toString())))
         .andExpect(jsonPath("$.username", is("updateduser")))
@@ -189,6 +199,7 @@ class UserApiIntegrationTest {
   }
 
   @Test
+  @WithMockUser(roles = "USER")
   @DisplayName("사용자 업데이트 실패 API 통합 테스트 - 존재하지 않는 사용자")
   void updateUser_Failure_UserNotFound() throws Exception {
     // Given
@@ -213,11 +224,13 @@ class UserApiIntegrationTest {
             .with(request -> {
               request.setMethod("PATCH");
               return request;
-            }))
+            })
+            .with(csrf()))
         .andExpect(status().isNotFound());
   }
 
   @Test
+  @WithMockUser(roles = "USER")
   @DisplayName("사용자 삭제 API 통합 테스트")
   void deleteUser_Success() throws Exception {
     // Given
@@ -232,7 +245,8 @@ class UserApiIntegrationTest {
     UUID userId = createdUser.id();
 
     // When & Then
-    mockMvc.perform(delete("/api/users/{userId}", userId))
+    mockMvc.perform(delete("/api/users/{userId}", userId)
+            .with(csrf()))
         .andExpect(status().isNoContent());
 
     // 삭제 확인
@@ -242,17 +256,20 @@ class UserApiIntegrationTest {
   }
 
   @Test
+  @WithMockUser(roles = "USER")
   @DisplayName("사용자 삭제 실패 API 통합 테스트 - 존재하지 않는 사용자")
   void deleteUser_Failure_UserNotFound() throws Exception {
     // Given
     UUID nonExistentUserId = UUID.randomUUID();
 
     // When & Then
-    mockMvc.perform(delete("/api/users/{userId}", nonExistentUserId))
+    mockMvc.perform(delete("/api/users/{userId}", nonExistentUserId)
+            .with(csrf()))
         .andExpect(status().isNotFound());
   }
 
   @Test
+  @WithMockUser(roles = "USER")
   @DisplayName("사용자 상태 업데이트 API 통합 테스트")
   void updateUserStatus_Success() throws Exception {
     // Given
@@ -275,12 +292,14 @@ class UserApiIntegrationTest {
     // When & Then
     mockMvc.perform(patch("/api/users/{userId}/userStatus", userId)
             .contentType(MediaType.APPLICATION_JSON)
-            .content(requestBody))
+            .content(requestBody)
+            .with(csrf()))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.lastActiveAt", is(newLastActiveAt.toString())));
   }
 
   @Test
+  @WithMockUser(roles = "USER")
   @DisplayName("사용자 상태 업데이트 실패 API 통합 테스트 - 존재하지 않는 사용자")
   void updateUserStatus_Failure_UserNotFound() throws Exception {
     // Given
@@ -293,7 +312,8 @@ class UserApiIntegrationTest {
     // When & Then
     mockMvc.perform(patch("/api/users/{userId}/userStatus", nonExistentUserId)
             .contentType(MediaType.APPLICATION_JSON)
-            .content(requestBody))
+            .content(requestBody)
+            .with(csrf()))
         .andExpect(status().isNotFound());
   }
 } 
