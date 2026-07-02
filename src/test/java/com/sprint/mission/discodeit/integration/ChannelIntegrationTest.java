@@ -1,5 +1,7 @@
 package com.sprint.mission.discodeit.integration;
 
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -53,7 +55,9 @@ public class ChannelIntegrationTest {
     // when & then
     mockMvc.perform(post("/api/channels/public")
             .contentType(MediaType.APPLICATION_JSON)
-            .content(gson.toJson(request)))
+            .content(gson.toJson(request))
+            .with(user("manager").roles("CHANNEL_MANAGER"))
+            .with(csrf()))
         .andExpect(status().isCreated())
         .andExpect(jsonPath("$.type").value("PUBLIC"))
         .andExpect(jsonPath("$.name").value("공개"))
@@ -73,7 +77,9 @@ public class ChannelIntegrationTest {
     // when & then
     mockMvc.perform(post("/api/channels/private")
             .contentType(MediaType.APPLICATION_JSON)
-            .content(gson.toJson(request)))
+            .content(gson.toJson(request))
+            .with(user("test").roles("USER"))
+            .with(csrf()))
         .andExpect(status().isCreated())
         .andExpect(jsonPath("$.type").value("PRIVATE"));
   }
@@ -91,7 +97,9 @@ public class ChannelIntegrationTest {
     // when & then
     mockMvc.perform(patch("/api/channels/{channelId}", channelId)
             .contentType(MediaType.APPLICATION_JSON)
-            .content(gson.toJson(request)))
+            .content(gson.toJson(request))
+            .with(user("manager").roles("CHANNEL_MANAGER"))
+            .with(csrf()))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.name").value("수정"));
   }
@@ -107,7 +115,9 @@ public class ChannelIntegrationTest {
     // when & then
     mockMvc.perform(patch("/api/channels/{channelId}", channelId)
             .contentType(MediaType.APPLICATION_JSON)
-            .content(gson.toJson(request)))
+            .content(gson.toJson(request))
+            .with(user("manager").roles("CHANNEL_MANAGER"))
+            .with(csrf()))
         .andExpect(status().isNotFound());
   }
 
@@ -120,7 +130,9 @@ public class ChannelIntegrationTest {
     UUID channelId = channel.getId();
 
     // when & then
-    mockMvc.perform(delete("/api/channels/{channelId}", channelId))
+    mockMvc.perform(delete("/api/channels/{channelId}", channelId)
+            .with(user("manager").roles("CHANNEL_MANAGER"))
+            .with(csrf()))
         .andExpect(status().isNoContent());
   }
 
@@ -131,7 +143,9 @@ public class ChannelIntegrationTest {
     UUID channelId = UUID.randomUUID();
 
     // when & then
-    mockMvc.perform(delete("/api/channels/{channelId}", channelId))
+    mockMvc.perform(delete("/api/channels/{channelId}", channelId)
+            .with(user("manager").roles("CHANNEL_MANAGER"))
+            .with(csrf()))
         .andExpect(status().isNotFound());
   }
 }

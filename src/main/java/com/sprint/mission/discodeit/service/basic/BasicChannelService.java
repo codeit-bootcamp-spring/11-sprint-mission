@@ -23,6 +23,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,6 +40,7 @@ public class BasicChannelService implements ChannelService {
 
   @Override
   @Transactional
+  @PreAuthorize("hasRole('CHANNEL_MANAGER')")
   public ChannelDto createPublic(ChannelCreatePublicRequest dto) {
     log.debug("[CHANNEL_CREATE_PUBLIC_START] PUBLIC 채널 생성 시작 - 생성할 채널 이름={}, 생성할 채널 설명={}",
         dto.name(), dto.description());
@@ -152,6 +154,7 @@ public class BasicChannelService implements ChannelService {
   // Update
   @Override
   @Transactional
+  @PreAuthorize("hasRole('CHANNEL_MANAGER')")
   public ChannelDto update(UUID id, ChannelUpdateRequest dto) {
     log.debug("[CHANNEL_UPDATE_START] 채널 수정 시작 - 수정할 채널 ID={}, 요청한 채널 이름={}, 요청한 채널 설명={}",
         id, dto.newName(), dto.newDescription());
@@ -189,6 +192,7 @@ public class BasicChannelService implements ChannelService {
   // 고도화 이후 : 채널 내 모든 메시지, 채널의 최근 메시지를 읽은 유저의 시간, 해당 채널 삭제
   @Override
   @Transactional
+  @PreAuthorize("hasRole('CHANNEL_MANAGER')")
   public void delete(UUID id) {
     log.debug("[CHANNEL_DELETE_START] 채널 삭제 시작 - 채널 ID={}", id);
 

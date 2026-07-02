@@ -3,6 +3,7 @@ package com.sprint.mission.discodeit.unit;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
@@ -14,11 +15,11 @@ import com.sprint.mission.discodeit.dto.request.UserUpdateRequest;
 import com.sprint.mission.discodeit.dto.response.UserDto;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.entity.User.Role;
 import com.sprint.mission.discodeit.exception.DiscodeitException;
 import com.sprint.mission.discodeit.mapper.UserMapper;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
-import com.sprint.mission.discodeit.repository.UserStatusRepository;
 import com.sprint.mission.discodeit.service.basic.BasicUserService;
 import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import java.io.IOException;
@@ -30,11 +31,17 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.multipart.MultipartFile;
 
 @ExtendWith(MockitoExtension.class)
 public class UserServiceTest {
+
+  @Spy
+  PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
   @Mock
   private UserRepository userRepository;
@@ -46,9 +53,6 @@ public class UserServiceTest {
   private BinaryContentStorage binaryContentStorage;
 
   @Mock
-  private UserStatusRepository userStatusRepository;
-
-  @Mock
   private UserMapper userMapper;
 
   @InjectMocks
@@ -58,8 +62,11 @@ public class UserServiceTest {
   @DisplayName("유저 생성 성공(프로필 이미지 있음)")
   void create_success_with_profile() throws IOException {
     // given
+    // BCrypt 암호화를 위한 평문 비밀번호
+    String password = "12345678";
     // 유저 DTO
-    UserCreateRequest request = new UserCreateRequest("테스트", "test@naver.com", "12345678");
+    UserCreateRequest request = new UserCreateRequest(
+        "테스트", "test@naver.com", passwordEncoder.encode(password));
 
     // 프로필
     MultipartFile profile = mock(MultipartFile.class);
@@ -76,7 +83,6 @@ public class UserServiceTest {
     // 각 Repository에 저장 후 willAnswer로 결과를 동적으로 가져옴
     given(userRepository.save(any(User.class))).willAnswer(i -> i.getArgument(0));
     given(binaryContentRepository.save(any(BinaryContent.class))).willAnswer(i -> i.getArgument(0));
-    given(userStatusRepository.save(any())).willAnswer(i -> i.getArgument(0));
 
     given(userMapper.toDto(any(User.class)))
         .willAnswer(i -> {
@@ -87,7 +93,8 @@ public class UserServiceTest {
               u.getUsername(),
               u.getEmail(),
               null,
-              true
+              true,
+              Role.USER
           );
         });
 
@@ -99,22 +106,23 @@ public class UserServiceTest {
     then(userRepository).should().save(any(User.class));
     then(binaryContentRepository).should().save(any());
     then(binaryContentStorage).should().put(any(), any(byte[].class));
-    then(userStatusRepository).should().save(any());
-    // == verify(userStatusRepository).save(any());
   }
 
   @Test
   @DisplayName("유저 생성 성공(프로필 이미지 없음)")
   void create_success_no_profile() {
     // given
+    // BCrypt 암호화를 위한 평문 비밀번호
+    String password = "12345678";
+
     // 유저 DTO
-    UserCreateRequest request = new UserCreateRequest("테스트", "test@naver.com", "12345678");
+    UserCreateRequest request = new UserCreateRequest(
+        "테스트", "test@naver.com", passwordEncoder.encode(password));
 
     given(userRepository.existsByUsername("테스트")).willReturn(false);
     given(userRepository.existsByEmail("test@naver.com")).willReturn(false);
 
     given(userRepository.save(any(User.class))).willAnswer(i -> i.getArgument(0));
-    given(userStatusRepository.save(any())).willAnswer(i -> i.getArgument(0));
 
     given(userMapper.toDto(any(User.class)))
         .willAnswer(i -> {
@@ -125,7 +133,8 @@ public class UserServiceTest {
               u.getUsername(),
               u.getEmail(),
               null,
-              true
+              true,
+              Role.USER
           );
         });
 
@@ -137,8 +146,6 @@ public class UserServiceTest {
     then(userRepository).should().save(any(User.class));
     then(binaryContentRepository).should((never())).save(any());
     then(binaryContentStorage).should((never())).put(any(), any(byte[].class));
-    then(userStatusRepository).should().save(any());
-    // == verify(userStatusRepository).save(any());
   }
 
   @Test
@@ -198,7 +205,8 @@ public class UserServiceTest {
               u.getUsername(),
               u.getEmail(),
               null,
-              true
+              true,
+              Role.USER
           );
         });
 
@@ -234,7 +242,8 @@ public class UserServiceTest {
               u.getUsername(),
               u.getEmail(),
               null,
-              true
+              true,
+              Role.USER
           );
         });
 
@@ -252,8 +261,10 @@ public class UserServiceTest {
   @DisplayName("유저 수정 성공(Password만 수정)")
   void update_password_success() {
     // given
+    // BCrypt 암호화를 위한 평문 비밀번호
+    String password = "12345678";
     // 유저 생성
-    User user = User.create("이름", "test@naver.com", "12345678");
+    User user = User.create("이름", "test@naver.com", passwordEncoder.encode(password));
 
     // 수정 요청
     UserUpdateRequest request = new UserUpdateRequest(null, "null", "1234");
@@ -267,7 +278,7 @@ public class UserServiceTest {
     ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
     then(userRepository).should().save(captor.capture());
     User savedUser = captor.getValue();
-    assertEquals("1234", savedUser.getPassword());
+    assertTrue(passwordEncoder.matches("1234", savedUser.getPassword()));
 
     // userRepository를 대상으로 save 메서드가 User의 아무 필드나 받아서 호출됐는지 확인
     then(userRepository).should().save(any(User.class));

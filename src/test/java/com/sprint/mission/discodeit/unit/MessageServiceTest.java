@@ -20,6 +20,7 @@ import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.entity.User.Role;
 import com.sprint.mission.discodeit.exception.DiscodeitException;
 import com.sprint.mission.discodeit.mapper.MessageMapper;
 import com.sprint.mission.discodeit.mapper.PageResponseMapper;
@@ -95,7 +96,7 @@ public class MessageServiceTest {
           m.getUpdatedAt(),
           m.getContent(),
           channelId,
-          new UserDto(userId, "test", "test@naver.com", null, true),
+          new UserDto(userId, "test", "test@naver.com", null, true, Role.USER),
           List.of()
       );
     });
@@ -144,7 +145,7 @@ public class MessageServiceTest {
           m.getUpdatedAt(),
           m.getContent(),
           channelId,
-          new UserDto(userId, "test", "test@naver.com", null, true),
+          new UserDto(userId, "test", "test@naver.com", null, true, Role.USER),
           List.of(binaryContentDto)
       );
     });
@@ -225,7 +226,7 @@ public class MessageServiceTest {
           m.getUpdatedAt(),
           m.getContent(),
           channelId,
-          new UserDto(userId, "test", "test@naver.com", null, true),
+          new UserDto(userId, "test", "test@naver.com", null, true, Role.USER),
           List.of()
       );
     });

@@ -14,10 +14,6 @@ public enum ErrorCode {
   // MESSAGE
   MESSAGE_NOT_FOUND("해당 메시지가 존재하지 않습니다."),
 
-  // USER_STATUS
-  USER_STATUS_NOT_FOUND("해당 UserStatus가 존재하지 않습니다."),
-  USER_STATUS_ALREADY_EXISTS("이미 존재하는 UserStatus입니다."),
-
   // READ_STATUS
   READ_STATUS_NOT_FOUND("해당 ReadStatus가 존재하지 않습니다."),
   READ_STATUS_ALREADY_EXISTS("이미 존재하는 ReadStatus입니다."),
@@ -31,6 +27,8 @@ public enum ErrorCode {
 
   // 공통
   INVALID_REQUEST("잘못된 요청입니다."),
+  UNAUTHORIZED("인증이 필요합니다."),
+  FORBIDDEN("접근 권한이 없습니다"),
   INTERNAL_SERVER_ERROR("서버 내부 오류가 발생했습니다.");
 
   private final String message;

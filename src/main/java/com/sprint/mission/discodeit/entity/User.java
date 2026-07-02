@@ -1,9 +1,10 @@
 package com.sprint.mission.discodeit.entity;
 
 import com.sprint.mission.discodeit.entity.base.BaseUpdatableEntity;
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
@@ -38,19 +39,10 @@ public class User extends BaseUpdatableEntity {
   @JoinColumn(name = "profile_id", unique = true)
   private BinaryContent profile; // BinaryContent의 id
 
-  // 1:1 관계(양방향) : 1개의 User는 1개의 UserStatus를 갖는다 / User가 삭제될 시 UserStatus도 삭제된다.(ON DELETE CASCADE)
-  @OneToOne(mappedBy = "user", cascade = CascadeType.REMOVE, orphanRemoval = true)
-  private UserStatus status; // 디스코드 접속 상태(온라인, 오프라인)
+  // 사용자 권한 : 관리자(ADMIN) / 채널 매니저(CHANNEL_MANAGER) / 일반 사용자(USER)
+  @Enumerated(EnumType.STRING)
+  private Role role;
 
-  // 'id', 'createdAt'는 생성자에서 초기화하세요.
-  public User(String username, String email, UserStatus status, String password) {
-    this.username = username;
-    this.email = email;
-    this.status = status;
-    this.password = password;
-  }
-
-  // 정적 팩토리 메서드
   // 생성자 오버로딩하여 코드 탬플릿에 적합한 생성자 생성
   private User(String username, String email, String password) {
     this.username = username;
@@ -60,7 +52,12 @@ public class User extends BaseUpdatableEntity {
 
   // 정적 팩토리 메서드
   public static User create(String username, String email, String password) {
-    return new User(username, email, password);
+    User user = new User(username, email, password);
+
+    // 유저 권한 설정(회원가입 시 모든 사용자는 USER 권한을 갖도록 설정)
+    user.role = Role.USER;
+
+    return user;
   }
 
   // get메서드(Lombok의 @Getter 사용)
@@ -73,16 +70,16 @@ public class User extends BaseUpdatableEntity {
     this.email = email;
   }
 
-  public void updateStatus(UserStatus status) {
-    this.status = status;
-  }
-
   public void updatePassword(String password) {
     this.password = password;
   }
 
   public void updateProfile(BinaryContent profile) {
     this.profile = profile;
+  }
+
+  public void updateRole(Role role) {
+    this.role = role;
   }
 
   @Override
@@ -102,5 +99,9 @@ public class User extends BaseUpdatableEntity {
     public String getDescription() {
       return description;
     }
+  }
+
+  public enum Role {
+    ADMIN, CHANNEL_MANAGER, USER;
   }
 }

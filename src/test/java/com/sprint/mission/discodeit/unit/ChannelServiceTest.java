@@ -19,6 +19,7 @@ import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.entity.User.Role;
 import com.sprint.mission.discodeit.exception.DiscodeitException;
 import com.sprint.mission.discodeit.mapper.ChannelMapper;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
@@ -105,8 +106,8 @@ public class ChannelServiceTest {
     );
 
     List<UserDto> dto = List.of(
-        new UserDto(userId1, "user1", "test1@naver.com", null, true),
-        new UserDto(userId1, "user2", "test2@naver.com", null, true)
+        new UserDto(userId1, "user1", "test1@naver.com", null, true, Role.USER),
+        new UserDto(userId1, "user2", "test2@naver.com", null, true, Role.USER)
     );
 
     given(channelRepository.save(any(Channel.class))).willAnswer(i -> i.getArgument(0));

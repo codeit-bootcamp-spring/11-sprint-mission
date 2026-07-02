@@ -29,6 +29,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -128,6 +129,7 @@ public class BasicMessageService implements MessageService {
   // Update
   @Override
   @Transactional
+  @PreAuthorize("@messagePermissionEvaluator.isOwner(#id, authentication)")
   public MessageDto update(UUID id, MessageUpdateRequest dto) {
     log.debug("[MESSAGE_UPDATE_START] 메시지 수정 시작 - 수정할 메시지 ID={}, 요청할 수정 메시지 내용={}",
         id, dto.newContent());
@@ -152,6 +154,7 @@ public class BasicMessageService implements MessageService {
   // 고도화 후 첨부파일 삭제 추가
   @Override
   @Transactional
+  @PreAuthorize("@messagePermissionEvaluator.isOwner(#id, authentication)")
   public void delete(UUID id) {
 
     log.debug("[MESSAGE_DELETE_START] 메시지 삭제 시작 - 메시지 ID={}", id);

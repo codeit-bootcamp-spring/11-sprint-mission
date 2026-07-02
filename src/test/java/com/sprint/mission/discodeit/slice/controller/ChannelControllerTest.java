@@ -19,6 +19,7 @@ import com.sprint.mission.discodeit.dto.response.UserDto;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.Channel.ChannelType;
 import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.entity.User.Role;
 import com.sprint.mission.discodeit.exception.channel.ChannelNotFoundException;
 import com.sprint.mission.discodeit.service.ChannelService;
 import java.time.Instant;
@@ -27,6 +28,7 @@ import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 import org.springframework.http.MediaType;
@@ -34,6 +36,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(ChannelController.class)
+@AutoConfigureMockMvc(addFilters = false)
 public class ChannelControllerTest {
 
   @Autowired
@@ -79,10 +82,20 @@ public class ChannelControllerTest {
     UUID userId2 = UUID.randomUUID();
 
     UserDto userDto1 = new UserDto(
-        user1.getId(), user1.getUsername(), user1.getEmail(), null, true
+        user1.getId(),
+        user1.getUsername(),
+        user1.getEmail(),
+        null,
+        true,
+        Role.USER
     );
     UserDto userDto2 = new UserDto(
-        user2.getId(), user2.getUsername(), user2.getEmail(), null, true
+        user2.getId(),
+        user2.getUsername(),
+        user2.getEmail(),
+        null,
+        true,
+        Role.USER
     );
 
     ChannelCreatePrivateRequest request = new ChannelCreatePrivateRequest(

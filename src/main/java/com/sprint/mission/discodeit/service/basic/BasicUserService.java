@@ -5,22 +5,21 @@ import com.sprint.mission.discodeit.dto.request.UserUpdateRequest;
 import com.sprint.mission.discodeit.dto.response.UserDto;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.User;
-import com.sprint.mission.discodeit.entity.UserStatus;
 import com.sprint.mission.discodeit.exception.user.UserEmailAlreadyExistsException;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.exception.user.UsernameAlreadyExistException;
 import com.sprint.mission.discodeit.mapper.UserMapper;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
-import com.sprint.mission.discodeit.repository.UserStatusRepository;
 import com.sprint.mission.discodeit.service.UserService;
 import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import java.io.IOException;
-import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -31,10 +30,10 @@ import org.springframework.web.multipart.MultipartFile;
 public class BasicUserService implements UserService {
 
   private final UserRepository userRepository;
-  private final UserStatusRepository userStatusRepository;
   private final BinaryContentRepository binaryContentRepository;
   private final BinaryContentStorage binaryContentStorage;
   private final UserMapper userMapper;
+  private final PasswordEncoder passwordEncoder;
 
   // Create
   @Override
@@ -55,10 +54,13 @@ public class BasicUserService implements UserService {
       throw new UserEmailAlreadyExistsException(dto.email());
     }
 
-    // 유저 생성(이름, 이메일 비밀번호)
-    User user = User.create(dto.username(), dto.email(), dto.password());
+    // 유저 생성 전 요청받은 비밀번호를 암호화
+    String encodePassword = passwordEncoder.encode(dto.password());
 
-    // User -> BinaryContent(ProfileImage) -> UserStatus 순으로 생성
+    // 유저 생성(이름, 이메일 비밀번호)
+    User user = User.create(dto.username(), dto.email(), encodePassword);
+
+    // User -> BinaryContent(ProfileImage) 순으로 생성
     User savedUser = userRepository.save(user);
 
     // 프로필 이미지 등록(선택)
@@ -76,11 +78,6 @@ public class BasicUserService implements UserService {
       log.debug("[USER_CREATE_PROFILE_SUCCESS] 유저 프로필 이미지 등록 완료 - 프로필 ID={}", profileImage.getId());
     }
 
-    // 유저 상태 생성
-    // UserStatusService를 사용하면 같은 레이어(여기서는 Service)간에 순환 참조가 생기므로 UserStatusService.create 사용 X
-    UserStatus userStatus = new UserStatus(savedUser, Instant.now());
-
-    userStatusRepository.save(userStatus); // cascade에 의해 UserStatus도 자동 저장
     log.info("[USER_CREATE_SUCCESS] 유저 생성 완료 - 유저 ID={}, 유저 이름={}", user.getId(),
         user.getUsername());
     return userMapper.toDto(savedUser);
@@ -111,6 +108,7 @@ public class BasicUserService implements UserService {
   // 같은 키, 다른 Value를 put 하면 키는 그대로, Value만 갱신된다.
   @Override
   @Transactional
+  @PreAuthorize("#id == authentication.principal.userDto.id")
   public UserDto update(UUID id, UserUpdateRequest dto, MultipartFile profile) {
 
     // 비밀번호는 X
@@ -160,7 +158,7 @@ public class BasicUserService implements UserService {
       user.updateEmail(dto.newEmail());
     }
     if (dto.newPassword() != null) {
-      user.updatePassword(dto.newPassword());
+      user.updatePassword(passwordEncoder.encode(dto.newPassword()));
     }
 
     userRepository.save(user);
@@ -171,10 +169,12 @@ public class BasicUserService implements UserService {
   }
 
   // Delete
-  @Override
-  @Transactional
   // 기존 User만 삭제
   // 고도화 이후 : User, UserStatus, 프로필 이미지 삭제
+  // 2차 고도화 이후 : User, 프로필 이미지 삭제
+  @Override
+  @Transactional
+  @PreAuthorize("#id == authentication.principal.userDto.id")
   public void delete(UUID id) {
     log.debug("[USER_DELETE_START] 유저 삭제 시작 - 삭제할 유저 ID={}", id);
 

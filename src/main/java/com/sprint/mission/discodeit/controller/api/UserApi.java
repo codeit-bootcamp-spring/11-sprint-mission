@@ -1,10 +1,8 @@
 package com.sprint.mission.discodeit.controller.api;
 
 import com.sprint.mission.discodeit.dto.request.UserCreateRequest;
-import com.sprint.mission.discodeit.dto.request.UserStatusUpdateRequest;
 import com.sprint.mission.discodeit.dto.request.UserUpdateRequest;
 import com.sprint.mission.discodeit.dto.response.UserDto;
-import com.sprint.mission.discodeit.dto.response.UserStatusDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -19,7 +17,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -67,16 +64,5 @@ public interface UserApi {
   @ApiResponse(responseCode = "200", description = "User 목록 조회 성공")
   @GetMapping
   ResponseEntity<List<UserDto>> findAll();
-
-  @Operation(summary = "User 온라인 상태 업데이트")
-  @ApiResponses(value = {
-      @ApiResponse(responseCode = "200", description = "User 온라인 상태가 성공적으로 업데이트됨"),
-      @ApiResponse(responseCode = "404", description = "해당 User의 UserStatus를 찾을 수 없음")
-  })
-  @PatchMapping("/{userId}/userStatus")
-  ResponseEntity<UserStatusDto> updateStatus(
-      @Parameter(description = "상태를 변경할 User ID")
-      @PathVariable("userId") UUID id,
-      @RequestBody UserStatusUpdateRequest dto);
 
 }

@@ -16,6 +16,7 @@ import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
 import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
@@ -29,6 +30,31 @@ public class AWSS3Test {
   private S3Client s3Client;
   private S3Presigner presigner;
   private String bucket;
+
+  private void uploadTempFile() {
+    // 다운로드 테스트용 파일 생성
+    String tempKey = "test/temp.txt";
+
+    // 내 S3 버킷에 text 파일 생성 요청
+    PutObjectRequest request = PutObjectRequest.builder()
+        .bucket(bucket)
+        .key(tempKey)
+        .contentType("text/plain")
+        .build();
+
+    // 프로젝트 내의 경로에 있는 txt파일을 S3 버킷에 업로드
+    Path target = Path.of("src/test/resources/example.txt");
+    s3Client.putObject(request, target);
+  }
+
+  private void deleteObject(String key) {
+    s3Client.deleteObject(
+        DeleteObjectRequest.builder()
+            .bucket(bucket)
+            .key(key)
+            .build()
+    );
+  }
 
   @BeforeEach
   void setUp() throws Exception {
@@ -90,7 +116,8 @@ public class AWSS3Test {
   @DisplayName("S3 다운로드 테스트")
   void S3_txt파일_다운로드_테스트() throws Exception {
     // given
-    String key = "test/upload.txt";
+    uploadTempFile();
+    String key = "test/temp.txt";
 
     // 내 S3 버킷에서 파일을 가져옴
     GetObjectRequest get = GetObjectRequest.builder()
@@ -112,17 +139,12 @@ public class AWSS3Test {
     assertTrue(target.toFile().exists());
   }
 
-  // 다운로드 테스트에서 발생한 파일 삭제
-  @AfterEach
-  void tearDown() throws Exception {
-    Files.deleteIfExists(Path.of("build/download.txt"));
-  }
-
   @Test
   @DisplayName("Presigned URL 생성 테스트(20초 동안 유효)")
   void _20초_동안_유효한_txt파일_Presigned_URL_생성_테스트_() {
     // given
-    String key = "test/upload.txt";
+    uploadTempFile();
+    String key = "test/temp.txt";
 
     // 내 S3 버킷에서 파일을 가져옴
     GetObjectRequest get = GetObjectRequest.builder()
@@ -146,5 +168,13 @@ public class AWSS3Test {
     System.out.println("Presigned URL : " + url);
 
     assertNotNull(url);
+  }
+
+  // 업로드, 다운로드 테스트에서 발생한 파일 삭제
+  @AfterEach
+  void tearDown() throws Exception {
+    Files.deleteIfExists(Path.of("build/download.txt"));
+    deleteObject("test/upload.txt");
+    deleteObject("test/temp.txt");
   }
 }

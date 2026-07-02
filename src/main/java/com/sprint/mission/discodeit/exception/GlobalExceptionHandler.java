@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -53,6 +54,16 @@ public class GlobalExceptionHandler {
     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
   }
 
+  // 인증은 되었지만 권한이 없는 경우 예외
+  @ExceptionHandler(AccessDeniedException.class)
+  public ResponseEntity<ErrorResponse> handleAccessDeniedException(AccessDeniedException e) {
+    ErrorResponse response = ErrorResponse.of(
+        ErrorCode.FORBIDDEN, HttpStatus.FORBIDDEN.value(), e,
+        Map.of("reason", e.getMessage()));
+
+    return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+  }
+
   // 추가 : 개발자마저 인지하지 못하는 예외가 있을 수 있기 때문에 예외 최상위 클래스 Exception 예외를 추가, 500번(예외 발생, 서버 코드 문제, 개발자 실수)
   @ExceptionHandler(Exception.class)
   public ResponseEntity<ErrorResponse> handleOtherException(Exception e) {
@@ -73,11 +84,10 @@ public class GlobalExceptionHandler {
 
       // 404
       case USER_NOT_FOUND, CHANNEL_NOT_FOUND, MESSAGE_NOT_FOUND,
-           USER_STATUS_NOT_FOUND, READ_STATUS_NOT_FOUND, BINARY_CONTENT_NOT_FOUND ->
-          HttpStatus.NOT_FOUND;
+           READ_STATUS_NOT_FOUND, BINARY_CONTENT_NOT_FOUND -> HttpStatus.NOT_FOUND;
 
       // 409
-      case DUPLICATE_USERNAME, DUPLICATE_EMAIL, USER_STATUS_ALREADY_EXISTS -> HttpStatus.CONFLICT;
+      case DUPLICATE_USERNAME, DUPLICATE_EMAIL -> HttpStatus.CONFLICT;
 
       // 500
       default -> HttpStatus.INTERNAL_SERVER_ERROR;

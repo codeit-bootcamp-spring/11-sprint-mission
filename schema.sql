@@ -15,16 +15,8 @@ create table users
     username   varchar(50) UNIQUE  NOT NULL,
     email      varchar(100) UNIQUE NOT NULL,
     password   varchar(60)         NOT NULL,
-    profile_id UUID UNIQUE         references binary_contents (id) on delete set null
-);
-
-create table user_statuses
-(
-    id             UUID primary key,
-    created_at     timestamptz not null,
-    updated_at     timestamptz,
-    user_id        uuid unique not null references users (id) on delete cascade,
-    last_active_at timestamptz not null
+    profile_id UUID UNIQUE         references binary_contents (id) on delete set null,
+    role       varchar(20)         NOT NULL
 );
 
 create table channels

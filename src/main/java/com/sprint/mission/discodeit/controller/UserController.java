@@ -3,12 +3,9 @@ package com.sprint.mission.discodeit.controller;
 import com.sprint.mission.discodeit.constant.EndPoints;
 import com.sprint.mission.discodeit.controller.api.UserApi;
 import com.sprint.mission.discodeit.dto.request.UserCreateRequest;
-import com.sprint.mission.discodeit.dto.request.UserStatusUpdateRequest;
 import com.sprint.mission.discodeit.dto.request.UserUpdateRequest;
 import com.sprint.mission.discodeit.dto.response.UserDto;
-import com.sprint.mission.discodeit.dto.response.UserStatusDto;
 import com.sprint.mission.discodeit.service.UserService;
-import com.sprint.mission.discodeit.service.UserStatusService;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
@@ -22,7 +19,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -36,7 +32,6 @@ import org.springframework.web.multipart.MultipartFile;
 public class UserController implements UserApi {
 
   private final UserService userService; // 특정 유저 생성, 모든 유저 조회, 특정 유저 업데이트, 특정 유저 삭제
-  private final UserStatusService userStatusService; // 특정 유저의 상태 업데이트
 
   // 특정 사용자 등록
   @Override
@@ -84,20 +79,5 @@ public class UserController implements UserApi {
   public ResponseEntity<List<UserDto>> findAll() {
     return ResponseEntity.ok(userService.findAll());
   }
-//    @RequestMapping(method = RequestMethod.GET)
-//    public ResponseEntity<List<UserReadDto>> readAll() {
-//        return ResponseEntity.ok(userService.findAll());
-//    }
-
-  // 특정 사용자의 상태(온/오프라인) 업데이트
-  @Override
-  @ResponseStatus(HttpStatus.OK)
-  @PatchMapping("/{userId}/userStatus")
-  public ResponseEntity<UserStatusDto> updateStatus(
-      @PathVariable("userId") UUID id,
-      @RequestBody UserStatusUpdateRequest dto) {
-    return ResponseEntity.ok(userStatusService.updateByUserId(id, dto));
-  }
-
 
 }
