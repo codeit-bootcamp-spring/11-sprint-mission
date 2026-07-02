@@ -99,7 +99,12 @@ public class BasicUserService implements UserService {
   @Override
   public List<UserDto> findAll() {
     return userRepository.findAll().stream()
-        .map(userMapper::toDto)
+        .map(user -> {
+          UserDto userDto = userMapper.toDto(user);
+          boolean isOnline = jwtRegistry.hasActiveJwtInformationByUserId(user.getId());
+
+          return userDto.withOnline(isOnline);
+        })
         .collect(Collectors.toList());
   }
 
@@ -109,7 +114,7 @@ public class BasicUserService implements UserService {
 
   @Override
   @Transactional
-  @PreAuthorize("#id == principal.uesrDto.id or hasRole('ADMIN')")
+  @PreAuthorize("#id == principal.userDto.id or hasRole('ADMIN')")
   public UserDto update(UUID id, UserUpdateRequest request, MultipartFile profile) {
     log.debug("사용자 수정 시작 - userId: {}", id);
 

@@ -7,7 +7,7 @@ import com.sprint.mission.discodeit.security.handler.JwtLoginSuccessHandler;
 import com.sprint.mission.discodeit.security.handler.JwtLogoutHandler;
 import com.sprint.mission.discodeit.security.handler.LoginFailureHandler;
 import com.sprint.mission.discodeit.security.filter.JwtAuthenticationFilter;
-import com.sprint.mission.discodeit.security.jwt.InMemoryJwtRegistry;
+import com.sprint.mission.discodeit.security.handler.SpaCsrfTokenRequestHandler;
 import com.sprint.mission.discodeit.security.jwt.JwtRegistry;
 import com.sprint.mission.discodeit.security.jwt.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
@@ -85,10 +85,10 @@ public class SecurityConfig {
             "/assets/**",
             "/favicon.ico"
         ).permitAll()
-        .requestMatchers(
-            "/api/auth/refresh",
-            "/api/auth/**"
-        ).permitAll()
+        .requestMatchers(HttpMethod.GET, "/api/auth/csrf-token").permitAll()
+        .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
+        .requestMatchers(HttpMethod.POST, "/api/auth/logout").permitAll()
+        .requestMatchers(HttpMethod.POST, "/api/auth/refresh").permitAll()
         .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
         .anyRequest().authenticated()
     );
