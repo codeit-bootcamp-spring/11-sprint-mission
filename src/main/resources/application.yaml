@@ -47,6 +47,7 @@ discodeit:
       secret: ${JWT_SECRET:discodeit-jwt-secret-key-must-be-at-least-32-bytes-long}
       access-token-validity: ${JWT_ACCESS_TOKEN_VALIDITY:1800}
       refresh-token-validity: ${JWT_REFRESH_TOKEN_VALIDITY:1209600}
+      max-active-count: ${JWT_MAX_ACTIVE_COUNT:1}
 
 info:
   app:

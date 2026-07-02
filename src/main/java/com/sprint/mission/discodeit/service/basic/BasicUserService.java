@@ -15,7 +15,7 @@ import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.mapper.UserMapper;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
-import com.sprint.mission.discodeit.security.DiscodeitUserDetails;
+import com.sprint.mission.discodeit.security.jwt.JwtRegistry;
 import com.sprint.mission.discodeit.service.UserService;
 import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import java.util.Map;
@@ -23,7 +23,6 @@ import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.session.SessionInformation;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 import java.io.IOException;
@@ -44,6 +43,7 @@ public class BasicUserService implements UserService {
   private final UserRepository userRepository;
   private final BinaryContentRepository binaryContentRepository;
   private final BinaryContentStorage binaryContentStorage;
+  private final JwtRegistry jwtRegistry;
 
   private final UserMapper userMapper;
   private final PasswordEncoder passwordEncoder;
@@ -210,17 +210,16 @@ public class BasicUserService implements UserService {
         .orElseThrow(() -> new UserNotFoundException(request.userId()));
     user.updateRole(request.newRole());
 
-    Set<UUID> onlineUserIds = getOnlineUserIds();
+    jwtRegistry.invalidateJwtInformationByUserId(request.userId());
 
-    // TODO: JwtRegistry 구현 후 해당 유저의 refresh token 무효화 로직 추가
-
-    boolean isOnline = onlineUserIds.contains(user.getId());
+    boolean isOnline = jwtRegistry.hasActiveJwtInformationByUserId(user.getId());
     return userMapper.toDto(user, isOnline);
   }
 
   private Set<UUID> getOnlineUserIds() {
-    // TODO: JwtRegistry 구현 후 refresh token 등록 여부로 온라인 판단하도록 교체
-
-    return Set.of();
+    return userRepository.findAll().stream()
+        .map(User::getId)
+        .filter(jwtRegistry::hasActiveJwtInformationByUserId)
+        .collect(Collectors.toSet());
   }
 }

@@ -22,6 +22,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
   private static final String BEARER_PREFIX = "Bearer ";
 
   private final JwtTokenProvider jwtTokenProvider;
+  private final JwtRegistry jwtRegistry;
   private final DiscodeitUserDetailsService userDetailsService;
 
   @Override
@@ -31,7 +32,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     String token = resolveToken(request);
 
     if (StringUtils.hasText(token) && jwtTokenProvider.validateToken(token)
-        && jwtTokenProvider.isAccessToken(token)) {
+        && jwtTokenProvider.isAccessToken(token)
+        && jwtRegistry.hasActiveJwtInformationByAccessToken(token)) {
       UUID userId = jwtTokenProvider.getUserId(token);
       String username = jwtTokenProvider.getUsername(token);
 

@@ -173,11 +173,6 @@ public class JwtTokenProvider {
 
   // 토큰 갱신
   public TokenPair reissueTokens(String refreshToken) {
-    if (!StringUtils.hasText(refreshToken)
-        || !validateToken(refreshToken)
-        || !isRefreshToken(refreshToken)) {
-      throw new RefreshTokenInvalidException();
-    }
     UUID userId = getUserId(refreshToken);
     String username = getUsername(refreshToken);
 
