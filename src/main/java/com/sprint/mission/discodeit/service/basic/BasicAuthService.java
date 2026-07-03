@@ -1,13 +1,16 @@
 package com.sprint.mission.discodeit.service.basic;
 
+import com.sprint.mission.discodeit.dto.data.TokenPair;
 import com.sprint.mission.discodeit.dto.data.UserDto;
 import com.sprint.mission.discodeit.dto.request.RoleUpdateRequest;
 import com.sprint.mission.discodeit.entity.Role;
 import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.exception.auth.RefreshTokenInvalidException;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.mapper.UserMapper;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.security.SessionManager;
+import com.sprint.mission.discodeit.security.jwt.JwtTokenProvider;
 import com.sprint.mission.discodeit.service.AuthService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +27,7 @@ public class BasicAuthService implements AuthService {
   private final UserRepository userRepository;
   private final UserMapper userMapper;
   private final SessionManager sessionManager;
+  private final JwtTokenProvider jwtTokenProvider;
 
   @PreAuthorize("hasRole('ADMIN')")
   @Transactional
@@ -47,5 +51,15 @@ public class BasicAuthService implements AuthService {
     return userMapper.toDto(user);
   }
 
+  @Override
+  public TokenPair reissueToken(String refreshToken) {
+    if (refreshToken == null || !jwtTokenProvider.validateToken(refreshToken)) {
+      throw new RefreshTokenInvalidException();
+    }
 
+    String newAccessToken = jwtTokenProvider.reissueAccessToken(refreshToken);
+    String newRefreshToken = jwtTokenProvider.reissueRefreshToken(refreshToken);
+
+    return new TokenPair(newAccessToken, newRefreshToken);
+  }
 }
