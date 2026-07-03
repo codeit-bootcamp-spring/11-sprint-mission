@@ -66,6 +66,17 @@ CREATE TABLE read_statuses
     UNIQUE (user_id, channel_id)
 );
 
+-- RefreshToken
+CREATE TABLE refresh_tokens
+(
+    id         uuid PRIMARY KEY,
+    created_at timestamp with time zone NOT NULL,
+    token      text UNIQUE              NOT NULL,
+    user_id    uuid UNIQUE              NOT NULL,
+    expires_at timestamp with time zone NOT NULL,
+    rotated    boolean                  NOT NULL
+);
+
 
 -- 제약 조건
 -- User (1) -> BinaryContent (1)
@@ -108,4 +119,11 @@ ALTER TABLE read_statuses
     ADD CONSTRAINT fk_read_status_channel
         FOREIGN KEY (channel_id)
             REFERENCES channels (id)
+            ON DELETE CASCADE;
+
+-- RefreshToken (N) -> User (1)
+ALTER TABLE refresh_tokens
+    ADD CONSTRAINT fk_refresh_token_user
+        FOREIGN KEY (user_id)
+            REFERENCES users (id)
             ON DELETE CASCADE;
