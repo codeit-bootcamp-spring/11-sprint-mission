@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import org.springframework.scheduling.annotation.Scheduled;
 
 public class InMemoryJwtRegistry implements JwtRegistry {
 
@@ -69,6 +70,7 @@ public class InMemoryJwtRegistry implements JwtRegistry {
     return newJwtInformation;
   }
 
+  @Scheduled(fixedDelay = 1000 * 60 * 5)
   @Override
   public void clearExpiredJwtInformation() {
     Instant now = Instant.now();
