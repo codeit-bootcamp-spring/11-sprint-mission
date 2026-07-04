@@ -9,7 +9,8 @@ import com.sprint.mission.discodeit.exception.auth.RefreshTokenInvalidException;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.mapper.UserMapper;
 import com.sprint.mission.discodeit.repository.UserRepository;
-import com.sprint.mission.discodeit.security.SessionManager;
+import com.sprint.mission.discodeit.security.jwt.JwtInformation;
+import com.sprint.mission.discodeit.security.jwt.JwtRegistry;
 import com.sprint.mission.discodeit.security.jwt.JwtTokenProvider;
 import com.sprint.mission.discodeit.service.AuthService;
 import java.util.UUID;
@@ -26,7 +27,7 @@ public class BasicAuthService implements AuthService {
 
   private final UserRepository userRepository;
   private final UserMapper userMapper;
-  private final SessionManager sessionManager;
+  private final JwtRegistry jwtRegistry;
   private final JwtTokenProvider jwtTokenProvider;
 
   @PreAuthorize("hasRole('ADMIN')")
@@ -46,19 +47,28 @@ public class BasicAuthService implements AuthService {
     Role newRole = request.newRole();
     user.updateRole(newRole);
 
-    sessionManager.invalidateSessionsByUserId(userId);
+    jwtRegistry.invalidateJwtInformationByUserId(userId);
 
     return userMapper.toDto(user);
   }
 
   @Override
   public TokenPair reissueToken(String refreshToken) {
-    if (refreshToken == null || !jwtTokenProvider.validateToken(refreshToken)) {
+    if (refreshToken == null
+        || !jwtTokenProvider.validateToken(refreshToken)
+        || !jwtRegistry.hasActiveJwtInformationByRefreshToken(refreshToken)) {
       throw new RefreshTokenInvalidException();
     }
 
     String newAccessToken = jwtTokenProvider.reissueAccessToken(refreshToken);
     String newRefreshToken = jwtTokenProvider.reissueRefreshToken(refreshToken);
+
+    JwtInformation newJwtInformation = new JwtInformation(
+        jwtTokenProvider.getUserId(refreshToken),
+        newAccessToken,
+        newRefreshToken,
+        jwtTokenProvider.getExpiration(newRefreshToken));
+    jwtRegistry.rotateJwtInformation(refreshToken, newJwtInformation);
 
     return new TokenPair(newAccessToken, newRefreshToken);
   }

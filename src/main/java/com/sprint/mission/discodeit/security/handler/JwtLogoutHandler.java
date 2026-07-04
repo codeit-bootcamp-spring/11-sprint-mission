@@ -1,5 +1,6 @@
 package com.sprint.mission.discodeit.security.handler;
 
+import com.sprint.mission.discodeit.security.jwt.JwtRegistry;
 import com.sprint.mission.discodeit.security.jwt.JwtTokenProvider;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -15,6 +16,9 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class JwtLogoutHandler implements LogoutHandler {
 
+  private final JwtTokenProvider jwtTokenProvider;
+  private final JwtRegistry jwtRegistry;
+
   @Override
   public void logout(HttpServletRequest request, HttpServletResponse response,
       Authentication authentication) {
@@ -26,7 +30,10 @@ public class JwtLogoutHandler implements LogoutHandler {
         .filter(cookie -> cookie.getName().equals(JwtTokenProvider.REFRESH_TOKEN_COOKIE_NAME))
         .findFirst()
         .ifPresent(cookie -> {
-          // TODO(커밋 8): jwtRegistry로 이 refreshToken에 해당하는 토큰 정보 무효화
+          String refreshToken = cookie.getValue();
+          if (jwtTokenProvider.validateToken(refreshToken)) {
+            jwtRegistry.invalidateJwtInformationByUserId(jwtTokenProvider.getUserId(refreshToken));
+          }
 
           ResponseCookie expiredCookie = ResponseCookie
               .from(JwtTokenProvider.REFRESH_TOKEN_COOKIE_NAME, "")

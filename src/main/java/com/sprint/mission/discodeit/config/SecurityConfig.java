@@ -9,6 +9,8 @@ import com.sprint.mission.discodeit.security.SpaCsrfTokenRequestHandler;
 import com.sprint.mission.discodeit.security.filter.JwtAuthenticationFilter;
 import com.sprint.mission.discodeit.security.handler.JwtLoginSuccessHandler;
 import com.sprint.mission.discodeit.security.handler.JwtLogoutHandler;
+import com.sprint.mission.discodeit.security.jwt.InMemoryJwtRegistry;
+import com.sprint.mission.discodeit.security.jwt.JwtRegistry;
 import com.sprint.mission.discodeit.security.jwt.JwtTokenProvider;
 import java.util.List;
 import java.util.stream.IntStream;
@@ -26,8 +28,6 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.session.SessionRegistry;
-import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -35,7 +35,6 @@ import org.springframework.security.web.authentication.Http403ForbiddenEntryPoin
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.logout.HttpStatusReturningLogoutSuccessHandler;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
-import org.springframework.security.web.session.HttpSessionEventPublisher;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.NegatedRequestMatcher;
 
@@ -97,8 +96,9 @@ public class SecurityConfig {
   @Bean
   public JwtAuthenticationFilter jwtAuthenticationFilter(
       JwtTokenProvider jwtTokenProvider,
-      DiscodeitUserDetailsService userDetailsService) {
-    return new JwtAuthenticationFilter(jwtTokenProvider, userDetailsService);
+      DiscodeitUserDetailsService userDetailsService,
+      JwtRegistry jwtRegistry) {
+    return new JwtAuthenticationFilter(jwtTokenProvider, userDetailsService, jwtRegistry);
   }
 
   @Bean
@@ -139,12 +139,7 @@ public class SecurityConfig {
   }
 
   @Bean
-  public SessionRegistry sessionRegistry() {
-    return new SessionRegistryImpl();
-  }
-
-  @Bean
-  public HttpSessionEventPublisher httpSessionEventPublisher() {
-    return new HttpSessionEventPublisher();
+  public JwtRegistry jwtRegistry() {
+    return new InMemoryJwtRegistry(1);
   }
 }
