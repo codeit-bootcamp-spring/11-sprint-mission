@@ -14,20 +14,15 @@ public class MessageSecurity {
     private final MessageRepository messageRepository;
 
     public boolean isAuthor(UUID messageId, Authentication authentication) {
-        if (authentication == null || !authentication.isAuthenticated()) {
+        if (authentication == null
+                || !authentication.isAuthenticated()
+                || !(authentication.getPrincipal() instanceof DiscodeitUserDetails userDetails)) {
             return false;
         }
 
-        if (authentication.getPrincipal() instanceof DiscodeitUserDetails userDetails) {
-            return messageRepository.existsByIdAndAuthor_Id(
-                    messageId,
-                    userDetails.getUserDto().id()
-            );
-        }
-
-        return messageRepository.existsByIdAndAuthor_Username(
+        return messageRepository.existsByIdAndAuthor_Id(
                 messageId,
-                authentication.getName()
+                userDetails.getUserDto().id()
         );
     }
 }

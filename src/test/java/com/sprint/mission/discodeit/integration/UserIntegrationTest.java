@@ -9,25 +9,24 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.charset.StandardCharsets;
-import java.util.List;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+import static com.sprint.mission.discodeit.support.SecurityTestUtils.userDetails;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
-@AutoConfigureMockMvc(addFilters = false)
+@AutoConfigureMockMvc
 @ActiveProfiles("test")
 @Transactional
 class UserIntegrationTest {
@@ -58,13 +57,17 @@ class UserIntegrationTest {
         // when & then - create
         mockMvc.perform(multipart("/api/users")
                         .file(userCreateRequest)
+                        .with(csrf())
                         .contentType(MediaType.MULTIPART_FORM_DATA))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.username").value("evan"))
                 .andExpect(jsonPath("$.email").value("evan@test.com"));
 
         // when & then - findAll
-        mockMvc.perform(get("/api/users"))
+        User authenticatedUser = userRepository.findByUsername("evan").orElseThrow();
+
+        mockMvc.perform(get("/api/users")
+                        .with(user(userDetails(authenticatedUser))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(2)))
                 .andExpect(jsonPath("$[?(@.username == 'evan')]", hasSize(1)))
@@ -73,7 +76,6 @@ class UserIntegrationTest {
 
     @Test
     @DisplayName("사용자를 수정하고 삭제할 수 있다")
-    @WithMockUser(username = "evan")
     void user_updateAndDelete_success() throws Exception {
         // given
         User user = userRepository.saveAndFlush(
@@ -96,6 +98,8 @@ class UserIntegrationTest {
         // when & then - update
         mockMvc.perform(multipart("/api/users/{userId}", user.getId())
                         .file(userUpdateRequest)
+                        .with(user(userDetails(user)))
+                        .with(csrf())
                         .contentType(MediaType.MULTIPART_FORM_DATA)
                         .with(request -> {
                             request.setMethod("PATCH");
@@ -106,16 +110,10 @@ class UserIntegrationTest {
                 .andExpect(jsonPath("$.username").value("newEvan"))
                 .andExpect(jsonPath("$.email").value("new@test.com"));
 
-        SecurityContextHolder.getContext().setAuthentication(
-                UsernamePasswordAuthenticationToken.authenticated(
-                        "newEvan",
-                        null,
-                        List.of()
-                )
-        );
-
         // when & then - delete
-        mockMvc.perform(delete("/api/users/{userId}", user.getId()))
+        mockMvc.perform(delete("/api/users/{userId}", user.getId())
+                        .with(user(userDetails(user)))
+                        .with(csrf()))
                 .andExpect(status().isNoContent());
     }
 }

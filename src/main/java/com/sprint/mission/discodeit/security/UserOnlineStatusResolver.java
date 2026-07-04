@@ -1,10 +1,13 @@
 package com.sprint.mission.discodeit.security;
 
-import com.sprint.mission.discodeit.entity.User;
 import lombok.RequiredArgsConstructor;
-import org.mapstruct.Named;
+import org.springframework.security.core.session.SessionInformation;
 import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.stereotype.Component;
+
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -12,13 +15,28 @@ public class UserOnlineStatusResolver {
 
     private final SessionRegistry sessionRegistry;
 
-    @Named("isOnline")
-    public boolean isOnline(User user) {
+    public Set<UUID> getOnlineUserIds() {
         return sessionRegistry.getAllPrincipals().stream()
                 .filter(DiscodeitUserDetails.class::isInstance)
                 .map(DiscodeitUserDetails.class::cast)
-                .filter(principal -> principal.getUserDto().id().equals(user.getId()))
-                .anyMatch(principal ->
-                        !sessionRegistry.getAllSessions(principal, false).isEmpty());
+                .filter(principal ->
+                        !sessionRegistry.getAllSessions(principal, false)
+                                .isEmpty()
+                )
+                .map(principal -> principal.getUserDto().id())
+                .collect(Collectors.toSet());
+    }
+
+    public void expireSessions(UUID userId) {
+        sessionRegistry.getAllPrincipals().stream()
+                .filter(DiscodeitUserDetails.class::isInstance)
+                .map(DiscodeitUserDetails.class::cast)
+                .filter(principal ->
+                        principal.getUserDto().id().equals(userId))
+                .flatMap(principal ->
+                        sessionRegistry
+                                .getAllSessions(principal, false)
+                                .stream())
+                .forEach(SessionInformation::expireNow);
     }
 }

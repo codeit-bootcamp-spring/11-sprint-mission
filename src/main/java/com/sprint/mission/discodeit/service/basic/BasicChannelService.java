@@ -17,6 +17,7 @@ import com.sprint.mission.discodeit.service.ChannelService;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.exception.channel.ChannelNotFoundException;
 import com.sprint.mission.discodeit.exception.channel.PrivateChannelUpdateException;
+import com.sprint.mission.discodeit.security.UserOnlineStatusResolver;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +29,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -43,6 +45,7 @@ public class BasicChannelService implements ChannelService {
     private final UserRepository userRepository;
     private final ChannelMapper channelMapper;
     private final UserMapper userMapper;
+    private final UserOnlineStatusResolver userOnlineStatusResolver;
 
     @Override
     @Transactional
@@ -80,8 +83,9 @@ public class BasicChannelService implements ChannelService {
             readStatusRepository.save(readStatus);
         }
 
+        Set<UUID> onlineUserIds = userOnlineStatusResolver.getOnlineUserIds();
         List<UserDto> participantDtos = participants.stream()
-                .map(userMapper::toDto)
+                .map(user -> userMapper.toDto(user, onlineUserIds))
                 .toList();
 
         log.info("PRIVATE 채널 생성 완료: channelId={}, participantCount={}",
@@ -94,6 +98,7 @@ public class BasicChannelService implements ChannelService {
 
     @Override
     public Optional<ChannelDto> find(UUID id) {
+        Set<UUID> onlineUserIds = userOnlineStatusResolver.getOnlineUserIds();
         return channelRepository.findById(id)
                 .map(channel -> {
                     Map<UUID, Instant> lastMessageAtMap = messageRepository
@@ -109,7 +114,9 @@ public class BasicChannelService implements ChannelService {
                             .stream()
                             .collect(Collectors.groupingBy(
                                     rs -> rs.getChannel().getId(),
-                                    Collectors.mapping(rs -> userMapper.toDto(rs.getUser()), Collectors.toList())
+                                    Collectors.mapping(
+                                            rs -> userMapper.toDto(rs.getUser(), onlineUserIds),
+                                            Collectors.toList())
                             ));
 
                     return channelMapper.toDto(
@@ -135,6 +142,8 @@ public class BasicChannelService implements ChannelService {
                 .map(Channel::getId)
                 .toList();
 
+        Set<UUID> onlineUserIds = userOnlineStatusResolver.getOnlineUserIds();
+
         Map<UUID, Instant> lastMessageAtMap = messageRepository.findLastMessageTimesByChannelIds(channelIds).stream()
                 .collect(Collectors.toMap(
                         row -> (UUID) row[0],
@@ -144,7 +153,9 @@ public class BasicChannelService implements ChannelService {
         Map<UUID, List<UserDto>> participantsMap = readStatusRepository.findAllWithUserByChannelIds(channelIds).stream()
                 .collect(Collectors.groupingBy(
                         rs -> rs.getChannel().getId(),
-                        Collectors.mapping(rs -> userMapper.toDto(rs.getUser()), Collectors.toList())
+                        Collectors.mapping(
+                                rs -> userMapper.toDto(rs.getUser(), onlineUserIds),
+                                Collectors.toList())
                 ));
 
       List<ChannelDto> result = channels.stream()

@@ -20,6 +20,7 @@ import com.sprint.mission.discodeit.repository.MessageRepository;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.security.authority.UserRole;
+import com.sprint.mission.discodeit.security.UserOnlineStatusResolver;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -36,6 +37,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.BDDMockito.given;
@@ -64,6 +66,9 @@ class BasicChannelServiceTest {
 
     @Mock
     UserMapper userMapper;
+
+    @Mock
+    UserOnlineStatusResolver userOnlineStatusResolver;
 
     @InjectMocks
     BasicChannelService channelService;
@@ -127,8 +132,8 @@ class BasicChannelServiceTest {
         given(userRepository.findById(user1.getId())).willReturn(Optional.of(user1));
         given(userRepository.findById(user2.getId())).willReturn(Optional.of(user2));
         given(channelRepository.save(any(Channel.class))).willReturn(savedChannel);
-        given(userMapper.toDto(user1)).willReturn(userDto1);
-        given(userMapper.toDto(user2)).willReturn(userDto2);
+        given(userMapper.toDto(eq(user1), anySet())).willReturn(userDto1);
+        given(userMapper.toDto(eq(user2), anySet())).willReturn(userDto2);
         given(channelMapper.toDto(eq(savedChannel), anyList(), isNull())).willReturn(expectedDto);
 
         // when

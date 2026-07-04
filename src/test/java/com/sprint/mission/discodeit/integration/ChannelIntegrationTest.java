@@ -3,14 +3,15 @@ package com.sprint.mission.discodeit.integration;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.mission.discodeit.entity.Channel;
+import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
+import com.sprint.mission.discodeit.security.authority.UserRole;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,14 +19,16 @@ import org.springframework.transaction.annotation.Transactional;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+import static com.sprint.mission.discodeit.support.SecurityTestUtils.userDetails;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
-@AutoConfigureMockMvc(addFilters = false)
+@AutoConfigureMockMvc
 @ActiveProfiles("test")
 @Transactional
-@WithMockUser(authorities = "CHANNEL_MANAGER")
 class ChannelIntegrationTest {
 
     @Autowired
@@ -37,11 +40,19 @@ class ChannelIntegrationTest {
     @Autowired
     ObjectMapper objectMapper;
 
+    private User channelManager() {
+        User user = new User("manager", "manager@test.com", "password");
+        user.updateRole(UserRole.CHANNEL_MANAGER);
+        return user;
+    }
+
     @Test
     @DisplayName("PUBLIC 채널을 생성하고 수정할 수 있다")
     void channel_createAndUpdate_success() throws Exception {
         // when & then - create
         String createResponse = mockMvc.perform(post("/api/channels/public")
+                        .with(user(userDetails(channelManager())))
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                         {
@@ -62,6 +73,8 @@ class ChannelIntegrationTest {
 
         // when & then - update
         mockMvc.perform(patch("/api/channels/{channelId}", channelId)
+                        .with(user(userDetails(channelManager())))
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                         {
@@ -84,7 +97,9 @@ class ChannelIntegrationTest {
         );
 
         // when & then
-        mockMvc.perform(delete("/api/channels/{channelId}", channel.getId()))
+        mockMvc.perform(delete("/api/channels/{channelId}", channel.getId())
+                        .with(user(userDetails(channelManager())))
+                        .with(csrf()))
                 .andExpect(status().isNoContent());
     }
 }
