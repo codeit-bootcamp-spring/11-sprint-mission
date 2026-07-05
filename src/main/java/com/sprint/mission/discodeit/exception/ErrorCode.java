@@ -10,6 +10,7 @@ public enum ErrorCode {
   UNAUTHORIZED("AUTH_003", "authentication is required.", HttpStatus.UNAUTHORIZED),
   FORBIDDEN("AUTH_004", "access is denied.", HttpStatus.FORBIDDEN),
   INVALID_TOKEN("AUTH_005", "token is invalid or expired.", HttpStatus.UNAUTHORIZED),
+  INVALID_REFRESH_TOKEN("AUTH_006", "refresh token is invalid or expired.", HttpStatus.UNAUTHORIZED),
 
   // User
   USER_NOT_FOUND("USER_001", "requested user not found.", HttpStatus.NOT_FOUND),
