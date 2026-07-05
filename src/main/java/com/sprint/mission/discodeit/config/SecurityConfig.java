@@ -6,6 +6,7 @@ import com.sprint.mission.discodeit.security.DiscodeitAuthenticationEntryPoint;
 import com.sprint.mission.discodeit.security.DiscodeitUserDetailsService;
 import com.sprint.mission.discodeit.security.LoginFailureHandler;
 import com.sprint.mission.discodeit.security.filter.JwtAuthenticationFilter;
+import com.sprint.mission.discodeit.security.jwt.InMemoryJwtRegistry;
 import com.sprint.mission.discodeit.security.jwt.JwtLoginSuccessHandler;
 import com.sprint.mission.discodeit.security.jwt.JwtLogoutHandler;
 import com.sprint.mission.discodeit.security.jwt.JwtTokenProvider;
@@ -109,5 +110,10 @@ public class SecurityConfig {
       JwtTokenProvider jwtTokenProvider,
       DiscodeitUserDetailsService userDetailsService) {
     return new JwtAuthenticationFilter(jwtTokenProvider, userDetailsService);
+  }
+
+  @Bean
+  public InMemoryJwtRegistry jwtRegistry() {
+    return new InMemoryJwtRegistry(1);
   }
 }
