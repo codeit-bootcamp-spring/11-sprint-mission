@@ -7,6 +7,7 @@ import com.sprint.mission.discodeit.security.DiscodeitUserDetailsService;
 import com.sprint.mission.discodeit.security.LoginFailureHandler;
 import com.sprint.mission.discodeit.security.filter.JwtAuthenticationFilter;
 import com.sprint.mission.discodeit.security.jwt.JwtLoginSuccessHandler;
+import com.sprint.mission.discodeit.security.jwt.JwtLogoutHandler;
 import com.sprint.mission.discodeit.security.jwt.JwtTokenProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -38,6 +39,7 @@ public class SecurityConfig {
       HttpSecurity http,
       JwtLoginSuccessHandler loginSuccessHandler,
       LoginFailureHandler loginFailureHandler,
+      JwtLogoutHandler logoutHandler,
       DiscodeitAuthenticationEntryPoint authenticationEntryPoint,
       DiscodeitAccessDeniedHandler accessDeniedHandler,
       JwtAuthenticationFilter jwtAuthenticationFilter) throws Exception {
@@ -51,7 +53,9 @@ public class SecurityConfig {
         .logout(logout -> logout
             .logoutUrl("/api/auth/logout")
             .logoutSuccessHandler(
-                new HttpStatusReturningLogoutSuccessHandler(HttpStatus.NO_CONTENT))
+                new HttpStatusReturningLogoutSuccessHandler(HttpStatus.NO_CONTENT)
+            )
+            .addLogoutHandler(logoutHandler)
         )
         .authorizeHttpRequests(auth -> auth
             .requestMatchers(
