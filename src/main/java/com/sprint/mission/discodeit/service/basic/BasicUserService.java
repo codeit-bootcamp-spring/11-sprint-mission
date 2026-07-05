@@ -7,6 +7,7 @@ import com.sprint.mission.discodeit.dto.UserUpdateRequest;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.event.BinaryContentCreatedEvent;
+import com.sprint.mission.discodeit.event.RoleUpdatedEvent;
 import com.sprint.mission.discodeit.exception.user.UserAlreadyExistsException;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.mapper.UserMapper;
@@ -175,10 +176,19 @@ public class BasicUserService implements UserService {
       log.warn("사용자 권한 변경 실패(존재하지 않는 유저) - userId: {}", request.userId());
       return new UserNotFoundException(request.userId());
     });
+
+    String oldRole = String.valueOf(user.getRole());
+
     user.updateRole(request.newRole());
     log.info("사용자 권한 변경 완료 - userId: {}, newRole: {}", user.getId(), request.newRole());
 
     expireUserTokens(request.userId());
+
+    eventPublisher.publishEvent(new RoleUpdatedEvent(
+        user.getId(),
+        oldRole,
+        String.valueOf(request.newRole())
+    ));
 
     return userMapper.toDto(user);
   }
