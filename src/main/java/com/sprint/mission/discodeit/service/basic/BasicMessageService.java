@@ -8,6 +8,7 @@ import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.event.BinaryContentCreatedEvent;
 import com.sprint.mission.discodeit.exception.channel.ChannelNotFoundException;
 import com.sprint.mission.discodeit.exception.message.MessageNotFoundException;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
@@ -26,6 +27,7 @@ import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
 import org.springframework.security.access.prepost.PostAuthorize;
@@ -47,6 +49,7 @@ public class BasicMessageService implements MessageService {
   private final MessageMapper messageMapper;
   private final BinaryContentStorage binaryContentStorage;
   private final PageResponseMapper pageResponseMapper;
+  private final ApplicationEventPublisher eventPublisher;
 
   @Override
   @Transactional
@@ -85,7 +88,8 @@ public class BasicMessageService implements MessageService {
         for (int i = 0; i < attachments.size(); i++) {
           MultipartFile file = attachments.get(i);
           BinaryContent content = attachmentContents.get(i);
-          binaryContentStorage.put(content.getId(), file.getBytes());
+          eventPublisher.publishEvent(
+              new BinaryContentCreatedEvent(content.getId(), file.getBytes()));
           uploadedFileIds.add(content.getId());
         }
       } catch (Exception e) {

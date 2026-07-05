@@ -6,6 +6,7 @@ import com.sprint.mission.discodeit.dto.UserRoleUpdateRequest;
 import com.sprint.mission.discodeit.dto.UserUpdateRequest;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.event.BinaryContentCreatedEvent;
 import com.sprint.mission.discodeit.exception.user.UserAlreadyExistsException;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.mapper.UserMapper;
@@ -21,6 +22,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.session.SessionInformation;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -40,6 +42,7 @@ public class BasicUserService implements UserService {
   private final BinaryContentStorage binaryContentStorage;
   private final PasswordEncoder passwordEncoder;
   private final JwtRegistry jwtRegistry;
+  private final ApplicationEventPublisher eventPublisher;
 
   @Override
   @Transactional
@@ -66,7 +69,8 @@ public class BasicUserService implements UserService {
 
         binaryContentRepository.save(profileImage);
 
-        binaryContentStorage.put(profileImage.getId(), profile.getBytes());
+        eventPublisher.publishEvent(
+            new BinaryContentCreatedEvent(profileImage.getId(), profile.getBytes()));
 
         user.updateProfile(profileImage);
       } else {
@@ -131,7 +135,8 @@ public class BasicUserService implements UserService {
         BinaryContent newProfile = new BinaryContent(
             profile.getOriginalFilename(), profile.getSize(), profile.getContentType());
 
-        binaryContentStorage.put(newProfile.getId(), profile.getBytes());
+        eventPublisher.publishEvent(
+            new BinaryContentCreatedEvent(newProfile.getId(), profile.getBytes()));
 
         user.updateProfile(newProfile);
       }
