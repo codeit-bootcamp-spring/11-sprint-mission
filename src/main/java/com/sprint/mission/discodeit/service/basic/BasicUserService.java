@@ -89,7 +89,7 @@ public class BasicUserService implements UserService {
         .toList();
   }
 
-  @PreAuthorize("authentication.principal.user.id == #id")
+  @PreAuthorize("hasRole('ADMIN') or authentication.principal.user.id == #id")
   @Transactional
   @Override
   public UserResponse updateUser(UUID id, UserUpdateRequest userUpdateRequest,
@@ -135,7 +135,7 @@ public class BasicUserService implements UserService {
     return this.mapper.toResponse(user);
   }
 
-  @PreAuthorize("authentication.principal.user.id == #id")
+  @PreAuthorize("hasRole('ADMIN') or authentication.principal.user.id == #id")
   @Transactional
   @Override
   public void deleteUser(UUID id) {
