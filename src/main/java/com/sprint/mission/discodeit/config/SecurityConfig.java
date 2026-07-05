@@ -3,8 +3,11 @@ package com.sprint.mission.discodeit.config;
 import com.sprint.mission.discodeit.entity.Role;
 import com.sprint.mission.discodeit.security.DiscodeitAccessDeniedHandler;
 import com.sprint.mission.discodeit.security.DiscodeitAuthenticationEntryPoint;
+import com.sprint.mission.discodeit.security.DiscodeitUserDetailsService;
 import com.sprint.mission.discodeit.security.LoginFailureHandler;
+import com.sprint.mission.discodeit.security.filter.JwtAuthenticationFilter;
 import com.sprint.mission.discodeit.security.jwt.JwtLoginSuccessHandler;
+import com.sprint.mission.discodeit.security.jwt.JwtTokenProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -20,6 +23,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.logout.HttpStatusReturningLogoutSuccessHandler;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.NegatedRequestMatcher;
@@ -35,9 +39,11 @@ public class SecurityConfig {
       JwtLoginSuccessHandler loginSuccessHandler,
       LoginFailureHandler loginFailureHandler,
       DiscodeitAuthenticationEntryPoint authenticationEntryPoint,
-      DiscodeitAccessDeniedHandler accessDeniedHandler) throws Exception {
+      DiscodeitAccessDeniedHandler accessDeniedHandler,
+      JwtAuthenticationFilter jwtAuthenticationFilter) throws Exception {
     http
         .csrf(csrf -> csrf.disable())
+        .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
         .formLogin(login -> login
             .loginProcessingUrl("/api/auth/login")
             .successHandler(loginSuccessHandler)
@@ -65,6 +71,7 @@ public class SecurityConfig {
         .sessionManagement(session -> session
             .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
         )
+        .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
     ;
     return http.build();
   }
@@ -94,4 +101,10 @@ public class SecurityConfig {
     return handler;
   }
 
+  @Bean
+  public JwtAuthenticationFilter jwtAuthenticationFilter(
+      JwtTokenProvider jwtTokenProvider,
+      DiscodeitUserDetailsService userDetailsService) {
+    return new JwtAuthenticationFilter(jwtTokenProvider, userDetailsService);
+  }
 }
