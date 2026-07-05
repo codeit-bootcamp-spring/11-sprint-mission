@@ -72,6 +72,7 @@ public class BasicAuthService implements AuthService {
         userDetails.getUser(), newAccessToken, newRefreshToken, expiration
     );
     log.info("auth refresh success: userId={}", userId);
-    return jwtRegistry.rotateJwtInformation(refreshToken, newJwtInformation);
+    jwtRegistry.rotateJwtInformation(refreshToken, newJwtInformation);
+    return newJwtInformation;
   }
 }

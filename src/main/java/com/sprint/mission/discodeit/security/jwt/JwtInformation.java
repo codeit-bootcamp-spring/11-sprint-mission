@@ -2,16 +2,21 @@ package com.sprint.mission.discodeit.security.jwt;
 
 import com.sprint.mission.discodeit.dto.user.UserResponse;
 import java.time.Instant;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 
-public record JwtInformation(
-    UserResponse userResponse,
-    String accessToken,
-    String refreshToken,
-    Instant expiration
-) {
+@Getter
+@AllArgsConstructor
+public class JwtInformation {
 
-  public JwtInformation rotate(String newAccessToken, String newRefreshToken,
-      Instant newExpiration) {
-    return new JwtInformation(userResponse, newAccessToken, newRefreshToken, newExpiration);
+  private final UserResponse userResponse;
+  private String accessToken;
+  private String refreshToken;
+  private Instant expiration;
+
+  public void rotate(String newAccessToken, String newRefreshToken, Instant newExpiration) {
+    this.accessToken = newAccessToken;
+    this.refreshToken = newRefreshToken;
+    this.expiration = newExpiration;
   }
 }

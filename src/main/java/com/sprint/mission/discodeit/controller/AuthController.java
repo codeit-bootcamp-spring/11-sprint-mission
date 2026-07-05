@@ -62,16 +62,16 @@ public class AuthController implements AuthApi {
     JwtInformation jwtInformation = authService.refresh(refreshToken);
 
     ResponseCookie cookie = ResponseCookie
-        .from(JwtTokenProvider.REFRESH_TOKEN_COOKIE_NAME, jwtInformation.refreshToken())
+        .from(JwtTokenProvider.REFRESH_TOKEN_COOKIE_NAME, jwtInformation.getRefreshToken())
         .httpOnly(true)
         .sameSite("Lax")
         .path("/")
-        .maxAge(Duration.between(Instant.now(), jwtInformation.expiration()))
+        .maxAge(Duration.between(Instant.now(), jwtInformation.getExpiration()))
         .build();
     response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
 
     return ResponseEntity
         .status(HttpStatus.OK)
-        .body(new JwtResponse(jwtInformation.userResponse(), jwtInformation.accessToken()));
+        .body(new JwtResponse(jwtInformation.getUserResponse(), jwtInformation.getAccessToken()));
   }
 }
