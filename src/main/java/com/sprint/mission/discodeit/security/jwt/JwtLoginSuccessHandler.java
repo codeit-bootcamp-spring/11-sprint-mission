@@ -29,6 +29,7 @@ import org.springframework.stereotype.Component;
 public class JwtLoginSuccessHandler implements AuthenticationSuccessHandler {
 
   private final JwtTokenProvider jwtTokenProvider;
+  private final JwtRegistry jwtRegistry;
   private final ObjectMapper objectMapper;
 
   @Override
@@ -65,6 +66,10 @@ public class JwtLoginSuccessHandler implements AuthenticationSuccessHandler {
     UserResponse userResponse = userDetails.getUser();
     JwtResponse jwtResponse = new JwtResponse(userResponse, accessToken);
     response.getWriter().write(objectMapper.writeValueAsString(jwtResponse));
+
+    jwtRegistry.registerJwtInformation(
+        new JwtInformation(userResponse, accessToken, refreshToken, expiration)
+    );
     log.info("auth login success: userId={}, username={}", userResponse.id(),
         userResponse.username());
   }
