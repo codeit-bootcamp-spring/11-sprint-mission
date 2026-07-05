@@ -9,6 +9,7 @@ import com.sprint.mission.discodeit.security.filter.JwtAuthenticationFilter;
 import com.sprint.mission.discodeit.security.jwt.InMemoryJwtRegistry;
 import com.sprint.mission.discodeit.security.jwt.JwtLoginSuccessHandler;
 import com.sprint.mission.discodeit.security.jwt.JwtLogoutHandler;
+import com.sprint.mission.discodeit.security.jwt.JwtRegistry;
 import com.sprint.mission.discodeit.security.jwt.JwtTokenProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -108,8 +109,9 @@ public class SecurityConfig {
   @Bean
   public JwtAuthenticationFilter jwtAuthenticationFilter(
       JwtTokenProvider jwtTokenProvider,
-      DiscodeitUserDetailsService userDetailsService) {
-    return new JwtAuthenticationFilter(jwtTokenProvider, userDetailsService);
+      DiscodeitUserDetailsService userDetailsService,
+      JwtRegistry jwtRegistry) {
+    return new JwtAuthenticationFilter(jwtTokenProvider, jwtRegistry, userDetailsService);
   }
 
   @Bean

@@ -1,6 +1,7 @@
 package com.sprint.mission.discodeit.security.filter;
 
 import com.sprint.mission.discodeit.security.DiscodeitUserDetailsService;
+import com.sprint.mission.discodeit.security.jwt.JwtRegistry;
 import com.sprint.mission.discodeit.security.jwt.JwtTokenProvider;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -19,6 +20,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
   private static final String BEARER_PREFIX = "Bearer ";
 
   private final JwtTokenProvider jwtTokenProvider;
+  private final JwtRegistry jwtRegistry;
   private final DiscodeitUserDetailsService userDetailsService;
 
   @Override
@@ -34,7 +36,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     String token = authHeader.substring(BEARER_PREFIX.length());
 
-    if (jwtTokenProvider.validateToken(token)) {
+    if (jwtTokenProvider.validateToken(token) && jwtRegistry.hasActiveJwtInformationByAccessToken(token)) {
       String username = jwtTokenProvider.getUsername(token);
       UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
