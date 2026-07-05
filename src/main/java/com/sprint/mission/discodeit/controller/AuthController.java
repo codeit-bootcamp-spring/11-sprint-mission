@@ -2,8 +2,8 @@ package com.sprint.mission.discodeit.controller;
 
 import com.sprint.mission.discodeit.controller.api.AuthApi;
 import com.sprint.mission.discodeit.dto.auth.JwtResponse;
-import com.sprint.mission.discodeit.dto.auth.TokenRefreshResult;
 import com.sprint.mission.discodeit.dto.auth.UserRoleUpdateRequest;
+import com.sprint.mission.discodeit.security.jwt.JwtInformation;
 import com.sprint.mission.discodeit.dto.user.UserResponse;
 import com.sprint.mission.discodeit.security.jwt.JwtTokenProvider;
 import com.sprint.mission.discodeit.service.AuthService;
@@ -59,19 +59,19 @@ public class AuthController implements AuthApi {
       @CookieValue(name = JwtTokenProvider.REFRESH_TOKEN_COOKIE_NAME, required = false)
       String refreshToken,
       HttpServletResponse response) {
-    TokenRefreshResult tokenPair = authService.refresh(refreshToken);
+    JwtInformation jwtInformation = authService.refresh(refreshToken);
 
     ResponseCookie cookie = ResponseCookie
-        .from(JwtTokenProvider.REFRESH_TOKEN_COOKIE_NAME, tokenPair.refreshToken())
+        .from(JwtTokenProvider.REFRESH_TOKEN_COOKIE_NAME, jwtInformation.refreshToken())
         .httpOnly(true)
         .sameSite("Lax")
         .path("/")
-        .maxAge(Duration.between(Instant.now(), tokenPair.refreshTokenExpiration()))
+        .maxAge(Duration.between(Instant.now(), jwtInformation.expiration()))
         .build();
     response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
 
     return ResponseEntity
         .status(HttpStatus.OK)
-        .body(new JwtResponse(tokenPair.userResponse(), tokenPair.accessToken()));
+        .body(new JwtResponse(jwtInformation.userResponse(), jwtInformation.accessToken()));
   }
 }
