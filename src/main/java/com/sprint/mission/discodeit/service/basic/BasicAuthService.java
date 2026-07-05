@@ -53,7 +53,7 @@ public class BasicAuthService implements AuthService {
   @Override
   public JwtInformation refresh(String refreshToken) {
     if (refreshToken == null
-        || !jwtTokenProvider.validateToken(refreshToken)
+        || !jwtTokenProvider.validateRefreshToken(refreshToken)
         || !jwtRegistry.hasActiveJwtInformationByRefreshToken(refreshToken)) {
       throw InvalidRefreshTokenException.withToken(refreshToken != null ? refreshToken : "");
     }

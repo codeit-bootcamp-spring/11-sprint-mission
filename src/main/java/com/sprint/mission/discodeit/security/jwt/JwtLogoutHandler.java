@@ -33,7 +33,7 @@ public class JwtLogoutHandler implements LogoutHandler {
         .findFirst()
         .ifPresent(cookie -> {
           String refreshToken = cookie.getValue();
-          if (jwtTokenProvider.validateToken(refreshToken)) {
+          if (jwtTokenProvider.validateRefreshToken(refreshToken)) {
             UUID userId = UUID.fromString(jwtTokenProvider.getSubject(refreshToken));
             jwtRegistry.invalidateJwtInformationByUserId(userId);
           }

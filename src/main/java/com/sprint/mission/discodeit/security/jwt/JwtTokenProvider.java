@@ -24,16 +24,19 @@ public class JwtTokenProvider {
 
   public static final String REFRESH_TOKEN_COOKIE_NAME = "REFRESH_TOKEN";
 
-  private final byte[] secretKey;
+  private final byte[] accessSecretKey;
+  private final byte[] refreshSecretKey;
   private final long accessTokenExpiration;
   private final long refreshTokenExpiration;
 
   public JwtTokenProvider(
-      @Value("${discodeit.jwt.secret}") String secret,
+      @Value("${discodeit.jwt.access-token-secret}") String accessSecret,
+      @Value("${discodeit.jwt.refresh-token-secret}") String refreshSecret,
       @Value("${discodeit.jwt.access-token-expiration}") long accessTokenExpiration,
       @Value("${discodeit.jwt.refresh-token-expiration}") long refreshTokenExpiration
   ) {
-    this.secretKey = secret.getBytes(StandardCharsets.UTF_8);
+    this.accessSecretKey = accessSecret.getBytes(StandardCharsets.UTF_8);
+    this.refreshSecretKey = refreshSecret.getBytes(StandardCharsets.UTF_8);
     this.accessTokenExpiration = accessTokenExpiration;
     this.refreshTokenExpiration = refreshTokenExpiration;
   }
@@ -41,6 +44,7 @@ public class JwtTokenProvider {
   public String generateAccessToken(DiscodeitUserDetails userDetails) {
     return generateToken(
         userDetails.getUser().id().toString(),
+        accessSecretKey,
         accessTokenExpiration,
         Map.of(
             "username", userDetails.getUsername(),
@@ -52,12 +56,13 @@ public class JwtTokenProvider {
   public String generateRefreshToken(DiscodeitUserDetails userDetails) {
     return generateToken(
         userDetails.getUser().id().toString(),
+        refreshSecretKey,
         refreshTokenExpiration,
         Map.of()
     );
   }
 
-  private String generateToken(String subject, long expirationMs,
+  private String generateToken(String subject, byte[] secret, long expirationMs,
       Map<String, Object> customClaims) {
     Instant now = Instant.now();
     try {
@@ -67,17 +72,25 @@ public class JwtTokenProvider {
           .expirationTime(Date.from(now.plusMillis(expirationMs)));
       customClaims.forEach(builder::claim);
       SignedJWT signedJWT = new SignedJWT(new JWSHeader(JWSAlgorithm.HS256), builder.build());
-      signedJWT.sign(new MACSigner(secretKey));
+      signedJWT.sign(new MACSigner(secret));
       return signedJWT.serialize();
     } catch (JOSEException e) {
       throw new IllegalStateException("failed to generate jwt token", e);
     }
   }
 
-  public boolean validateToken(String token) {
+  public boolean validateAccessToken(String token) {
+    return verify(token, accessSecretKey);
+  }
+
+  public boolean validateRefreshToken(String token) {
+    return verify(token, refreshSecretKey);
+  }
+
+  private boolean verify(String token, byte[] secret) {
     try {
       SignedJWT signedJWT = SignedJWT.parse(token);
-      if (!signedJWT.verify(new MACVerifier(secretKey))) {
+      if (!signedJWT.verify(new MACVerifier(secret))) {
         log.debug("jwt signature invalid");
         return false;
       }
