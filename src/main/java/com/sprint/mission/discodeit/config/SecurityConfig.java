@@ -43,7 +43,6 @@ public class SecurityConfig {
       JwtAuthenticationFilter jwtAuthenticationFilter) throws Exception {
     http
         .csrf(csrf -> csrf.disable())
-        .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
         .formLogin(login -> login
             .loginProcessingUrl("/api/auth/login")
             .successHandler(loginSuccessHandler)

@@ -17,4 +17,12 @@ public class AuthExamples {
         "message": "requested user not found."
       }
       """;
+
+  public static final String ERROR_401_AUTH_006 = """
+      {
+        "code": "AUTH_006",
+        "exceptionType": "InvalidRefreshTokenException",
+        "message": "refresh token is invalid or expired."
+      }
+      """;
 }
