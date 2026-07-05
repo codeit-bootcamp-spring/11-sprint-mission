@@ -9,7 +9,7 @@ import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.mapper.UserMapper;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.security.DiscodeitUserDetails;
-import com.sprint.mission.discodeit.security.SessionManager;
+import com.sprint.mission.discodeit.security.jwt.JwtRegistry;
 import com.sprint.mission.discodeit.security.jwt.JwtTokenProvider;
 import com.sprint.mission.discodeit.service.AuthService;
 import java.time.Instant;
@@ -27,9 +27,9 @@ import org.springframework.transaction.annotation.Transactional;
 public class BasicAuthService implements AuthService {
 
   private final UserRepository userRepository;
-  private final SessionManager sessionManager;
   private final UserMapper mapper;
   private final JwtTokenProvider jwtTokenProvider;
+  private final JwtRegistry jwtRegistry;
 
   @Override
   public TokenRefreshResult refresh(String refreshToken) {
@@ -65,7 +65,7 @@ public class BasicAuthService implements AuthService {
     User user = userRepository.findById(request.userId())
         .orElseThrow(() -> UserNotFoundException.withId(request.userId()));
     user.updateRole(request.newRole());
-    sessionManager.expireSessions(user.getId());
+    jwtRegistry.invalidateJwtInformationByUserId(user.getId());
     log.info("auth update-role success: userId={}, newRole={}", user.getId(), user.getRole());
     return mapper.toResponse(user);
   }
