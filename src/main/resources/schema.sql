@@ -46,12 +46,13 @@ CREATE TABLE IF NOT EXISTS messages
 
 CREATE TABLE IF NOT EXISTS read_statuses
 (
-    id           UUID PRIMARY KEY,
-    created_at   TIMESTAMPTZ NOT NULL,
-    updated_at   TIMESTAMPTZ,
-    user_id      UUID        NOT NULL,
-    channel_id   UUID        NOT NULL,
-    last_read_at TIMESTAMPTZ NOT NULL,
+    id                   UUID PRIMARY KEY,
+    created_at           TIMESTAMPTZ NOT NULL,
+    updated_at           TIMESTAMPTZ,
+    user_id              UUID        NOT NULL,
+    channel_id           UUID        NOT NULL,
+    last_read_at         TIMESTAMPTZ NOT NULL,
+    notification_enabled BOOLEAN     NOT NULL,
     UNIQUE (user_id, channel_id),
     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
     FOREIGN KEY (channel_id) REFERENCES channels (id) ON DELETE CASCADE

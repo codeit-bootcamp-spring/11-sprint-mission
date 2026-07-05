@@ -88,6 +88,11 @@ public class BasicReadStatusService implements ReadStatusService {
           return new ReadStatusNotFoundException(id);
         });
     readStatus.update(request.newLastReadAt());
+
+    if (request.newNotificationEnabled() != null) {
+      readStatus.updateNotificationStatus(request.newNotificationEnabled());
+    }
+
     return readStatusMapper.toDto(readStatus);
   }
 
