@@ -9,6 +9,7 @@ import com.sprint.mission.discodeit.repository.UserRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +24,7 @@ public class NotificationRequiredEventListener {
   private final NotificationRepository notificationRepository;
   private final UserRepository userRepository;
 
+  @Async("eventTaskExecutor")
   @TransactionalEventListener
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   public void on(MessageCreatedEvent event) {
@@ -46,6 +48,7 @@ public class NotificationRequiredEventListener {
     log.info("{}명에게 메시지 알림 전송 완료", notifications.size());
   }
 
+  @Async("eventTaskExecutor")
   @TransactionalEventListener
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   public void on(RoleUpdatedEvent event) {
