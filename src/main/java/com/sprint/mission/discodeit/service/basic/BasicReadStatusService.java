@@ -20,6 +20,8 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PostAuthorize;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,6 +38,7 @@ public class BasicReadStatusService implements ReadStatusService {
 
   @Override
   @Transactional
+  @PreAuthorize("principal.userDto.id == #request.userId()")
   public ReadStatusDto create(ReadStatusCreateRequest request) {
     User user = userRepository.findById(request.userId())
         .orElseThrow(() -> {
@@ -77,6 +80,7 @@ public class BasicReadStatusService implements ReadStatusService {
 
   @Override
   @Transactional
+  @PostAuthorize("principal.userDto.id == returnObject.userId()")
   public ReadStatusDto update(UUID id, ReadStatusUpdateRequest request) {
     ReadStatus readStatus = readStatusRepository.findById(id)
         .orElseThrow(() -> {

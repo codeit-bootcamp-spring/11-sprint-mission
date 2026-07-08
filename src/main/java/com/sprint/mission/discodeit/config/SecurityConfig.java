@@ -2,13 +2,18 @@ package com.sprint.mission.discodeit.config;
 
 import com.sprint.mission.discodeit.security.DiscodeitUserDetailsService;
 import com.sprint.mission.discodeit.security.Http401AuthenticationEntryPoint;
-import com.sprint.mission.discodeit.security.Http403AccessDeniedHandler;
-import com.sprint.mission.discodeit.security.LoginFailureHandler;
-import com.sprint.mission.discodeit.security.LoginSuccessHandler;
+import com.sprint.mission.discodeit.security.handler.Http403AccessDeniedHandler;
+import com.sprint.mission.discodeit.security.handler.JwtLoginSuccessHandler;
+import com.sprint.mission.discodeit.security.handler.JwtLogoutHandler;
+import com.sprint.mission.discodeit.security.handler.LoginFailureHandler;
+import com.sprint.mission.discodeit.security.filter.JwtAuthenticationFilter;
+import com.sprint.mission.discodeit.security.handler.SpaCsrfTokenRequestHandler;
+import com.sprint.mission.discodeit.security.jwt.JwtRegistry;
+import com.sprint.mission.discodeit.security.jwt.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler;
 import org.springframework.security.access.expression.method.MethodSecurityExpressionHandler;
@@ -17,14 +22,13 @@ import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.core.session.SessionRegistry;
-import org.springframework.security.core.session.SessionRegistryImpl;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.logout.HttpStatusReturningLogoutSuccessHandler;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
-import org.springframework.security.web.session.HttpSessionEventPublisher;
 
 @Configuration
 @EnableWebSecurity
@@ -32,14 +36,12 @@ import org.springframework.security.web.session.HttpSessionEventPublisher;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-  private final LoginSuccessHandler loginSuccessHandler;
+  private final JwtLoginSuccessHandler jwtLoginSuccessHandler;
   private final LoginFailureHandler loginFailureHandler;
   private final DiscodeitUserDetailsService userDetailsService;
   private final Http401AuthenticationEntryPoint authenticationEntryPoint;
   private final Http403AccessDeniedHandler accessDeniedHandler;
-
-  @Value("${spring.security.remember-me.key:discodeit-secret-key-for-remember-me}")
-  private String rememberKey;
+  private final JwtLogoutHandler jwtLogoutHandler;
 
   @Bean
   public PasswordEncoder passwordEncoder() {
@@ -63,17 +65,14 @@ public class SecurityConfig {
   }
 
   @Bean
-  public SessionRegistry sessionRegistry() {
-    return new SessionRegistryImpl();
+  public JwtAuthenticationFilter jwtAuthenticationFilter(JwtTokenProvider jwtTokenProvider,
+      JwtRegistry jwtRegistry) {
+    return new JwtAuthenticationFilter(jwtTokenProvider, userDetailsService, jwtRegistry);
   }
 
   @Bean
-  public HttpSessionEventPublisher httpSessionEventPublisher() {
-    return new HttpSessionEventPublisher();
-  }
-
-  @Bean
-  public SecurityFilterChain filterChain(HttpSecurity http, SessionRegistry sessionRegistry)
+  public SecurityFilterChain filterChain(HttpSecurity http,
+      JwtAuthenticationFilter jwtAuthenticationFilter)
       throws Exception {
     http.csrf(csrf -> csrf
         .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
@@ -86,11 +85,11 @@ public class SecurityConfig {
             "/assets/**",
             "/favicon.ico"
         ).permitAll()
-        .requestMatchers(
-            "/api/auth/**",
-            "/api/users/",
-            "api/users/**"
-        ).permitAll()
+        .requestMatchers(HttpMethod.GET, "/api/auth/csrf-token").permitAll()
+        .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
+        .requestMatchers(HttpMethod.POST, "/api/auth/logout").permitAll()
+        .requestMatchers(HttpMethod.POST, "/api/auth/refresh").permitAll()
+        .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
         .anyRequest().authenticated()
     );
 
@@ -100,32 +99,24 @@ public class SecurityConfig {
     );
 
     http.sessionManagement(management -> management
-        .sessionConcurrency(concurrency -> concurrency
-            .maximumSessions(1)
-            .maxSessionsPreventsLogin(false)
-            .sessionRegistry(sessionRegistry)
-        )
+        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
     );
 
     http.formLogin(login -> login
         .loginProcessingUrl("/api/auth/login")
-        .successHandler(loginSuccessHandler)
+        .successHandler(jwtLoginSuccessHandler)
         .failureHandler(loginFailureHandler)
-    );
-
-    http.rememberMe(rememberMe -> rememberMe
-        .rememberMeParameter("remember-me")
-        .tokenValiditySeconds(14 * 24 * 60 * 60)
-        .key(rememberKey)
-        .userDetailsService(userDetailsService)
     );
 
     http.logout(logout -> logout
         .logoutUrl("/api/auth/logout")
         .logoutSuccessHandler(new HttpStatusReturningLogoutSuccessHandler(HttpStatus.NO_CONTENT))
+        .addLogoutHandler(jwtLogoutHandler)
     );
 
     http.userDetailsService(userDetailsService);
+
+    http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
     return http.build();
   }

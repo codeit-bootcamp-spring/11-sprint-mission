@@ -140,7 +140,7 @@ public class BasicMessageService implements MessageService {
 
   @Override
   @Transactional
-  @PostAuthorize("returnObject.author.id == principal.userDto.id or hasRole('ADMIN')")
+  @PreAuthorize("@basicMessageService.findById(#id).author.id == principal.userDto.id or hasRole('ADMIN')")
   public MessageDto update(UUID id, MessageUpdateRequest request) {
     log.debug("메시지 수정 시작 - messageId: {}", id);
     Message message = messageRepository.findById(id)
