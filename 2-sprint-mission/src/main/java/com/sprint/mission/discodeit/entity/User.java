@@ -36,7 +36,7 @@ public class User extends BaseUpdatableEntity {
 
   @Enumerated(EnumType.STRING)
   @Column(nullable = false, length = 20)
-  private Role role;
+  private Role role = Role.USER;
 
   //  미사용 필드 주석처리
   //  private String nickname;
@@ -48,7 +48,7 @@ public class User extends BaseUpdatableEntity {
     this.email = email;
     this.password = password;
     this.profile = profile;
-    this.role = role;
+    this.role = role != null ? role : Role.USER;
   }
 
   public void changeUsername(String newUsername) {
@@ -73,10 +73,5 @@ public class User extends BaseUpdatableEntity {
   // 권한 변경
   public void updateRole(Role newRole) {
     this.role = newRole;
-  }
-
-  // 비밀번호 일치 검증
-  public boolean matchesPassword(String password) {
-    return this.password != null && this.password.equals(password);
   }
 }

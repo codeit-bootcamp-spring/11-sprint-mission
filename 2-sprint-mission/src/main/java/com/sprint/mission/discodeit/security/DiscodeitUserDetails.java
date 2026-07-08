@@ -28,6 +28,11 @@ public class DiscodeitUserDetails implements UserDetails {
   }
 
   @Override
+  public String getPassword() {
+    return password;
+  }
+
+  @Override
   public boolean equals(Object obj) {
     if (this == obj) {
       return true;

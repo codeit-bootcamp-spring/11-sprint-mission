@@ -97,7 +97,7 @@ public class BasicUserService implements UserService {
 
   @Override
   @Transactional
-  @PreAuthorize("#id == principal.userDto.id")
+  @PreAuthorize("hasRole('ADMIN') or #id == principal.userDto.id")
   public UserDto.Response update(UUID id, UserDto.UpdateRequest request,
       BinaryContentDto.CreateRequest profileImageRequest) {
     log.debug("사용자 업데이트 시작: id={}", id);
@@ -138,6 +138,7 @@ public class BasicUserService implements UserService {
 
       // 비밀번호 수정
       Optional.ofNullable(request.newPassword())
+          .map(passwordEncoder::encode)
           .ifPresent(user::changePassword);
 
       log.info("사용자 업데이트 완료: userId={}", id);
@@ -153,7 +154,7 @@ public class BasicUserService implements UserService {
 
   @Override
   @Transactional
-  @PreAuthorize("#id == principal.userDto.id")
+  @PreAuthorize("hasRole('ADMIN') or #id == principal.userDto.id")
   public void delete(UUID id) {
     log.debug("사용자 삭제 시작: id={}", id);
 

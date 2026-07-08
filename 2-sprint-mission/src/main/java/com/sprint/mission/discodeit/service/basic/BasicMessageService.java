@@ -130,7 +130,7 @@ public class BasicMessageService implements MessageService {
 
   @Override
   @Transactional
-  @PreAuthorize("@messageSecurity.isAuthor(#id, principal.userDto.id)")
+  @PreAuthorize("hasRole('ADMIN') or @messageSecurity.isAuthor(#id, principal.userDto.id)")
   public void delete(UUID id) {
     log.debug("메시지 삭제 시작: messageId={}", id);
 

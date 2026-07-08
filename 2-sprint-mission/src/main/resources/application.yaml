@@ -69,6 +69,13 @@ discodeit:
     username: ${DISCODEIT_ADMIN_USERNAME}
     email: ${DISCODEIT_ADMIN_EMAIL}
     password: ${DISCODEIT_ADMIN_PASSWORD}
+  jwt:
+    access-token:
+      secret: ${JWT_ACCESS_SECRET}
+      expiration: ${JWT_ACCESS_EXPIRATION:1800000} # (기본값: 30분)
+    refresh-token:
+      secret: ${JWT_REFRESH_SECRET}
+      expiration: ${JWT_REFRESH_EXPIRATION:1209600000} # (기본값: 2주)
 
 
 logging:
