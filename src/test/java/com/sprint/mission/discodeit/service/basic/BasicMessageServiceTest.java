@@ -18,6 +18,7 @@ import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.storage.BinaryContentStorage;
+import com.sprint.mission.discodeit.security.UserOnlineStatusResolver;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -33,6 +34,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.BDDMockito.given;
@@ -60,6 +62,9 @@ class BasicMessageServiceTest {
 
     @Mock
     BinaryContentStorage binaryContentStorage;
+
+    @Mock
+    UserOnlineStatusResolver userOnlineStatusResolver;
 
     @InjectMocks
     BasicMessageService messageService;
@@ -92,7 +97,7 @@ class BasicMessageServiceTest {
         given(userRepository.findById(author.getId())).willReturn(Optional.of(author));
         given(channelRepository.findById(channel.getId())).willReturn(Optional.of(channel));
         given(messageRepository.save(any(Message.class))).willReturn(savedMessage);
-        given(messageMapper.toDto(savedMessage)).willReturn(expectedDto);
+        given(messageMapper.toDto(eq(savedMessage), anySet())).willReturn(expectedDto);
 
         // when
         MessageDto result = messageService.create(request);
@@ -103,7 +108,7 @@ class BasicMessageServiceTest {
         then(userRepository).should().findById(author.getId());
         then(channelRepository).should().findById(channel.getId());
         then(messageRepository).should().save(any(Message.class));
-        then(messageMapper).should().toDto(savedMessage);
+        then(messageMapper).should().toDto(eq(savedMessage), anySet());
     }
 
     @Test
@@ -176,7 +181,7 @@ class BasicMessageServiceTest {
         );
 
         given(messageRepository.findById(message.getId())).willReturn(Optional.of(message));
-        given(messageMapper.toDto(message)).willReturn(expectedDto);
+        given(messageMapper.toDto(eq(message), anySet())).willReturn(expectedDto);
 
         // when
         MessageDto result = messageService.update(param);
@@ -186,7 +191,7 @@ class BasicMessageServiceTest {
         assertThat(message.getContent()).isEqualTo("new content");
 
         then(messageRepository).should().findById(message.getId());
-        then(messageMapper).should().toDto(message);
+        then(messageMapper).should().toDto(eq(message), anySet());
     }
 
     @Test
@@ -266,7 +271,7 @@ class BasicMessageServiceTest {
         given(messageRepository.findAllWithDetailsByIdIn(List.of(message.getId())))
                 .willReturn(List.of(message));
 
-        given(messageMapper.toDto(message)).willReturn(messageDto);
+        given(messageMapper.toDto(eq(message), anySet())).willReturn(messageDto);
 
         // when
         PageResponse<MessageDto> result = messageService.findAllByChannelId(
@@ -288,7 +293,7 @@ class BasicMessageServiceTest {
                 any(Pageable.class)
         );
         then(messageRepository).should().findAllWithDetailsByIdIn(List.of(message.getId()));
-        then(messageMapper).should().toDto(message);
+        then(messageMapper).should().toDto(eq(message), anySet());
     }
 
     @Test

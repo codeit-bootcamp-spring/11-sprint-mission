@@ -20,6 +20,7 @@ import com.sprint.mission.discodeit.exception.ErrorCode;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.exception.channel.ChannelNotFoundException;
 import com.sprint.mission.discodeit.exception.message.MessageNotFoundException;
+import com.sprint.mission.discodeit.security.UserOnlineStatusResolver;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -43,6 +44,7 @@ public class BasicMessageService implements MessageService {
     private final BinaryContentRepository binaryContentRepository;
     private final MessageMapper messageMapper;
     private final BinaryContentStorage binaryContentStorage;
+    private final UserOnlineStatusResolver userOnlineStatusResolver;
 
     @Override
     @Transactional
@@ -90,13 +92,15 @@ public class BasicMessageService implements MessageService {
         Message savedMessage = messageRepository.save(message);
 
         log.info("메세지 생성 완료: messageId={}, attachmentsCount={}", savedMessage.getId(), attachments.size());
-        return messageMapper.toDto(savedMessage);
+        Set<UUID> onlineUserIds = userOnlineStatusResolver.getOnlineUserIds();
+        return messageMapper.toDto(savedMessage, onlineUserIds);
     }
 
     @Override
     public Optional<MessageDto> find(UUID id) {
+        Set<UUID> onlineUserIds = userOnlineStatusResolver.getOnlineUserIds();
         return messageRepository.findByIdWithDetails(id)
-                .map(messageMapper::toDto);
+                .map(message -> messageMapper.toDto(message, onlineUserIds));
     }
 
     @Override
@@ -142,8 +146,9 @@ public class BasicMessageService implements MessageService {
             return new PageResponse<>(List.of(), null, pageSize);
         }
 
+        Set<UUID> onlineUserIds = userOnlineStatusResolver.getOnlineUserIds();
         List<MessageDto> content = messageRepository.findAllWithDetailsByIdIn(ids).stream()
-                .map(messageMapper::toDto)
+                .map(message -> messageMapper.toDto(message, onlineUserIds))
                 .toList();
 
         String nextCursor = null;
@@ -177,7 +182,8 @@ public class BasicMessageService implements MessageService {
 
         log.info("메시지 수정 완료: messageId={}", message.getId());
 
-        return messageMapper.toDto(message);
+        Set<UUID> onlineUserIds = userOnlineStatusResolver.getOnlineUserIds();
+        return messageMapper.toDto(message, onlineUserIds);
     }
 
     @Override

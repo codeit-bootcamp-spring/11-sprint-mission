@@ -13,8 +13,6 @@ import java.util.UUID;
 
 public interface MessageRepository extends JpaRepository<Message, UUID> {
 
-    boolean existsByIdAndAuthor_Username(UUID id, String username);
-
     boolean existsByIdAndAuthor_Id(UUID id, UUID authorId);
 
     @Query("""

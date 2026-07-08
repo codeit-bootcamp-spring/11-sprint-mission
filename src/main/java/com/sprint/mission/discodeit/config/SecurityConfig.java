@@ -44,11 +44,18 @@ public class SecurityConfig {
                         .csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler())
                 )
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(
+                                "/",
+                                "/index.html/",
+                                "/assets/**",
+                                "/favicon.ico",
+                                "default-avatar.png",
+                                "/error"
+                        ).permitAll()
                         .requestMatchers("/api/auth/csrf-token").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
                         .requestMatchers("/api/auth/login", "/api/auth/logout").permitAll()
-                        .requestMatchers("/api/**").authenticated()
-                        .anyRequest().permitAll()
+                        .anyRequest().authenticated()
                 )
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint(authenticationEntryPoint)
@@ -84,10 +91,10 @@ public class SecurityConfig {
 
     @Bean
     public RoleHierarchy roleHierarchy() {
-        return RoleHierarchyImpl.fromHierarchy("""
-                ADMIN > CHANNEL_MANAGER
-                CHANNEL_MANAGER > USER
-                """);
+        return RoleHierarchyImpl.withDefaultRolePrefix()
+                .role("ADMIN").implies("CHANNEL_MANAGER")
+                .role("CHANNEL_MANAGER").implies("USER")
+                .build();
     }
 
     @Bean

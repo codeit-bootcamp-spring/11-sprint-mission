@@ -2,17 +2,20 @@ package com.sprint.mission.discodeit.mapper;
 
 import com.sprint.mission.discodeit.dto.UserDto;
 import com.sprint.mission.discodeit.entity.User;
-import com.sprint.mission.discodeit.security.UserOnlineStatusResolver;
+import org.mapstruct.Context;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
+import java.util.Set;
+import java.util.UUID;
+
 @Mapper(
         componentModel = "spring",
-        uses = {BinaryContentMapper.class, UserOnlineStatusResolver.class}
+        uses = BinaryContentMapper.class
 )
 public interface UserMapper {
 
-    @Mapping(target = "profile", source = "profile")
-    @Mapping(target = "online", source = "user", qualifiedByName = "isOnline")
-    UserDto toDto(User user);
+    @Mapping(target = "profile", source = "user.profile")
+    @Mapping(target = "online", expression = "java(onlineUserIds.contains(user.getId()))")
+    UserDto toDto(User user, @Context Set<UUID> onlineUserIds);
 }

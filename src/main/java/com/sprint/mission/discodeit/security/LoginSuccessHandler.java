@@ -18,7 +18,6 @@ import java.nio.charset.StandardCharsets;
 @RequiredArgsConstructor
 public class LoginSuccessHandler implements AuthenticationSuccessHandler {
 
-    private UserDto userDto;
     private final ObjectMapper objectMapper;
 
     @Override

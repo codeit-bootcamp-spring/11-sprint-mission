@@ -11,6 +11,7 @@ import com.sprint.mission.discodeit.mapper.UserMapper;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.security.authority.UserRole;
+import com.sprint.mission.discodeit.security.UserOnlineStatusResolver;
 import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,6 +26,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anySet;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
@@ -47,6 +50,9 @@ class BasicUserServiceTest {
 
     @Mock
     PasswordEncoder passwordEncoder;
+
+    @Mock
+    UserOnlineStatusResolver userOnlineStatusResolver;
 
     @InjectMocks
     BasicUserService userService;
@@ -80,7 +86,7 @@ class BasicUserServiceTest {
         given(userRepository.existsByEmail(request.email())).willReturn(false);
         given(passwordEncoder.encode(request.password())).willReturn("encoded-password");
         given(userRepository.save(any(User.class))).willReturn(savedUser);
-        given(userMapper.toDto(savedUser)).willReturn(expectedDto);
+        given(userMapper.toDto(eq(savedUser), anySet())).willReturn(expectedDto);
 
         // when
         UserDto result = userService.create(request);
@@ -92,7 +98,7 @@ class BasicUserServiceTest {
         then(userRepository).should().existsByEmail(request.email());
         then(passwordEncoder).should().encode(request.password());
         then(userRepository).should().save(any(User.class));
-        then(userMapper).should().toDto(savedUser);
+        then(userMapper).should().toDto(eq(savedUser), anySet());
     }
 
     @Test
@@ -142,7 +148,8 @@ class BasicUserServiceTest {
         given(userRepository.findById(user.getId())).willReturn(Optional.of(user));
         given(userRepository.findByUsername("newEvan")).willReturn(Optional.empty());
         given(userRepository.findByEmail("new@test.com")).willReturn(Optional.empty());
-        given(userMapper.toDto(user)).willReturn(expectedDto);
+        given(passwordEncoder.encode("new-password")).willReturn("encoded-new-password");
+        given(userMapper.toDto(eq(user), anySet())).willReturn(expectedDto);
 
         // when
         UserDto result = userService.update(param);
@@ -151,12 +158,13 @@ class BasicUserServiceTest {
         assertThat(result).isEqualTo(expectedDto);
         assertThat(user.getUsername()).isEqualTo("newEvan");
         assertThat(user.getEmail()).isEqualTo("new@test.com");
-        assertThat(user.getPassword()).isEqualTo("new-password");
+        assertThat(user.getPassword()).isEqualTo("encoded-new-password");
 
         then(userRepository).should().findById(user.getId());
         then(userRepository).should().findByUsername("newEvan");
         then(userRepository).should().findByEmail("new@test.com");
-        then(userMapper).should().toDto(user);
+        then(passwordEncoder).should().encode("new-password");
+        then(userMapper).should().toDto(eq(user), anySet());
     }
 
     @Test

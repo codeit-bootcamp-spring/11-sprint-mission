@@ -13,7 +13,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,11 +24,14 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+import static com.sprint.mission.discodeit.support.SecurityTestUtils.userDetails;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
-@AutoConfigureMockMvc(addFilters = false)
+@AutoConfigureMockMvc
 @ActiveProfiles("test")
 @Transactional
 class MessageIntegrationTest {
@@ -74,6 +76,8 @@ class MessageIntegrationTest {
         // when & then - create
         mockMvc.perform(multipart("/api/messages")
                         .file(messageCreateRequest)
+                        .with(user(userDetails(author)))
+                        .with(csrf())
                         .contentType(MediaType.MULTIPART_FORM_DATA))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.content").value("hello"))
@@ -83,7 +87,8 @@ class MessageIntegrationTest {
         // when & then - findAllByChannelId
         mockMvc.perform(get("/api/messages")
                         .param("channelId", channel.getId().toString())
-                        .param("size", "50"))
+                        .param("size", "50")
+                        .with(user(userDetails(author))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content", hasSize(1)))
                 .andExpect(jsonPath("$.content[0].content").value("hello"))
@@ -92,7 +97,6 @@ class MessageIntegrationTest {
 
     @Test
     @DisplayName("메시지를 수정하고 삭제할 수 있다")
-    @WithMockUser(username = "evan")
     void message_updateAndDelete_success() throws Exception {
         // given
         User author = userRepository.saveAndFlush(
@@ -109,6 +113,8 @@ class MessageIntegrationTest {
 
         // when & then - update
         mockMvc.perform(patch("/api/messages/{messageId}", message.getId())
+                        .with(user(userDetails(author)))
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                         {
@@ -120,7 +126,9 @@ class MessageIntegrationTest {
                 .andExpect(jsonPath("$.content").value("updated message"));
 
         // when & then - delete
-        mockMvc.perform(delete("/api/messages/{messageId}", message.getId()))
+        mockMvc.perform(delete("/api/messages/{messageId}", message.getId())
+                        .with(user(userDetails(author)))
+                        .with(csrf()))
                 .andExpect(status().isNoContent());
     }
 }

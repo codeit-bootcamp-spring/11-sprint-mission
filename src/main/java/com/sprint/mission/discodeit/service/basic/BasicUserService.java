@@ -5,15 +5,13 @@ import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
-import com.sprint.mission.discodeit.security.DiscodeitUserDetails;
+import com.sprint.mission.discodeit.security.UserOnlineStatusResolver;
 import com.sprint.mission.discodeit.service.UserService;
 import com.sprint.mission.discodeit.exception.user.UserAlreadyExistsException;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.session.SessionInformation;
-import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +21,7 @@ import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 @Slf4j
@@ -36,6 +35,7 @@ public class BasicUserService implements UserService {
     private final UserMapper userMapper;
     private final BinaryContentStorage binaryContentStorage;
     private final PasswordEncoder passwordEncoder;
+    private final UserOnlineStatusResolver userOnlineStatusResolver;
 
     @Override
     @Transactional
@@ -84,22 +84,27 @@ public class BasicUserService implements UserService {
         User savedUser = userRepository.save(user);
 
         log.info("사용자 생성 완료: userId={}", savedUser.getId());
-        return userMapper.toDto(savedUser);
+        return userMapper.toDto(savedUser, Set.of());
     }
 
     @Override
-
     public Optional<UserDto> find(UUID id) {
+        Set<UUID> onlineUserIds =
+                userOnlineStatusResolver.getOnlineUserIds();
+
         return userRepository.findById(id)
-                .map(userMapper::toDto);
+                .map(user -> userMapper.toDto(user, onlineUserIds));
     }
 
     @Override
     public List<UserDto> findAll() {
         log.debug("사용자 목록 조회 처리 시작");
 
+        Set<UUID> onlineUserIds =
+                userOnlineStatusResolver.getOnlineUserIds();
+
         List<UserDto> users = userRepository.findAll().stream()
-                .map(userMapper::toDto)
+                .map(user -> userMapper.toDto(user, onlineUserIds))
                 .toList();
 
         log.debug("사용자 목록 조회 완료: count={}", users.size());
@@ -134,7 +139,9 @@ public class BasicUserService implements UserService {
         }
 
         if (param.request().newPassword() != null) {
-            newPassword = param.request().newPassword();
+            newPassword = passwordEncoder.encode(
+                    param.request().newPassword()
+            );
         }
 
         user.update(newUsername, newEmail, newPassword);
@@ -144,8 +151,9 @@ public class BasicUserService implements UserService {
         }
 
         log.info("사용자 수정 처리 완료: userId={}", user.getId());
-        return userMapper.toDto(user);
-        }
+        Set<UUID> onlineUserIds = userOnlineStatusResolver.getOnlineUserIds();
+        return userMapper.toDto(user, onlineUserIds);
+    }
 
     private void validateUsername(String newUsername, User user) {
         Optional<User> userByUsername = userRepository.findByUsername(newUsername);
@@ -235,16 +243,8 @@ public class BasicUserService implements UserService {
 
         user.updateRole(request.newRole());
 
-        sessionRegistry.getAllPrincipals().stream()
-                .filter(DiscodeitUserDetails.class::isInstance)
-                .map(DiscodeitUserDetails.class::cast)
-                .filter(principal -> principal.getUserDto().id().equals(user.getId()))
-                .flatMap(principal ->
-                        sessionRegistry.getAllSessions(principal, false).stream())
-                .forEach(SessionInformation::expireNow);
+        userOnlineStatusResolver.expireSessions(user.getId());
 
-        return userMapper.toDto(user);
+        return userMapper.toDto(user, Set.of());
     }
-
-    private final SessionRegistry sessionRegistry;
 }
