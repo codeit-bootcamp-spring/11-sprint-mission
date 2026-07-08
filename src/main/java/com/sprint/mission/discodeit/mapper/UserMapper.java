@@ -5,9 +5,9 @@ import com.sprint.mission.discodeit.entity.User;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-@Mapper(componentModel = "spring", uses = {BinaryContentMapper.class, UserStatusMapper.class})
-public interface UserMapper {
+@Mapper(componentModel = "spring", uses = {BinaryContentMapper.class})
+public abstract class UserMapper {
 
-  @Mapping(target = "online", expression = "java(user.getStatus().isOnline())")
-  UserDto toDto(User user);
+  @Mapping(target = "online", expression = "java(false)")
+  public abstract UserDto toDto(User user);
 }

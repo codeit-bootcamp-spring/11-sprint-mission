@@ -29,7 +29,8 @@ public class GlobalExceptionHandler {
 
   @ExceptionHandler(DiscodeitException.class)
   public ResponseEntity<ErrorResponse> handleDiscodeitException(DiscodeitException exception) {
-    log.error("커스텀 예외 발생: code={}, message={}", exception.getErrorCode(), exception.getMessage(), exception);
+    log.error("커스텀 예외 발생: code={}, message={}", exception.getErrorCode(), exception.getMessage(),
+        exception);
     HttpStatus status = determineHttpStatus(exception);
     ErrorResponse response = new ErrorResponse(exception, status.value());
     return ResponseEntity
@@ -37,15 +38,42 @@ public class GlobalExceptionHandler {
         .body(response);
   }
 
-  @ExceptionHandler(AuthorizationDeniedException.class)
-  public ResponseEntity<ErrorResponse> handleAuthorizationDeniedException(AuthorizationDeniedException e) {
-    log.warn("권한 없는 접근: {}", e.getMessage());
+  @ExceptionHandler(MethodArgumentNotValidException.class)
+  public ResponseEntity<ErrorResponse> handleValidationExceptions(
+      MethodArgumentNotValidException ex) {
+    log.error("요청 유효성 검사 실패: {}", ex.getMessage());
+
+    Map<String, Object> validationErrors = new HashMap<>();
+    ex.getBindingResult().getAllErrors().forEach(error -> {
+      String fieldName = ((FieldError) error).getField();
+      String errorMessage = error.getDefaultMessage();
+      validationErrors.put(fieldName, errorMessage);
+    });
+
     ErrorResponse response = new ErrorResponse(
         Instant.now(),
-        "FORBIDDEN",
-        "접근 권한이 없습니다.",
-        Map.of(),
-        e.getClass().getSimpleName(),
+        "VALIDATION_ERROR",
+        "요청 데이터 유효성 검사에 실패했습니다",
+        validationErrors,
+        ex.getClass().getSimpleName(),
+        HttpStatus.BAD_REQUEST.value()
+    );
+
+    return ResponseEntity
+        .status(HttpStatus.BAD_REQUEST)
+        .body(response);
+  }
+
+  @ExceptionHandler(AuthorizationDeniedException.class)
+  public ResponseEntity<ErrorResponse> handleAuthorizationDeniedException(
+      AuthorizationDeniedException ex) {
+    log.error("권한 거부 오류 발생: {}", ex.getMessage());
+    ErrorResponse response = new ErrorResponse(
+        Instant.now(),
+        "AUTHORIZATION_DENIED",
+        "요청에 대한 권한이 없습니다",
+        null,
+        ex.getClass().getSimpleName(),
         HttpStatus.FORBIDDEN.value()
     );
     return ResponseEntity
@@ -53,38 +81,13 @@ public class GlobalExceptionHandler {
         .body(response);
   }
 
-  @ExceptionHandler(MethodArgumentNotValidException.class)
-  public ResponseEntity<ErrorResponse> handleValidationExceptions(MethodArgumentNotValidException ex) {
-    log.error("요청 유효성 검사 실패: {}", ex.getMessage());
-    
-    Map<String, Object> validationErrors = new HashMap<>();
-    ex.getBindingResult().getAllErrors().forEach(error -> {
-      String fieldName = ((FieldError) error).getField();
-      String errorMessage = error.getDefaultMessage();
-      validationErrors.put(fieldName, errorMessage);
-    });
-    
-    ErrorResponse response = new ErrorResponse(
-        Instant.now(), 
-        "VALIDATION_ERROR",
-        "요청 데이터 유효성 검사에 실패했습니다",
-        validationErrors,
-        ex.getClass().getSimpleName(),
-        HttpStatus.BAD_REQUEST.value()
-    );
-    
-    return ResponseEntity
-        .status(HttpStatus.BAD_REQUEST)
-        .body(response);
-  }
-
   private HttpStatus determineHttpStatus(DiscodeitException exception) {
     ErrorCode errorCode = exception.getErrorCode();
     return switch (errorCode) {
-      case USER_NOT_FOUND, CHANNEL_NOT_FOUND, MESSAGE_NOT_FOUND, BINARY_CONTENT_NOT_FOUND, 
-           READ_STATUS_NOT_FOUND, USER_STATUS_NOT_FOUND -> HttpStatus.NOT_FOUND;
-      case DUPLICATE_USER, DUPLICATE_READ_STATUS, DUPLICATE_USER_STATUS -> HttpStatus.CONFLICT;
-      case INVALID_USER_CREDENTIALS -> HttpStatus.UNAUTHORIZED;
+      case USER_NOT_FOUND, CHANNEL_NOT_FOUND, MESSAGE_NOT_FOUND, BINARY_CONTENT_NOT_FOUND,
+           READ_STATUS_NOT_FOUND -> HttpStatus.NOT_FOUND;
+      case DUPLICATE_USER, DUPLICATE_READ_STATUS -> HttpStatus.CONFLICT;
+      case INVALID_USER_CREDENTIALS, INVALID_JWT_TOKEN, EXPIRED_JWT_TOKEN -> HttpStatus.UNAUTHORIZED;
       case PRIVATE_CHANNEL_UPDATE, INVALID_REQUEST -> HttpStatus.BAD_REQUEST;
       case INTERNAL_SERVER_ERROR -> HttpStatus.INTERNAL_SERVER_ERROR;
     };

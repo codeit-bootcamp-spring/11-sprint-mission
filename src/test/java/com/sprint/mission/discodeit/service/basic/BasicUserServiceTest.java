@@ -36,7 +36,6 @@ class BasicUserServiceTest {
 
   @Mock
   private UserMapper userMapper;
-
   @Mock
   private PasswordEncoder passwordEncoder;
 
