@@ -7,6 +7,7 @@ import com.sprint.mission.discodeit.dto.request.UserUpdateRequest;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.entity.UserStatus;
+import com.sprint.mission.discodeit.entity.Role;
 import com.sprint.mission.discodeit.exception.user.UserAlreadyExistsException;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.mapper.UserMapper;
@@ -15,6 +16,7 @@ import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.repository.UserStatusRepository;
 import com.sprint.mission.discodeit.service.UserService;
 import com.sprint.mission.discodeit.storage.BinaryContentStorage;
+import com.sprint.mission.discodeit.security.JwtRegistry;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -36,6 +38,7 @@ public class BasicUserService implements UserService {
   private final BinaryContentRepository binaryContentRepository;
   private final BinaryContentStorage binaryContentStorage;
   private final PasswordEncoder passwordEncoder;
+  private final JwtRegistry jwtRegistry;
 
   @Transactional
   @Override
@@ -154,5 +157,23 @@ public class BasicUserService implements UserService {
 
     userRepository.deleteById(userId);
     log.info("사용자 삭제 완료: id={}", userId);
+  }
+
+  @Transactional
+  @Override
+  public UserDto updateRole(UUID userId, Role newRole) {
+    log.debug("사용자 역할 변경 시작: userId={}, newRole={}", userId, newRole);
+
+    User user = userRepository.findById(userId)
+        .orElseThrow(() -> UserNotFoundException.withId(userId));
+
+    // 사용자 역할 변경함
+    user.updateRole(newRole);
+
+    // 역할이 변경된 사용자의 기존 JWT 정보를 모두 무효화함
+    jwtRegistry.invalidateJwtInformationByUserId(userId);
+
+    log.info("사용자 역할 변경 완료: userId={}, newRole={}", userId, newRole);
+    return userMapper.toDto(user);
   }
 }

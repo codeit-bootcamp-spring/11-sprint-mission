@@ -52,12 +52,16 @@ public interface UserApi {
           content = @Content(schema = @Schema(implementation = UserDto.class))
       ),
       @ApiResponse(
-          responseCode = "404", description = "User를 찾을 수 없음",
-          content = @Content(examples = @ExampleObject("User with id {userId} not found"))
-      ),
-      @ApiResponse(
           responseCode = "400", description = "같은 email 또는 username를 사용하는 User가 이미 존재함",
           content = @Content(examples = @ExampleObject("user with email {newEmail} already exists"))
+      ),
+      @ApiResponse(
+          responseCode = "403",
+          description = "권한 부족"
+      ),
+      @ApiResponse(
+          responseCode = "404", description = "User를 찾을 수 없음",
+          content = @Content(examples = @ExampleObject("User with id {userId} not found"))
       )
   })
   ResponseEntity<UserDto> update(
@@ -71,6 +75,10 @@ public interface UserApi {
       @ApiResponse(
           responseCode = "204",
           description = "User가 성공적으로 삭제됨"
+      ),
+      @ApiResponse(
+          responseCode = "403",
+          description = "권한 부족"
       ),
       @ApiResponse(
           responseCode = "404",

@@ -46,11 +46,14 @@ public class BasicReadStatusService implements ReadStatusService {
     Channel channel = channelRepository.findById(channelId)
         .orElseThrow(() -> ChannelNotFoundException.withId(channelId));
 
-    ReadStatus readStatus = readStatusRepository.findByUserIdAndChannelId(user.getId(), channel.getId())
-        .orElseGet(() -> {
-          Instant lastReadAt = request.lastReadAt();
-          return readStatusRepository.save(new ReadStatus(user, channel, lastReadAt));
+    readStatusRepository.findByUserIdAndChannelId(user.getId(), channel.getId())
+        .ifPresent(readStatus -> {
+          // 같은 사용자와 채널의 읽음 상태는 하나만 존재해야 함
+          throw DuplicateReadStatusException.withUserIdAndChannelId(userId, channelId);
         });
+
+    Instant lastReadAt = request.lastReadAt();
+    ReadStatus readStatus = readStatusRepository.save(new ReadStatus(user, channel, lastReadAt));
 
     log.info("읽음 상태 생성 완료: id={}, userId={}, channelId={}", 
         readStatus.getId(), userId, channelId);

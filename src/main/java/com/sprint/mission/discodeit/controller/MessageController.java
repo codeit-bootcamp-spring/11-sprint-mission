@@ -32,6 +32,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.security.access.prepost.PreAuthorize;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -72,6 +73,7 @@ public class MessageController implements MessageApi {
         .body(createdMessage);
   }
 
+  @PreAuthorize("@messagePermissionEvaluator.isAuthor(#messageId, principal)")
   @PatchMapping(path = "{messageId}")
   public ResponseEntity<MessageDto> update(
       @PathVariable("messageId") UUID messageId,
@@ -84,6 +86,7 @@ public class MessageController implements MessageApi {
         .body(updatedMessage);
   }
 
+  @PreAuthorize("@messagePermissionEvaluator.isAuthor(#messageId, principal)")
   @DeleteMapping(path = "{messageId}")
   public ResponseEntity<Void> delete(@PathVariable("messageId") UUID messageId) {
     log.info("메시지 삭제 요청: id={}", messageId);

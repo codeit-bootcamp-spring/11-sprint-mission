@@ -25,6 +25,10 @@ public interface ChannelApi {
       @ApiResponse(
           responseCode = "201", description = "Public Channel이 성공적으로 생성됨",
           content = @Content(schema = @Schema(implementation = ChannelDto.class))
+      ),
+      @ApiResponse(
+          responseCode = "403",
+          description = "권한 부족"
       )
   })
   ResponseEntity<ChannelDto> create(
@@ -55,6 +59,10 @@ public interface ChannelApi {
       @ApiResponse(
           responseCode = "400", description = "Private Channel은 수정할 수 없음",
           content = @Content(examples = @ExampleObject(value = "Private channel cannot be updated"))
+      ),
+      @ApiResponse(
+          responseCode = "403",
+          description = "권한 부족"
       )
   })
   ResponseEntity<ChannelDto> update(
@@ -66,6 +74,10 @@ public interface ChannelApi {
   @ApiResponses(value = {
       @ApiResponse(
           responseCode = "204", description = "Channel이 성공적으로 삭제됨"
+      ),
+      @ApiResponse(
+          responseCode = "403",
+          description = "권한 부족"
       ),
       @ApiResponse(
           responseCode = "404", description = "Channel을 찾을 수 없음",

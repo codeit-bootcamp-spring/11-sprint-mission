@@ -24,9 +24,9 @@ public class DiscodeitUserDetails implements UserDetails {
 
   @Override
   public Collection<? extends GrantedAuthority> getAuthorities() {
-    // Role 구현 전 임시 권한임
-    // 이후 User.role 값을 기준으로 ROLE_ADMIN, ROLE_CHANNEL_MANAGER, ROLE_USER 반환하도록 변경 예정임
-    return List.of(new SimpleGrantedAuthority("ROLE_USER"));
+    // User 엔티티의 role 값을 Spring Security 권한 형식으로 변환함
+    // hasRole("ADMIN")은 내부적으로 ROLE_ADMIN 권한을 확인함
+    return List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()));
   }
 
   @Override

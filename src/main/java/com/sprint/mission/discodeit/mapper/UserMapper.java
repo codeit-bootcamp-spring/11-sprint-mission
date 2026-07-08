@@ -5,9 +5,14 @@ import com.sprint.mission.discodeit.entity.User;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-@Mapper(componentModel = "spring", uses = {BinaryContentMapper.class, UserStatusMapper.class})
+@Mapper(componentModel = "spring", uses = {
+    BinaryContentMapper.class,
+    UserStatusMapper.class,
+    UserOnlineStatusMapper.class
+})
 public interface UserMapper {
 
-  @Mapping(target = "online", expression = "java(user.getStatus().isOnline())")
+  // SessionRegistry에 만료되지 않은 세션이 있는지 확인
+  @Mapping(target = "online", source = "user", qualifiedByName = "online")
   UserDto toDto(User user);
 }

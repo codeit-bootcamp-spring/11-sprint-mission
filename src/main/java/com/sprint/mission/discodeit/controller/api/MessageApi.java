@@ -32,7 +32,7 @@ public interface MessageApi {
       @ApiResponse(
           responseCode = "404", description = "Channel 또는 User를 찾을 수 없음",
           content = @Content(examples = @ExampleObject(value = "Channel | Author with id {channelId | authorId} not found"))
-      ),
+      )
   })
   ResponseEntity<MessageDto> create(
       @Parameter(
@@ -52,9 +52,13 @@ public interface MessageApi {
           content = @Content(schema = @Schema(implementation = MessageDto.class))
       ),
       @ApiResponse(
+          responseCode = "403",
+          description = "권한 부족"
+      ),
+      @ApiResponse(
           responseCode = "404", description = "Message를 찾을 수 없음",
           content = @Content(examples = @ExampleObject(value = "Message with id {messageId} not found"))
-      ),
+      )
   })
   ResponseEntity<MessageDto> update(
       @Parameter(description = "수정할 Message ID") UUID messageId,
@@ -67,9 +71,13 @@ public interface MessageApi {
           responseCode = "204", description = "Message가 성공적으로 삭제됨"
       ),
       @ApiResponse(
+          responseCode = "403",
+          description = "권한 부족"
+      ),
+      @ApiResponse(
           responseCode = "404", description = "Message를 찾을 수 없음",
           content = @Content(examples = @ExampleObject(value = "Message with id {messageId} not found"))
-      ),
+      )
   })
   ResponseEntity<Void> delete(
       @Parameter(description = "삭제할 Message ID") UUID messageId

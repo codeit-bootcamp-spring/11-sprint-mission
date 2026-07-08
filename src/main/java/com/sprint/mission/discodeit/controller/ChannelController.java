@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.access.prepost.PreAuthorize;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -31,6 +32,7 @@ public class ChannelController implements ChannelApi {
 
   private final ChannelService channelService;
 
+  @PreAuthorize("hasRole('CHANNEL_MANAGER')")
   @PostMapping(path = "public")
   public ResponseEntity<ChannelDto> create(@RequestBody @Valid PublicChannelCreateRequest request) {
     log.info("공개 채널 생성 요청: {}", request);
@@ -51,6 +53,7 @@ public class ChannelController implements ChannelApi {
         .body(createdChannel);
   }
 
+  @PreAuthorize("hasRole('CHANNEL_MANAGER')")
   @PatchMapping(path = "{channelId}")
   public ResponseEntity<ChannelDto> update(
       @PathVariable("channelId") UUID channelId,
@@ -63,6 +66,7 @@ public class ChannelController implements ChannelApi {
         .body(updatedChannel);
   }
 
+  @PreAuthorize("hasRole('CHANNEL_MANAGER')")
   @DeleteMapping(path = "{channelId}")
   public ResponseEntity<Void> delete(@PathVariable("channelId") UUID channelId) {
     log.info("채널 삭제 요청: id={}", channelId);

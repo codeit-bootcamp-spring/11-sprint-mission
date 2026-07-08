@@ -10,12 +10,27 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+  @ExceptionHandler(AuthorizationDeniedException.class)
+  public ResponseEntity<ErrorResponse> handleAuthorizationDeniedException(
+      AuthorizationDeniedException exception
+  ) {
+    // 메서드 보안에서 권한 거부된 경우 403으로 응답함
+    log.warn("권한 없음: {}", exception.getMessage(), exception);
+
+    ErrorResponse response = new ErrorResponse(exception, HttpStatus.FORBIDDEN.value());
+
+    return ResponseEntity
+        .status(HttpStatus.FORBIDDEN)
+        .body(response);
+  }
 
   @ExceptionHandler(Exception.class)
   public ResponseEntity<ErrorResponse> handleException(Exception e) {

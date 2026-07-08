@@ -28,6 +28,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.security.access.prepost.PreAuthorize;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -55,6 +56,7 @@ public class UserController implements UserApi {
         .body(createdUser);
   }
 
+  @PreAuthorize("#userId == principal.id")
   @PatchMapping(
       path = "{userId}",
       consumes = {MediaType.MULTIPART_FORM_DATA_VALUE}
@@ -75,6 +77,7 @@ public class UserController implements UserApi {
         .body(updatedUser);
   }
 
+  @PreAuthorize("#userId == principal.id")
   @DeleteMapping(path = "{userId}")
   @Override
   public ResponseEntity<Void> delete(@PathVariable("userId") UUID userId) {

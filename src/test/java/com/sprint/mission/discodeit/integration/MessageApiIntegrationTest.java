@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.mission.discodeit.dto.data.ChannelDto;
@@ -21,6 +22,9 @@ import com.sprint.mission.discodeit.dto.request.UserCreateRequest;
 import com.sprint.mission.discodeit.service.ChannelService;
 import com.sprint.mission.discodeit.service.MessageService;
 import com.sprint.mission.discodeit.service.UserService;
+import com.sprint.mission.discodeit.repository.UserRepository;
+import com.sprint.mission.discodeit.security.DiscodeitUserDetails;
+import com.sprint.mission.discodeit.entity.User;
 import java.util.ArrayList;
 import java.util.Optional;
 import java.util.UUID;
@@ -34,9 +38,12 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
+import org.junit.jupiter.api.AfterEach;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 @SpringBootTest
-@AutoConfigureMockMvc
+@AutoConfigureMockMvc(addFilters = false)
 @ActiveProfiles("test")
 @Transactional
 class MessageApiIntegrationTest {
@@ -55,6 +62,33 @@ class MessageApiIntegrationTest {
 
   @Autowired
   private UserService userService;
+
+  @Autowired
+  private UserRepository userRepository;
+
+  private void authenticateAs(UUID userId) {
+    // 실제 DB에 저장된 사용자 엔티티를 principal로 사용함
+    User user = userRepository.findById(userId).orElseThrow();
+
+    // @PreAuthorize에서 principal로 사용할 DiscodeitUserDetails 생성함
+    DiscodeitUserDetails principal = new DiscodeitUserDetails(user);
+
+    // 메서드 보안이 SecurityContextHolder에서 인증 정보를 읽을 수 있게 설정함
+    UsernamePasswordAuthenticationToken authentication =
+        new UsernamePasswordAuthenticationToken(
+            principal,
+            null,
+            principal.getAuthorities()
+        );
+
+    SecurityContextHolder.getContext().setAuthentication(authentication);
+  }
+
+  @AfterEach
+  void clearSecurityContext() {
+    // 테스트 간 인증 정보가 섞이지 않도록 정리함
+    SecurityContextHolder.clearContext();
+  }
 
   @Test
   @DisplayName("메시지 생성 API 통합 테스트")
@@ -215,6 +249,8 @@ class MessageApiIntegrationTest {
     MessageDto createdMessage = messageService.create(createRequest, new ArrayList<>());
     UUID messageId = createdMessage.id();
 
+    authenticateAs(user.id());
+
     // 메시지 업데이트 요청
     MessageUpdateRequest updateRequest = new MessageUpdateRequest(
         "수정된 메시지 내용입니다."
@@ -245,10 +281,19 @@ class MessageApiIntegrationTest {
     String requestBody = objectMapper.writeValueAsString(updateRequest);
 
     // When & Then
+    UserCreateRequest userRequest = new UserCreateRequest(
+        "notfounduser",
+        "notfound@example.com",
+        "Password1!"
+    );
+
+    UserDto user = userService.create(userRequest, Optional.empty());
+    authenticateAs(user.id());
+
     mockMvc.perform(patch("/api/messages/{messageId}", nonExistentMessageId)
             .contentType(MediaType.APPLICATION_JSON)
             .content(requestBody))
-        .andExpect(status().isNotFound());
+        .andExpect(status().isForbidden());
   }
 
   @Test
@@ -282,6 +327,8 @@ class MessageApiIntegrationTest {
     MessageDto createdMessage = messageService.create(createRequest, new ArrayList<>());
     UUID messageId = createdMessage.id();
 
+    authenticateAs(user.id());
+
     // When & Then
     mockMvc.perform(delete("/api/messages/{messageId}", messageId))
         .andExpect(status().isNoContent());
@@ -301,7 +348,16 @@ class MessageApiIntegrationTest {
     UUID nonExistentMessageId = UUID.randomUUID();
 
     // When & Then
+    UserCreateRequest userRequest = new UserCreateRequest(
+        "deletenotfounduser",
+        "deletenotfound@example.com",
+        "Password1!"
+    );
+
+    UserDto user = userService.create(userRequest, Optional.empty());
+    authenticateAs(user.id());
+
     mockMvc.perform(delete("/api/messages/{messageId}", nonExistentMessageId))
-        .andExpect(status().isNotFound());
+        .andExpect(status().isForbidden());
   }
 } 

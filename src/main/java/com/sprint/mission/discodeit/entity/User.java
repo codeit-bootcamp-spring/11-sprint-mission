@@ -9,6 +9,8 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -26,6 +28,9 @@ public class User extends BaseUpdatableEntity {
   private String email;
   @Column(length = 60, nullable = false)
   private String password;
+  @Enumerated(EnumType.STRING)
+  @Column(length = 20, nullable = false)
+  private Role role;
   @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
   @JoinColumn(name = "profile_id", columnDefinition = "uuid")
   private BinaryContent profile;
@@ -34,10 +39,13 @@ public class User extends BaseUpdatableEntity {
   @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
   private UserStatus status;
 
+
   public User(String username, String email, String password, BinaryContent profile) {
     this.username = username;
     this.email = email;
     this.password = password;
+    // 회원가입 사용자는 기본 USER 권한으로 생성함
+    this.role = Role.USER;
     this.profile = profile;
   }
 
@@ -54,6 +62,13 @@ public class User extends BaseUpdatableEntity {
     }
     if (newProfile != null) {
       this.profile = newProfile;
+    }
+  }
+
+  public void updateRole(Role newRole) {
+    // 관리자 기능에서 사용자 역할을 변경하기 위함
+    if (newRole != null && newRole != this.role) {
+      this.role = newRole;
     }
   }
 }
