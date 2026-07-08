@@ -18,6 +18,7 @@ import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
+import com.sprint.mission.discodeit.security.jwt.JwtRegistry;
 import com.sprint.mission.discodeit.service.MessageService;
 import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import java.time.Instant;
@@ -30,7 +31,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -48,7 +48,7 @@ public class BasicMessageService implements MessageService {
   private final BinaryContentStorage binaryContentStorage;
   private final MessageMapper messageMapper;
   private final UserMapper userMapper;
-  private final SessionRegistry sessionRegistry;
+  private final JwtRegistry jwtRegistry;
 
   @Override
   @Transactional
@@ -90,9 +90,8 @@ public class BasicMessageService implements MessageService {
     messageRepository.saveAndFlush(message);
     log.info("메시지 생성 완료 - id: {}, channelId: {}", message.getId(), channel.getId());
 
-    boolean isOnline = !sessionRegistry.getAllSessions(
-        new org.springframework.security.core.userdetails.User(
-            author.getUsername(), "", List.of()), false).isEmpty();
+    boolean isOnline = message.getAuthor() != null && jwtRegistry.hasActiveJwtInformationByUserId(
+        message.getAuthor().getId());
     UserDto authorDto = userMapper.toDto(author, isOnline);
     return messageMapper.toDto(message, isOnline, authorDto);
   }
@@ -137,9 +136,8 @@ public class BasicMessageService implements MessageService {
     message.updateContent(request.newContent());
     log.info("메시지 수정 완료 - id: {}", messageId);
 
-    boolean isOnline = message.getAuthor() != null && !sessionRegistry.getAllSessions(
-        new org.springframework.security.core.userdetails.User(
-            message.getAuthor().getUsername(), "", List.of()), false).isEmpty();
+    boolean isOnline = message.getAuthor() != null && jwtRegistry.hasActiveJwtInformationByUserId(
+        message.getAuthor().getId());
     UserDto authorDto = message.getAuthor() != null
         ? userMapper.toDto(message.getAuthor(), isOnline)
         : null;
@@ -161,9 +159,8 @@ public class BasicMessageService implements MessageService {
   }
 
   private MessageDto toDto(Message message) {
-    boolean isOnline = message.getAuthor() != null && !sessionRegistry.getAllSessions(
-        new org.springframework.security.core.userdetails.User(
-            message.getAuthor().getUsername(), "", List.of()), false).isEmpty();
+    boolean isOnline = message.getAuthor() != null && jwtRegistry.hasActiveJwtInformationByUserId(
+        message.getAuthor().getId());
     UserDto authorDto = message.getAuthor() != null
         ? userMapper.toDto(message.getAuthor(), isOnline)
         : null;

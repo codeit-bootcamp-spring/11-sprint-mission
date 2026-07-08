@@ -24,10 +24,10 @@ import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
+import com.sprint.mission.discodeit.security.jwt.JwtRegistry;
 import com.sprint.mission.discodeit.service.basic.BasicMessageService;
 import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import java.time.Instant;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -38,7 +38,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.SliceImpl;
-import org.springframework.security.core.session.SessionRegistry;
 
 @ExtendWith(MockitoExtension.class)
 class BasicMessageServiceTest {
@@ -58,7 +57,7 @@ class BasicMessageServiceTest {
   @Mock
   private UserMapper userMapper;
   @Mock
-  private SessionRegistry sessionRegistry;
+  private JwtRegistry jwtRegistry;
 
   @InjectMocks
   private BasicMessageService messageService;
@@ -78,7 +77,7 @@ class BasicMessageServiceTest {
     given(channelRepository.findById(channelId)).willReturn(Optional.of(channel));
     given(userRepository.findById(authorId)).willReturn(Optional.of(author));
     given(messageRepository.saveAndFlush(any(Message.class))).willReturn(message);
-    given(sessionRegistry.getAllSessions(any(), anyBoolean())).willReturn(Collections.emptyList());
+    given(jwtRegistry.hasActiveJwtInformationByUserId(any())).willReturn(false);
     given(userMapper.toDto(any(User.class), anyBoolean())).willReturn(null);
     given(messageMapper.toDto(any(Message.class), anyBoolean(), any())).willReturn(dto);
 
@@ -124,7 +123,7 @@ class BasicMessageServiceTest {
         channel.getId(), null, List.of());
 
     given(messageRepository.findById(messageId)).willReturn(Optional.of(message));
-    given(sessionRegistry.getAllSessions(any(), anyBoolean())).willReturn(Collections.emptyList());
+    given(jwtRegistry.hasActiveJwtInformationByUserId(any())).willReturn(false);
     given(userMapper.toDto(any(User.class), anyBoolean())).willReturn(null);
     given(messageMapper.toDto(any(Message.class), anyBoolean(), any())).willReturn(dto);
 
@@ -177,7 +176,7 @@ class BasicMessageServiceTest {
 
     given(messageRepository.findAllByChannelIdOrderByCreatedAtDesc(any(), any(Pageable.class)))
         .willReturn(new SliceImpl<>(List.of(message)));
-    given(sessionRegistry.getAllSessions(any(), anyBoolean())).willReturn(Collections.emptyList());
+    given(jwtRegistry.hasActiveJwtInformationByUserId(any())).willReturn(false);
     given(messageMapper.toDto(any(Message.class), anyBoolean(), any())).willReturn(dto);
 
     PageResponse<MessageDto> result = messageService.findAllByChannelId(channelId, null, 50);
