@@ -32,6 +32,10 @@ public class DiscodeitUserDetails implements UserDetails {
     return userDto.username();
   }
 
+  public String getId() {
+    return userDto.id().toString();
+  }
+
   // 계정이 만료되었는지 확인
   // true : 정상 계정 / false : 계정 만료되어 로그인 차단
   @Override

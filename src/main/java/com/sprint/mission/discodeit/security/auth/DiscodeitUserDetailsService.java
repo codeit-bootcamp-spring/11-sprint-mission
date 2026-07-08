@@ -3,8 +3,10 @@ package com.sprint.mission.discodeit.security.auth;
 
 import com.sprint.mission.discodeit.dto.response.UserDto;
 import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.mapper.UserMapper;
 import com.sprint.mission.discodeit.repository.UserRepository;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -23,9 +25,23 @@ public class DiscodeitUserDetailsService implements UserDetailsService {
   @Transactional(readOnly = true)
   public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
 
-    // discodeit DB 사용자 정보로 UserDetails 객체 생성
+    // discodeit DB 사용자 정보로 UserDetails 객체 생성(username으로 생성)
     User user = userRepository.findByUsername(username).orElseThrow(
         () -> new UsernameNotFoundException(username)
+    );
+
+    // Dto로 변환
+    UserDto userDto = userMapper.toDto(user);
+
+    return new DiscodeitUserDetails(userDto, user.getPassword());
+  }
+
+  @Transactional(readOnly = true)
+  public UserDetails loadUserById(UUID userId) {
+
+    // discodeit DB에 사용자 정보로 UserDetails 객체 생성(userId로 생성)
+    User user = userRepository.findById(userId).orElseThrow(
+        () -> new UserNotFoundException(userId)
     );
 
     // Dto로 변환

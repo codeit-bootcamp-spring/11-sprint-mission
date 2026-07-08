@@ -24,6 +24,7 @@ public enum ErrorCode {
 
   // AUTH
   INVALID_LOGIN("로그인 정보가 올바르지 않습니다."),
+  REFRESH_TOKEN_INVALID("Refresh Token이 유효하지 않습니다."),
 
   // 공통
   INVALID_REQUEST("잘못된 요청입니다."),

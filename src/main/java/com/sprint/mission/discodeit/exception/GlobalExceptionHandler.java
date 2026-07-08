@@ -80,7 +80,7 @@ public class GlobalExceptionHandler {
       case INVALID_REQUEST, PRIVATE_CHANNEL_UPDATE -> HttpStatus.BAD_REQUEST;
 
       // 401
-      case INVALID_LOGIN -> HttpStatus.UNAUTHORIZED;
+      case INVALID_LOGIN, REFRESH_TOKEN_INVALID -> HttpStatus.UNAUTHORIZED;
 
       // 404
       case USER_NOT_FOUND, CHANNEL_NOT_FOUND, MESSAGE_NOT_FOUND,
