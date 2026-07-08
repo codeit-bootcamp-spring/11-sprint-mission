@@ -38,8 +38,18 @@ discodeit:
       presigned-url-expiration: ${AWS_S3_PRESIGNED_URL_EXPIRATION:600}
 
 
+
+
   remember-me:
     key: ${REMEMBER_ME_KEY:nightmare}
+
+
+  jwt:
+    secret: ${JWT_SECRET:VeryVeryLongAndMustOver32CharactersSecretKey}
+    access-token-expiration: ${JWT_ACCESS_EXPIRATION:1800000} #30분
+    refresh-token-expiration: ${JWT_REFRESH_EXPIRATION:1209600000} #2주
+    max-active-count: ${JWT_MAX_ACTIVE:1} #최대 계정 1
+
 
 
 

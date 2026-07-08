@@ -4,6 +4,7 @@ import com.sprint.mission.discodeit.dto.userdto.UserDto;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.mapper.UserMapper;
 import com.sprint.mission.discodeit.repository.JPAUserRepository;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -30,5 +31,14 @@ public class DiscodeitUserDetailsService implements UserDetailsService {
         user.getPassword()
     );
   }
+
+  public UserDetails loadUserById(UUID userId) {
+    User user = userRepository.findById(userId)
+        .orElseThrow(() -> new UsernameNotFoundException("유저 없음: " + userId));
+
+    UserDto userDto = userMapper.toDto(user);
+    return new DiscodeitUserDetails(userDto, user.getPassword());
+  }
+
 
 }

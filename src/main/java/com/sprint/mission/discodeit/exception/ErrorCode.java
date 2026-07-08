@@ -25,6 +25,8 @@ public enum ErrorCode {
 
   FILE_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 파일을 찾을 수 없습니다."),
 
+  REFRESH_TOKEN_INVALID(HttpStatus.UNAUTHORIZED, "유효하지 않은 리프레시 토큰입니다."),
+
   DUMMY_EXCEPTION(HttpStatus.INTERNAL_SERVER_ERROR, "더미 예외입니다.");
 
   private final HttpStatus status;

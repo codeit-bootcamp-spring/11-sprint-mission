@@ -2,8 +2,11 @@ package com.sprint.mission.discodeit.config;
 
 
 import com.sprint.mission.discodeit.security.LoginFailureHandler;
-import com.sprint.mission.discodeit.security.LoginSuccessHandler;
 import com.sprint.mission.discodeit.security.SpaCsrfTokenRequestHandler;
+import com.sprint.mission.discodeit.security.jwt.JwtAuthenticationFilter;
+import com.sprint.mission.discodeit.security.jwt.JwtLoginSuccessHandler;
+import com.sprint.mission.discodeit.security.jwt.JwtLogoutHandler;
+import com.sprint.mission.discodeit.security.jwt.JwtRegistry;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -17,11 +20,11 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer.FrameOptionsConfig;
-import org.springframework.security.core.session.SessionRegistry;
-import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.logout.HttpStatusReturningLogoutSuccessHandler;
 import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
@@ -33,10 +36,12 @@ import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 public class SecurityConfig {
 
 
-  private final LoginSuccessHandler loginSuccessHandler;
+  private final JwtLoginSuccessHandler jwtLoginSuccessHandler;
   private final LoginFailureHandler loginFailureHandler;
-  private final UserDetailsService userDetailsService;
-  private final SessionRegistry sessionRegistry;
+  private final JwtAuthenticationFilter jwtAuthenticationFilter;
+  private final JwtLogoutHandler jwtLogoutHandler;
+  private final JwtRegistry jwtRegistry;
+
 
   @Bean
   static MethodSecurityExpressionHandler methodSecurityExpressionHandler(
@@ -56,7 +61,9 @@ public class SecurityConfig {
             .requestMatchers(
                 "/api/auth/csrf-token",      // csrf
                 "/api/auth/login",           // 로그인
-                "/api/auth/logout"// 로그아웃
+                "/api/auth/logout",// 로그아웃
+                "/api/auth/refresh", //토큰 재발급
+                "/error"
             ).permitAll()
             .requestMatchers(HttpMethod.POST, "/api/users").permitAll() //회원가입
             .requestMatchers(
@@ -78,23 +85,15 @@ public class SecurityConfig {
         )
         .formLogin(login -> login
             .loginProcessingUrl("/api/auth/login")
-            .successHandler(loginSuccessHandler)
+            .successHandler(jwtLoginSuccessHandler)
             .failureHandler(loginFailureHandler)
         )
         .sessionManagement(session -> session
-            .maximumSessions(1)
-            .maxSessionsPreventsLogin(false) //기존 만료
-            .sessionRegistry(sessionRegistry)
-        )
-        .rememberMe(remember -> remember
-            .rememberMeParameter("remember-me")
-            .key("${discodeit.remember-me.key}")
-            .tokenValiditySeconds(3600 * 24 * 14)
-            .alwaysRemember(false)
-            .userDetailsService(userDetailsService)
+            .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
         )
         .logout(logout -> logout
             .logoutUrl("/api/auth/logout")
+            .addLogoutHandler(jwtLogoutHandler)
             .logoutSuccessHandler(
                 logoutSuccessHandler()
             )
@@ -104,7 +103,8 @@ public class SecurityConfig {
                 response.sendError(401))
             .accessDeniedHandler((request, response, accessDeniedException) ->
                 response.sendError(403))
-        );
+        )
+        .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
     return http.build();
   }
 
