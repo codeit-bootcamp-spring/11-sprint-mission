@@ -111,7 +111,7 @@ public class BasicMessageService implements MessageService {
     return result;
   }
 
-  @PostAuthorize("returnObject.author.id == authentication.principal.user.id")
+  @PostAuthorize("hasRole('ADMIN') or returnObject.author.id == authentication.principal.user.id")
   @Transactional
   @Override
   public MessageResponse updateMessage(UUID id, MessageUpdateRequest messageUpdateRequest,
@@ -147,7 +147,7 @@ public class BasicMessageService implements MessageService {
     return this.mapper.toResponse(message);
   }
 
-  @PreAuthorize("@messageSecurity.isAuthor(#id, authentication.principal.user.id)")
+  @PreAuthorize("hasRole('ADMIN') or @messageSecurity.isAuthor(#id, authentication.principal.user.id)")
   @Transactional
   @Override
   public void deleteMessage(UUID id) {

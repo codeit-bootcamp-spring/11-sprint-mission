@@ -12,7 +12,8 @@ import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.mapper.UserMapper;
 import com.sprint.mission.discodeit.repository.UserRepository;
-import com.sprint.mission.discodeit.security.SessionManager;
+import com.sprint.mission.discodeit.security.jwt.JwtRegistry;
+import com.sprint.mission.discodeit.security.jwt.JwtTokenProvider;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -31,7 +32,10 @@ class BasicAuthServiceTest {
   private UserRepository userRepository;
 
   @Mock
-  private SessionManager sessionManager;
+  private JwtTokenProvider jwtTokenProvider;
+
+  @Mock
+  private JwtRegistry jwtRegistry;
 
   @Mock
   private UserMapper mapper;
