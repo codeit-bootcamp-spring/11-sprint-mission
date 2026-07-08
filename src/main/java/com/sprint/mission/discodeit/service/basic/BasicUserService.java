@@ -6,6 +6,7 @@ import com.sprint.mission.discodeit.dto.user.UserDto;
 import com.sprint.mission.discodeit.dto.user.UserUpdateRequest;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.event.PasswordChangeEvent;
 import com.sprint.mission.discodeit.exception.DiscodeitException;
 import com.sprint.mission.discodeit.exception.ErrorCode;
 import com.sprint.mission.discodeit.exception.user.DuplicateUserException;
@@ -14,14 +15,14 @@ import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.mapper.UserMapper;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
-import com.sprint.mission.discodeit.security.DiscodeitUserDetails;
+import com.sprint.mission.discodeit.security.jwt.JwtRegistry;
 import com.sprint.mission.discodeit.service.UserService;
 import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import java.util.Map;
+import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.session.SessionInformation;
-import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 import java.io.IOException;
@@ -42,10 +43,11 @@ public class BasicUserService implements UserService {
   private final UserRepository userRepository;
   private final BinaryContentRepository binaryContentRepository;
   private final BinaryContentStorage binaryContentStorage;
+  private final JwtRegistry jwtRegistry;
 
   private final UserMapper userMapper;
   private final PasswordEncoder passwordEncoder;
-  private final SessionRegistry sessionRegistry;
+  private final ApplicationEventPublisher eventPublisher;
 
   @Override
   @Transactional
@@ -99,14 +101,16 @@ public class BasicUserService implements UserService {
           return new UserNotFoundException(id);
         });
 
-    return userMapper.toDto(user, isOnline(user.getId()));
+    return userMapper.toDto(user, getOnlineUserIds().contains(user.getId()));
   }
 
   @Override
   public List<UserDto> allReadUser() {
     List<User> users = userRepository.findAll();
+    Set<UUID> onlineUserIds = getOnlineUserIds();
+
     return users.stream()
-        .map(user -> userMapper.toDto(user, isOnline(user.getId())))
+        .map(user -> userMapper.toDto(user, onlineUserIds.contains(user.getId())))
         .collect(Collectors.toList());
   }
 
@@ -189,9 +193,13 @@ public class BasicUserService implements UserService {
 
     user.update(name, email, password, currentProfile);
 
+    if (request.newPassword() != null) {
+      eventPublisher.publishEvent(new PasswordChangeEvent(id));
+    }
+
     log.info("사용자 정보 업데이트 완료 - userId: {}, username: {}, email: {}", id, name, email);
 
-    return userMapper.toDto(user, isOnline(user.getId()));
+    return userMapper.toDto(user, getOnlineUserIds().contains(user.getId()));
   }
 
   @Override
@@ -202,22 +210,16 @@ public class BasicUserService implements UserService {
         .orElseThrow(() -> new UserNotFoundException(request.userId()));
     user.updateRole(request.newRole());
 
-    sessionRegistry.getAllPrincipals().stream()
-        .filter(p -> p instanceof DiscodeitUserDetails)
-        .map(p -> (DiscodeitUserDetails) p)
-        .filter(p -> p.getUserDto().id().equals(request.userId()))
-        .forEach(p -> {
-          List<SessionInformation> sessions = sessionRegistry.getAllSessions(p, false);
-          sessions.forEach(SessionInformation::expireNow);
-        });
+    jwtRegistry.invalidateJwtInformationByUserId(request.userId());
 
-    return userMapper.toDto(user, isOnline(user.getId()));
+    boolean isOnline = jwtRegistry.hasActiveJwtInformationByUserId(user.getId());
+    return userMapper.toDto(user, isOnline);
   }
 
-  private boolean isOnline(UUID userId) {
-    return sessionRegistry.getAllPrincipals().stream()
-        .filter(p -> p instanceof DiscodeitUserDetails)
-        .map(p -> (DiscodeitUserDetails) p)
-        .anyMatch(p -> p.getUserDto().id().equals(userId));
+  private Set<UUID> getOnlineUserIds() {
+    return userRepository.findAll().stream()
+        .map(User::getId)
+        .filter(jwtRegistry::hasActiveJwtInformationByUserId)
+        .collect(Collectors.toSet());
   }
 }

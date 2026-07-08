@@ -35,7 +35,7 @@ public class DiscodeitUserDetails implements UserDetails {
   @Override
   public boolean equals(Object o) {
     if (this == o) {
-      return false;
+      return true;
     }
     if (!(o instanceof DiscodeitUserDetails that)) {
       return false;

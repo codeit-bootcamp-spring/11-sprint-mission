@@ -35,7 +35,10 @@ public enum ErrorCode {
   VALIDATION_ERROR(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR"),
   INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "Internal Server Error"),
 
-  FORBIDDEN(HttpStatus.FORBIDDEN, "Access Denied");
+  FORBIDDEN(HttpStatus.FORBIDDEN, "Access Denied"),
+
+  // --- Token (토큰) ---
+  REFRESH_TOKEN_INVALID(HttpStatus.UNAUTHORIZED, "Invalid or expired refresh token");
 
   @Getter
   private final HttpStatus status;
