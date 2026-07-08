@@ -33,7 +33,9 @@ public enum ErrorCode {
   // Auth
   AUTHENTICATION_FAILED(HttpStatus.UNAUTHORIZED, "아이디 또는 비밀번호가 일치하지 않습니다."),
   UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "로그인이 필요한 서비스입니다."),
-  ACCESS_DENIED(HttpStatus.FORBIDDEN, "이 기능을 실행할 권한이 부족합니다.");
+  ACCESS_DENIED(HttpStatus.FORBIDDEN, "이 기능을 실행할 권한이 부족합니다."),
+
+  REFRESH_TOKEN_INVALID(HttpStatus.UNAUTHORIZED, "유효하지 않거나 만료된 리프레시 토큰입니다.");
 
   private final HttpStatus status; // Enum 클래스에서는 상수들을 무조건 최상단에 먼저 선언해야 한다.
   private final String message;

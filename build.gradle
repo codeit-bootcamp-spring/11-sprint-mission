@@ -67,6 +67,9 @@ dependencies {
     // Spring Security
     implementation 'org.springframework.boot:spring-boot-starter-security'
 
+    // nimbus-jose-jwt
+    implementation 'com.nimbusds:nimbus-jose-jwt:10.3'
+
     // 컴파일 시 코드 생성기 (반드시 Lombok -> Binding -> MapStruct 순서여야 함!)
     annotationProcessor 'org.projectlombok:lombok'
     annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.5.Final'

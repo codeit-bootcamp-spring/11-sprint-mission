@@ -40,6 +40,10 @@ discodeit:
       region: ${AWS_S3_REGION}
       bucket: ${AWS_S3_BUCKET}
       presigned-url-expiration: ${AWS_S3_PRESIGNED_URL_EXPIRATION:600}
+  jwt:
+    secret: ${JWT_SECRET_KEY:default-secret-key-must-be-long-enough-for-hs256}
+    access-token-expiration: ${ACCESS_TOKEN_EXPIRATION:1800000}
+    refresh-token-expiration: ${REFRESH_TOKEN_EXPIRATION:1209600000}
 
 admin:
   account:
