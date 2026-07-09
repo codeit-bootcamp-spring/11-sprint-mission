@@ -6,6 +6,7 @@ import com.sprint.mission.discodeit.dto.user.UserDto;
 import com.sprint.mission.discodeit.dto.user.UserUpdateRequest;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.event.BinaryContentCreatedEvent;
 import com.sprint.mission.discodeit.event.PasswordChangeEvent;
 import com.sprint.mission.discodeit.exception.DiscodeitException;
 import com.sprint.mission.discodeit.exception.ErrorCode;
@@ -182,7 +183,8 @@ public class BasicUserService implements UserService {
             profile.getSize()
         );
         BinaryContent savedProfile = binaryContentRepository.save(currentProfile);
-        binaryContentStorage.put(savedProfile.getId(), profile.getBytes());
+        eventPublisher.publishEvent(
+            new BinaryContentCreatedEvent(savedProfile.getId(), profile.getBytes()));
         log.debug("새 프로필 이미지 저장 완료 - userId: {}, binaryContentId: {}", id, savedProfile.getId());
       } catch (IOException e) {
         log.error("프로필 이미지 저장 중 서버 오류 발생 - userId: {}", id, e);

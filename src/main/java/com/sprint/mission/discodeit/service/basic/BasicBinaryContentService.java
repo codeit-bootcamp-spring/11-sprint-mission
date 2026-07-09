@@ -3,6 +3,8 @@ package com.sprint.mission.discodeit.service.basic;
 import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentCreateRequest;
 import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentDto;
 import com.sprint.mission.discodeit.entity.BinaryContent;
+import com.sprint.mission.discodeit.entity.BinaryContentStatus;
+import com.sprint.mission.discodeit.event.BinaryContentCreatedEvent;
 import com.sprint.mission.discodeit.exception.file.BinaryContentNotExistsException;
 import com.sprint.mission.discodeit.exception.file.FileEmptyException;
 import com.sprint.mission.discodeit.exception.file.FileNotFoundException;
@@ -12,11 +14,13 @@ import com.sprint.mission.discodeit.service.BinaryContentService;
 import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
@@ -26,6 +30,7 @@ public class BasicBinaryContentService implements BinaryContentService {
 
   private final BinaryContentRepository binaryContentRepository;
   private final BinaryContentStorage binaryContentStorage;
+  private final ApplicationEventPublisher eventPublisher;
 
   private final BinaryContentMapper binaryContentMapper;
 
@@ -46,7 +51,8 @@ public class BasicBinaryContentService implements BinaryContentService {
 
     BinaryContent savedContent = binaryContentRepository.save(content);
 
-    binaryContentStorage.put(savedContent.getId(), request.bytes());
+    eventPublisher.publishEvent(
+        new BinaryContentCreatedEvent(savedContent.getId(), request.bytes()));
 
     log.info("파일 업로드 완료 - binaryContentId: {}, fileName: {}, size: {}bytes", savedContent.getId(),
         request.fileName(), fileSize);
@@ -91,5 +97,19 @@ public class BasicBinaryContentService implements BinaryContentService {
     ResponseEntity<Resource> response = binaryContentStorage.download(dto);
     log.info("파일 다운로드 완료 - binaryContentId: {}, fileName: {}", id, dto.fileName());
     return response;
+  }
+
+  @Override
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
+  public void updateStatus(UUID binaryContentId, BinaryContentStatus status) {
+    binaryContentRepository.findById(binaryContentId)
+        .ifPresentOrElse(
+            content -> {
+              content.updateStatus(status);
+              log.info("바이너리 데이터 상태 업데이트 - binaryContentId: {}, status: {}",
+                  binaryContentId, status);
+            },
+            () -> log.warn("바이너리 데이터 상태 업데이트 실패 - 존재하지 않는 콘텐츠: {}", binaryContentId)
+        );
   }
 }
