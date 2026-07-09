@@ -243,7 +243,7 @@ public class BasicUserService implements UserService {
 
         user.updateRole(request.newRole());
 
-        userOnlineStatusResolver.expireSessions(user.getId());
+        userOnlineStatusResolver.invalidateTokens(user.getId());
 
         return userMapper.toDto(user, Set.of());
     }
