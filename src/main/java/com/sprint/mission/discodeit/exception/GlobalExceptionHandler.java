@@ -18,15 +18,6 @@ import lombok.extern.slf4j.Slf4j;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-  @ExceptionHandler(AuthorizationDeniedException.class)
-  public ResponseEntity<ErrorResponse> handleAuthorizationDeniedException(
-      AuthorizationDeniedException e) {
-    log.warn("권한 부족: {}", e.getMessage());
-    ErrorResponse errorResponse = new ErrorResponse(e, HttpStatus.FORBIDDEN.value());
-    return ResponseEntity
-        .status(HttpStatus.FORBIDDEN)
-        .body(errorResponse);
-  }
   @ExceptionHandler(Exception.class)
   public ResponseEntity<ErrorResponse> handleException(Exception e) {
     log.error("예상치 못한 오류 발생: {}", e.getMessage(), e);
@@ -68,6 +59,23 @@ public class GlobalExceptionHandler {
     
     return ResponseEntity
         .status(HttpStatus.BAD_REQUEST)
+        .body(response);
+  }
+
+  @ExceptionHandler(AuthorizationDeniedException.class)
+  public ResponseEntity<ErrorResponse> handleAuthorizationDeniedException(
+      AuthorizationDeniedException ex) {
+    log.error("권한 거부 오류 발생: {}", ex.getMessage());
+    ErrorResponse response = new ErrorResponse(
+        Instant.now(),
+        "AUTHORIZATION_DENIED",
+        "요청에 대한 권한이 없습니다",
+        null,
+        ex.getClass().getSimpleName(),
+        HttpStatus.FORBIDDEN.value()
+    );
+    return ResponseEntity
+        .status(HttpStatus.FORBIDDEN)
         .body(response);
   }
 

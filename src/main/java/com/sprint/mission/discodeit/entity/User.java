@@ -29,6 +29,10 @@ public class User extends BaseUpdatableEntity {
   @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
   @JoinColumn(name = "profile_id", columnDefinition = "uuid")
   private BinaryContent profile;
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false)
+  private Role role = Role.USER;
+
   public User(String username, String email, String password, BinaryContent profile) {
     this.username = username;
     this.email = email;
@@ -52,11 +56,9 @@ public class User extends BaseUpdatableEntity {
     }
   }
 
-  @Column(nullable = false)
-  @Enumerated(EnumType.STRING)
-  private Role role = Role.USER;  // 기본값 USER로 하기.
-
-  public void updateRole(Role role) {
-    this.role = role;
+  public void updateRole(Role newRole) {
+    if (this.role != newRole) {
+      this.role = newRole;
+    }
   }
 }
