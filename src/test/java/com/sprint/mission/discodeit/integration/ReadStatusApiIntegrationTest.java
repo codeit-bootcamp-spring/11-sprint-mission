@@ -30,10 +30,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+
+@WithMockUser(roles = "ADMIN")
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
@@ -87,7 +91,8 @@ class ReadStatusApiIntegrationTest {
     // When & Then
     mockMvc.perform(post("/api/readStatuses")
             .contentType(MediaType.APPLICATION_JSON)
-            .content(requestBody))
+            .content(requestBody)
+            .with(csrf()))
         .andExpect(status().isCreated())
         .andExpect(jsonPath("$.id", notNullValue()))
         .andExpect(jsonPath("$.userId", is(user.id().toString())))
@@ -125,7 +130,8 @@ class ReadStatusApiIntegrationTest {
     String firstRequestBody = objectMapper.writeValueAsString(firstCreateRequest);
     mockMvc.perform(post("/api/readStatuses")
             .contentType(MediaType.APPLICATION_JSON)
-            .content(firstRequestBody))
+            .content(firstRequestBody)
+            .with(csrf()))
         .andExpect(status().isCreated());
 
     // 두 번째 읽음 상태 생성 요청 (동일 사용자, 동일 채널) - 실패해야 함
@@ -140,7 +146,8 @@ class ReadStatusApiIntegrationTest {
     // When & Then
     mockMvc.perform(post("/api/readStatuses")
             .contentType(MediaType.APPLICATION_JSON)
-            .content(duplicateRequestBody))
+            .content(duplicateRequestBody)
+            .with(csrf()))
         .andExpect(status().isConflict());
   }
 
@@ -185,7 +192,8 @@ class ReadStatusApiIntegrationTest {
     // When & Then
     mockMvc.perform(patch("/api/readStatuses/{readStatusId}", readStatusId)
             .contentType(MediaType.APPLICATION_JSON)
-            .content(requestBody))
+            .content(requestBody)
+            .with(csrf()))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.id", is(readStatusId.toString())))
         .andExpect(jsonPath("$.userId", is(user.id().toString())))
@@ -208,7 +216,8 @@ class ReadStatusApiIntegrationTest {
     // When & Then
     mockMvc.perform(patch("/api/readStatuses/{readStatusId}", nonExistentReadStatusId)
             .contentType(MediaType.APPLICATION_JSON)
-            .content(requestBody))
+            .content(requestBody)
+            .with(csrf()))
         .andExpect(status().isNotFound());
   }
 

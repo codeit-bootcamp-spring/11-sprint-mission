@@ -29,10 +29,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+
+@WithMockUser(roles = "ADMIN")
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
@@ -65,7 +69,8 @@ class ChannelApiIntegrationTest {
     // When & Then
     mockMvc.perform(post("/api/channels/public")
             .contentType(MediaType.APPLICATION_JSON)
-            .content(requestBody))
+            .content(requestBody)
+            .with(csrf()))
         .andExpect(status().isCreated())
         .andExpect(jsonPath("$.id", notNullValue()))
         .andExpect(jsonPath("$.type", is(ChannelType.PUBLIC.name())))
@@ -87,7 +92,8 @@ class ChannelApiIntegrationTest {
     // When & Then
     mockMvc.perform(post("/api/channels/public")
             .contentType(MediaType.APPLICATION_JSON)
-            .content(requestBody))
+            .content(requestBody)
+            .with(csrf()))
         .andExpect(status().isBadRequest());
   }
 
@@ -119,7 +125,8 @@ class ChannelApiIntegrationTest {
     // When & Then
     mockMvc.perform(post("/api/channels/private")
             .contentType(MediaType.APPLICATION_JSON)
-            .content(requestBody))
+            .content(requestBody)
+            .with(csrf()))
         .andExpect(status().isCreated())
         .andExpect(jsonPath("$.id", notNullValue()))
         .andExpect(jsonPath("$.type", is(ChannelType.PRIVATE.name())))
@@ -196,7 +203,8 @@ class ChannelApiIntegrationTest {
     // When & Then
     mockMvc.perform(patch("/api/channels/{channelId}", channelId)
             .contentType(MediaType.APPLICATION_JSON)
-            .content(requestBody))
+            .content(requestBody)
+            .with(csrf()))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.id", is(channelId.toString())))
         .andExpect(jsonPath("$.name", is("수정된 채널")))
@@ -219,7 +227,8 @@ class ChannelApiIntegrationTest {
     // When & Then
     mockMvc.perform(patch("/api/channels/{channelId}", nonExistentChannelId)
             .contentType(MediaType.APPLICATION_JSON)
-            .content(requestBody))
+            .content(requestBody)
+            .with(csrf()))
         .andExpect(status().isNotFound());
   }
 
@@ -237,7 +246,8 @@ class ChannelApiIntegrationTest {
     UUID channelId = createdChannel.id();
 
     // When & Then
-    mockMvc.perform(delete("/api/channels/{channelId}", channelId))
+    mockMvc.perform(delete("/api/channels/{channelId}", channelId)
+            .with(csrf()))
         .andExpect(status().isNoContent());
 
     // 삭제 확인 - 사용자로 채널 조회 시 삭제된 채널은 조회되지 않아야 함
@@ -263,7 +273,8 @@ class ChannelApiIntegrationTest {
     UUID nonExistentChannelId = UUID.randomUUID();
 
     // When & Then
-    mockMvc.perform(delete("/api/channels/{channelId}", nonExistentChannelId))
+    mockMvc.perform(delete("/api/channels/{channelId}", nonExistentChannelId)
+            .with(csrf()))
         .andExpect(status().isNotFound());
   }
 } 

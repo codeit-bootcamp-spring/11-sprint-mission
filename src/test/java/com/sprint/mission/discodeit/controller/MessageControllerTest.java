@@ -36,8 +36,11 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 
+@WithMockUser
 @WebMvcTest(MessageController.class)
 class MessageControllerTest {
 
@@ -84,7 +87,8 @@ class MessageControllerTest {
         "testuser",
         "test@example.com",
         null,
-        true
+        true,
+        null
     );
     
     BinaryContentDto attachmentDto = new BinaryContentDto(
@@ -111,7 +115,8 @@ class MessageControllerTest {
     mockMvc.perform(multipart("/api/messages")
             .file(messageCreateRequestPart)
             .file(attachment)
-            .contentType(MediaType.MULTIPART_FORM_DATA_VALUE))
+            .contentType(MediaType.MULTIPART_FORM_DATA_VALUE)
+            .with(csrf()))
         .andExpect(status().isCreated())
         .andExpect(jsonPath("$.id").value(messageId.toString()))
         .andExpect(jsonPath("$.content").value("안녕하세요, 테스트 메시지입니다."))
@@ -140,7 +145,8 @@ class MessageControllerTest {
     // When & Then
     mockMvc.perform(multipart("/api/messages")
             .file(messageCreateRequestPart)
-            .contentType(MediaType.MULTIPART_FORM_DATA_VALUE))
+            .contentType(MediaType.MULTIPART_FORM_DATA_VALUE)
+            .with(csrf()))
         .andExpect(status().isBadRequest());
   }
 
@@ -163,7 +169,8 @@ class MessageControllerTest {
         "testuser",
         "test@example.com",
         null,
-        true
+        true,
+        null
     );
 
     MessageDto updatedMessage = new MessageDto(
@@ -182,7 +189,8 @@ class MessageControllerTest {
     // When & Then
     mockMvc.perform(patch("/api/messages/{messageId}", messageId)
             .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(updateRequest)))
+            .content(objectMapper.writeValueAsString(updateRequest))
+            .with(csrf()))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.id").value(messageId.toString()))
         .andExpect(jsonPath("$.content").value("수정된 메시지 내용입니다."))
@@ -206,7 +214,8 @@ class MessageControllerTest {
     // When & Then
     mockMvc.perform(patch("/api/messages/{messageId}", nonExistentMessageId)
             .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(updateRequest)))
+            .content(objectMapper.writeValueAsString(updateRequest))
+            .with(csrf()))
         .andExpect(status().isNotFound());
   }
 
@@ -219,7 +228,8 @@ class MessageControllerTest {
 
     // When & Then
     mockMvc.perform(delete("/api/messages/{messageId}", messageId)
-            .contentType(MediaType.APPLICATION_JSON))
+            .contentType(MediaType.APPLICATION_JSON)
+            .with(csrf()))
         .andExpect(status().isNoContent());
   }
 
@@ -233,7 +243,8 @@ class MessageControllerTest {
 
     // When & Then
     mockMvc.perform(delete("/api/messages/{messageId}", nonExistentMessageId)
-            .contentType(MediaType.APPLICATION_JSON))
+            .contentType(MediaType.APPLICATION_JSON)
+            .with(csrf()))
         .andExpect(status().isNotFound());
   }
 
@@ -251,7 +262,8 @@ class MessageControllerTest {
         "testuser",
         "test@example.com",
         null,
-        true
+        true,
+        null
     );
     
     List<MessageDto> messages = List.of(

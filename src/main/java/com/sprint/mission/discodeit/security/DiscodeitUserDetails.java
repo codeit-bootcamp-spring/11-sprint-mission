@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+import java.util.Objects;
 
 @Getter
 @RequiredArgsConstructor
@@ -42,4 +43,19 @@ public class DiscodeitUserDetails implements UserDetails {
 
   @Override
   public boolean isEnabled() { return true; }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof DiscodeitUserDetails)) return false;
+    DiscodeitUserDetails that = (DiscodeitUserDetails) o;
+    return Objects.equals(userDto.username(), that.userDto.username());
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(userDto.username());
+  }
+
+
 }

@@ -21,6 +21,8 @@ import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
 import org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler;
 import org.springframework.security.access.expression.method.MethodSecurityExpressionHandler;
+import org.springframework.security.core.session.SessionRegistry;
+import org.springframework.security.core.userdetails.UserDetailsService;
 
 @RequiredArgsConstructor
 @Configuration
@@ -32,9 +34,10 @@ public class SecurityConfig {
   private final LoginFailureHandler loginFailureHandler;
   private final CustomAccessDeniedHandler accessDeniedHandler;
   private final CustomAuthenticationEntryPoint authenticationEntryPoint;
+  private final UserDetailsService userDetailsService;
 
   @Bean
-  public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+  public SecurityFilterChain filterChain(HttpSecurity http, SessionRegistry sessionRegistry) throws Exception {
     http
         .csrf(csrf -> csrf
             .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
@@ -62,8 +65,20 @@ public class SecurityConfig {
             .logoutUrl("/api/auth/logout")
             .logoutSuccessHandler(
                 new HttpStatusReturningLogoutSuccessHandler(HttpStatus.NO_CONTENT))
+        )
+        .sessionManagement(management -> management
+            .sessionConcurrency(concurrency -> concurrency
+                .maximumSessions(1)
+                .maxSessionsPreventsLogin(true)
+                .sessionRegistry(sessionRegistry)
+            )
+        )
+        .rememberMe(rememberMe -> rememberMe
+            .userDetailsService(userDetailsService)
+            .rememberMeParameter("remember-me")
+            .tokenValiditySeconds(60 * 60 * 24 * 14)
+            .key("discodeit-remember-me-key")
         );
-
     SecurityFilterChain chain = http.build();
     chain.getFilters().forEach(filter -> System.out.println(filter.getClass().getName()));
     return chain;
@@ -87,4 +102,5 @@ public class SecurityConfig {
     handler.setRoleHierarchy(roleHierarchy);
     return handler;
   }
+
 }
