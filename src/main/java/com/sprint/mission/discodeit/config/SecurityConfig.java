@@ -1,10 +1,15 @@
 package com.sprint.mission.discodeit.config;
 
 import com.sprint.mission.discodeit.security.LoginFailureHandler;
-import com.sprint.mission.discodeit.security.LoginSuccessHandler;
 import com.sprint.mission.discodeit.security.CustomAccessDeniedHandler;
 import com.sprint.mission.discodeit.security.CustomAuthenticationEntryPoint;
 import com.sprint.mission.discodeit.security.DiscodeitUserDetailsService;
+import com.sprint.mission.discodeit.security.filter.JwtAuthenticationFilter;
+import com.sprint.mission.discodeit.security.handler.JwtLoginSuccessHandler;
+import com.sprint.mission.discodeit.security.handler.JwtLogoutHandler;
+import com.sprint.mission.discodeit.security.jwt.InMemoryJwtRegistry;
+import com.sprint.mission.discodeit.security.jwt.JwtRegistry;
+import com.sprint.mission.discodeit.security.jwt.JwtTokenProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
@@ -15,14 +20,13 @@ import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.core.session.SessionRegistry;
-import org.springframework.security.core.session.SessionRegistryImpl;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.logout.HttpStatusReturningLogoutSuccessHandler;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
-import org.springframework.security.web.session.HttpSessionEventPublisher;
 
 @Configuration
 @EnableMethodSecurity
@@ -31,9 +35,9 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(
             HttpSecurity http,
-            SessionRegistry sessionRegistry,
-            DiscodeitUserDetailsService userDetailsService,
-            LoginSuccessHandler loginSuccessHandler,
+            JwtAuthenticationFilter jwtAuthenticationFilter,
+            JwtLoginSuccessHandler jwtLoginSuccessHandler,
+            JwtLogoutHandler jwtLogoutHandler,
             LoginFailureHandler loginFailureHandler,
             CustomAuthenticationEntryPoint authenticationEntryPoint,
             CustomAccessDeniedHandler accessDeniedHandler)
@@ -46,15 +50,19 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/",
-                                "/index.html/",
+                                "/index.html",
                                 "/assets/**",
                                 "/favicon.ico",
-                                "default-avatar.png",
+                                "/default-avatar.png",
                                 "/error"
                         ).permitAll()
                         .requestMatchers("/api/auth/csrf-token").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
-                        .requestMatchers("/api/auth/login", "/api/auth/logout").permitAll()
+                        .requestMatchers(
+                                "/api/auth/login",
+                                "/api/auth/logout",
+                                "/api/auth/refresh"
+                        ).permitAll()
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(exception -> exception
@@ -63,23 +71,20 @@ public class SecurityConfig {
                 )
                 .formLogin(login -> login
                         .loginProcessingUrl("/api/auth/login")
-                        .successHandler(loginSuccessHandler)
+                        .successHandler(jwtLoginSuccessHandler)
                         .failureHandler(loginFailureHandler)
-                )
-                .rememberMe(remember -> remember
-                        .rememberMeParameter("remember-me")
-                        .userDetailsService(userDetailsService)
-                        .tokenValiditySeconds(60 * 60 * 24 * 14)
                 )
                 .logout(logout -> logout
                         .logoutUrl("/api/auth/logout")
+                        .addLogoutHandler(jwtLogoutHandler)
                         .logoutSuccessHandler(new HttpStatusReturningLogoutSuccessHandler(HttpStatus.NO_CONTENT))
                 )
                 .sessionManagement(session -> session
-                        .sessionConcurrency(concurrency -> concurrency
-                                .maximumSessions(1)
-                                .sessionRegistry(sessionRegistry)
-                        )
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+                .addFilterBefore(
+                        jwtAuthenticationFilter,
+                        UsernamePasswordAuthenticationFilter.class
                 )
                 .build();
     }
@@ -108,12 +113,20 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SessionRegistry sessionRegistry() {
-        return new SessionRegistryImpl();
+    public JwtRegistry jwtRegistry() {
+        return new InMemoryJwtRegistry(1);
     }
 
     @Bean
-    public HttpSessionEventPublisher httpSessionEventPublisher() {
-        return new HttpSessionEventPublisher();
+    public JwtAuthenticationFilter jwtAuthenticationFilter(
+            JwtTokenProvider jwtTokenProvider,
+            JwtRegistry jwtRegistry,
+            DiscodeitUserDetailsService userDetailsService
+    ) {
+        return new JwtAuthenticationFilter(
+                jwtTokenProvider,
+                jwtRegistry,
+                userDetailsService
+        );
     }
 }

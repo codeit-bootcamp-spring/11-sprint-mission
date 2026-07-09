@@ -11,6 +11,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.Set;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -24,6 +25,13 @@ public class DiscodeitUserDetailsService implements UserDetailsService {
         throws UsernameNotFoundException {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException(username));
+
+        return new DiscodeitUserDetails(userMapper.toDto(user, Set.of()), user.getPassword());
+    }
+
+    public DiscodeitUserDetails loadUserById(UUID userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UsernameNotFoundException(userId.toString()));
 
         return new DiscodeitUserDetails(userMapper.toDto(user, Set.of()), user.getPassword());
     }
