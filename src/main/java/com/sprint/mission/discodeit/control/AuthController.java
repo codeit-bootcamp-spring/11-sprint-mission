@@ -3,21 +3,16 @@ package com.sprint.mission.discodeit.control;
 import com.sprint.mission.discodeit.dto.auth.JwtDto;
 import com.sprint.mission.discodeit.dto.user.RoleUpdateRequest;
 import com.sprint.mission.discodeit.dto.user.UserDto;
-import com.sprint.mission.discodeit.exception.auth.RefreshTokenInvalidException;
-import com.sprint.mission.discodeit.security.DiscodeitUserDetails;
-import com.sprint.mission.discodeit.security.jwt.JwtRegistry;
 import com.sprint.mission.discodeit.security.jwt.JwtTokenProvider;
-import com.sprint.mission.discodeit.security.jwt.dto.JwtInformation;
+import com.sprint.mission.discodeit.security.jwt.dto.JwtSessionResult;
 import com.sprint.mission.discodeit.service.UserService;
+import com.sprint.mission.discodeit.service.jwt.JwtService;
 import jakarta.servlet.http.HttpServletResponse;
-import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.web.csrf.CsrfToken;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -33,43 +28,26 @@ public class AuthController {
 
   private final UserService userService;
   private final JwtTokenProvider jwtTokenProvider;
-  private final JwtRegistry jwtRegistry;
+  private final JwtService jwtService;
 
   public AuthController(UserService userService, JwtTokenProvider jwtTokenProvider,
-      JwtRegistry jwtRegistry) {
+      JwtService jwtService) {
     this.userService = userService;
     this.jwtTokenProvider = jwtTokenProvider;
-    this.jwtRegistry = jwtRegistry;
+    this.jwtService = jwtService;
   }
 
   @PostMapping("/refresh")
   public ResponseEntity<JwtDto> refresh(
       @CookieValue(name = JwtTokenProvider.REFRESH_TOKEN_COOKIE_NAME, required = false) String refreshToken,
       HttpServletResponse response) {
-    if (!StringUtils.hasText(refreshToken)
-        || !jwtTokenProvider.validateToken(refreshToken)
-        || !jwtTokenProvider.isRefreshToken(refreshToken)
-        || !jwtRegistry.hasActiveJwtInformationByRefreshToken(refreshToken)) {
-      throw new RefreshTokenInvalidException();
-    }
+    JwtSessionResult result = jwtService.refreshJwtSession(refreshToken);
 
-    JwtTokenProvider.TokenPair tokenPair = jwtTokenProvider.reissueTokens(refreshToken);
-    UUID userId = jwtTokenProvider.getUserId(tokenPair.refreshToken());
+    ResponseCookie responseTokenCookie = jwtTokenProvider.createRefreshTokenCookie(
+        result.refreshToken());
+    response.addHeader(HttpHeaders.SET_COOKIE, responseTokenCookie.toString());
 
-    JwtInformation newJwtInformation = new JwtInformation(
-        userId,
-        tokenPair.accessToken(),
-        tokenPair.refreshToken(),
-        jwtTokenProvider.getExpiration(tokenPair.refreshToken())
-    );
-    jwtRegistry.rotateJwtInformation(refreshToken, newJwtInformation);
-
-    ResponseCookie refreshTokenCookie = jwtTokenProvider.createRefreshTokenCookie(
-        tokenPair.refreshToken());
-    response.addHeader(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString());
-
-    UserDto userDto = userService.readUser(userId);
-    JwtDto jwtDto = new JwtDto(userDto, tokenPair.accessToken());
+    JwtDto jwtDto = new JwtDto(result.userDto(), result.accessToken());
 
     return ResponseEntity.ok(jwtDto);
   }
@@ -83,6 +61,8 @@ public class AuthController {
 
   @PutMapping("/role")
   public ResponseEntity<UserDto> updateRole(@RequestBody RoleUpdateRequest request) {
-    return ResponseEntity.ok(userService.updateRole(request));
+    UserDto userDto = userService.updateRole(request);
+    log.info("권한 변경 성공 - userId: {}, newRole: {}", request.userId(), request.newRole());
+    return ResponseEntity.ok(userDto);
   }
 }

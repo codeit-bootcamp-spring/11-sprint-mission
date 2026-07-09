@@ -39,6 +39,9 @@ public class JwtTokenProvider {
   @Value("${discodeit.security.jwt.refresh-token-validity}")
   private long refreshTokenValidity;
 
+  @Value("${discodeit.security.jwt.cookie-secure:true}")
+  private boolean cookieSecure;
+
   private JWSSigner signer;
   private JWSVerifier verifier;
 
@@ -109,15 +112,6 @@ public class JwtTokenProvider {
     }
   }
 
-  public String getSubject(String token) {
-    try {
-      SignedJWT signedJWT = SignedJWT.parse(token);
-      return signedJWT.getJWTClaimsSet().getSubject();
-    } catch (ParseException e) {
-      throw new IllegalArgumentException("유효하지 않은 토큰입니다.", e);
-    }
-  }
-
   public String getUsername(String token) {
     try {
       SignedJWT signedJWT = SignedJWT.parse(token);
@@ -171,20 +165,11 @@ public class JwtTokenProvider {
     }
   }
 
-  // 토큰 갱신
-  public TokenPair reissueTokens(String refreshToken) {
-    UUID userId = getUserId(refreshToken);
-    String username = getUsername(refreshToken);
-
-    String newAccessToken = createAccessToken(userId, username);
-    String newRefreshToken = createRefreshToken(userId, username);
-
-    return new TokenPair(newAccessToken, newRefreshToken);
-  }
-
   public ResponseCookie createRefreshTokenCookie(String refreshToken) {
     return ResponseCookie.from(REFRESH_TOKEN_COOKIE_NAME, refreshToken)
         .httpOnly(true)
+        .secure(cookieSecure)
+        .sameSite("Lax")
         .path("/")
         .maxAge(refreshTokenValidity)
         .build();
@@ -193,6 +178,8 @@ public class JwtTokenProvider {
   public ResponseCookie expireRefreshTokenCookie() {
     return ResponseCookie.from(REFRESH_TOKEN_COOKIE_NAME, "")
         .httpOnly(true)
+        .secure(cookieSecure)
+        .sameSite("Lax")
         .path("/")
         .maxAge(0)
         .build();

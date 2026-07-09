@@ -48,6 +48,7 @@ discodeit:
       access-token-validity: ${JWT_ACCESS_TOKEN_VALIDITY:1800}
       refresh-token-validity: ${JWT_REFRESH_TOKEN_VALIDITY:1209600}
       max-active-count: ${JWT_MAX_ACTIVE_COUNT:1}
+      cookie-secure: ${JWT_COOKIE_SECURE:true}
 
 info:
   app:

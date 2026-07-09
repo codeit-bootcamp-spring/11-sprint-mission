@@ -207,19 +207,18 @@ public class BasicUserService implements UserService {
   @PreAuthorize("hasRole('ADMIN')")
   public UserDto updateRole(RoleUpdateRequest request) {
     User user = userRepository.findById(request.userId())
-        .orElseThrow(() -> new UserNotFoundException(request.userId()));
+        .orElseThrow(() -> {
+          log.warn("권한 변경 실패 - 사용자를 찾을 수 없음 - userId: {}", request.userId());
+          return new UserNotFoundException(request.userId());
+        });
     user.updateRole(request.newRole());
 
     jwtRegistry.invalidateJwtInformationByUserId(request.userId());
 
-    boolean isOnline = jwtRegistry.hasActiveJwtInformationByUserId(user.getId());
-    return userMapper.toDto(user, isOnline);
+    return userMapper.toDto(user, false);
   }
 
   private Set<UUID> getOnlineUserIds() {
-    return userRepository.findAll().stream()
-        .map(User::getId)
-        .filter(jwtRegistry::hasActiveJwtInformationByUserId)
-        .collect(Collectors.toSet());
+    return jwtRegistry.getActiveUserIds();
   }
 }

@@ -1,5 +1,6 @@
 package com.sprint.mission.discodeit.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.mission.discodeit.security.handler.CustomAccessDeniedHandler;
 import com.sprint.mission.discodeit.security.handler.CustomAuthenticationEntryPoint;
 import com.sprint.mission.discodeit.security.handler.JwtLoginSuccessHandler;
@@ -45,10 +46,12 @@ public class SecurityConfig {
   private final DiscodeitUserDetailsService userDetailsService;
   private final JwtLogoutHandler jwtLogoutHandler;
   private final JwtRegistry jwtRegistry;
+  private final ObjectMapper objectMapper;
 
   @Bean
   public JwtAuthenticationFilter jwtAuthenticationFilter() {
-    return new JwtAuthenticationFilter(jwtTokenProvider, jwtRegistry, userDetailsService);
+    return new JwtAuthenticationFilter(jwtTokenProvider, jwtRegistry, userDetailsService,
+        objectMapper);
   }
 
   @Bean

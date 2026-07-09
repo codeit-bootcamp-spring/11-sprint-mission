@@ -25,6 +25,11 @@ spring:
       mode: always
       platform: postgres
 
+discodeit:
+  security:
+    jwt:
+      cookie-secure: false
+
 management:
   endpoints:
     web:

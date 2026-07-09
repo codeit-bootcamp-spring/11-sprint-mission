@@ -23,6 +23,11 @@ spring:
       mode: always
       platform: postgres
 
+discodeit:
+  security:
+    jwt:
+      cookie-secure: true
+
 logging:
   level:
     root: info

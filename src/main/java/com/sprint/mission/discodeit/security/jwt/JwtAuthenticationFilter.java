@@ -1,5 +1,6 @@
 package com.sprint.mission.discodeit.security.jwt;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.mission.discodeit.security.service.DiscodeitUserDetailsService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -8,6 +9,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -24,6 +26,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
   private final JwtTokenProvider jwtTokenProvider;
   private final JwtRegistry jwtRegistry;
   private final DiscodeitUserDetailsService userDetailsService;
+  private final ObjectMapper objectMapper;
 
   @Override
   protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
@@ -31,26 +34,44 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     String token = resolveToken(request);
 
-    if (StringUtils.hasText(token) && jwtTokenProvider.validateToken(token)
-        && jwtTokenProvider.isAccessToken(token)
-        && jwtRegistry.hasActiveJwtInformationByAccessToken(token)) {
-      UUID userId = jwtTokenProvider.getUserId(token);
-      String username = jwtTokenProvider.getUsername(token);
-
-      UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-
-      UsernamePasswordAuthenticationToken authentication =
-          new UsernamePasswordAuthenticationToken(
-              userDetails,
-              null,
-              userDetails.getAuthorities()
-          );
-      authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-
-      SecurityContextHolder.getContext().setAuthentication(authentication);
+    if (!StringUtils.hasText(token)) {
+      filterChain.doFilter(request, response);
+      return;
     }
 
+    if (!isValidAccessToken(token)) {
+      sendUnauthorized(response);
+      return;
+    }
+
+    UUID userId = jwtTokenProvider.getUserId(token);
+    String username = jwtTokenProvider.getUsername(token);
+
+    UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+
+    UsernamePasswordAuthenticationToken authentication =
+        new UsernamePasswordAuthenticationToken(
+            userDetails,
+            null,
+            userDetails.getAuthorities()
+        );
+    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+
+    SecurityContextHolder.getContext().setAuthentication(authentication);
+
     filterChain.doFilter(request, response);
+  }
+
+  private boolean isValidAccessToken(String token) {
+    return jwtTokenProvider.validateToken(token)
+        && jwtTokenProvider.isAccessToken(token)
+        && jwtRegistry.hasActiveJwtInformationByAccessToken(token);
+  }
+
+  private void sendUnauthorized(HttpServletResponse response) throws IOException {
+    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+    response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+    response.setCharacterEncoding("UTF-8");
   }
 
   private String resolveToken(HttpServletRequest request) {
