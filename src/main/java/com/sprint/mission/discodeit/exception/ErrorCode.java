@@ -37,6 +37,9 @@ public enum ErrorCode {
 
   FORBIDDEN(HttpStatus.FORBIDDEN, "Access Denied"),
 
+  // --- Notification (알림) ---
+  NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "Notification Not Found"),
+
   // --- Token (토큰) ---
   REFRESH_TOKEN_INVALID(HttpStatus.UNAUTHORIZED, "Invalid or expired refresh token");
 
