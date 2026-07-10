@@ -9,21 +9,22 @@ import org.springframework.security.web.csrf.CsrfTokenRequestHandler;
 import org.springframework.security.web.csrf.XorCsrfTokenRequestAttributeHandler;
 import org.springframework.util.StringUtils;
 
-public class SpaCsrfTokenRequestHandler extends CsrfTokenRequestAttributeHandler {
+public class SpaCsrfTokenRequestHandler implements CsrfTokenRequestHandler {
 
-  private final CsrfTokenRequestHandler delegate = new XorCsrfTokenRequestAttributeHandler();
+  private final CsrfTokenRequestHandler plain = new CsrfTokenRequestAttributeHandler();
+  private final CsrfTokenRequestHandler xor = new XorCsrfTokenRequestAttributeHandler();
 
   @Override
   public void handle(HttpServletRequest request, HttpServletResponse response,
       Supplier<CsrfToken> csrfToken) {
-    this.delegate.handle(request, response, csrfToken);
+    this.xor.handle(request, response, csrfToken);
+    csrfToken.get();
   }
 
   @Override
   public String resolveCsrfTokenValue(HttpServletRequest request, CsrfToken csrfToken) {
-    if (StringUtils.hasText(request.getHeader(csrfToken.getHeaderName()))) {
-      return super.resolveCsrfTokenValue(request, csrfToken);
-    }
-    return this.delegate.resolveCsrfTokenValue(request, csrfToken);
+    String headerValue = request.getHeader(csrfToken.getHeaderName());
+    return (StringUtils.hasText(headerValue) ? this.plain : this.xor)
+        .resolveCsrfTokenValue(request, csrfToken);
   }
 }
