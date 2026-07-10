@@ -13,8 +13,8 @@ import com.sprint.mission.discodeit.dto.user.UserDto;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.ChannelType;
 import com.sprint.mission.discodeit.entity.ReadStatus;
+import com.sprint.mission.discodeit.entity.Role;
 import com.sprint.mission.discodeit.entity.User;
-import com.sprint.mission.discodeit.entity.UserStatus;
 import com.sprint.mission.discodeit.exception.channel.ChannelNotFoundException;
 import com.sprint.mission.discodeit.exception.channel.PrivateChannelUpdateException;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
@@ -68,7 +68,6 @@ class BasicChannelServiceTest {
   private Channel mockPublicChannel;
   private Channel mockPrivateChannel;
   private User mockUser;
-  private UserStatus mockUserStatus;
   private UserDto mockUserDto;
   private ChannelDto mockChannelDto;
 
@@ -84,10 +83,8 @@ class BasicChannelServiceTest {
     ReflectionTestUtils.setField(mockPrivateChannel, "id", channelId);
 
     mockUser = new User("tester", "test@test.com", "password123", null);
-    mockUserStatus = new UserStatus(mockUser);
-    mockUser.initStatus(mockUserStatus);
 
-    mockUserDto = new UserDto(userId, "tester", "test@test.com", null, true);
+    mockUserDto = new UserDto(userId, "tester", "test@test.com", null, true, Role.USER);
     mockChannelDto = new ChannelDto(channelId, "테스트", ChannelType.PUBLIC, "테스트 채널입니다.",
         Instant.now(),
         Collections.emptyList());
@@ -151,7 +148,7 @@ class BasicChannelServiceTest {
       given(channelRepository.save(any(Channel.class))).willReturn(mockPrivateChannel);
       given(userRepository.findById(participantId)).willReturn(Optional.of(mockUser));
       given(readStatusRepository.save(any(ReadStatus.class))).willReturn(mock(ReadStatus.class));
-      given(userMapper.toDto(any(User.class), any(UserStatus.class))).willReturn(mockUserDto);
+      given(userMapper.toDto(any(User.class), anyBoolean())).willReturn(mockUserDto);
       given(channelMapper.toDto(any(Channel.class), nullable(Instant.class), any())).willReturn(
           privateChannelDto);
 
