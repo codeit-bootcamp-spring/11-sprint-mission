@@ -10,6 +10,7 @@ import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.entity.MessageAttachment;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.event.BinaryContentCreatedEvent;
+import com.sprint.mission.discodeit.event.MessageCreatedEvent;
 import com.sprint.mission.discodeit.exception.DiscodeitException;
 import com.sprint.mission.discodeit.exception.ErrorCode;
 import com.sprint.mission.discodeit.exception.channel.ChannelNotFoundException;
@@ -19,6 +20,7 @@ import com.sprint.mission.discodeit.mapper.MessageMapper;
 import com.sprint.mission.discodeit.mapper.PageResponseMapper;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
+import com.sprint.mission.discodeit.repository.MessageAttachmentRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.MessageService;
@@ -48,7 +50,7 @@ public class BasicMessageService implements MessageService {
   private final UserRepository userRepository;
   private final ChannelRepository channelRepository;
   private final BinaryContentRepository binaryContentRepository;
-  private final BinaryContentStorage binaryContentStorage;
+  private final MessageAttachmentRepository messageAttachmentRepository;
   private final ApplicationEventPublisher eventPublisher;
 
   private final MessageMapper messageMapper;
@@ -102,6 +104,15 @@ public class BasicMessageService implements MessageService {
     }
 
     Message savedMessage = messageRepository.save(message);
+
+    eventPublisher.publishEvent(new MessageCreatedEvent(
+        channel.getId(),
+        channel.getName(),
+        author.getId(),
+        author.getUsername(),
+        savedMessage.getContent()
+    ));
+
     channel.updateLastMessageAt(savedMessage.getCreatedAt());
 
     log.info("매시지 생성 완료 - messageId: {}, channelId: {}, authorId: {}", savedMessage.getId(),
@@ -152,6 +163,7 @@ public class BasicMessageService implements MessageService {
           .map(MessageAttachment::getBinaryContent)
           .toList();
 
+      messageAttachmentRepository.deleteAll(mes.getMessageAttachments());
       binaryContentRepository.deleteAll(contentsToDelete);
     }
 
