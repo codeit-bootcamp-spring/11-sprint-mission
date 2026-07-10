@@ -6,6 +6,7 @@ import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -81,11 +82,30 @@ public class GlobalExceptionHandler {
         .body(response);
   }
 
+  @ExceptionHandler(AccessDeniedException.class)
+  public ResponseEntity<ErrorResponse> handleAccessDeniedException(
+      AccessDeniedException ex) {
+    log.error("권한 거부 오류 발생: {}", ex.getMessage());
+
+    ErrorResponse response = new ErrorResponse(
+        Instant.now(),
+        "ACCESS_DENIED",
+        ex.getMessage(),
+        null,
+        ex.getClass().getSimpleName(),
+        HttpStatus.FORBIDDEN.value()
+    );
+
+    return ResponseEntity
+        .status(HttpStatus.FORBIDDEN)
+        .body(response);
+  }
+
   private HttpStatus determineHttpStatus(DiscodeitException exception) {
     ErrorCode errorCode = exception.getErrorCode();
     return switch (errorCode) {
       case USER_NOT_FOUND, CHANNEL_NOT_FOUND, MESSAGE_NOT_FOUND, BINARY_CONTENT_NOT_FOUND,
-           READ_STATUS_NOT_FOUND -> HttpStatus.NOT_FOUND;
+           READ_STATUS_NOT_FOUND, NOTIFICATION_NOT_FOUND -> HttpStatus.NOT_FOUND;
       case DUPLICATE_USER, DUPLICATE_READ_STATUS -> HttpStatus.CONFLICT;
       case INVALID_USER_CREDENTIALS, INVALID_TOKEN, INVALID_USER_DETAILS -> HttpStatus.UNAUTHORIZED;
       case PRIVATE_CHANNEL_UPDATE, INVALID_REQUEST -> HttpStatus.BAD_REQUEST;
