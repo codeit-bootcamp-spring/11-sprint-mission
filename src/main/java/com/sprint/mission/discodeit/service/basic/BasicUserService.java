@@ -103,10 +103,7 @@ public class BasicUserService implements UserService {
     log.debug("사용자 수정 시작: id={}, request={}", userId, userUpdateRequest);
 
     User user = userRepository.findById(userId)
-        .orElseThrow(() -> {
-          UserNotFoundException exception = UserNotFoundException.withId(userId);
-          return exception;
-        });
+        .orElseThrow(() -> UserNotFoundException.withId(userId));
 
     String newUsername = userUpdateRequest.newUsername();
     String newEmail = userUpdateRequest.newEmail();
@@ -133,9 +130,9 @@ public class BasicUserService implements UserService {
         })
         .orElse(null);
 
-    String newPassword = userUpdateRequest.newPassword() != null
-        ? passwordEncoder.encode(userUpdateRequest.newPassword())
-        : null;
+    String newPassword = Optional.ofNullable(userUpdateRequest.newPassword())
+        .map(passwordEncoder::encode)
+        .orElse(user.getPassword());
 
     user.update(newUsername, newEmail, newPassword, nullableProfile);
 
