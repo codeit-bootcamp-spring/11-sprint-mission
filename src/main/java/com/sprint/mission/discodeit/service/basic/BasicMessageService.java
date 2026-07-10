@@ -152,9 +152,15 @@ public class BasicMessageService implements MessageService {
     return pageResponseMapper.fromSlice(dtoSlice, nextCursor);
   }
 
+  public boolean isAuthor(UUID messageId, UUID userId) {
+    return messageRepository.findById(messageId)
+        .map(message -> message.getAuthor().getId().equals(userId))
+        .orElse(false);
+  }
+
   @Override
   @Transactional
-  @PreAuthorize("@basicMessageService.findById(#id).author.id == principal.userDto.id or hasRole('ADMIN')")
+  @PreAuthorize("@basicMessageService.isAuthor(#id, principal.userDto.id) or hasRole('ADMIN')")
   public MessageDto update(UUID id, MessageUpdateRequest request) {
     log.debug("메시지 수정 시작 - messageId: {}", id);
     Message message = messageRepository.findById(id)
@@ -169,7 +175,7 @@ public class BasicMessageService implements MessageService {
 
   @Override
   @Transactional
-  @PreAuthorize("@messageRepository.findById(#id).orElse(null)?.author?.id == principal.userDto.id or hasRole('ADMIN')")
+  @PreAuthorize("@basicMessageService.isAuthor(#id, principal.userDto.id) or hasRole('ADMIN')")
   public void delete(UUID id) {
     log.debug("메시지 삭제 시작 - messageId: {}", id);
 
