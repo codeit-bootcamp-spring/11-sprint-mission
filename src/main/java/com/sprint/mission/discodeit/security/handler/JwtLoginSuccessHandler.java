@@ -41,22 +41,23 @@ public class JwtLoginSuccessHandler implements AuthenticationSuccessHandler {
     Instant expiration = jwtTokenProvider.getExpiration(refreshToken);
     JwtInformation jwtInformation = new JwtInformation(userDetails.getUserDto().id(), accessToken,
         refreshToken, expiration);
+
+    jwtRegistry.invalidateJwtInformationByUserId(userDetails.getUserDto().id());
     jwtRegistry.registerJwtInformation(jwtInformation);
 
     Cookie refreshTokenCookie = new Cookie(JwtTokenProvider.REFRESH_TOKEN_COOKIE_NAME,
         refreshToken);
     refreshTokenCookie.setHttpOnly(true);
     refreshTokenCookie.setPath("/");
+
+    refreshTokenCookie.setSecure(request.isSecure());
     response.addCookie(refreshTokenCookie);
 
     response.setStatus(HttpStatus.OK.value());
     response.setContentType(MediaType.APPLICATION_JSON_VALUE);
     response.setCharacterEncoding("UTF-8");
 
-    Map<String, Object> responseData = new HashMap<>();
-    responseData.put("accessToken", accessToken);
-    responseData.put("userDto", userDetails.getUserDto());
-
-    objectMapper.writeValue(response.getWriter(), responseData);
+    JwtDto jwtDto = new JwtDto(accessToken, userDetails.getUserDto());
+    objectMapper.writeValue(response.getWriter(), jwtDto);
   }
 }
