@@ -136,6 +136,8 @@ public class BasicUserService implements UserService {
         BinaryContent newProfile = new BinaryContent(
             profile.getOriginalFilename(), profile.getSize(), profile.getContentType());
 
+        binaryContentRepository.save(newProfile);
+
         eventPublisher.publishEvent(
             new BinaryContentCreatedEvent(newProfile.getId(), profile.getBytes()));
 
