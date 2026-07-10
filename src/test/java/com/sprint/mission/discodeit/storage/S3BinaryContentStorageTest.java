@@ -3,6 +3,7 @@ package com.sprint.mission.discodeit.storage;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.sprint.mission.discodeit.dto.BinaryContentDto;
+import com.sprint.mission.discodeit.service.NotificationService;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -11,6 +12,7 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,12 +29,15 @@ public class S3BinaryContentStorageTest {
       props.load(fis);
     }
 
+    NotificationService mockNotificationService = Mockito.mock(NotificationService.class);
+
     storage = new S3BinaryContentStorage(
         props.getProperty("AWS_S3_ACCESS_KEY"),
         props.getProperty("AWS_S3_SECRET_KEY"),
         props.getProperty("AWS_S3_REGION"),
         props.getProperty("AWS_S3_BUCKET"),
-        600L
+        600L,
+        mockNotificationService
     );
   }
 

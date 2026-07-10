@@ -9,4 +9,6 @@ public interface NotificationService {
   List<NotificationDto> findAllByReceiverId(UUID receiverId);
 
   void delete(UUID id);
+
+  void notifyAdmins(String title, String content);
 }
