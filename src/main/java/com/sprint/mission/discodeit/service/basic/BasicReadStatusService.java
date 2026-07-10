@@ -78,9 +78,15 @@ public class BasicReadStatusService implements ReadStatusService {
         map(readStatusMapper::toDto).collect(Collectors.toList());
   }
 
+  public boolean isOwner(UUID id, UUID userId) {
+    return readStatusRepository.findById(id)
+        .map(readStatus -> readStatus.getUser().getId().equals(userId))
+        .orElse(false);
+  }
+
   @Override
   @Transactional
-  @PostAuthorize("principal.userDto.id == returnObject.userId()")
+  @PreAuthorize("@basicReadStatusService.isOwner(#id, principal.userDto.id)")
   public ReadStatusDto update(UUID id, ReadStatusUpdateRequest request) {
     ReadStatus readStatus = readStatusRepository.findById(id)
         .orElseThrow(() -> {
