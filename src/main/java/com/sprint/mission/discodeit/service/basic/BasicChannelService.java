@@ -82,7 +82,8 @@ public class BasicChannelService implements ChannelService {
             log.warn("Private 채널 생성 실패 - 유저를 찾을 수 없음 - userId: {}", userId);
             return new UserNotFoundException(userId);
           });
-      ReadStatus readStatus = new ReadStatus(user, createdChannel, createdChannel.getCreatedAt());
+      ReadStatus readStatus = new ReadStatus(user, createdChannel, createdChannel.getCreatedAt(),
+          true);
       readStatusRepository.save(readStatus);
 
       participants.add(userMapper.toDto(user, false));
