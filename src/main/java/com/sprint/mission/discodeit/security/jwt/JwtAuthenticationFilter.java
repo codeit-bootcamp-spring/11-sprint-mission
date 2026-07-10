@@ -13,6 +13,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -47,7 +48,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     UUID userId = jwtTokenProvider.getUserId(token);
     String username = jwtTokenProvider.getUsername(token);
 
-    UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+    UserDetails userDetails;
+    try {
+      userDetails = userDetailsService.loadUserByUsername(username);
+    } catch (UsernameNotFoundException e) {
+      sendUnauthorized(response);
+      return;
+    }
 
     UsernamePasswordAuthenticationToken authentication =
         new UsernamePasswordAuthenticationToken(

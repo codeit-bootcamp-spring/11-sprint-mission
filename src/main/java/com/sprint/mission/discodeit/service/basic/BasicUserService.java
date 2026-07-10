@@ -74,7 +74,8 @@ public class BasicUserService implements UserService {
         profileEntity = new BinaryContent(profile.getOriginalFilename(), profile.getContentType(),
             profile.getSize());
         BinaryContent savedProfile = binaryContentRepository.save(profileEntity);
-        binaryContentStorage.put(savedProfile.getId(), profile.getBytes());
+        eventPublisher.publishEvent(
+            new BinaryContentCreatedEvent(savedProfile.getId(), profile.getBytes()));
 
         log.debug("프로필 이미지 저장 완료 - binaryContentId: {}", savedProfile.getId());
       } catch (IOException e) {
