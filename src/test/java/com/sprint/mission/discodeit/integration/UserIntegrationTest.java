@@ -3,29 +3,34 @@ package com.sprint.mission.discodeit.integration;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.mission.discodeit.dto.user.UserCreateRequest;
 import com.sprint.mission.discodeit.dto.user.UserUpdateRequest;
 import com.sprint.mission.discodeit.entity.User;
-import com.sprint.mission.discodeit.entity.UserStatus;
 import com.sprint.mission.discodeit.repository.UserRepository;
+import jakarta.servlet.http.Cookie;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
@@ -33,6 +38,9 @@ import org.springframework.transaction.annotation.Transactional;
 @ActiveProfiles("test")
 @Transactional
 public class UserIntegrationTest {
+
+  private static final String CSRF_COOKIE_NAME = "XSRF-TOKEN";
+  private static final String CSRF_HEADER_NAME = "X-XSRF-TOKEN";
 
   @Autowired
   private MockMvc mockMvc;
@@ -43,14 +51,35 @@ public class UserIntegrationTest {
   @Autowired
   private UserRepository userRepository;
 
+  @Autowired
+  private PasswordEncoder passwordEncoder;
+
   private User savedUser;
+  private String accessToken;
+  private String csrfToken;
+  private Cookie csrfCookie;
 
   @BeforeEach
-  void setUp() {
-    User user = new User("test", "test@test.com", "password123", null);
-    UserStatus status = new UserStatus(user);
-    user.initStatus(status);
+  void setUp() throws Exception {
+    User user = new User("test", "test@test.com", passwordEncoder.encode("password123"), null);
     savedUser = userRepository.save(user);
+
+    MvcResult csrfResult = mockMvc.perform(get("/api/auth/csrf-token"))
+        .andExpect(status().isNoContent())
+        .andReturn();
+    csrfCookie = csrfResult.getResponse().getCookie(CSRF_COOKIE_NAME);
+    csrfToken = csrfCookie.getValue();
+
+    MvcResult loginResult = mockMvc.perform(post("/api/auth/login")
+            .param("username", "test")
+            .param("password", "password123")
+            .cookie(csrfCookie)
+            .header(CSRF_HEADER_NAME, csrfToken))
+        .andExpect(status().isOk())
+        .andReturn();
+
+    JsonNode json = objectMapper.readTree(loginResult.getResponse().getContentAsString());
+    accessToken = json.get("accessToken").asText();
   }
 
   // --- POST ---
@@ -64,8 +93,11 @@ public class UserIntegrationTest {
         objectMapper.writeValueAsBytes(request)
     );
 
-    mockMvc.perform(multipart("/api/users").file(requestPart))
+    mockMvc.perform(multipart("/api/users").file(requestPart)
+            .cookie(csrfCookie)
+            .header(CSRF_HEADER_NAME, csrfToken))
         .andDo(print())
+        .andExpect(status().isCreated())
         .andExpect(jsonPath("$.username").value("newUser"))
         .andExpect(jsonPath("$.email").value("new@test.com"))
         .andExpect(jsonPath("$.id").isNotEmpty());
@@ -82,7 +114,9 @@ public class UserIntegrationTest {
         objectMapper.writeValueAsBytes(request)
     );
 
-    mockMvc.perform(multipart("/api/users").file(requestPart))
+    mockMvc.perform(multipart("/api/users").file(requestPart)
+            .cookie(csrfCookie)
+            .header(CSRF_HEADER_NAME, csrfToken))
         .andDo(print())
         .andExpect(status().isConflict())
         .andExpect(jsonPath("$.code").value("EMAIL_EXISTS"));
@@ -92,7 +126,8 @@ public class UserIntegrationTest {
   @Test
   @DisplayName("전체 사용자 조회 시 200과 사용자 목록을 반환")
   void getAllUsers_returns200WithUserList() throws Exception {
-    mockMvc.perform(get("/api/users"))
+    mockMvc.perform(get("/api/users")
+            .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken))
         .andDo(print())
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.length()").value(1))
@@ -101,21 +136,24 @@ public class UserIntegrationTest {
   }
 
   @Test
-  @DisplayName("사용자가 없을 때 전체 조회를 할 경우 200과 빈 배열을 반환")
-  void getAllUsers_noUsers_return200WithEmptyList() throws Exception {
+  @DisplayName("인증된 사용자가 삭제된 경우 전체 조회 시 401을 반환")
+  void getAllUsers_noUsers_return401WhenUserDeleted() throws Exception {
     userRepository.deleteAll();
 
-    mockMvc.perform(get("/api/users"))
+    mockMvc.perform(get("/api/users")
+            .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken))
         .andDo(print())
-        .andExpect(status().isOk())
-        .andExpect(jsonPath("$.length()").value(0));
+        .andExpect(status().isUnauthorized());
   }
 
   // --- DELETE ---
   @Test
   @DisplayName("존재하는 사용자를 삭제 할 경우 204를 반환하고 DB에서도 삭제됨")
   void deleteUser_return204AndDeletedFromDb() throws Exception {
-    mockMvc.perform(delete("/api/users/{id}", savedUser.getId()))
+    mockMvc.perform(delete("/api/users/{id}", savedUser.getId())
+            .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+            .cookie(csrfCookie)
+            .header(CSRF_HEADER_NAME, csrfToken))
         .andDo(print())
         .andExpect(status().isNoContent());
 
@@ -123,12 +161,17 @@ public class UserIntegrationTest {
   }
 
   @Test
-  @DisplayName("존재하지 않는 사용자를 삭제 할 경우 404를 반환")
-  void deleteUser_notFound_returns404() throws Exception {
-    mockMvc.perform(delete("/api/users/{id}", UUID.randomUUID()))
+  @DisplayName("본인이 아닌 다른 사용자를 삭제 시도할 경우 403을 반환")
+  void deleteUser_notFound_returns403() throws Exception {
+    User otherUser = userRepository.save(
+        new User("other", "other@test.com", "password123", null));
+
+    mockMvc.perform(delete("/api/users/{id}", otherUser.getId())
+            .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+            .cookie(csrfCookie)
+            .header(CSRF_HEADER_NAME, csrfToken))
         .andDo(print())
-        .andExpect(status().isNotFound())
-        .andExpect(jsonPath("$.code").value("USER_NOT_FOUND"));
+        .andExpect(status().isForbidden());
   }
 
   // --- PATCH ---
@@ -144,6 +187,9 @@ public class UserIntegrationTest {
 
     mockMvc.perform(multipart("/api/users/{id}", savedUser.getId())
             .file(requestPart)
+            .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+            .cookie(csrfCookie)
+            .header(CSRF_HEADER_NAME, csrfToken)
             .with(req -> {
               req.setMethod("PATCH");
               return req;
@@ -155,23 +201,27 @@ public class UserIntegrationTest {
   }
 
   @Test
-  @DisplayName("존재하지 않는 사용자를 수정 할 경우 404를 반환")
-  void updateUser_notFound_returns404() throws Exception {
-    UserUpdateRequest request = new UserUpdateRequest("updateUser", null, null);
+  @DisplayName("본인이 아닌 다른 사용자를 수정 시도할 경우 403을 반환")
+  void updateUser_otherUser_returns403() throws Exception {
+    User otherUser = userRepository.save(
+        new User("other", "other@test.com", "password123", null));
+    UserUpdateRequest request = new UserUpdateRequest("hacked", null, null);
 
     MockMultipartFile requestPart = new MockMultipartFile(
         "userUpdateRequest", "", MediaType.APPLICATION_JSON_VALUE,
         objectMapper.writeValueAsBytes(request)
     );
 
-    mockMvc.perform(multipart("/api/users/{id}", UUID.randomUUID())
+    mockMvc.perform(multipart("/api/users/{id}", otherUser.getId())
             .file(requestPart)
+            .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+            .cookie(csrfCookie)
+            .header(CSRF_HEADER_NAME, csrfToken)
             .with(req -> {
               req.setMethod("PATCH");
               return req;
             }))
         .andDo(print())
-        .andExpect(status().isNotFound())
-        .andExpect(jsonPath("$.code").value("USER_NOT_FOUND"));
+        .andExpect(status().isForbidden());
   }
 }
