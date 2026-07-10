@@ -1,4 +1,13 @@
 package com.sprint.mission.discodeit.event;
 
-public class MessageCreatedEvent {
+import java.util.UUID;
+
+public record MessageCreatedEvent(
+    UUID channelId,
+    String channelName,
+    UUID authorId,
+    String authorName,
+    String content
+) {
+
 }
