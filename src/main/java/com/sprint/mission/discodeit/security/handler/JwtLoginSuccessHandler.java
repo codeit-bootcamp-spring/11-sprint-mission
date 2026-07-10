@@ -7,16 +7,15 @@ import com.sprint.mission.discodeit.security.jwt.JwtInformation;
 import com.sprint.mission.discodeit.security.jwt.JwtRegistry;
 import com.sprint.mission.discodeit.security.jwt.JwtTokenProvider;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.Instant;
-import java.util.HashMap;
-import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
@@ -45,13 +44,14 @@ public class JwtLoginSuccessHandler implements AuthenticationSuccessHandler {
     jwtRegistry.invalidateJwtInformationByUserId(userDetails.getUserDto().id());
     jwtRegistry.registerJwtInformation(jwtInformation);
 
-    Cookie refreshTokenCookie = new Cookie(JwtTokenProvider.REFRESH_TOKEN_COOKIE_NAME,
-        refreshToken);
-    refreshTokenCookie.setHttpOnly(true);
-    refreshTokenCookie.setPath("/");
-
-    refreshTokenCookie.setSecure(request.isSecure());
-    response.addCookie(refreshTokenCookie);
+    ResponseCookie refreshTokenCookie = ResponseCookie.from(
+            JwtTokenProvider.REFRESH_TOKEN_COOKIE_NAME, refreshToken)
+        .httpOnly(true)
+        .path("/")
+        .secure(true)
+        .sameSite("Strict")
+        .build();
+    response.addHeader(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString());
 
     response.setStatus(HttpStatus.OK.value());
     response.setContentType(MediaType.APPLICATION_JSON_VALUE);

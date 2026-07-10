@@ -8,11 +8,12 @@ import com.sprint.mission.discodeit.security.jwt.JwtTokenProvider;
 import com.sprint.mission.discodeit.service.JwtService;
 import com.sprint.mission.discodeit.service.UserService;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.web.bind.annotation.CookieValue;
@@ -54,12 +55,14 @@ public class AuthController {
 
     JwtRefreshResult result = jwtService.refreshJwtSession(refreshToken);
 
-    Cookie refreshTokenCookie = new Cookie(JwtTokenProvider.REFRESH_TOKEN_COOKIE_NAME,
-        result.refreshToken());
-    refreshTokenCookie.setHttpOnly(true);
-    refreshTokenCookie.setPath("/");
-    refreshTokenCookie.setSecure(true);
-    response.addCookie(refreshTokenCookie);
+    ResponseCookie refreshTokenCookie = ResponseCookie.from(
+            JwtTokenProvider.REFRESH_TOKEN_COOKIE_NAME, result.refreshToken())
+        .httpOnly(true)
+        .path("/")
+        .secure(true)
+        .sameSite("Strict")
+        .build();
+    response.addHeader(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString());
 
     return ResponseEntity.ok(new JwtDto(result.accessToken(), result.userDto()));
   }
