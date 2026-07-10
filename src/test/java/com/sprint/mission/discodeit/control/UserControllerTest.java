@@ -17,14 +17,15 @@ import com.sprint.mission.discodeit.advice.GlobalExceptionHandler;
 import com.sprint.mission.discodeit.dto.user.UserCreateRequest;
 import com.sprint.mission.discodeit.dto.user.UserDto;
 import com.sprint.mission.discodeit.dto.user.UserUpdateRequest;
+import com.sprint.mission.discodeit.entity.Role;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.service.UserService;
-import com.sprint.mission.discodeit.service.UserStatusService;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
@@ -33,6 +34,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(UserController.class)
+@AutoConfigureMockMvc(addFilters = false)
 @Import(GlobalExceptionHandler.class)
 class UserControllerTest {
 
@@ -45,15 +47,13 @@ class UserControllerTest {
   @MockitoBean
   private UserService userService;
 
-  @MockitoBean
-  private UserStatusService userStatusService;
-
   // --- POST ---
   @Test
   @DisplayName("사용자 생성 시 201과 생성된 사용자 JSON 반환")
   void createUser_returns201WithBody() throws Exception {
     UserCreateRequest request = new UserCreateRequest("test", "test@test.com", "password123");
-    UserDto response = new UserDto(UUID.randomUUID(), "test", "test@test.com", null, true);
+    UserDto response = new UserDto(UUID.randomUUID(), "test", "test@test.com", null, true,
+        Role.USER);
 
     given(userService.createUser(any(), any())).willReturn(response);
     MockMultipartFile requestPart = new MockMultipartFile(
@@ -88,8 +88,10 @@ class UserControllerTest {
   @Test
   @DisplayName("전체 사용자 조회 시 200과 사용자 목록 JSON 반환")
   void getAllUsers_success() throws Exception {
-    UserDto user1 = new UserDto(UUID.randomUUID(), "test1", "test1@test.com", null, true);
-    UserDto user2 = new UserDto(UUID.randomUUID(), "test2", "test2@test.com", null, false);
+    UserDto user1 = new UserDto(UUID.randomUUID(), "test1", "test1@test.com", null, true,
+        Role.USER);
+    UserDto user2 = new UserDto(UUID.randomUUID(), "test2", "test2@test.com", null, false,
+        Role.USER);
     given(userService.allReadUser()).willReturn(List.of(user1, user2));
 
     mockMvc.perform(get("/api/users"))
@@ -141,7 +143,7 @@ class UserControllerTest {
   void updateUser_return200() throws Exception {
     UUID userId = UUID.randomUUID();
     UserUpdateRequest request = new UserUpdateRequest("updatedName", null, null);
-    UserDto response = new UserDto(userId, "updatedName", "test@test.com", null, true);
+    UserDto response = new UserDto(userId, "updatedName", "test@test.com", null, true, Role.USER);
     given(userService.updateUser(eq(userId), any(), any())).willReturn(response);
 
     MockMultipartFile requestPart = new MockMultipartFile(
