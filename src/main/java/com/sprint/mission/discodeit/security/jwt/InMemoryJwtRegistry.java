@@ -81,7 +81,7 @@ public class InMemoryJwtRegistry implements JwtRegistry {
 
     registerJwtInformation(newJwtInformation);
 
-    return null;
+    return newJwtInformation;
   }
 
   @Scheduled(fixedDelay = 1000 * 60 * 5)
