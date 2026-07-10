@@ -19,7 +19,7 @@ public class BinaryContentEventListener {
   private final BinaryContentStorage binaryContentStorage;
   private final BinaryContentService binaryContentService;
 
-  @Async
+  @Async("eventTaskExecutor")
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
   public void handleBinaryContentCreated(BinaryContentCreatedEvent event) {
     try {

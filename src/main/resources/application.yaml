@@ -27,6 +27,11 @@ logging:
     org.hibernate.SQL: warn
     org.hibernate.orm.jdbc.bind: warn
 
+management:
+  observations:
+    annotations:
+      enabled: true
+
 discodeit:
   repository:
     type: jpa
