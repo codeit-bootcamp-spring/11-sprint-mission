@@ -21,7 +21,6 @@ public class JwtLogoutHandler implements LogoutHandler {
 
   private final JwtTokenProvider jwtTokenProvider;
   private final JwtRegistry jwtRegistry;
-  private final DiscodeitUserDetailsService userDetailsService;
 
   @Override
   public void logout(HttpServletRequest request, HttpServletResponse response,
@@ -35,9 +34,7 @@ public class JwtLogoutHandler implements LogoutHandler {
 
             if (jwtTokenProvider.validateToken(refreshToken)) {
               String username = jwtTokenProvider.getSubject(refreshToken);
-              DiscodeitUserDetails userDetails = (DiscodeitUserDetails) userDetailsService.loadUserByUsername(
-                  username);
-              jwtRegistry.invalidateJwtInformationByUserId(userDetails.getUserDto().id());
+              jwtRegistry.invalidateJwtInformationByRefreshToken(refreshToken);
               log.debug("서버 메모리에서 사용자({})의 토큰 정보 삭제 완료", username);
             }
 
