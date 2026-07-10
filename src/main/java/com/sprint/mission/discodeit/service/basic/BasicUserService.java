@@ -5,9 +5,11 @@ import com.sprint.mission.discodeit.dto.user.UserCreateRequest;
 import com.sprint.mission.discodeit.dto.user.UserDto;
 import com.sprint.mission.discodeit.dto.user.UserUpdateRequest;
 import com.sprint.mission.discodeit.entity.BinaryContent;
+import com.sprint.mission.discodeit.entity.Role;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.event.BinaryContentCreatedEvent;
 import com.sprint.mission.discodeit.event.PasswordChangeEvent;
+import com.sprint.mission.discodeit.event.RoleUpdatedEvent;
 import com.sprint.mission.discodeit.exception.DiscodeitException;
 import com.sprint.mission.discodeit.exception.ErrorCode;
 import com.sprint.mission.discodeit.exception.user.DuplicateUserException;
@@ -214,7 +216,10 @@ public class BasicUserService implements UserService {
           log.warn("권한 변경 실패 - 사용자를 찾을 수 없음 - userId: {}", request.userId());
           return new UserNotFoundException(request.userId());
         });
+
+    Role oldRole = user.getRole();
     user.updateRole(request.newRole());
+    eventPublisher.publishEvent(new RoleUpdatedEvent(user.getId(), oldRole, request.newRole()));
 
     jwtRegistry.invalidateJwtInformationByUserId(request.userId());
 
