@@ -84,7 +84,8 @@ public class SecurityConfig {
             "/index.html",
             "/assets/**",
             "/favicon.ico",
-            "/uploads/**"
+            "/uploads/**",
+            "/actuator/**"
         ).permitAll()
         .requestMatchers(HttpMethod.GET, "/api/auth/csrf-token").permitAll()
         .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
