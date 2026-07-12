@@ -24,6 +24,8 @@ import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import java.util.Map;
 import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -54,6 +56,7 @@ public class BasicUserService implements UserService {
 
   @Override
   @Transactional
+  @CacheEvict(cacheNames = "users", allEntries = true)
   public UserDto createUser(UserCreateRequest request, MultipartFile profile) {
     String name = request.username().trim();
     String email = request.email().trim();
@@ -109,6 +112,7 @@ public class BasicUserService implements UserService {
   }
 
   @Override
+  @Cacheable(cacheNames = "users")
   public List<UserDto> allReadUser() {
     List<User> users = userRepository.findAll();
     Set<UUID> onlineUserIds = getOnlineUserIds();
@@ -121,6 +125,7 @@ public class BasicUserService implements UserService {
   @Override
   @Transactional
   @PreAuthorize("#id == authentication.principal.userDto.id()")
+  @CacheEvict(cacheNames = "users", allEntries = true)
   public void deleteUser(UUID id) {
     log.debug("사용자 삭제 비즈니스 로직 시작 - userId: {}", id);
     User user = userRepository.findById(id)
@@ -144,6 +149,7 @@ public class BasicUserService implements UserService {
   @Override
   @Transactional
   @PreAuthorize("#id == authentication.principal.userDto.id()")
+  @CacheEvict(cacheNames = "users", allEntries = true)
   public UserDto updateUser(UUID id, UserUpdateRequest request, MultipartFile profile) {
     log.debug("사용자 업데이트 비즈니스 로직 시작 - updateName: {}, updateEmail: {}", request.newUsername(),
         request.newEmail());
@@ -210,6 +216,7 @@ public class BasicUserService implements UserService {
   @Override
   @Transactional
   @PreAuthorize("hasRole('ADMIN')")
+  @CacheEvict(cacheNames = "users", allEntries = true)
   public UserDto updateRole(RoleUpdateRequest request) {
     User user = userRepository.findById(request.userId())
         .orElseThrow(() -> {

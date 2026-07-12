@@ -19,6 +19,17 @@ spring:
     multipart:
       max-file-size: 10MB
       max-request-size: 30MB
+  cache:
+    type: caffeine
+    cache-names:
+      - channels
+      - notifications
+      - users
+    caffeine:
+      spec: >
+        maximumSize=100
+        expireAfterAccess=600s
+        recordStats
 
 logging:
   level:

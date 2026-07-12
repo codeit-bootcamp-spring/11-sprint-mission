@@ -22,6 +22,8 @@ import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.ChannelService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
@@ -47,6 +49,7 @@ public class BasicChannelService implements ChannelService {
   @Override
   @Transactional
   @PreAuthorize("hasRole('CHANNEL_MANAGER')")
+  @CacheEvict(cacheNames = "channels", allEntries = true)
   public ChannelDto createPublicChannel(PublicChannelRequest request) {
     log.debug("Public 채널 생성 비즈니스 로직 시작 - name: {}, description: {}", request.name(),
         request.description());
@@ -64,6 +67,7 @@ public class BasicChannelService implements ChannelService {
 
   @Override
   @Transactional
+  @CacheEvict(cacheNames = "channels", allEntries = true)
   public ChannelDto createPrivateChannel(PrivateChannelRequest request) {
     log.debug("Private 채널 생성 비즈니스 로직 시작 - participantCount: {}", request.participantIds().size());
     Channel channel = new Channel(
@@ -114,6 +118,7 @@ public class BasicChannelService implements ChannelService {
   }
 
   @Override
+  @Cacheable(cacheNames = "channels", key = "#userId")
   public List<ChannelDto> findAllByUserId(UUID userId) {
     List<Channel> allChannels = channelRepository.findAll();
 
@@ -164,6 +169,7 @@ public class BasicChannelService implements ChannelService {
   @Override
   @Transactional
   @PreAuthorize("hasRole('CHANNEL_MANAGER')")
+  @CacheEvict(cacheNames = "channels", allEntries = true)
   public void deleteChannel(UUID id) {
     log.debug("채널 삭제 비즈니스 로직 시작 - channelId: {}", id);
     Channel channel = channelRepository.findById(id)
@@ -179,6 +185,7 @@ public class BasicChannelService implements ChannelService {
   @Override
   @Transactional
   @PreAuthorize("hasRole('CHANNEL_MANAGER')")
+  @CacheEvict(cacheNames = "channels", allEntries = true)
   public ChannelDto updateChannel(UUID id, ChannelUpdateRequest request) {
     log.debug("채널 업데이트 비즈니스 로직 시작 - channelId: {}", id);
     Channel channel = channelRepository.findById(id)
