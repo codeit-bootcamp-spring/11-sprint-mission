@@ -21,6 +21,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
@@ -40,6 +41,7 @@ public class BasicChannelService implements ChannelService {
   @Override
   @Transactional
   @PreAuthorize("hasRole('CHANNEL_MANAGER')")
+  @CacheEvict(cacheNames = "channels", allEntries = true)
   public ChannelDto createPublic(PublicChannelCreateRequest request) {
     log.debug("PUBLIC 채널 생성 시작: - name: {}", request.name());
     Channel channel = new Channel(ChannelType.PUBLIC, request.name(), request.description());
@@ -50,6 +52,7 @@ public class BasicChannelService implements ChannelService {
 
   @Override
   @Transactional
+  @CacheEvict(cacheNames = "channels", allEntries = true)
   public ChannelDto createPrivate(PrivateChannelCreateRequest request) {
     log.debug("PRIVATE 채널 생성 시작 - participantCount: {}", request.participantIds());
     Channel channel = new Channel(ChannelType.PRIVATE, null, null);
@@ -96,6 +99,7 @@ public class BasicChannelService implements ChannelService {
   @Override
   @Transactional
   @PreAuthorize("hasRole('CHANNEL_MANAGER')")
+  @CacheEvict(cacheNames = "channels", allEntries = true)
   public ChannelDto update(UUID id, ChannelUpdateRequest request) {
     log.debug("채널 수정 시작 - channelId: {}", id);
     Channel channel = channelRepository.findById(id).
@@ -113,6 +117,7 @@ public class BasicChannelService implements ChannelService {
   @Override
   @Transactional
   @PreAuthorize("hasRole('CHANNEL_MANAGER')")
+  @CacheEvict(cacheNames = "channels", allEntries = true)
   public void delete(UUID id) {
     log.debug("채널 삭제 시작 - channelId: {}", id);
 

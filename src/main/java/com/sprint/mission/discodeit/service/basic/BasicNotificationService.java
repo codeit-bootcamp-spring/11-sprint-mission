@@ -11,6 +11,9 @@ import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
@@ -24,6 +27,7 @@ public class BasicNotificationService implements NotificationService {
 
   private final NotificationRepository notificationRepository;
   private final UserRepository userRepository;
+  private final CacheManager cacheManager;
 
   @Override
   @Cacheable(cacheNames = "notifications", key = "#receiverId")
@@ -38,14 +42,22 @@ public class BasicNotificationService implements NotificationService {
   @Transactional
   @PreAuthorize("@notificationRepository.findById(#id).orElse(null)?.receiver?.id == principal.userDto.id")
   public void delete(UUID id) {
-    if (!notificationRepository.existsById(id)) {
-      throw new RuntimeException("알림이 존재하지 않습니다.");
+    Notification notification = notificationRepository.findById(id)
+        .orElseThrow(() -> new RuntimeException("알림이 존재하지 않습니다."));
+
+    UUID receiverId = notification.getReceiver().getId();
+
+    notificationRepository.delete(notification);
+
+    Cache cache = cacheManager.getCache("notifications");
+    if (cache != null) {
+      cache.evict(receiverId);
     }
-    notificationRepository.deleteById(id);
   }
 
   @Override
   @Transactional
+  @CacheEvict(cacheNames = "notifications", allEntries = true)
   public void notifyAdmins(String title, String content) {
     log.info("관리자 알림 발송 시작 - title: {}", title);
 

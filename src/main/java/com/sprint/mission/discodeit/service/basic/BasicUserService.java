@@ -22,6 +22,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -46,6 +47,7 @@ public class BasicUserService implements UserService {
 
   @Override
   @Transactional
+  @CacheEvict(cacheNames = "users", allEntries = true)
   public UserDto create(UserCreateRequest request, MultipartFile profile) {
     log.debug("사용자 생성 시작 - username: {}, email: {}", request.username(), request.email());
 
@@ -120,6 +122,7 @@ public class BasicUserService implements UserService {
   @Override
   @Transactional
   @PreAuthorize("#id == principal.userDto.id or hasRole('ADMIN')")
+  @CacheEvict(cacheNames = "users", allEntries = true)
   public UserDto update(UUID id, UserUpdateRequest request, MultipartFile profile) {
     log.debug("사용자 수정 시작 - userId: {}", id);
 
@@ -156,6 +159,7 @@ public class BasicUserService implements UserService {
   @Override
   @Transactional
   @PreAuthorize("#id == principal.userDto.id or hasRole('ADMIN')")
+  @CacheEvict(cacheNames = "users", allEntries = true)
   public void delete(UUID id) {
     log.debug("사용자 삭제 시작 - userId: {}", id);
 
@@ -171,6 +175,7 @@ public class BasicUserService implements UserService {
   @Override
   @Transactional
   @PreAuthorize("hasRole('ADMIN')")
+  @CacheEvict(cacheNames = "users", allEntries = true)
   public UserDto updateRole(UserRoleUpdateRequest request) {
     log.debug("사용자 권한 변경 시작 - userId: {}, newRole: {}", request.userId(), request.newRole());
 
