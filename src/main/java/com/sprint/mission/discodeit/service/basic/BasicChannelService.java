@@ -21,6 +21,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -81,6 +82,7 @@ public class BasicChannelService implements ChannelService {
   }
 
   @Override
+  @Cacheable(cacheNames = "channels", key = "#userId")
   public List<ChannelDto> findAllByUserId(UUID userId) {
     List<UUID> userPrivateChannelIds = readStatusRepository.findByUserId(userId).
         stream().map(readStatus -> readStatus.getChannel().getId()).toList();

@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +26,7 @@ public class BasicNotificationService implements NotificationService {
   private final UserRepository userRepository;
 
   @Override
+  @Cacheable(cacheNames = "notifications", key = "#receiverId")
   public List<NotificationDto> findAllByReceiverId(UUID receiverId) {
     return notificationRepository.findAllByReceiverIdOrderByCreatedAtDesc(receiverId)
         .stream().map(n -> new NotificationDto(
