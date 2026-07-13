@@ -10,7 +10,7 @@ spring:
   datasource:
     driver-class-name: org.postgresql.Driver
   profiles:
-    active: dev
+    active: dev, kafka
   jpa:
     hibernate:
       ddl-auto: validate
