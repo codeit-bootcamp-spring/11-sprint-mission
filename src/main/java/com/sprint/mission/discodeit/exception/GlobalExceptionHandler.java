@@ -29,7 +29,8 @@ public class GlobalExceptionHandler {
 
   @ExceptionHandler(DiscodeitException.class)
   public ResponseEntity<ErrorResponse> handleDiscodeitException(DiscodeitException exception) {
-    log.error("커스텀 예외 발생: code={}, message={}", exception.getErrorCode(), exception.getMessage(), exception);
+    log.error("커스텀 예외 발생: code={}, message={}", exception.getErrorCode(), exception.getMessage(),
+        exception);
     HttpStatus status = determineHttpStatus(exception);
     ErrorResponse response = new ErrorResponse(exception, status.value());
     return ResponseEntity
@@ -38,25 +39,26 @@ public class GlobalExceptionHandler {
   }
 
   @ExceptionHandler(MethodArgumentNotValidException.class)
-  public ResponseEntity<ErrorResponse> handleValidationExceptions(MethodArgumentNotValidException ex) {
+  public ResponseEntity<ErrorResponse> handleValidationExceptions(
+      MethodArgumentNotValidException ex) {
     log.error("요청 유효성 검사 실패: {}", ex.getMessage());
-    
+
     Map<String, Object> validationErrors = new HashMap<>();
     ex.getBindingResult().getAllErrors().forEach(error -> {
       String fieldName = ((FieldError) error).getField();
       String errorMessage = error.getDefaultMessage();
       validationErrors.put(fieldName, errorMessage);
     });
-    
+
     ErrorResponse response = new ErrorResponse(
-        Instant.now(), 
+        Instant.now(),
         "VALIDATION_ERROR",
         "요청 데이터 유효성 검사에 실패했습니다",
         validationErrors,
         ex.getClass().getSimpleName(),
         HttpStatus.BAD_REQUEST.value()
     );
-    
+
     return ResponseEntity
         .status(HttpStatus.BAD_REQUEST)
         .body(response);
@@ -87,7 +89,8 @@ public class GlobalExceptionHandler {
       case DUPLICATE_USER, DUPLICATE_READ_STATUS -> HttpStatus.CONFLICT;
       case INVALID_USER_CREDENTIALS -> HttpStatus.UNAUTHORIZED;
       case PRIVATE_CHANNEL_UPDATE, INVALID_REQUEST -> HttpStatus.BAD_REQUEST;
-      case INTERNAL_SERVER_ERROR -> HttpStatus.INTERNAL_SERVER_ERROR;
+      case JWT_EXPIRED, JWT_INVALID_SIGNATURE, JWT_MALFORMED -> HttpStatus.UNAUTHORIZED;
+      case JWT_GENERATION_FAILED, INTERNAL_SERVER_ERROR -> HttpStatus.INTERNAL_SERVER_ERROR;
     };
   }
 }

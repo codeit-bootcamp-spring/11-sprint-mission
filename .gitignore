@@ -40,6 +40,7 @@ bin/
 
 ### Discodeit ###
 .discodeit
+application-dev.yaml
 
 ### 숨김 파일 ###
 .*

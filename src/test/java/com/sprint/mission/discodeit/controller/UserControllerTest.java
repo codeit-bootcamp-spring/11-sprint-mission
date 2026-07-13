@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.BDDMockito.willThrow;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
@@ -16,6 +17,7 @@ import com.sprint.mission.discodeit.dto.data.BinaryContentDto;
 import com.sprint.mission.discodeit.dto.data.UserDto;
 import com.sprint.mission.discodeit.dto.request.UserCreateRequest;
 import com.sprint.mission.discodeit.dto.request.UserUpdateRequest;
+import com.sprint.mission.discodeit.entity.Role;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.service.UserService;
 import java.util.List;
@@ -24,16 +26,15 @@ import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 
-@WithMockUser
 @WebMvcTest(UserController.class)
+@AutoConfigureMockMvc(addFilters = false)
 class UserControllerTest {
 
   @Autowired
@@ -44,6 +45,7 @@ class UserControllerTest {
 
   @MockitoBean
   private UserService userService;
+
 
   @Test
   @DisplayName("사용자 생성 성공 테스트")
@@ -83,7 +85,7 @@ class UserControllerTest {
         "test@example.com",
         profileDto,
         false,
-        null
+        Role.USER
     );
 
     given(userService.create(any(UserCreateRequest.class), any(Optional.class)))
@@ -141,7 +143,7 @@ class UserControllerTest {
         "user1@example.com",
         null,
         true,
-        null
+        Role.USER
     );
 
     UserDto user2 = new UserDto(
@@ -150,7 +152,7 @@ class UserControllerTest {
         "user2@example.com",
         null,
         false,
-        null
+        Role.USER
     );
 
     List<UserDto> users = List.of(user1, user2);
@@ -207,7 +209,7 @@ class UserControllerTest {
         "updated@example.com",
         profileDto,
         true,
-        null
+        Role.USER
     );
 
     given(userService.update(eq(userId), any(UserUpdateRequest.class), any(Optional.class)))
@@ -301,5 +303,4 @@ class UserControllerTest {
             .with(csrf()))
         .andExpect(status().isNotFound());
   }
-
 } 

@@ -34,7 +34,8 @@ class UserRepositoryTest {
    */
   private User createTestUser(String username, String email) {
     BinaryContent profile = new BinaryContent("profile.jpg", 1024L, "image/jpeg");
-    return new User(username, email, "password123!@#", profile);
+    User user = new User(username, email, "password123!@#", profile);
+    return user;
   }
 
   @Test
@@ -99,7 +100,7 @@ class UserRepositoryTest {
   }
 
   @Test
-  @DisplayName("모든 사용자를 프로필과 상태 정보와 함께 조회할 수 있다")
+  @DisplayName("모든 사용자를 프로필과 함께 조회할 수 있다")
   void findAllWithProfileAndStatus_ReturnsUsersWithProfileAndStatus() {
     // given
     User user1 = createTestUser("user1", "user1@example.com");
@@ -112,7 +113,7 @@ class UserRepositoryTest {
     entityManager.clear();
 
     // when
-    List<User> users = userRepository.findAllWithProfileAndStatus();
+    List<User> users = userRepository.findAllWithProfile();
 
     // then
     assertThat(users).hasSize(2);

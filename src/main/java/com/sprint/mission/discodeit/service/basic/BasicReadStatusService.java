@@ -50,7 +50,8 @@ public class BasicReadStatusService implements ReadStatusService {
       throw DuplicateReadStatusException.withUserIdAndChannelId(userId, channelId);
     }
 
-    ReadStatus readStatus = readStatusRepository.save(new ReadStatus(user, channel, request.lastReadAt()));
+    Instant lastReadAt = request.lastReadAt();
+    ReadStatus readStatus = readStatusRepository.save(new ReadStatus(user, channel, lastReadAt));
 
     log.info("읽음 상태 생성 완료: id={}, userId={}, channelId={}",
         readStatus.getId(), userId, channelId);
