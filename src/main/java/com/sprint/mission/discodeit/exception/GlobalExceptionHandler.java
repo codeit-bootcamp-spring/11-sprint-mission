@@ -31,7 +31,7 @@ public class GlobalExceptionHandler {
   public ResponseEntity<ErrorResponse> handleDiscodeitException(DiscodeitException exception) {
     log.error("커스텀 예외 발생: code={}, message={}", exception.getErrorCode(), exception.getMessage(),
         exception);
-    HttpStatus status = determineHttpStatus(exception);
+    HttpStatus status = exception.getErrorCode().getHttpStatus();
     ErrorResponse response = new ErrorResponse(exception, status.value());
     return ResponseEntity
         .status(status)
@@ -81,16 +81,4 @@ public class GlobalExceptionHandler {
         .body(response);
   }
 
-  private HttpStatus determineHttpStatus(DiscodeitException exception) {
-    ErrorCode errorCode = exception.getErrorCode();
-    return switch (errorCode) {
-      case USER_NOT_FOUND, CHANNEL_NOT_FOUND, MESSAGE_NOT_FOUND, BINARY_CONTENT_NOT_FOUND,
-           READ_STATUS_NOT_FOUND -> HttpStatus.NOT_FOUND;
-      case DUPLICATE_USER, DUPLICATE_READ_STATUS -> HttpStatus.CONFLICT;
-      case INVALID_USER_CREDENTIALS -> HttpStatus.UNAUTHORIZED;
-      case PRIVATE_CHANNEL_UPDATE, INVALID_REQUEST -> HttpStatus.BAD_REQUEST;
-      case JWT_EXPIRED, JWT_INVALID_SIGNATURE, JWT_MALFORMED -> HttpStatus.UNAUTHORIZED;
-      case JWT_GENERATION_FAILED, INTERNAL_SERVER_ERROR -> HttpStatus.INTERNAL_SERVER_ERROR;
-    };
-  }
 }
