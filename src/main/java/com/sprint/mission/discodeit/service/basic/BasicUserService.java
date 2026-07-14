@@ -6,6 +6,7 @@ import com.sprint.mission.discodeit.dto.request.UserUpdateRequest;
 import com.sprint.mission.discodeit.dto.response.UserDto;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.event.BinaryContentCreatedEvent;
 import com.sprint.mission.discodeit.exception.UserAlreadyExistsException;
 import com.sprint.mission.discodeit.exception.UserNotFoundException;
 import com.sprint.mission.discodeit.mapper.UserMapper;
@@ -13,11 +14,11 @@ import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.security.jwt.JwtRegistry;
 import com.sprint.mission.discodeit.service.UserService;
-import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -32,7 +33,7 @@ public class BasicUserService implements UserService {
 
   private final UserRepository userRepository;
   private final BinaryContentRepository binaryContentRepository;
-  private final BinaryContentStorage binaryContentStorage;
+  private final ApplicationEventPublisher eventPublisher;
   private final UserMapper userMapper;
   private final PasswordEncoder passwordEncoder;
   private final JwtRegistry jwtRegistry;
@@ -60,8 +61,9 @@ public class BasicUserService implements UserService {
             profile.getContentType()
         );
         binaryContentRepository.save(profileContent);
-        binaryContentStorage.put(profileContent.getId(), profile.getBytes());
-        log.debug("프로필 이미지 저장 완료 - fileId: {}", profileContent.getId());
+        eventPublisher.publishEvent(
+            new BinaryContentCreatedEvent(profileContent.getId(), profile.getBytes()));
+        log.debug("프로필 이미지 메타데이터 저장 완료 - fileId: {}", profileContent.getId());
       } catch (Exception e) {
         log.error("프로필 이미지 저장 실패 - username: {}", request.username(), e);
         throw new RuntimeException("프로필 이미지 저장 실패", e);
@@ -126,8 +128,9 @@ public class BasicUserService implements UserService {
             profile.getContentType()
         );
         binaryContentRepository.save(profileContent);
-        binaryContentStorage.put(profileContent.getId(), profile.getBytes());
-        log.debug("프로필 이미지 수정 완료 - fileId: {}", profileContent.getId());
+        eventPublisher.publishEvent(
+            new BinaryContentCreatedEvent(profileContent.getId(), profile.getBytes()));
+        log.debug("프로필 이미지 메타데이터 수정 완료 - fileId: {}", profileContent.getId());
       } catch (Exception e) {
         log.error("프로필 이미지 저장 실패 - userId: {}", id, e);
         throw new RuntimeException("프로필 이미지 저장 실패", e);

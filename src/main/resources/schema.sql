@@ -2,10 +2,16 @@ CREATE TABLE IF NOT EXISTS binary_contents
 (
     id           UUID PRIMARY KEY,
     created_at   TIMESTAMP WITH TIME ZONE NOT NULL,
+    updated_at   TIMESTAMP WITH TIME ZONE NOT NULL,
     file_name    VARCHAR(255)             NOT NULL,
     size         BIGINT                   NOT NULL,
-    content_type VARCHAR(100)             NOT NULL
+    content_type VARCHAR(100)             NOT NULL,
+    status       VARCHAR(20)              NOT NULL DEFAULT 'PROCESSING'
 );
+
+-- 기존 테이블에 컬럼만 추가해야 하는 경우:
+-- ALTER TABLE binary_contents ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now();
+-- ALTER TABLE binary_contents ADD COLUMN IF NOT EXISTS status VARCHAR(20) NOT NULL DEFAULT 'PROCESSING';
 
 CREATE TABLE IF NOT EXISTS users
 (
