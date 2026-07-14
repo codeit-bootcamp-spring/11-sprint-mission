@@ -7,6 +7,7 @@ import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.service.NotificationService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionalEventListener;
 
@@ -17,6 +18,7 @@ public class NotificationRequiredEventListener {
   private final NotificationService notificationService;
   private final ReadStatusRepository readStatusRepository;
 
+  @Async("eventTaskExecutor")
   @TransactionalEventListener
   public void on(MessageCreatedEvent event) {
     List<ReadStatus> targets = readStatusRepository
@@ -29,6 +31,7 @@ public class NotificationRequiredEventListener {
         .forEach(rs -> notificationService.create(rs.getUser().getId(), title, event.content()));
   }
 
+  @Async("eventTaskExecutor")
   @TransactionalEventListener
   public void on(RoleUpdatedEvent event) {
     String content = "%s -> %s".formatted(event.previousRole(), event.newRole());
