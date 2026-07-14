@@ -68,6 +68,9 @@ public class BasicReadStatusService implements ReadStatusService {
         .orElseThrow(() -> new IllegalArgumentException(
             "ReadStatus with id " + readStatusId + " not found"));
     readStatus.update(request.newLastReadAt());
+    if (request.notificationEnabled() != null) {
+      readStatus.updateNotificationEnabled(request.notificationEnabled());
+    }
     return toDto(readStatus);
   }
 

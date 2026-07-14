@@ -10,6 +10,7 @@ import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.event.BinaryContentCreatedEvent;
+import com.sprint.mission.discodeit.event.MessageCreatedEvent;
 import com.sprint.mission.discodeit.exception.ChannelNotFoundException;
 import com.sprint.mission.discodeit.exception.MessageNotFoundException;
 import com.sprint.mission.discodeit.exception.UserNotFoundException;
@@ -90,6 +91,15 @@ public class BasicMessageService implements MessageService {
 
     messageRepository.saveAndFlush(message);
     log.info("메시지 생성 완료 - id: {}, channelId: {}", message.getId(), channel.getId());
+
+    eventPublisher.publishEvent(new MessageCreatedEvent(
+        message.getId(),
+        channel.getId(),
+        author.getId(),
+        author.getUsername(),
+        channel.getName(),
+        message.getContent()
+    ));
 
     boolean isOnline = message.getAuthor() != null && jwtRegistry.hasActiveJwtInformationByUserId(
         message.getAuthor().getId());
