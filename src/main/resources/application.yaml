@@ -27,21 +27,20 @@ spring:
       max-request-size: 30MB
 
   cache:
-    cache:
-      type: redis
-      cache-names:
+    type: redis
+    cache-names:
         - channelsByUser
         - notificationsByReceiver
         - users
-      caffeine:
-        spec: maximumSize=100,expireAfterAccess=600s,recordStats
-      redis:
-        enable-statistics: true
+    caffeine:
+      spec: maximumSize=100,expireAfterAccess=600s,recordStats
+    redis:
+      enable-statistics: true
 
-      data:
-        redis:
-          host: ${REDIS_HOST:localhost}
-          port: ${REDIS_PORT:6379}
+    data:
+      redis:
+        host: ${REDIS_HOST:localhost}
+        port: ${REDIS_PORT:6379}
 
   jpa:
     hibernate:
@@ -90,7 +89,7 @@ management:
 info:
   application:
     name: Discodeit
-    version: 2.1-M10
+    version: 2.2-M11
 
   java:
     version: 17
