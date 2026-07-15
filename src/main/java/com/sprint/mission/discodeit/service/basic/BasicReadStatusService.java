@@ -70,7 +70,10 @@ public class BasicReadStatusService implements ReadStatusService {
         ReadStatus readStatus = readStatusRepository.findById(param.id())
                 .orElseThrow(() -> new NotFoundException("해당 ReadStatus가 존재하지 않습니다."));
 
-        readStatus.update(param.request().newLastReadAt());
+        readStatus.update(
+                param.request().newLastReadAt(),
+                param.request().notificationEnabled()
+        );
         return readStatusMapper.toDto(readStatus);
     }
 

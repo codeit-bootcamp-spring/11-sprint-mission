@@ -3,15 +3,19 @@ package com.sprint.mission.discodeit.service.basic;
 import com.sprint.mission.discodeit.dto.*;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.event.BinaryContentCreatedEvent;
+import com.sprint.mission.discodeit.event.RoleUpdatedEvent;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.security.UserOnlineStatusResolver;
+import com.sprint.mission.discodeit.security.authority.UserRole;
 import com.sprint.mission.discodeit.service.UserService;
 import com.sprint.mission.discodeit.exception.user.UserAlreadyExistsException;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,6 +40,7 @@ public class BasicUserService implements UserService {
     private final BinaryContentStorage binaryContentStorage;
     private final PasswordEncoder passwordEncoder;
     private final UserOnlineStatusResolver userOnlineStatusResolver;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     @Transactional
@@ -67,7 +72,9 @@ public class BasicUserService implements UserService {
             profile = binaryContentRepository.save(profile);
 
             if (request.profileImage().bytes() != null) {
-                binaryContentStorage.put(profile.getId(), request.profileImage().bytes());
+                eventPublisher.publishEvent(
+                        new BinaryContentCreatedEvent(profile.getId(), request.profileImage().bytes())
+                );
             }
         }
 
@@ -200,7 +207,9 @@ public class BasicUserService implements UserService {
         BinaryContent savedProfile = binaryContentRepository.save(newProfile);
 
         if (newProfileImage.bytes() != null) {
-            binaryContentStorage.put(savedProfile.getId(), newProfileImage.bytes());
+            eventPublisher.publishEvent(
+                    new BinaryContentCreatedEvent(savedProfile.getId(), newProfileImage.bytes())
+            );
         }
 
         user.updateProfile(savedProfile);
@@ -241,7 +250,13 @@ public class BasicUserService implements UserService {
         User user = userRepository.findById(request.userId())
                 .orElseThrow(() -> new UserNotFoundException(request.userId()));
 
+        UserRole previousRole = user.getRole();
+
         user.updateRole(request.newRole());
+
+        eventPublisher.publishEvent(
+                new RoleUpdatedEvent(user.getId(), previousRole, request.newRole())
+        );
 
         userOnlineStatusResolver.invalidateTokens(user.getId());
 

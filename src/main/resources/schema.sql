@@ -5,14 +5,17 @@ DROP TABLE IF EXISTS messages CASCADE;
 DROP TABLE IF EXISTS channels CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
 DROP TABLE IF EXISTS binary_contents CASCADE;
+DROP TABLE IF EXISTS notifications CASCADE;
 
 CREATE TABLE binary_contents
 (
     id           UUID PRIMARY KEY,
     created_at   TIMESTAMPTZ  NOT NULL,
+    updated_at   TIMESTAMPTZ,
     file_name    VARCHAR(255) NOT NULL,
     size         BIGINT       NOT NULL,
-    content_type VARCHAR(100) NOT NULL
+    content_type VARCHAR(100) NOT NULL,
+    status       VARCHAR(20)  NOT NULL
 );
 
 CREATE TABLE users
@@ -52,6 +55,7 @@ CREATE TABLE read_statuses
     user_id      UUID        NOT NULL,
     channel_id   UUID        NOT NULL,
     last_read_at TIMESTAMPTZ NOT NULL,
+    notification_enabled BOOLEAN     NOT NULL,
     CONSTRAINT uq_read_statues_user_channel UNIQUE (user_id, channel_id),
     CONSTRAINT fk_read_statues_users
         FOREIGN KEY (user_id)
@@ -93,5 +97,19 @@ CREATE TABLE message_attachments
     CONSTRAINT fk_message_attachments_attachments
         FOREIGN KEY (attachment_id)
             REFERENCES binary_contents (id)
+            ON DELETE CASCADE
+);
+
+CREATE TABLE notifications
+(
+    id          UUID PRIMARY KEY,
+    created_at  TIMESTAMPTZ NOT NULL,
+    updated_at  TIMESTAMPTZ,
+    receiver_id UUID        NOT NULL,
+    title       VARCHAR(255) NOT NULL,
+    content     TEXT        NOT NULL,
+    CONSTRAINT fk_notifications_receiver
+        FOREIGN KEY (receiver_id)
+            REFERENCES users (id)
             ON DELETE CASCADE
 );
