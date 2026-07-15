@@ -7,6 +7,9 @@ import com.sprint.mission.discodeit.mapper.NotificationMapper;
 import com.sprint.mission.discodeit.repository.NotificationRepository;
 import com.sprint.mission.discodeit.service.NotificationService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,8 +24,10 @@ public class BasicNotificationService implements NotificationService {
 
     private final NotificationRepository notificationRepository;
     private final NotificationMapper notificationMapper;
+    private final CacheManager cacheManager;
 
     @Override
+    @Cacheable(value = "notificationsByReceiver", key = "#receiverId")
     public List<NotificationDto> findAllByReceiverId(UUID receiverId) {
         return notificationRepository.findAllByReceiver_Id(receiverId).stream()
                 .map(notificationMapper::toDto)
@@ -40,5 +45,13 @@ public class BasicNotificationService implements NotificationService {
         }
 
         notificationRepository.delete(notification);
+        evictNotificationCache(requesterId);
+    }
+
+    private void evictNotificationCache(UUID receiverId) {
+        Cache cache = cacheManager.getCache("notificationsByReceiver");
+        if (cache != null) {
+            cache.evict(receiverId);
+        }
     }
 }

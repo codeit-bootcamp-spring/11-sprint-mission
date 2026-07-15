@@ -16,6 +16,11 @@ spring:
       max-file-size: 10MB
       max-request-size: 30MB
 
+  cache:
+    type: caffeine
+    caffeine:
+      spec: maximumSize=100,expireAfterAccess=600s,recordStats
+
   jpa:
     hibernate:
       ddl-auto: none
@@ -58,7 +63,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics,loggers
+        include: health,info,metrics,loggers,caches
 
 info:
   application:

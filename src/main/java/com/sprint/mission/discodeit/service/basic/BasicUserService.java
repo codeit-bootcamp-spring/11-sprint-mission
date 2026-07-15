@@ -15,6 +15,8 @@ import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -44,6 +46,7 @@ public class BasicUserService implements UserService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "users", allEntries = true)
     public UserDto create(UserCreateRequest request) {
         log.info("사용자 생성 요청: username={}, email={}",
                 request.username(),
@@ -104,6 +107,7 @@ public class BasicUserService implements UserService {
     }
 
     @Override
+    @Cacheable(value = "users")
     public List<UserDto> findAll() {
         log.debug("사용자 목록 조회 처리 시작");
 
@@ -122,6 +126,7 @@ public class BasicUserService implements UserService {
     @Override
     @Transactional
     @PreAuthorize("@userSecurity.isSelf(#param.id, authentication)")
+    @CacheEvict(value = "users", allEntries = true)
     public UserDto update(UserUpdateParam param) {
         log.info("사용자 수정 처리 시작: userId={}", param.id());
 
@@ -223,6 +228,7 @@ public class BasicUserService implements UserService {
     @Override
     @Transactional
     @PreAuthorize("@userSecurity.isSelf(#id, authentication)")
+    @CacheEvict(value = "users", allEntries = true)
     public void delete(UUID id) {
         log.info("사용자 삭제 처리 시작: userId={}", id);
 
@@ -246,6 +252,7 @@ public class BasicUserService implements UserService {
     @Override
     @Transactional
     @PreAuthorize("hasAuthority('ADMIN')")
+    @CacheEvict(value = "users", allEntries = true)
     public UserDto updateRole(UserRoleUpdateRequest request) {
         User user = userRepository.findById(request.userId())
                 .orElseThrow(() -> new UserNotFoundException(request.userId()));

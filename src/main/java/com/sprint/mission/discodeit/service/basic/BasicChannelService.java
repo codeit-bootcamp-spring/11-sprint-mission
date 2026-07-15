@@ -21,6 +21,8 @@ import com.sprint.mission.discodeit.security.UserOnlineStatusResolver;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -50,6 +52,7 @@ public class BasicChannelService implements ChannelService {
     @Override
     @Transactional
     @PreAuthorize("hasAuthority('CHANNEL_MANAGER')")
+    @CacheEvict(value = "channelsByUser", allEntries = true)
     public ChannelDto createPublic(PublicChannelCreateRequest request) {
         log.info("PUBLIC 채널 생성 시작: name={}", request.name());
 
@@ -63,6 +66,7 @@ public class BasicChannelService implements ChannelService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "channelsByUser", allEntries = true)
     public ChannelDto createPrivate(PrivateChannelCreateRequest request) {
         log.debug("PRIVATE 채널 참여자 목록: participantIds={}",
                 request.participantIds());
@@ -128,6 +132,7 @@ public class BasicChannelService implements ChannelService {
     }
 
     @Override
+    @Cacheable(value = "channelsByUser", key = "#userId")
     public List<ChannelDto> findAllByUserId(UUID userId) {
         log.debug("사용자별 채널 목록 조회 시작: userId={}", userId);
 
@@ -174,6 +179,7 @@ public class BasicChannelService implements ChannelService {
     @Override
     @Transactional
     @PreAuthorize("hasAuthority('CHANNEL_MANAGER')")
+    @CacheEvict(value = "channelsByUser", allEntries = true)
     public ChannelDto update(ChannelUpdateParam param) {
         log.info("채널 수정 시작: channelId={}", param.id());
 
@@ -201,6 +207,7 @@ public class BasicChannelService implements ChannelService {
     @Override
     @Transactional
     @PreAuthorize("hasAuthority('CHANNEL_MANAGER')")
+    @CacheEvict(value = "channelsByUser", allEntries = true)
     public void delete(UUID id) {
         log.info("채널 삭제 시작: channelId={}", id);
 

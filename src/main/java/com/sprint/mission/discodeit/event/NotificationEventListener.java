@@ -9,6 +9,8 @@ import com.sprint.mission.discodeit.repository.NotificationRepository;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionalEventListener;
@@ -23,6 +25,7 @@ public class NotificationEventListener {
     private final ReadStatusRepository readStatusRepository;
     private final NotificationRepository notificationRepository;
     private final UserRepository userRepository;
+    private final CacheManager cacheManager;
 
     @Async
     @TransactionalEventListener
@@ -46,6 +49,7 @@ public class NotificationEventListener {
                     message.getAuthor().getUsername() + " (#" + message.getChannel().getName() + ")",
                     message.getContent()
             ));
+            evictNotificationCache(receiver.getId());
         }
     }
 
@@ -59,5 +63,13 @@ public class NotificationEventListener {
                 "권한이 변경되었습니다.",
                 event.previousRole() + " -> " + event.newRole()
         ));
+        evictNotificationCache(receiver.getId());
+    }
+
+    private void evictNotificationCache(java.util.UUID receiverId) {
+        Cache cache = cacheManager.getCache("notificationsByReceiver");
+        if (cache != null) {
+            cache.evict(receiverId);
+        }
     }
 }
