@@ -1,6 +1,16 @@
 spring:
   application:
     name: discodeit
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+    consumer:
+      group-id: discodeit-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
 
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:dev}
@@ -17,9 +27,21 @@ spring:
       max-request-size: 30MB
 
   cache:
-    type: caffeine
-    caffeine:
-      spec: maximumSize=100,expireAfterAccess=600s,recordStats
+    cache:
+      type: redis
+      cache-names:
+        - channelsByUser
+        - notificationsByReceiver
+        - users
+      caffeine:
+        spec: maximumSize=100,expireAfterAccess=600s,recordStats
+      redis:
+        enable-statistics: true
+
+      data:
+        redis:
+          host: ${REDIS_HOST:localhost}
+          port: ${REDIS_PORT:6379}
 
   jpa:
     hibernate:

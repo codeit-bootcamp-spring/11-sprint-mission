@@ -17,7 +17,7 @@ import org.springframework.transaction.event.TransactionalEventListener;
 
 import java.util.List;
 
-@Component
+// @Component
 @RequiredArgsConstructor
 public class NotificationEventListener {
 
