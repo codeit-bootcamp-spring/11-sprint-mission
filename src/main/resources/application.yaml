@@ -65,6 +65,7 @@ discodeit:
     secret: ${JWT_SECRET}
     access-token-expiration: ${JWT_ACCESS_EXPIRATION:1800000}    # 30분 (ms)
     refresh-token-expiration: ${JWT_REFRESH_EXPIRATION:1209600000} # 2주 (ms)
+    cookie-secure: ${JWT_COOKIE_SECURE:false} # HTTPS 전용 전송 여부 (prod에서 true)
 
 logging:
   level:

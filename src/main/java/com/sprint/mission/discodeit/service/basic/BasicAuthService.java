@@ -38,8 +38,8 @@ public class BasicAuthService implements AuthService {
     return updateRoleInternal(request);
   }
 
+  // 관리자 계정 부트스트랩 전용 권한 부여 경로. @PreAuthorize를 우회하므로 인터페이스에 노출하지 않는다.
   @Transactional
-  @Override
   public UserDto updateRoleInternal(RoleUpdateRequest request) {
     UUID userId = request.userId();
     User user = userRepository.findById(userId)
@@ -58,6 +58,7 @@ public class BasicAuthService implements AuthService {
   public TokenPair reissueToken(String refreshToken) {
     if (refreshToken == null
         || !jwtTokenProvider.validateToken(refreshToken)
+        || !jwtTokenProvider.isRefreshToken(refreshToken)
         || !jwtRegistry.hasActiveJwtInformationByRefreshToken(refreshToken)) {
       throw new RefreshTokenInvalidException();
     }

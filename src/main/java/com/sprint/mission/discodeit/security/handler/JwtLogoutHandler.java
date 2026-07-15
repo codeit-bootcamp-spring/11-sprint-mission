@@ -35,13 +35,7 @@ public class JwtLogoutHandler implements LogoutHandler {
             jwtRegistry.invalidateJwtInformationByUserId(jwtTokenProvider.getUserId(refreshToken));
           }
 
-          ResponseCookie expiredCookie = ResponseCookie
-              .from(JwtTokenProvider.REFRESH_TOKEN_COOKIE_NAME, "")
-              .httpOnly(true)
-              .path("/")
-              .maxAge(0)
-              .sameSite("Strict")
-              .build();
+          ResponseCookie expiredCookie = jwtTokenProvider.expireRefreshTokenCookie();
           response.addHeader(HttpHeaders.SET_COOKIE, expiredCookie.toString());
         });
   }

@@ -18,7 +18,7 @@ import com.sprint.mission.discodeit.exception.auth.RefreshTokenInvalidException;
 import com.sprint.mission.discodeit.security.DiscodeitUserDetails;
 import com.sprint.mission.discodeit.security.DiscodeitUserDetailsService;
 import com.sprint.mission.discodeit.security.jwt.JwtTokenProvider;
-import com.sprint.mission.discodeit.service.AuthService;
+import com.sprint.mission.discodeit.service.basic.BasicAuthService;
 import jakarta.servlet.http.Cookie;
 import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
@@ -46,7 +46,7 @@ class AuthControllerTest {
   private DiscodeitUserDetailsService userDetailsService;
 
   @MockitoBean
-  private AuthService authService;
+  private BasicAuthService authService;
 
   @Test
   @DisplayName("액세스 토큰 재발급 - 성공")

@@ -3,7 +3,7 @@ package com.sprint.mission.discodeit.security.filter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.mission.discodeit.exception.ErrorResponse;
 import com.sprint.mission.discodeit.exception.auth.AccessTokenInvalidException;
-import com.sprint.mission.discodeit.security.DiscodeitUserDetailsService;
+import com.sprint.mission.discodeit.security.DiscodeitUserDetails;
 import com.sprint.mission.discodeit.security.jwt.JwtRegistry;
 import com.sprint.mission.discodeit.security.jwt.JwtTokenProvider;
 import jakarta.servlet.FilterChain;
@@ -16,7 +16,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 @RequiredArgsConstructor
@@ -25,7 +24,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
   private static final String BEARER_PREFIX = "Bearer ";
 
   private final JwtTokenProvider jwtTokenProvider;
-  private final DiscodeitUserDetailsService userDetailsService;
   private final JwtRegistry jwtRegistry;
   private final ObjectMapper objectMapper;
 
@@ -42,15 +40,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     String token = authHeader.substring(BEARER_PREFIX.length());
 
-    // 토큰이 있지만 유효하지 않으면 즉시 401을 반환한다.
+    // 토큰이 있지만 유효하지 않거나, 액세스 토큰이 아니면 즉시 401을 반환한다.
     if (!jwtTokenProvider.validateToken(token)
+        || !jwtTokenProvider.isAccessToken(token)
         || !jwtRegistry.hasActiveJwtInformationByAccessToken(token)) {
       sendUnauthorized(response);
       return;
     }
 
-    String username = jwtTokenProvider.getUsername(token);
-    UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+    // 매 요청 DB 조회 없이 JWT claim만으로 인증 주체를 구성한다. (Stateless)
+    DiscodeitUserDetails userDetails = DiscodeitUserDetails.ofClaims(
+        jwtTokenProvider.getUserId(token),
+        jwtTokenProvider.getUsername(token),
+        jwtTokenProvider.getRole(token));
 
     UsernamePasswordAuthenticationToken authentication =
         new UsernamePasswordAuthenticationToken(

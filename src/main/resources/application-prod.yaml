@@ -1,6 +1,10 @@
 server:
   port: 80
 
+discodeit:
+  jwt:
+    cookie-secure: true
+
 spring:
   datasource:
     url: ${SPRING_DATASOURCE_URL}

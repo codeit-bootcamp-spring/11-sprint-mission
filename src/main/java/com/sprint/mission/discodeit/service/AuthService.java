@@ -8,7 +8,5 @@ public interface AuthService {
 
   UserDto updateRole(RoleUpdateRequest request);
 
-  UserDto updateRoleInternal(RoleUpdateRequest request);
-
   TokenPair reissueToken(String refreshToken);
 }

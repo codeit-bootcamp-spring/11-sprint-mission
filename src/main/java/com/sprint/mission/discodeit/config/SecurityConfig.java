@@ -3,7 +3,6 @@ package com.sprint.mission.discodeit.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.mission.discodeit.entity.Role;
 import com.sprint.mission.discodeit.security.Http403ForbiddenAccessDeniedHandler;
-import com.sprint.mission.discodeit.security.DiscodeitUserDetailsService;
 import com.sprint.mission.discodeit.security.JwtAuthenticationEntryPoint;
 import com.sprint.mission.discodeit.security.LoginFailureHandler;
 import com.sprint.mission.discodeit.security.SpaCsrfTokenRequestHandler;
@@ -19,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler;
@@ -96,14 +96,13 @@ public class SecurityConfig {
   @Bean
   public JwtAuthenticationFilter jwtAuthenticationFilter(
       JwtTokenProvider jwtTokenProvider,
-      DiscodeitUserDetailsService userDetailsService,
       JwtRegistry jwtRegistry,
       ObjectMapper objectMapper) {
-    return new JwtAuthenticationFilter(jwtTokenProvider, userDetailsService, jwtRegistry,
-        objectMapper);
+    return new JwtAuthenticationFilter(jwtTokenProvider, jwtRegistry, objectMapper);
   }
 
   @Bean
+  @Profile("dev")
   public CommandLineRunner debugFilterChain(SecurityFilterChain filterChain) {
     return args -> {
       int filterSize = filterChain.getFilters().size();
