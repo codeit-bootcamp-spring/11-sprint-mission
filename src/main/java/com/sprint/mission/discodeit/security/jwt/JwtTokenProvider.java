@@ -75,25 +75,6 @@ public class JwtTokenProvider {
     return jwtProperties.refreshTokenExpiration();
   }
 
-  // 리프레시 토큰으로 새 액세스 토큰 재발급
-  public String reissueAccessToken(String refreshToken) {
-    return reissueToken(refreshToken, jwtProperties.accessTokenExpiration());
-  }
-
-  // 리프레시 토큰 로테이션: 기존 클레임으로 새 리프레시 토큰 발급
-  public String reissueRefreshToken(String refreshToken) {
-    return reissueToken(refreshToken, jwtProperties.refreshTokenExpiration());
-  }
-
-  private String reissueToken(String token, long expiration) {
-    Claims claims = parseClaims(token);
-    return generateToken(
-        claims.getSubject(),
-        claims.get(CLAIM_USER_ID, String.class),
-        claims.get(CLAIM_ROLE, String.class),
-        expiration);
-  }
-
   // 토큰 생성
   private String generateToken(DiscodeitUserDetails userDetails, long expiration) {
     return generateToken(

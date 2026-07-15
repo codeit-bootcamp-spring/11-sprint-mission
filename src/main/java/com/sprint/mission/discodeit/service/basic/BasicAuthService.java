@@ -9,6 +9,7 @@ import com.sprint.mission.discodeit.exception.auth.RefreshTokenInvalidException;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.mapper.UserMapper;
 import com.sprint.mission.discodeit.repository.UserRepository;
+import com.sprint.mission.discodeit.security.DiscodeitUserDetails;
 import com.sprint.mission.discodeit.security.jwt.JwtInformation;
 import com.sprint.mission.discodeit.security.jwt.JwtRegistry;
 import com.sprint.mission.discodeit.security.jwt.JwtTokenProvider;
@@ -52,6 +53,7 @@ public class BasicAuthService implements AuthService {
     return userMapper.toDto(user);
   }
 
+  @Transactional(readOnly = true)
   @Override
   public TokenPair reissueToken(String refreshToken) {
     if (refreshToken == null
@@ -60,11 +62,18 @@ public class BasicAuthService implements AuthService {
       throw new RefreshTokenInvalidException();
     }
 
-    String newAccessToken = jwtTokenProvider.reissueAccessToken(refreshToken);
-    String newRefreshToken = jwtTokenProvider.reissueRefreshToken(refreshToken);
+    // 재발급 시 DB에서 최신 사용자 정보를 조회해 권한 변경을 반영한다.
+    UUID userId = jwtTokenProvider.getUserId(refreshToken);
+    User user = userRepository.findById(userId)
+        .orElseThrow(() -> UserNotFoundException.withId(userId));
+    DiscodeitUserDetails userDetails =
+        new DiscodeitUserDetails(userMapper.toDto(user), user.getPassword());
+
+    String newAccessToken = jwtTokenProvider.generateAccessToken(userDetails);
+    String newRefreshToken = jwtTokenProvider.generateRefreshToken(userDetails);
 
     JwtInformation newJwtInformation = new JwtInformation(
-        jwtTokenProvider.getUserId(refreshToken),
+        userId,
         newAccessToken,
         newRefreshToken,
         jwtTokenProvider.getExpiration(newRefreshToken));

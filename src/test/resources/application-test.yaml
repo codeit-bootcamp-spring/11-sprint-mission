@@ -15,6 +15,16 @@ spring:
     init:
       mode: never
 
+discodeit:
+  admin:
+    username: admin
+    email: admin@test.com
+    password: admin1234
+  jwt:
+    secret: test-secret-key-for-jwt-must-be-at-least-256-bits-long-000000
+    access-token-expiration: 1800000
+    refresh-token-expiration: 1209600000
+
 logging:
   level:
     com.sprint.mission.discodeit: debug

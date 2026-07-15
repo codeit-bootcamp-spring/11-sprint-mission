@@ -11,6 +11,8 @@ public enum ErrorCode {
 
   // 인증(JWT) 관련 에러 코드
   REFRESH_TOKEN_INVALID("유효하지 않은 리프레시 토큰입니다."),
+  ACCESS_TOKEN_INVALID("유효하지 않은 액세스 토큰입니다."),
+  AUTHENTICATION_REQUIRED("인증이 필요합니다."),
 
   // Channel 관련 에러 코드
   CHANNEL_NOT_FOUND("채널을 찾을 수 없습니다."),

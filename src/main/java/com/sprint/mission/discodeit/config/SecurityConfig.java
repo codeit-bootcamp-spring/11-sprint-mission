@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.mission.discodeit.entity.Role;
 import com.sprint.mission.discodeit.security.Http403ForbiddenAccessDeniedHandler;
 import com.sprint.mission.discodeit.security.DiscodeitUserDetailsService;
+import com.sprint.mission.discodeit.security.JwtAuthenticationEntryPoint;
 import com.sprint.mission.discodeit.security.LoginFailureHandler;
 import com.sprint.mission.discodeit.security.SpaCsrfTokenRequestHandler;
 import com.sprint.mission.discodeit.security.filter.JwtAuthenticationFilter;
@@ -31,7 +32,6 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.Http403ForbiddenEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.logout.HttpStatusReturningLogoutSuccessHandler;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
@@ -82,7 +82,7 @@ public class SecurityConfig {
             .anyRequest().authenticated()
         )
         .exceptionHandling(ex -> ex
-            .authenticationEntryPoint(new Http403ForbiddenEntryPoint())
+            .authenticationEntryPoint(new JwtAuthenticationEntryPoint(objectMapper))
             .accessDeniedHandler(new Http403ForbiddenAccessDeniedHandler(objectMapper))
         )
         .sessionManagement(session -> session
@@ -97,8 +97,10 @@ public class SecurityConfig {
   public JwtAuthenticationFilter jwtAuthenticationFilter(
       JwtTokenProvider jwtTokenProvider,
       DiscodeitUserDetailsService userDetailsService,
-      JwtRegistry jwtRegistry) {
-    return new JwtAuthenticationFilter(jwtTokenProvider, userDetailsService, jwtRegistry);
+      JwtRegistry jwtRegistry,
+      ObjectMapper objectMapper) {
+    return new JwtAuthenticationFilter(jwtTokenProvider, userDetailsService, jwtRegistry,
+        objectMapper);
   }
 
   @Bean
