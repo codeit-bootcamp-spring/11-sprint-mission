@@ -72,7 +72,7 @@ public class BasicReadStatusService implements ReadStatusService {
 
         readStatus.update(
                 param.request().newLastReadAt(),
-                param.request().notificationEnabled()
+                param.request().newNotificationEnabled()
         );
         return readStatusMapper.toDto(readStatus);
     }
