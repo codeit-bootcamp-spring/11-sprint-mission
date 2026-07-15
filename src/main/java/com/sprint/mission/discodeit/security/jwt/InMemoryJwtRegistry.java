@@ -8,11 +8,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class InMemoryJwtRegistry implements JwtRegistry {
-
-  // <userId, Queue<JwtInformation>>
+  
   private final Map<UUID, Queue<JwtInformation>> origin = new ConcurrentHashMap<>();
-  // 토큰 조회를 O(1)로 처리하기 위한 역인덱스. origin과 항상 함께 갱신한다.
-  private final Map<String, UUID> accessTokenIndex = new ConcurrentHashMap<>();
+  // refreshToken -> userId 역인덱스로 조회를 O(1)로 처리한다. origin과 항상 함께 갱신한다.
   private final Map<String, UUID> refreshTokenIndex = new ConcurrentHashMap<>();
   private final int maxActiveJwtCount;
 
@@ -25,12 +23,12 @@ public class InMemoryJwtRegistry implements JwtRegistry {
     Queue<JwtInformation> queue = origin.computeIfAbsent(
         jwtInformation.userId(), key -> new ConcurrentLinkedQueue<>());
     queue.add(jwtInformation);
-    addToIndexes(jwtInformation);
+    refreshTokenIndex.put(jwtInformation.refreshToken(), jwtInformation.userId());
 
     while (queue.size() > maxActiveJwtCount) {
       JwtInformation evicted = queue.poll();
       if (evicted != null) {
-        removeFromIndexes(evicted);
+        refreshTokenIndex.remove(evicted.refreshToken());
       }
     }
   }
@@ -39,7 +37,7 @@ public class InMemoryJwtRegistry implements JwtRegistry {
   public void invalidateJwtInformationByUserId(UUID userId) {
     Queue<JwtInformation> queue = origin.remove(userId);
     if (queue != null) {
-      queue.forEach(this::removeFromIndexes);
+      queue.forEach(info -> refreshTokenIndex.remove(info.refreshToken()));
     }
   }
 
@@ -47,11 +45,6 @@ public class InMemoryJwtRegistry implements JwtRegistry {
   public boolean hasActiveJwtInformationByUserId(UUID userId) {
     Queue<JwtInformation> queue = origin.get(userId);
     return queue != null && !queue.isEmpty();
-  }
-
-  @Override
-  public boolean hasActiveJwtInformationByAccessToken(String accessToken) {
-    return accessTokenIndex.containsKey(accessToken);
   }
 
   @Override
@@ -69,7 +62,7 @@ public class InMemoryJwtRegistry implements JwtRegistry {
         queue.removeIf(info -> {
           boolean matched = info.refreshToken().equals(oldRefreshToken);
           if (matched) {
-            removeFromIndexes(info);
+            refreshTokenIndex.remove(info.refreshToken());
           }
           return matched;
         });
@@ -85,20 +78,10 @@ public class InMemoryJwtRegistry implements JwtRegistry {
     origin.values().forEach(queue -> queue.removeIf(info -> {
       boolean expired = info.expiration().isBefore(now);
       if (expired) {
-        removeFromIndexes(info);
+        refreshTokenIndex.remove(info.refreshToken());
       }
       return expired;
     }));
     origin.entrySet().removeIf(entry -> entry.getValue().isEmpty());
-  }
-
-  private void addToIndexes(JwtInformation jwtInformation) {
-    accessTokenIndex.put(jwtInformation.accessToken(), jwtInformation.userId());
-    refreshTokenIndex.put(jwtInformation.refreshToken(), jwtInformation.userId());
-  }
-
-  private void removeFromIndexes(JwtInformation jwtInformation) {
-    accessTokenIndex.remove(jwtInformation.accessToken());
-    refreshTokenIndex.remove(jwtInformation.refreshToken());
   }
 }

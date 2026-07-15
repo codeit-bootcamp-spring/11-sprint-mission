@@ -10,8 +10,6 @@ public interface JwtRegistry {
 
   boolean hasActiveJwtInformationByUserId(UUID userId);
 
-  boolean hasActiveJwtInformationByAccessToken(String accessToken);
-
   boolean hasActiveJwtInformationByRefreshToken(String refreshToken);
 
   JwtInformation rotateJwtInformation(String oldRefreshToken, JwtInformation newJwtInformation);

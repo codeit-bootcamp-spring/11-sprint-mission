@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.mission.discodeit.exception.ErrorResponse;
 import com.sprint.mission.discodeit.exception.auth.AccessTokenInvalidException;
 import com.sprint.mission.discodeit.security.DiscodeitUserDetails;
-import com.sprint.mission.discodeit.security.jwt.JwtRegistry;
 import com.sprint.mission.discodeit.security.jwt.JwtTokenProvider;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -24,7 +23,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
   private static final String BEARER_PREFIX = "Bearer ";
 
   private final JwtTokenProvider jwtTokenProvider;
-  private final JwtRegistry jwtRegistry;
   private final ObjectMapper objectMapper;
 
   @Override
@@ -40,10 +38,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     String token = authHeader.substring(BEARER_PREFIX.length());
 
-    // 토큰이 있지만 유효하지 않거나, 액세스 토큰이 아니면 즉시 401을 반환한다.
+    // 액세스 토큰은 무상태로 검증한다. (서버 조회 없이 서명·type·만료만 확인)
     if (!jwtTokenProvider.validateToken(token)
-        || !jwtTokenProvider.isAccessToken(token)
-        || !jwtRegistry.hasActiveJwtInformationByAccessToken(token)) {
+        || !jwtTokenProvider.isAccessToken(token)) {
       sendUnauthorized(response);
       return;
     }

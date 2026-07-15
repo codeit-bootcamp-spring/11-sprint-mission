@@ -75,7 +75,6 @@ public class BasicAuthService implements AuthService {
 
     JwtInformation newJwtInformation = new JwtInformation(
         userId,
-        newAccessToken,
         newRefreshToken,
         jwtTokenProvider.getExpiration(newRefreshToken));
     jwtRegistry.rotateJwtInformation(refreshToken, newJwtInformation);

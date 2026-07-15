@@ -21,8 +21,11 @@ services:
       - AWS_S3_REGION=${AWS_S3_REGION}
       - AWS_S3_BUCKET=${AWS_S3_BUCKET}
       - AWS_S3_PRESIGNED_URL_EXPIRATION=600
+      - SPRING_DATA_REDIS_HOST=redis
+      - SPRING_DATA_REDIS_PORT=6379
     depends_on:
       - db
+      - redis
     volumes:
       - binary-content-storage:/app/.discodeit/storage
     networks:
@@ -43,9 +46,21 @@ services:
     networks:
       - discodeit-network
 
+  redis:
+    image: redis:7-alpine
+    container_name: discodeit-redis
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - discodeit-network
+
 volumes:
   postgres-data:
   binary-content-storage:
+  redis-data:
 
 networks:
   discodeit-network:

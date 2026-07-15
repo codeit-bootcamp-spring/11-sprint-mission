@@ -25,6 +25,9 @@ management:
   endpoint:
     health:
       show-details: always
+  health:
+    redis:
+      enabled: false 
 
 info:
   name: Discodeit
@@ -66,6 +69,7 @@ discodeit:
     access-token-expiration: ${JWT_ACCESS_EXPIRATION:1800000}    # 30분 (ms)
     refresh-token-expiration: ${JWT_REFRESH_EXPIRATION:1209600000} # 2주 (ms)
     cookie-secure: ${JWT_COOKIE_SECURE:false} # HTTPS 전용 전송 여부 (prod에서 true)
+    registry: ${JWT_REGISTRY:memory} # 토큰 저장소: memory(단일 인스턴스) | redis(다중 인스턴스)
 
 logging:
   level:

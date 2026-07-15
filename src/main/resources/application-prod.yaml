@@ -4,8 +4,13 @@ server:
 discodeit:
   jwt:
     cookie-secure: true
+    registry: redis
 
 spring:
+  data:
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST:redis}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
   datasource:
     url: ${SPRING_DATASOURCE_URL}
     username: ${SPRING_DATASOURCE_USERNAME}
@@ -24,6 +29,9 @@ management:
   endpoint:
     health:
       show-details: never
+  health:
+    redis:
+      enabled: true
   info:
     env:
       enabled: false

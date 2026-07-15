@@ -38,7 +38,6 @@ public class JwtLoginSuccessHandler implements AuthenticationSuccessHandler {
     jwtRegistry.invalidateJwtInformationByUserId(userDetails.getUserDto().id());
     jwtRegistry.registerJwtInformation(new JwtInformation(
         userDetails.getUserDto().id(),
-        accessToken,
         refreshToken,
         jwtTokenProvider.getExpiration(refreshToken)));
 

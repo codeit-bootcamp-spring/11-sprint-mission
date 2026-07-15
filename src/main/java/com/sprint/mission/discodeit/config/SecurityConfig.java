@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.stream.IntStream;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -96,9 +97,8 @@ public class SecurityConfig {
   @Bean
   public JwtAuthenticationFilter jwtAuthenticationFilter(
       JwtTokenProvider jwtTokenProvider,
-      JwtRegistry jwtRegistry,
       ObjectMapper objectMapper) {
-    return new JwtAuthenticationFilter(jwtTokenProvider, jwtRegistry, objectMapper);
+    return new JwtAuthenticationFilter(jwtTokenProvider, objectMapper);
   }
 
   @Bean
@@ -139,7 +139,10 @@ public class SecurityConfig {
     return handler;
   }
 
+  // 기본은 InMemory. 다중 인스턴스 프로덕션은 discodeit.jwt.registry=redis 로 RedisJwtRegistry 사용.
   @Bean
+  @ConditionalOnProperty(prefix = "discodeit.jwt", name = "registry", havingValue = "memory",
+      matchIfMissing = true)
   public JwtRegistry jwtRegistry() {
     return new InMemoryJwtRegistry(1);
   }
