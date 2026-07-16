@@ -1,9 +1,11 @@
 package com.sprint.mission.discodeit.security.handler;
 
+import com.sprint.mission.discodeit.security.jwt.JwtRegistry;
 import com.sprint.mission.discodeit.security.jwt.JwtTokenProvider;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.Arrays;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
@@ -15,7 +17,8 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class JwtLogoutHandler implements LogoutHandler {
 
-    // JwtRegistry는 다음 섹션에서 구현 후 주입 예정
+    private final JwtTokenProvider jwtTokenProvider;
+    private final JwtRegistry jwtRegistry;
 
     @Override
     public void logout(HttpServletRequest request, HttpServletResponse response,
@@ -29,7 +32,12 @@ public class JwtLogoutHandler implements LogoutHandler {
             .filter(cookie -> cookie.getName().equals(JwtTokenProvider.REFRESH_TOKEN_COOKIE_NAME))
             .findFirst()
             .ifPresent(cookie -> {
-                // TODO: JwtRegistry 구현 후 무효화 처리 추가
+                try {
+                    String userId = jwtTokenProvider.getSubject(cookie.getValue());
+                    jwtRegistry.invalidateJwtInformationByUserId(UUID.fromString(userId));
+                } catch (Exception ignored) {
+                    // 리프레시 토큰이 만료/손상되어도 쿠키 삭제는 진행
+                }
 
                 ResponseCookie expiredCookie = ResponseCookie
                     .from(JwtTokenProvider.REFRESH_TOKEN_COOKIE_NAME, "")

@@ -63,8 +63,9 @@ discodeit:
     password: ${DISCODEIT_ADMIN_PASSWORD}
   jwt:
     secret: ${JWT_SECRET}
-    access-token-expiration: ${JWT_ACCESS_EXPIRATION:1800000}    # 기본값: 30분
-    refresh-token-expiration: ${JWT_REFRESH_EXPIRATION:1209600000} # 기본값: 2주
+    access-token-expiration: ${JWT_ACCESS_EXPIRATION:1800000}        # 기본값: 30분
+    refresh-token-expiration: ${JWT_REFRESH_EXPIRATION:1209600000}   # 기본값: 2주
+    max-active-jwt-count: ${JWT_MAX_ACTIVE_COUNT:1}                  # 기본값: 동시 로그인 1개
 
 logging:
   level:

@@ -3,10 +3,13 @@ package com.sprint.mission.discodeit.security.handler;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.mission.discodeit.dto.data.JwtDto;
 import com.sprint.mission.discodeit.security.DiscodeitUserDetails;
+import com.sprint.mission.discodeit.security.jwt.JwtInformation;
+import com.sprint.mission.discodeit.security.jwt.JwtRegistry;
 import com.sprint.mission.discodeit.security.jwt.JwtTokenProvider;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -21,7 +24,7 @@ public class JwtLoginSuccessHandler implements AuthenticationSuccessHandler {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final ObjectMapper objectMapper;
-    // JwtRegistry는 후반부 구현 후 주입 예정
+    private final JwtRegistry jwtRegistry;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
@@ -30,6 +33,10 @@ public class JwtLoginSuccessHandler implements AuthenticationSuccessHandler {
 
         String accessToken = jwtTokenProvider.generateAccessToken(userDetails);
         String refreshToken = jwtTokenProvider.generateRefreshToken(userDetails);
+
+        Instant expiration = jwtTokenProvider.getExpiration(refreshToken);
+        jwtRegistry.registerJwtInformation(
+            new JwtInformation(userDetails.getUserDto().id(), accessToken, refreshToken, expiration));
 
         ResponseCookie refreshTokenCookie = ResponseCookie
             .from(JwtTokenProvider.REFRESH_TOKEN_COOKIE_NAME, refreshToken)

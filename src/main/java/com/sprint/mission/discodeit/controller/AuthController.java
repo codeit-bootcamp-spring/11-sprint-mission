@@ -8,9 +8,12 @@ import com.sprint.mission.discodeit.exception.jwt.JwtException;
 import com.sprint.mission.discodeit.exception.jwt.RefreshTokenInvalidException;
 import com.sprint.mission.discodeit.security.DiscodeitUserDetails;
 import com.sprint.mission.discodeit.security.DiscodeitUserDetailsService;
+import com.sprint.mission.discodeit.security.jwt.JwtInformation;
+import com.sprint.mission.discodeit.security.jwt.JwtRegistry;
 import com.sprint.mission.discodeit.security.jwt.JwtTokenProvider;
 import com.sprint.mission.discodeit.service.AuthService;
 import jakarta.servlet.http.HttpServletResponse;
+import java.time.Instant;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,6 +37,7 @@ public class AuthController  {
   private final AuthService authService;
   private final JwtTokenProvider jwtTokenProvider;
   private final DiscodeitUserDetailsService userDetailsService;
+  private final JwtRegistry jwtRegistry;
 
   @PostMapping("refresh")
   public ResponseEntity<JwtDto> refresh(
@@ -49,11 +53,20 @@ public class AuthController  {
       throw new RefreshTokenInvalidException();
     }
 
+    if (!jwtRegistry.hasActiveJwtInformationByRefreshToken(refreshToken)) {
+      throw new RefreshTokenInvalidException();
+    }
+
     String userId = jwtTokenProvider.getSubject(refreshToken);
     DiscodeitUserDetails userDetails = userDetailsService.loadUserById(UUID.fromString(userId));
 
     String newAccessToken = jwtTokenProvider.generateAccessToken(userDetails);
     String newRefreshToken = jwtTokenProvider.generateRefreshToken(userDetails);
+
+    Instant expiration = jwtTokenProvider.getExpiration(newRefreshToken);
+    JwtInformation newJwtInformation = new JwtInformation(
+        userDetails.getUserDto().id(), newAccessToken, newRefreshToken, expiration);
+    jwtRegistry.rotateJwtInformation(refreshToken, newJwtInformation);
 
     ResponseCookie refreshTokenCookie = ResponseCookie
         .from(JwtTokenProvider.REFRESH_TOKEN_COOKIE_NAME, newRefreshToken)
