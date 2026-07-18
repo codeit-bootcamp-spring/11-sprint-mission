@@ -177,6 +177,7 @@ public class BasicUserService implements UserService {
         .orElseThrow(() -> new UserNotFoundException(request.userId()));
     Role previousRole = user.getRole();
     user.updateRole(request.newRole());
+    jwtRegistry.invalidateJwtInformationByUserId(user.getId());
     eventPublisher.publishEvent(
         new RoleUpdatedEvent(user.getId(), previousRole, request.newRole()));
     return toDto(user);

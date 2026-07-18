@@ -34,6 +34,8 @@ public class JwtLogoutHandler implements LogoutHandler {
 
           Cookie expiredCookie = new Cookie(JwtTokenProvider.REFRESH_TOKEN_COOKIE_NAME, null);
           expiredCookie.setHttpOnly(true);
+          expiredCookie.setSecure(true);
+          expiredCookie.setAttribute("SameSite", "Lax");
           expiredCookie.setPath("/");
           expiredCookie.setMaxAge(0);
           response.addCookie(expiredCookie);

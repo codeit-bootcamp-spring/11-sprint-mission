@@ -41,6 +41,8 @@ public class JwtLoginSuccessHandler implements AuthenticationSuccessHandler {
     // 리프레시 토큰 → 쿠키
     Cookie refreshCookie = new Cookie(JwtTokenProvider.REFRESH_TOKEN_COOKIE_NAME, refreshToken);
     refreshCookie.setHttpOnly(true);
+    refreshCookie.setSecure(true);
+    refreshCookie.setAttribute("SameSite", "Lax");
     refreshCookie.setPath("/");
     refreshCookie.setMaxAge((int) (jwtTokenProvider.getRefreshTokenExpiration() / 1000));
     response.addCookie(refreshCookie);
