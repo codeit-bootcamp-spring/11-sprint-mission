@@ -20,6 +20,8 @@ import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -42,6 +44,7 @@ public class BasicUserService implements UserService {
 
   @Override
   @Transactional
+  @CacheEvict(cacheNames = "users", allEntries = true)
   public UserDto create(UserCreateRequest request, MultipartFile profile) {
     log.debug("사용자 생성 요청 - username: {}, email: {}", request.username(), request.email());
 
@@ -92,6 +95,7 @@ public class BasicUserService implements UserService {
   }
 
   @Override
+  @Cacheable(cacheNames = "users")
   public List<UserDto> findAll() {
     log.debug("사용자 전체 조회");
     return userRepository.findAll().stream()
@@ -101,6 +105,7 @@ public class BasicUserService implements UserService {
 
   @Override
   @Transactional
+  @CacheEvict(cacheNames = "users", allEntries = true)
   @PreAuthorize("authentication.principal.userDto.id == #id")
   public UserDto update(UUID id, UserUpdateRequest request, MultipartFile profile) {
     log.debug("사용자 수정 요청 - id: {}", id);
@@ -150,6 +155,7 @@ public class BasicUserService implements UserService {
 
   @Override
   @Transactional
+  @CacheEvict(cacheNames = "users", allEntries = true)
   @PreAuthorize("authentication.principal.userDto.id == #id")
   public void delete(UUID id) {
     log.debug("사용자 삭제 요청 - id: {}", id);
@@ -164,6 +170,7 @@ public class BasicUserService implements UserService {
 
   @Override
   @Transactional
+  @CacheEvict(cacheNames = "users", allEntries = true)
   @PreAuthorize("hasRole('ADMIN')")
   public UserDto updateRole(UserRoleUpdateRequest request) {
     User user = userRepository.findById(request.userId())
