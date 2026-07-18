@@ -8,9 +8,12 @@ import com.sprint.mission.discodeit.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
-import org.springframework.stereotype.Component;
 
-@Component
+/**
+ * Kafka 도입(2.6) 이후 비활성화됨.
+ * S3 업로드 실패 알림 책임은 {@code event.kafka.KafkaProduceRequiredEventListener}(발행)와
+ * {@code event.kafka.NotificationRequiredTopicListener}(구독/알림 생성)로 이전되었다.
+ */
 @RequiredArgsConstructor
 public class S3UploadFailureListener {
 

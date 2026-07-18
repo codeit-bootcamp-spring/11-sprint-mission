@@ -8,10 +8,15 @@ import com.sprint.mission.discodeit.service.NotificationService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Async;
-import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionalEventListener;
 
-@Component
+/**
+ * Kafka 도입(2.6) 이후 비활성화됨.
+ * 알림 생성 책임은 {@code event.kafka.KafkaProduceRequiredEventListener}(발행)와
+ * {@code event.kafka.NotificationRequiredTopicListener}(구독/알림 생성)로 이전되었다.
+ * 로컬(같은 프로세스) 이벤트 처리로 되돌리려면 @Component를 다시 붙이고
+ * KafkaProduceRequiredEventListener를 비활성화하면 된다.
+ */
 @RequiredArgsConstructor
 public class NotificationRequiredEventListener {
 
