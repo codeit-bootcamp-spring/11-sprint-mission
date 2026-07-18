@@ -44,6 +44,8 @@ dependencies {
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     testRuntimeOnly 'com.h2database:h2'
     implementation 'software.amazon.awssdk:s3:2.31.7'
+    implementation 'org.springframework.retry:spring-retry'
+    implementation 'org.springframework.boot:spring-boot-starter-aop'
 
 }
 
