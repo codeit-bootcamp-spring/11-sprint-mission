@@ -8,9 +8,13 @@ import java.time.Duration;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -19,6 +23,7 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 
+@Slf4j
 @ConditionalOnProperty(name = "discodeit.storage.type", havingValue = "s3")
 @Component
 public class S3BinaryContentStorage implements BinaryContentStorage {
@@ -53,26 +58,40 @@ public class S3BinaryContentStorage implements BinaryContentStorage {
         .build();
   }
 
+  @Retryable(
+      retryFor = SdkException.class,
+      maxAttempts = 3,
+      backoff = @Backoff(delay = 1000, multiplier = 2)
+  )
   @Override
   public UUID put(UUID id, byte[] bytes) {
-    s3Client.putObject(
-        PutObjectRequest.builder()
-            .bucket(bucket)
-            .key(id.toString())
-            .build(),
-        RequestBody.fromBytes(bytes)
-    );
-    return id;
+    try {
+      s3Client.putObject(
+          PutObjectRequest.builder()
+              .bucket(bucket)
+              .key(id.toString())
+              .build(),
+          RequestBody.fromBytes(bytes)
+      );
+      log.info("S3 upload success: bucket={}, key={}, size={}", bucket, id, bytes.length);
+      return id;
+    } catch (SdkException e) {
+      log.warn("S3 upload attempt fail: bucket={}, key={}, size={}, exceptionType={}, reason={}",
+          bucket, id, bytes.length, e.getClass().getSimpleName(), e.getMessage(), e);
+      throw e;
+    }
   }
 
   @Override
   public InputStream get(UUID id) {
-    return s3Client.getObject(
+    InputStream result = s3Client.getObject(
         GetObjectRequest.builder()
             .bucket(bucket)
             .key(id.toString())
             .build()
     );
+    log.info("S3 download success: bucket={}, key={}", bucket, id);
+    return result;
   }
 
   @Override
@@ -86,6 +105,8 @@ public class S3BinaryContentStorage implements BinaryContentStorage {
                 .build())
             .build()
     ).url().toString();
+    log.info("S3 presigned-url generate success: bucket={}, key={}, fileName={}",
+        bucket, dto.id(), dto.fileName());
     return new DownloadResult.Redirect(url);
   }
 }
