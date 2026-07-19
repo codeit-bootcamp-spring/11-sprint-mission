@@ -9,6 +9,7 @@ import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.event.BinaryContentCreatedEvent;
 import com.sprint.mission.discodeit.exception.channel.ChannelNotFoundException;
 import com.sprint.mission.discodeit.exception.message.MessageNotFoundException;
 import com.sprint.mission.discodeit.exception.message.MessageWithoutChannelAccessException;
@@ -20,13 +21,13 @@ import com.sprint.mission.discodeit.repository.MessageRepository;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.MessageService;
-import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.security.access.prepost.PostAuthorize;
@@ -46,7 +47,7 @@ public class BasicMessageService implements MessageService {
   private final ReadStatusRepository readStatusRepository;
   private final MessageMapper mapper;
   private final PageMapper pageMapper;
-  private final BinaryContentStorage binaryContentStorage;
+  private final ApplicationEventPublisher eventPublisher;
 
   @Transactional
   @Override
@@ -70,7 +71,8 @@ public class BasicMessageService implements MessageService {
           .map(req -> {
             BinaryContent attachment = new BinaryContent(req.fileName(), req.size(),
                 req.contentType());
-            this.binaryContentStorage.put(attachment.getId(), req.bytes());
+            this.eventPublisher.publishEvent(
+                new BinaryContentCreatedEvent(attachment.getId(), req.bytes()));
             return attachment;
           })
           .toList();
@@ -134,7 +136,8 @@ public class BasicMessageService implements MessageService {
           .map(req -> {
             BinaryContent attachment = new BinaryContent(req.fileName(), req.size(),
                 req.contentType());
-            this.binaryContentStorage.put(attachment.getId(), req.bytes());
+            this.eventPublisher.publishEvent(
+                new BinaryContentCreatedEvent(attachment.getId(), req.bytes()));
             return attachment;
           })
           .toList();
