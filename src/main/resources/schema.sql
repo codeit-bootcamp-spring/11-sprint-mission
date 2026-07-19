@@ -69,3 +69,12 @@ CREATE TABLE IF NOT EXISTS message_attachments (
     FOREIGN KEY (message_id) REFERENCES messages (id) ON DELETE CASCADE,
     FOREIGN KEY (attachment_id) REFERENCES binary_contents (id) ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS notifications (
+    id          UUID PRIMARY KEY,
+    created_at  TIMESTAMPTZ  NOT NULL,
+    receiver_id UUID         NOT NULL,
+    title       VARCHAR(255) NOT NULL,
+    content     TEXT         NOT NULL,
+    FOREIGN KEY (receiver_id) REFERENCES users (id) ON DELETE CASCADE
+);

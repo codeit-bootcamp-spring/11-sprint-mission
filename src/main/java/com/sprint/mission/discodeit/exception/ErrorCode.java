@@ -39,6 +39,10 @@ public enum ErrorCode {
   BINARY_CONTENT_NOT_FOUND("BINARY_CONTENT_001", "requested binary content not found.",
       HttpStatus.NOT_FOUND),
 
+  // Notification
+  NOTIFICATION_NOT_FOUND("NOTIFICATION_001", "requested notification not found.",
+      HttpStatus.NOT_FOUND),
+
   // Common
   UNEXPECTED_ERROR("COMMON_001", "unexpected error occurred.", HttpStatus.INTERNAL_SERVER_ERROR),
   VALIDATION_ERROR("COMMON_002", "request validation failed.", HttpStatus.BAD_REQUEST);
