@@ -1,15 +1,19 @@
 package com.sprint.mission.discodeit.storage.s3;
 
 import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentResponse;
+import com.sprint.mission.discodeit.event.S3UploadFailedEvent;
 import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import com.sprint.mission.discodeit.storage.DownloadResult;
 import java.io.InputStream;
 import java.time.Duration;
 import java.util.UUID;
+import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Recover;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
@@ -32,16 +36,19 @@ public class S3BinaryContentStorage implements BinaryContentStorage {
   private final long presignedUrlExpiration;
   private final S3Client s3Client;
   private final S3Presigner s3Presigner;
+  private final ApplicationEventPublisher eventPublisher;
 
   public S3BinaryContentStorage(
       @Value("${discodeit.storage.s3.access-key}") String accessKey,
       @Value("${discodeit.storage.s3.secret-key}") String secretKey,
       @Value("${discodeit.storage.s3.region}") String region,
       @Value("${discodeit.storage.s3.bucket}") String bucket,
-      @Value("${discodeit.storage.s3.presigned-url-expiration}") long presignedUrlExpiration
+      @Value("${discodeit.storage.s3.presigned-url-expiration}") long presignedUrlExpiration,
+      ApplicationEventPublisher eventPublisher
   ) {
     this.bucket = bucket;
     this.presignedUrlExpiration = presignedUrlExpiration;
+    this.eventPublisher = eventPublisher;
 
     AwsBasicCredentials credentials = AwsBasicCredentials.create(accessKey, secretKey);
     StaticCredentialsProvider credentialsProvider = StaticCredentialsProvider.create(credentials);
@@ -80,6 +87,16 @@ public class S3BinaryContentStorage implements BinaryContentStorage {
           bucket, id, bytes.length, e.getClass().getSimpleName(), e.getMessage(), e);
       throw e;
     }
+  }
+
+  @Recover
+  public UUID recover(SdkException e, UUID id, byte[] bytes) {
+    String requestId = MDC.get("requestId");
+    log.error("S3 upload fail after retries exhausted: bucket={}, key={}, requestId={}, reason={}",
+        bucket, id, requestId, e.getMessage(), e);
+
+    this.eventPublisher.publishEvent(new S3UploadFailedEvent(requestId, id, e.getMessage()));
+    throw e;
   }
 
   @Override

@@ -1,11 +1,14 @@
 package com.sprint.mission.discodeit.event;
 
 import com.sprint.mission.discodeit.entity.ReadStatus;
+import com.sprint.mission.discodeit.entity.Role;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
+import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionalEventListener;
@@ -16,6 +19,7 @@ import org.springframework.transaction.event.TransactionalEventListener;
 public class NotificationRequiredEventListener {
 
   private final ReadStatusRepository readStatusRepository;
+  private final UserRepository userRepository;
   private final NotificationService notificationService;
 
   @Async("eventTaskExecutor")
@@ -47,5 +51,18 @@ public class NotificationRequiredEventListener {
         event.userId(), "권한이 변경되었습니다.", content);
 
     log.info("notification role-updated success: userId={}", event.userId());
+  }
+
+  @EventListener
+  public void on(S3UploadFailedEvent event) {
+    log.debug("notification s3-upload-failed trial: binaryContentId={}", event.binaryContentId());
+    String content = "RequestId: %s\nBinaryContentId: %s\nError: %s".formatted(
+        event.requestId(), event.binaryContentId(), event.errorMessage());
+
+    this.userRepository.findAllByRole(Role.ADMIN)
+        .forEach(admin -> this.notificationService.createNotification(
+            admin.getId(), "S3 파일 업로드 실패", content));
+
+    log.info("notification s3-upload-failed success: binaryContentId={}", event.binaryContentId());
   }
 }
