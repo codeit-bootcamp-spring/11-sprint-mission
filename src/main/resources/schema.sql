@@ -7,10 +7,9 @@ CREATE TABLE users
     updated_at timestamp with time zone,
     username   varchar(50) UNIQUE       NOT NULL,
     email      varchar(100) UNIQUE      NOT NULL,
-    password      varchar(60)              NOT NULL,
-    profile_id    uuid,
-    role          varchar(20)              NOT NULL,
-    refresh_token varchar(1000)
+    password   varchar(60)              NOT NULL,
+    profile_id uuid,
+    role       varchar(20)              NOT NULL
 );
 
 -- BinaryContent
@@ -18,11 +17,18 @@ CREATE TABLE binary_contents
 (
     id           uuid PRIMARY KEY,
     created_at   timestamp with time zone NOT NULL,
+    updated_at   timestamp with time zone,
     file_name    varchar(255)             NOT NULL,
     size         bigint                   NOT NULL,
-    content_type varchar(100)             NOT NULL
+    content_type varchar(100)             NOT NULL,
+    status       varchar(20)              NOT NULL
 --     ,bytes        bytea        NOT NULL
 );
+
+-- ALTER TABLE binary_contents
+--      ADD COLUMN updated_at timestamp with time zone;
+-- ALTER TABLE binary_contents
+--      ADD COLUMN status varchar(20) NOT NULL DEFAULT 'SUCCESS';
 
 
 -- Channel

@@ -3,24 +3,22 @@ package com.sprint.mission.discodeit.security.jwt;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
+import com.nimbusds.jose.JWSSigner;
+import com.nimbusds.jose.JWSVerifier;
 import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jose.crypto.MACVerifier;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import com.sprint.mission.discodeit.dto.data.UserDto;
-import com.sprint.mission.discodeit.entity.Role;
-import com.sprint.mission.discodeit.exception.jwt.ExpiredJwtTokenException;
-import com.sprint.mission.discodeit.exception.jwt.InvalidJwtTokenException;
-import com.sprint.mission.discodeit.exception.jwt.JwtException;
+import com.sprint.mission.discodeit.security.DiscodeitUserDetails;
+import jakarta.servlet.http.Cookie;
 import java.nio.charset.StandardCharsets;
-import java.text.ParseException;
-import java.time.Duration;
-import java.time.Instant;
 import java.util.Date;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.ResponseCookie;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Component;
 
 @Slf4j
@@ -29,167 +27,159 @@ public class JwtTokenProvider {
 
   public static final String REFRESH_TOKEN_COOKIE_NAME = "REFRESH_TOKEN";
 
-  private static final String CLAIM_USERNAME = "username";
-  private static final String CLAIM_EMAIL = "email";
-  private static final String CLAIM_ROLE = "role";
-  private static final String CLAIM_TOKEN_TYPE = "tokenType";
+  private final int accessTokenExpirationMs;
+  private final int refreshTokenExpirationMs;
 
-  private final MACSigner signer;
-  private final MACVerifier verifier;
-  private final long accessTokenExpirationSeconds;
-  private final long refreshTokenExpirationSeconds;
+  private final JWSSigner accessTokenSigner;
+  private final JWSVerifier accessTokenVerifier;
+  private final JWSSigner refreshTokenSigner;
+  private final JWSVerifier refreshTokenVerifier;
 
   public JwtTokenProvider(
-      @Value("${discodeit.jwt.secret}") String secret,
-      @Value("${discodeit.jwt.access-token-expiration}") long accessTokenExpirationSeconds,
-      @Value("${discodeit.jwt.refresh-token-expiration}") long refreshTokenExpirationSeconds
-  ) {
+      @Value("${discodeit.jwt.access-token.secret}") String accessTokenSecret,
+      @Value("${discodeit.jwt.access-token.expiration-ms}") int accessTokenExpirationMs,
+      @Value("${discodeit.jwt.refresh-token.secret}") String refreshTokenSecret,
+      @Value("${discodeit.jwt.refresh-token.expiration-ms}") int refreshTokenExpirationMs)
+      throws JOSEException {
+
+    this.accessTokenExpirationMs = accessTokenExpirationMs;
+    this.refreshTokenExpirationMs = refreshTokenExpirationMs;
+
+    byte[] accessSecretBytes = accessTokenSecret.getBytes(StandardCharsets.UTF_8);
+    this.accessTokenSigner = new MACSigner(accessSecretBytes);
+    this.accessTokenVerifier = new MACVerifier(accessSecretBytes);
+
+    byte[] refreshSecretBytes = refreshTokenSecret.getBytes(StandardCharsets.UTF_8);
+    this.refreshTokenSigner = new MACSigner(refreshSecretBytes);
+    this.refreshTokenVerifier = new MACVerifier(refreshSecretBytes);
+  }
+
+  public String generateAccessToken(DiscodeitUserDetails userDetails) throws JOSEException {
+    return generateToken(userDetails, accessTokenExpirationMs, accessTokenSigner, "access");
+  }
+
+  public String generateRefreshToken(DiscodeitUserDetails userDetails) throws JOSEException {
+    return generateToken(userDetails, refreshTokenExpirationMs, refreshTokenSigner, "refresh");
+  }
+
+  private String generateToken(DiscodeitUserDetails userDetails, int expirationMs, JWSSigner signer,
+      String tokenType) throws JOSEException {
+    String tokenId = UUID.randomUUID().toString();
+    UserDto user = userDetails.getUserDto();
+
+    Date now = new Date();
+    Date expiryDate = new Date(now.getTime() + expirationMs);
+
+    JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
+        .subject(user.username())
+        .jwtID(tokenId)
+        .claim("userId", user.id().toString())
+        .claim("type", tokenType)
+        .claim("roles", userDetails.getAuthorities().stream()
+            .map(GrantedAuthority::getAuthority)
+            .collect(Collectors.toList()))
+        .issueTime(now)
+        .expirationTime(expiryDate)
+        .build();
+
+    SignedJWT signedJWT = new SignedJWT(
+        new JWSHeader(JWSAlgorithm.HS256),
+        claimsSet
+    );
+
+    signedJWT.sign(signer);
+    String token = signedJWT.serialize();
+
+    log.debug("Generated {} token for user: {}", tokenType, user.username());
+    return token;
+  }
+
+  public boolean validateAccessToken(String token) {
+    return validateToken(token, accessTokenVerifier, "access");
+  }
+
+  public boolean validateRefreshToken(String token) {
+    return validateToken(token, refreshTokenVerifier, "refresh");
+  }
+
+  private boolean validateToken(String token, JWSVerifier verifier, String expectedType) {
     try {
-      byte[] secretBytes = secret.getBytes(StandardCharsets.UTF_8);
-      this.signer = new MACSigner(secretBytes);
-      this.verifier = new MACVerifier(secretBytes);
-    } catch (JOSEException e) {
-      throw new IllegalStateException("JWT 시크릿 키 초기화에 실패했습니다. 최소 32바이트 이상이어야 합니다.", e);
-    }
-    this.accessTokenExpirationSeconds = accessTokenExpirationSeconds;
-    this.refreshTokenExpirationSeconds = refreshTokenExpirationSeconds;
-  }
+      SignedJWT signedJWT = SignedJWT.parse(token);
 
-  public String generateAccessToken(UserDto userDto) {
-    return generateToken(userDto.id(), userDto.username(), userDto.email(), userDto.role(),
-        accessTokenExpirationSeconds, TokenType.ACCESS);
-  }
+      // Verify signature
+      if (!signedJWT.verify(verifier)) {
+        log.debug("JWT signature verification failed for {} token", expectedType);
+        return false;
+      }
 
-  public String generateRefreshToken(UserDto userDto) {
-    return generateToken(userDto.id(), userDto.username(), userDto.email(), userDto.role(),
-        refreshTokenExpirationSeconds, TokenType.REFRESH);
-  }
+      // Check token type
+      String tokenType = (String) signedJWT.getJWTClaimsSet().getClaim("type");
+      if (!expectedType.equals(tokenType)) {
+        log.debug("JWT token type mismatch: expected {}, got {}", expectedType, tokenType);
+        return false;
+      }
 
-  public boolean validateToken(String token) {
-    try {
-      parseAndValidate(token);
+      // Check expiration
+      Date expirationTime = signedJWT.getJWTClaimsSet().getExpirationTime();
+      if (expirationTime == null || expirationTime.before(new Date())) {
+        log.debug("JWT {} token expired", expectedType);
+        return false;
+      }
+
       return true;
-    } catch (JwtException e) {
-      log.debug("JWT 유효성 검사 실패: {}", e.getMessage());
+    } catch (Exception e) {
+      log.debug("JWT {} token validation failed: {}", expectedType, e.getMessage());
       return false;
     }
   }
 
-  public JWTClaimsSet getClaims(String token) {
-    return parseAndValidate(token);
+  public String getUsernameFromToken(String token) {
+    try {
+      SignedJWT signedJWT = SignedJWT.parse(token);
+      return signedJWT.getJWTClaimsSet().getSubject();
+    } catch (Exception e) {
+      throw new IllegalArgumentException("Invalid JWT token", e);
+    }
+  }
+
+  public String getTokenId(String token) {
+    try {
+      SignedJWT signedJWT = SignedJWT.parse(token);
+      return signedJWT.getJWTClaimsSet().getJWTID();
+    } catch (Exception e) {
+      throw new IllegalArgumentException("Invalid JWT token", e);
+    }
   }
 
   public UUID getUserId(String token) {
-    return getUserId(getClaims(token));
-  }
-
-  public String getUsername(String token) {
-    return getStringClaim(getClaims(token), CLAIM_USERNAME);
-  }
-
-  public String getEmail(String token) {
-    return getStringClaim(getClaims(token), CLAIM_EMAIL);
-  }
-
-  public Role getRole(String token) {
-    return Role.valueOf(getStringClaim(getClaims(token), CLAIM_ROLE));
-  }
-
-  public TokenType getTokenType(String token) {
-    return TokenType.valueOf(getStringClaim(getClaims(token), CLAIM_TOKEN_TYPE));
-  }
-
-  public long getAccessTokenExpirationSeconds() {
-    return accessTokenExpirationSeconds;
-  }
-
-  public long getRefreshTokenExpirationSeconds() {
-    return refreshTokenExpirationSeconds;
-  }
-
-  public ResponseCookie buildRefreshTokenCookie(String refreshToken) {
-    return ResponseCookie.from(REFRESH_TOKEN_COOKIE_NAME, refreshToken)
-        .httpOnly(true)
-        .secure(true)
-        .sameSite("Strict")
-        .path("/")
-        .maxAge(Duration.ofSeconds(refreshTokenExpirationSeconds))
-        .build();
-  }
-
-  public ResponseCookie expireRefreshTokenCookie() {
-    return ResponseCookie.from(REFRESH_TOKEN_COOKIE_NAME, "")
-        .httpOnly(true)
-        .secure(true)
-        .sameSite("Strict")
-        .path("/")
-        .maxAge(Duration.ZERO)
-        .build();
-  }
-
-  private String generateToken(UUID userId, String username, String email, Role role,
-      long expirationSeconds, TokenType tokenType) {
-    Instant now = Instant.now();
-    Instant expiration = now.plusSeconds(expirationSeconds);
-
-    JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
-        .subject(userId.toString())
-        .claim(CLAIM_USERNAME, username)
-        .claim(CLAIM_EMAIL, email)
-        .claim(CLAIM_ROLE, role.name())
-        .claim(CLAIM_TOKEN_TYPE, tokenType.name())
-        .issueTime(Date.from(now))
-        .expirationTime(Date.from(expiration))
-        .build();
-
-    SignedJWT signedJWT = new SignedJWT(new JWSHeader(JWSAlgorithm.HS256), claimsSet);
     try {
-      signedJWT.sign(signer);
-    } catch (JOSEException e) {
-      throw new IllegalStateException("JWT 서명에 실패했습니다.", e);
-    }
-    return signedJWT.serialize();
-  }
-
-  private JWTClaimsSet parseAndValidate(String token) {
-    SignedJWT signedJWT;
-    try {
-      signedJWT = SignedJWT.parse(token);
-      if (!signedJWT.verify(verifier)) {
-        throw new InvalidJwtTokenException();
+      SignedJWT signedJWT = SignedJWT.parse(token);
+      String userIdStr = (String) signedJWT.getJWTClaimsSet().getClaim("userId");
+      if (userIdStr == null) {
+        throw new IllegalArgumentException("User ID claim not found in JWT token");
       }
-    } catch (ParseException | JOSEException e) {
-      throw new InvalidJwtTokenException(e);
-    }
-
-    JWTClaimsSet claims;
-    try {
-      claims = signedJWT.getJWTClaimsSet();
-    } catch (ParseException e) {
-      throw new InvalidJwtTokenException(e);
-    }
-
-    Date expiration = claims.getExpirationTime();
-    if (expiration == null || expiration.before(new Date())) {
-      throw new ExpiredJwtTokenException();
-    }
-
-    return claims;
-  }
-
-  private UUID getUserId(JWTClaimsSet claims) {
-    try {
-      return UUID.fromString(claims.getSubject());
-    } catch (IllegalArgumentException | NullPointerException e) {
-      throw new InvalidJwtTokenException(e);
+      return UUID.fromString(userIdStr);
+    } catch (Exception e) {
+      throw new IllegalArgumentException("Invalid JWT token", e);
     }
   }
 
-  private String getStringClaim(JWTClaimsSet claims, String name) {
-    try {
-      return claims.getStringClaim(name);
-    } catch (ParseException e) {
-      throw new InvalidJwtTokenException(e);
-    }
+  public Cookie genereateRefreshTokenCookie(String refreshToken) {
+    // Set refresh token in HttpOnly cookie
+    Cookie refreshCookie = new Cookie(REFRESH_TOKEN_COOKIE_NAME, refreshToken);
+    refreshCookie.setHttpOnly(true);
+    refreshCookie.setSecure(true); // Use HTTPS in production
+    refreshCookie.setPath("/");
+    refreshCookie.setMaxAge(refreshTokenExpirationMs / 1000);
+    return refreshCookie;
+  }
+
+  public Cookie genereateRefreshTokenExpirationCookie() {
+    Cookie refreshCookie = new Cookie(REFRESH_TOKEN_COOKIE_NAME, "");
+    refreshCookie.setHttpOnly(true);
+    refreshCookie.setSecure(true); // Use HTTPS in production
+    refreshCookie.setPath("/");
+    refreshCookie.setMaxAge(0);
+    return refreshCookie;
   }
 }

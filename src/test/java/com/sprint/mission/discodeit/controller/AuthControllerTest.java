@@ -4,6 +4,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -14,6 +15,7 @@ import com.sprint.mission.discodeit.dto.request.RoleUpdateRequest;
 import com.sprint.mission.discodeit.entity.Role;
 import com.sprint.mission.discodeit.security.DiscodeitUserDetails;
 import com.sprint.mission.discodeit.service.AuthService;
+import com.sprint.mission.discodeit.service.UserService;
 import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -42,6 +44,18 @@ class AuthControllerTest {
 
   @MockitoBean
   private AuthService authService;
+
+  @MockitoBean
+  private UserService userService;
+
+  @Test
+  @DisplayName("현재 사용자 정보 조회 - 인증되지 않은 사용자")
+  void me_Unauthorized() throws Exception {
+    // When & Then
+    mockMvc.perform(get("/api/auth/me")
+            .with(csrf()))
+        .andExpect(status().isForbidden());
+  }
 
   @Test
   @DisplayName("권한 업데이트 - 성공")
