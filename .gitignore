@@ -44,5 +44,10 @@ bin/
 ### 숨김 파일 ###
 .*
 !.gitignore
-!.dockerignore
-!.env.example
+
+
+### Github Actions ###
+!.github/
+
+### Markdown (worklog/checklist 등 로컬 메모용) ###
+*.md

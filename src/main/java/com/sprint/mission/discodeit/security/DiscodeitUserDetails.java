@@ -1,44 +1,35 @@
 package com.sprint.mission.discodeit.security;
 
 import com.sprint.mission.discodeit.dto.data.UserDto;
-import com.sprint.mission.discodeit.entity.Role;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import java.util.Collection;
+import java.util.List;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
-
+@EqualsAndHashCode(of = "userDto")
 @Getter
 @RequiredArgsConstructor
 public class DiscodeitUserDetails implements UserDetails {
 
-    private final UserDto userDto;
-    private final String password;
-    private final Role role;
+  private final UserDto userDto;
+  private final String password;
 
-    @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));
-    }
+  @Override
+  public Collection<? extends GrantedAuthority> getAuthorities() {
+    return List.of(new SimpleGrantedAuthority("ROLE_" + userDto.role().name()));
+  }
 
-    @Override
-    public String getUsername() {
-        return userDto.username();
-    }
+  @Override
+  public String getPassword() {
+    return password;
+  }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof DiscodeitUserDetails other)) return false;
-        return Objects.equals(userDto.id(), other.userDto.id());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(userDto.id());
-    }
+  @Override
+  public String getUsername() {
+    return userDto.username();
+  }
 }
