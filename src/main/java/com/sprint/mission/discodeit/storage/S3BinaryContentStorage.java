@@ -2,6 +2,7 @@ package com.sprint.mission.discodeit.storage;
 
 import com.sprint.mission.discodeit.dto.response.BinaryContentDto;
 import com.sprint.mission.discodeit.event.S3UploadFailedEvent;
+import com.sprint.mission.discodeit.exception.BinaryContentUploadException;
 import java.io.InputStream;
 import java.net.URI;
 import java.time.Duration;
@@ -83,6 +84,10 @@ public class S3BinaryContentStorage implements BinaryContentStorage {
     }
 
     // 재시도가 모두 실패했을 때 호출됨 (원본 메소드와 동일한 파라미터 + 첫 인자로 예외)
+    // 주의: 정상값(UUID)을 그냥 return하면 호출부(BinaryContentUploadEventListener.on())가
+    // put()이 성공한 것으로 착각해 상태를 SUCCESS로 잘못 갱신하게 된다.
+    // 관리자 알림을 발행한 뒤 반드시 예외를 다시 던져 호출부의 catch 블록이 FAIL 상태로
+    // 갱신하도록 해야 한다.
     @Recover
     public UUID recover(Exception e, UUID id, byte[] bytes) {
         String requestId = MDC.get("requestId");
@@ -91,7 +96,7 @@ public class S3BinaryContentStorage implements BinaryContentStorage {
         eventPublisher.publishEvent(new S3UploadFailedEvent(
                 "binaryContentUpload", requestId, id, e.getMessage()
         ));
-        return id;
+        throw new BinaryContentUploadException("S3 바이너리 데이터 저장 최종 실패 - binaryContentId: " + id, e);
     }
 
     @Override
