@@ -3,6 +3,7 @@ package com.sprint.mission.discodeit.service.basic;
 import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentCreateRequest;
 import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentResponse;
 import com.sprint.mission.discodeit.entity.BinaryContent;
+import com.sprint.mission.discodeit.entity.BinaryContentStatus;
 import com.sprint.mission.discodeit.event.BinaryContentCreatedEvent;
 import com.sprint.mission.discodeit.exception.binarycontent.BinaryContentNotFoundException;
 import com.sprint.mission.discodeit.mapper.BinaryContentMapper;
@@ -14,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
@@ -76,5 +78,17 @@ public class BasicBinaryContentService implements BinaryContentService {
     this.binaryContentRepository.delete(binaryContent);
 
     log.info("binary-content delete success: id={}", binaryContent.getId());
+  }
+
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
+  @Override
+  public void updateStatus(UUID id, BinaryContentStatus status) {
+    log.debug("binary-content update-status trial: id={}, status={}", id, status);
+    BinaryContent binaryContent = this.binaryContentRepository.findById(id)
+        .orElseThrow(() -> BinaryContentNotFoundException.withId(id));
+
+    binaryContent.updateStatus(status);
+
+    log.info("binary-content update-status success: id={}, status={}", id, status);
   }
 }
