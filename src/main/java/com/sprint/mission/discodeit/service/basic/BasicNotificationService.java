@@ -38,7 +38,7 @@ public class BasicNotificationService implements NotificationService {
   @Override
   public List<NotificationResponse> findAllByReceiverId(UUID receiverId) {
     log.debug("notification find-all-by-receiver-id trial: receiverId={}", receiverId);
-    List<Notification> notifications = this.notificationRepository.findAllByReceiverId(
+    List<Notification> notifications = this.notificationRepository.findAllByReceiverIdOrderByCreatedAtDesc(
         receiverId);
 
     log.info("notification find-all-by-receiver-id success: receiverId={}, count={}", receiverId,
