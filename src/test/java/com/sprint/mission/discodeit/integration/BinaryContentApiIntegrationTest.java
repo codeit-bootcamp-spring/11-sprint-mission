@@ -17,10 +17,12 @@ import com.sprint.mission.discodeit.dto.request.BinaryContentCreateRequest;
 import com.sprint.mission.discodeit.dto.request.MessageCreateRequest;
 import com.sprint.mission.discodeit.dto.request.PublicChannelCreateRequest;
 import com.sprint.mission.discodeit.dto.request.UserCreateRequest;
+import com.sprint.mission.discodeit.entity.BinaryContentStatus;
 import com.sprint.mission.discodeit.service.BinaryContentService;
 import com.sprint.mission.discodeit.service.ChannelService;
 import com.sprint.mission.discodeit.service.MessageService;
 import com.sprint.mission.discodeit.service.UserService;
+import com.sprint.mission.discodeit.util.AsyncTestUtils;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -200,6 +202,13 @@ class BinaryContentApiIntegrationTest {
     TestTransaction.flagForCommit();
     TestTransaction.end();
     TestTransaction.start();
+
+    // 리스너가 @Async로 별도 스레드에서 처리되므로(+ 저장 로직에 3초 지연이 있으므로),
+    // 상태가 SUCCESS/FAIL로 바뀔 때까지 폴링으로 기다립니다.
+    AsyncTestUtils.awaitUntil(
+        () -> binaryContentService.find(binaryContentId).status() != BinaryContentStatus.PROCESSING,
+        8000
+    );
 
     // When & Then
     mockMvc.perform(get("/api/binaryContents/{binaryContentId}/download", binaryContentId))

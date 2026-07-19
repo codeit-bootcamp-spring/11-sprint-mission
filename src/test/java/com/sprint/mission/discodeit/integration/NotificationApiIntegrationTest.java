@@ -28,6 +28,7 @@ import com.sprint.mission.discodeit.service.MessageService;
 import com.sprint.mission.discodeit.service.NotificationService;
 import com.sprint.mission.discodeit.service.ReadStatusService;
 import com.sprint.mission.discodeit.service.UserService;
+import com.sprint.mission.discodeit.util.AsyncTestUtils;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -109,6 +110,13 @@ class NotificationApiIntegrationTest {
     TestTransaction.end();
     TestTransaction.start();
 
+    // 리스너가 @Async로 별도 스레드에서 처리되므로, 구독자에게 알림이 생성될 때까지 기다립니다.
+    AsyncTestUtils.awaitUntil(
+        () -> notificationService.findAllByReceiverId(subscriber.id()).stream()
+            .anyMatch(n -> "알림 테스트 메시지입니다.".equals(n.content())),
+        5000
+    );
+
     DiscodeitUserDetails subscriberDetails = new DiscodeitUserDetails(subscriber, "Password1!");
     DiscodeitUserDetails authorDetails = new DiscodeitUserDetails(author, "Password1!");
 
@@ -149,6 +157,13 @@ class NotificationApiIntegrationTest {
     TestTransaction.flagForCommit();
     TestTransaction.end();
     TestTransaction.start();
+
+    // 리스너가 @Async로 별도 스레드에서 처리되므로, 알림이 생성될 때까지 기다립니다.
+    AsyncTestUtils.awaitUntil(
+        () -> notificationService.findAllByReceiverId(user.id()).stream()
+            .anyMatch(n -> "권한이 변경되었습니다.".equals(n.title())),
+        5000
+    );
 
     DiscodeitUserDetails userDetails = new DiscodeitUserDetails(user, "Password1!");
 
