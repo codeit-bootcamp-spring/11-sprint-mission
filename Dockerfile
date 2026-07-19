@@ -15,7 +15,7 @@ FROM amazoncorretto:17-alpine
 
 WORKDIR /app
 
-COPY --from=builder /app/build/libs/discodeit-2.1-M10.jar app.jar
+COPY --from=builder /app/build/libs/discodeit-2.2-M11.jar app.jar
 
 EXPOSE 80
 
