@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,6 +36,7 @@ public class BasicNotificationService implements NotificationService {
     return this.mapper.toResponse(notification);
   }
 
+  @Cacheable(cacheNames = "notifications", key = "#receiverId")
   @Override
   public List<NotificationResponse> findAllByReceiverId(UUID receiverId) {
     log.debug("notification find-all-by-receiver-id trial: receiverId={}", receiverId);

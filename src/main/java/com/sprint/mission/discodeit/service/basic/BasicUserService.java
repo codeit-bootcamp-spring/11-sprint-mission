@@ -18,6 +18,7 @@ import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -79,6 +80,7 @@ public class BasicUserService implements UserService {
     return this.mapper.toResponse(user);
   }
 
+  @Cacheable(cacheNames = "users")
   @Override
   public List<UserResponse> findAll() {
     log.debug("user find-all trial");
