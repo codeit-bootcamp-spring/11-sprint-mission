@@ -6,6 +6,7 @@ import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionalEventListener;
 
@@ -17,6 +18,7 @@ public class NotificationRequiredEventListener {
   private final ReadStatusRepository readStatusRepository;
   private final NotificationService notificationService;
 
+  @Async("eventTaskExecutor")
   @TransactionalEventListener
   public void on(MessageCreatedEvent event) {
     log.debug("notification message-created trial: channelId={}, authorId={}", event.channelId(),
@@ -34,6 +36,7 @@ public class NotificationRequiredEventListener {
     log.info("notification message-created success: channelId={}", event.channelId());
   }
 
+  @Async("eventTaskExecutor")
   @TransactionalEventListener
   public void on(RoleUpdatedEvent event) {
     log.debug("notification role-updated trial: userId={}, oldRole={}, newRole={}",
