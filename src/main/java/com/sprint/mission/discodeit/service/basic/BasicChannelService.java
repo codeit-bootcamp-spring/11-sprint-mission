@@ -24,6 +24,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
@@ -41,6 +42,7 @@ public class BasicChannelService implements ChannelService {
   private final MessageRepository messageRepository;
   private final ChannelMapper mapper;
 
+  @CacheEvict(cacheNames = "channels", allEntries = true)
   @PreAuthorize("hasRole('CHANNEL_MANAGER')")
   @Transactional
   @Override
@@ -60,6 +62,7 @@ public class BasicChannelService implements ChannelService {
   }
 
 
+  @CacheEvict(cacheNames = "channels", allEntries = true)
   @Transactional
   @Override
   public ChannelResponse createPrivateChannel(
@@ -140,6 +143,7 @@ public class BasicChannelService implements ChannelService {
         .toList();
   }
 
+  @CacheEvict(cacheNames = "channels", allEntries = true)
   @PreAuthorize("hasRole('CHANNEL_MANAGER')")
   @Transactional
   @Override
@@ -173,6 +177,7 @@ public class BasicChannelService implements ChannelService {
     return this.mapper.toResponse(channel, participants, lastMessageAt);
   }
 
+  @CacheEvict(cacheNames = "channels", allEntries = true)
   @PreAuthorize("hasRole('CHANNEL_MANAGER')")
   @Transactional
   @Override

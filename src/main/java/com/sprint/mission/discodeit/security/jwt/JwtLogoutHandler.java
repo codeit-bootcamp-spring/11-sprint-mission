@@ -4,9 +4,12 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.time.Duration;
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.Authentication;
@@ -20,6 +23,7 @@ public class JwtLogoutHandler implements LogoutHandler {
 
   private final JwtTokenProvider jwtTokenProvider;
   private final JwtRegistry jwtRegistry;
+  private final CacheManager cacheManager;
 
   @Override
   public void logout(HttpServletRequest request, HttpServletResponse response,
@@ -46,6 +50,9 @@ public class JwtLogoutHandler implements LogoutHandler {
               .maxAge(Duration.ZERO)
               .build();
           response.addHeader(HttpHeaders.SET_COOKIE, expired.toString());
+
+          Optional.ofNullable(cacheManager.getCache("users")).ifPresent(Cache::clear);
+
           log.info("auth logout: refreshToken={}", refreshToken);
         });
   }
