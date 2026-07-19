@@ -2,6 +2,7 @@ package com.sprint.mission.discodeit.security.jwt;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.JOSEException;
+import com.sprint.mission.discodeit.config.CacheConfig;
 import com.sprint.mission.discodeit.dto.data.JwtDto;
 import com.sprint.mission.discodeit.dto.data.JwtInformation;
 import com.sprint.mission.discodeit.exception.ErrorResponse;
@@ -13,6 +14,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
@@ -27,6 +29,9 @@ public class JwtLoginSuccessHandler implements AuthenticationSuccessHandler {
   private final JwtTokenProvider tokenProvider;
   private final JwtRegistry jwtRegistry;
 
+  // 사용자 목록 조회(findAll) 결과에는 로그인 여부(online)가 함께 캐시되므로,
+  // 로그인이 발생하면 캐시된 사용자 목록이 최신 온라인 상태를 반영하도록 무효화한다.
+  @CacheEvict(cacheNames = CacheConfig.ALL_USERS_CACHE, allEntries = true)
   @Override
   public void onAuthenticationSuccess(HttpServletRequest request,
       HttpServletResponse response,

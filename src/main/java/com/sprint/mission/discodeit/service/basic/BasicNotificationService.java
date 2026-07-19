@@ -1,5 +1,6 @@
 package com.sprint.mission.discodeit.service.basic;
 
+import com.sprint.mission.discodeit.config.CacheConfig;
 import com.sprint.mission.discodeit.dto.data.NotificationDto;
 import com.sprint.mission.discodeit.entity.Notification;
 import com.sprint.mission.discodeit.entity.User;
@@ -13,6 +14,8 @@ import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +29,7 @@ public class BasicNotificationService implements NotificationService {
   private final UserRepository userRepository;
   private final NotificationMapper notificationMapper;
 
+  @CacheEvict(cacheNames = CacheConfig.NOTIFICATIONS_BY_USER_CACHE, key = "#receiverId")
   @Transactional
   @Override
   public NotificationDto create(UUID receiverId, String title, String content) {
@@ -51,6 +55,7 @@ public class BasicNotificationService implements NotificationService {
     return dto;
   }
 
+  @Cacheable(cacheNames = CacheConfig.NOTIFICATIONS_BY_USER_CACHE, key = "#receiverId")
   @Transactional(readOnly = true)
   @Override
   public List<NotificationDto> findAllByReceiverId(UUID receiverId) {
@@ -63,6 +68,12 @@ public class BasicNotificationService implements NotificationService {
     return dtos;
   }
 
+  // 알림의 receiverId는 파라미터로 전달되지 않으므로, 삭제 전 조회 결과(@PreAuthorize와 동일한
+  // 패턴으로 자기 자신 빈을 참조)를 키로 사용해 해당 사용자의 알림 목록 캐시만 정확히 무효화한다.
+  @CacheEvict(
+      cacheNames = CacheConfig.NOTIFICATIONS_BY_USER_CACHE,
+      key = "@basicNotificationService.find(#notificationId).receiverId"
+  )
   @PreAuthorize("principal.userDto.id == @basicNotificationService.find(#notificationId).receiverId")
   @Transactional
   @Override
