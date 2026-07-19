@@ -79,7 +79,7 @@ public class BasicChannelService implements ChannelService {
     this.channelRepository.save(channel);
 
     List<ReadStatus> readStatuses = participants.stream()
-        .map(user -> new ReadStatus(user, channel, Instant.now()))
+        .map(user -> new ReadStatus(user, channel, Instant.now(), true))
         .toList();
 
     this.readStatusRepository.saveAll(readStatuses);

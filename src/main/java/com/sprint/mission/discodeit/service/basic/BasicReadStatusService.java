@@ -46,7 +46,8 @@ public class BasicReadStatusService implements ReadStatusService {
       throw DuplicateReadStatusException.withUserAndChannel(user.getId(), channel.getId());
     }
 
-    ReadStatus readStatus = new ReadStatus(user, channel, readStatusCreateRequest.lastReadAt());
+    ReadStatus readStatus = new ReadStatus(user, channel, readStatusCreateRequest.lastReadAt(),
+        false);
     this.readStatusRepository.save(readStatus);
 
     log.info("read-status create success: id={}, userId={}, channelId={}",
@@ -84,7 +85,12 @@ public class BasicReadStatusService implements ReadStatusService {
     ReadStatus readStatus = this.readStatusRepository.findById(id)
         .orElseThrow(() -> ReadStatusNotFoundException.withId(id));
 
-    readStatus.updateLastReadAt(readStatusUpdateRequest.newLastReadAt());
+    if (readStatusUpdateRequest.newLastReadAt() != null) {
+      readStatus.updateLastReadAt(readStatusUpdateRequest.newLastReadAt());
+    }
+    if (readStatusUpdateRequest.newNotificationEnabled() != null) {
+      readStatus.updateNotificationEnabled(readStatusUpdateRequest.newNotificationEnabled());
+    }
 
     log.info("read-status update success: id={}", readStatus.getId());
     return this.mapper.toResponse(readStatus);

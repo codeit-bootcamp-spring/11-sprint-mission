@@ -45,6 +45,7 @@ CREATE TABLE IF NOT EXISTS read_statuses (
     user_id      UUID        NOT NULL,
     channel_id   UUID        NOT NULL,
     last_read_at TIMESTAMPTZ NOT NULL,
+    notification_enabled BOOLEAN NOT NULL,
     UNIQUE (user_id, channel_id),
     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
     FOREIGN KEY (channel_id) REFERENCES channels (id) ON DELETE CASCADE

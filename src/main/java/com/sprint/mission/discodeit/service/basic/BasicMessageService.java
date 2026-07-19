@@ -10,6 +10,7 @@ import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.event.BinaryContentCreatedEvent;
+import com.sprint.mission.discodeit.event.MessageCreatedEvent;
 import com.sprint.mission.discodeit.exception.channel.ChannelNotFoundException;
 import com.sprint.mission.discodeit.exception.message.MessageNotFoundException;
 import com.sprint.mission.discodeit.exception.message.MessageWithoutChannelAccessException;
@@ -85,6 +86,10 @@ public class BasicMessageService implements MessageService {
         attachments
     );
     this.messageRepository.save(message);
+
+    this.eventPublisher.publishEvent(new MessageCreatedEvent(
+        channel.getId(), channel.getName(), author.getId(), author.getUsername(),
+        message.getContent()));
 
     log.info("message create success: id={}, channelId={}, authorId={}, attachments-count={}",
         message.getId(), channel.getId(), author.getId(), attachments.size());
