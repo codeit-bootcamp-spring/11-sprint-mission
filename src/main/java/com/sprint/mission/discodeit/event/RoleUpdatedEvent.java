@@ -9,4 +9,5 @@ public record RoleUpdatedEvent(
     Role newRole
 ) {
 
+  public static final String TOPIC = "discodeit.RoleUpdatedEvent";
 }

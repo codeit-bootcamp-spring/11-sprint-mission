@@ -10,4 +10,5 @@ public record MessageCreatedEvent(
     String content
 ) {
 
+  public static final String TOPIC = "discodeit.MessageCreatedEvent";
 }

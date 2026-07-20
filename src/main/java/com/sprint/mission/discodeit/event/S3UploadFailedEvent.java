@@ -8,4 +8,5 @@ public record S3UploadFailedEvent(
     String errorMessage
 ) {
 
+  public static final String TOPIC = "discodeit.S3UploadFailedEvent";
 }

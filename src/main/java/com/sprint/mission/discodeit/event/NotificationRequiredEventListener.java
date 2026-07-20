@@ -8,12 +8,14 @@ import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionalEventListener;
 
 @Slf4j
+@Profile("!kafka")
 @RequiredArgsConstructor
 @Component
 public class NotificationRequiredEventListener {
@@ -53,6 +55,7 @@ public class NotificationRequiredEventListener {
     log.info("notification role-updated success: userId={}", event.userId());
   }
 
+  @Async("eventTaskExecutor")
   @EventListener
   public void on(S3UploadFailedEvent event) {
     log.debug("notification s3-upload-failed trial: binaryContentId={}", event.binaryContentId());
