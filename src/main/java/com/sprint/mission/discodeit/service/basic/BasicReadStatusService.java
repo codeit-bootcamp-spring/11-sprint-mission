@@ -4,6 +4,7 @@ import com.sprint.mission.discodeit.dto.readstatus.ReadStatusCreateRequest;
 import com.sprint.mission.discodeit.dto.readstatus.ReadStatusDto;
 import com.sprint.mission.discodeit.dto.readstatus.ReadStatusUpdateRequest;
 import com.sprint.mission.discodeit.entity.Channel;
+import com.sprint.mission.discodeit.entity.ChannelType;
 import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.exception.channel.ChannelNotFoundException;
@@ -48,7 +49,8 @@ public class BasicReadStatusService implements ReadStatusService {
           throw new ReadStatusAlreadyExistsException(request.userId(), request.channelId());
         });
 
-    ReadStatus readStatus = new ReadStatus(user, channel, Instant.now());
+    boolean notificationEnabled = channel.getType() == ChannelType.PRIVATE;
+    ReadStatus readStatus = new ReadStatus(user, channel, Instant.now(), notificationEnabled);
 
     readStatusRepository.save(readStatus);
 
@@ -83,7 +85,12 @@ public class BasicReadStatusService implements ReadStatusService {
     ReadStatus readStatus = readStatusRepository.findById(readStatusId)
         .orElseThrow(() -> new ReadStatusNotFoundException(readStatusId));
 
-    readStatus.update(request.newLastReadAt());
+    if (request.newLastReadAt() != null) {
+      readStatus.update(request.newLastReadAt());
+    }
+    if (request.notificationEnabled() != null) {
+      readStatus.updateNotificationEnabled(request.notificationEnabled());
+    }
 
     return readStatusMapper.toDto(readStatus);
   }

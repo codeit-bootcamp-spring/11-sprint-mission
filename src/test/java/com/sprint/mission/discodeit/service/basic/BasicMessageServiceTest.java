@@ -15,8 +15,9 @@ import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.ChannelType;
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.entity.MessageAttachment;
+import com.sprint.mission.discodeit.entity.Role;
 import com.sprint.mission.discodeit.entity.User;
-import com.sprint.mission.discodeit.entity.UserStatus;
+import com.sprint.mission.discodeit.event.BinaryContentCreatedEvent;
 import com.sprint.mission.discodeit.exception.channel.ChannelNotFoundException;
 import com.sprint.mission.discodeit.exception.message.MessageNotFoundException;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
@@ -25,7 +26,6 @@ import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
-import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
@@ -39,6 +39,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Limit;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -59,7 +60,7 @@ class BasicMessageServiceTest {
   private BinaryContentRepository binaryContentRepository;
 
   @Mock
-  private BinaryContentStorage binaryContentStorage;
+  private ApplicationEventPublisher eventPublisher;
 
   @Mock
   private MessageMapper messageMapper;
@@ -86,10 +87,8 @@ class BasicMessageServiceTest {
     ReflectionTestUtils.setField(mockChannel, "id", channelId);
 
     mockAuthor = new User("tester", "test@test.com", "password123", null);
-    UserStatus mockStatus = new UserStatus(mockAuthor);
-    mockAuthor.initStatus(mockStatus);
     ReflectionTestUtils.setField(mockAuthor, "id", authorId);
-    mockUserDto = new UserDto(authorId, "tester", "test@test.com", null, true);
+    mockUserDto = new UserDto(authorId, "tester", "test@test.com", null, true, Role.USER);
 
     mockMessage = new Message(mockChannel, mockAuthor, "test message");
     mockMessageDto = new MessageDto(messageId, Instant.now(), Instant.now(), "test message",
@@ -150,7 +149,7 @@ class BasicMessageServiceTest {
       // then
       assertThat(result).isNotNull();
       then(binaryContentRepository).should().save(any(BinaryContent.class));
-      then(binaryContentStorage).should().put(eq(binaryId), any(byte[].class));
+      then(eventPublisher).should().publishEvent(any(BinaryContentCreatedEvent.class));
     }
 
     // --- 실패 ---

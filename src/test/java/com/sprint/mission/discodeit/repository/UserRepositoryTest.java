@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.sprint.mission.discodeit.config.JpaConfig;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.User;
-import com.sprint.mission.discodeit.entity.UserStatus;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -41,9 +40,6 @@ class UserRepositoryTest {
     User user = new User("test", "test@test.com", "password123", profile);
     savedUser = em.persistAndFlush(user);
 
-    UserStatus status = new UserStatus(savedUser);
-    em.persistAndFlush(status);
-
     em.clear();
   }
 
@@ -58,13 +54,11 @@ class UserRepositoryTest {
     assertThat(user.getUsername()).isEqualTo("test");
     assertThat(user.getProfile()).isNotNull();
     assertThat(user.getProfile().getFileName()).isEqualTo("test.png");
-    assertThat(user.getStatus()).isNotNull();
   }
 
   @Test
   @DisplayName("사용자가 없는 경우 전체를 조회하면 빈 목록을 반환")
   void findAll_noUser_returnEmptyList() {
-    em.getEntityManager().createQuery("DELETE FROM UserStatus").executeUpdate();
     em.getEntityManager().createQuery("DELETE FROM User").executeUpdate();
 
     List<User> users = userRepository.findAll();

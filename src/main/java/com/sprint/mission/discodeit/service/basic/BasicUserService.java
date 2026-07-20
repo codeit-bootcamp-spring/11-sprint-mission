@@ -5,8 +5,11 @@ import com.sprint.mission.discodeit.dto.user.UserCreateRequest;
 import com.sprint.mission.discodeit.dto.user.UserDto;
 import com.sprint.mission.discodeit.dto.user.UserUpdateRequest;
 import com.sprint.mission.discodeit.entity.BinaryContent;
+import com.sprint.mission.discodeit.entity.Role;
 import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.event.BinaryContentCreatedEvent;
 import com.sprint.mission.discodeit.event.PasswordChangeEvent;
+import com.sprint.mission.discodeit.event.RoleUpdatedEvent;
 import com.sprint.mission.discodeit.exception.DiscodeitException;
 import com.sprint.mission.discodeit.exception.ErrorCode;
 import com.sprint.mission.discodeit.exception.user.DuplicateUserException;
@@ -21,6 +24,8 @@ import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import java.util.Map;
 import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -51,6 +56,7 @@ public class BasicUserService implements UserService {
 
   @Override
   @Transactional
+  @CacheEvict(cacheNames = "users", allEntries = true)
   public UserDto createUser(UserCreateRequest request, MultipartFile profile) {
     String name = request.username().trim();
     String email = request.email().trim();
@@ -73,7 +79,8 @@ public class BasicUserService implements UserService {
         profileEntity = new BinaryContent(profile.getOriginalFilename(), profile.getContentType(),
             profile.getSize());
         BinaryContent savedProfile = binaryContentRepository.save(profileEntity);
-        binaryContentStorage.put(savedProfile.getId(), profile.getBytes());
+        eventPublisher.publishEvent(
+            new BinaryContentCreatedEvent(savedProfile.getId(), profile.getBytes()));
 
         log.debug("프로필 이미지 저장 완료 - binaryContentId: {}", savedProfile.getId());
       } catch (IOException e) {
@@ -105,6 +112,7 @@ public class BasicUserService implements UserService {
   }
 
   @Override
+  @Cacheable(cacheNames = "users")
   public List<UserDto> allReadUser() {
     List<User> users = userRepository.findAll();
     Set<UUID> onlineUserIds = getOnlineUserIds();
@@ -117,6 +125,7 @@ public class BasicUserService implements UserService {
   @Override
   @Transactional
   @PreAuthorize("#id == authentication.principal.userDto.id()")
+  @CacheEvict(cacheNames = "users", allEntries = true)
   public void deleteUser(UUID id) {
     log.debug("사용자 삭제 비즈니스 로직 시작 - userId: {}", id);
     User user = userRepository.findById(id)
@@ -140,6 +149,7 @@ public class BasicUserService implements UserService {
   @Override
   @Transactional
   @PreAuthorize("#id == authentication.principal.userDto.id()")
+  @CacheEvict(cacheNames = "users", allEntries = true)
   public UserDto updateUser(UUID id, UserUpdateRequest request, MultipartFile profile) {
     log.debug("사용자 업데이트 비즈니스 로직 시작 - updateName: {}, updateEmail: {}", request.newUsername(),
         request.newEmail());
@@ -182,7 +192,8 @@ public class BasicUserService implements UserService {
             profile.getSize()
         );
         BinaryContent savedProfile = binaryContentRepository.save(currentProfile);
-        binaryContentStorage.put(savedProfile.getId(), profile.getBytes());
+        eventPublisher.publishEvent(
+            new BinaryContentCreatedEvent(savedProfile.getId(), profile.getBytes()));
         log.debug("새 프로필 이미지 저장 완료 - userId: {}, binaryContentId: {}", id, savedProfile.getId());
       } catch (IOException e) {
         log.error("프로필 이미지 저장 중 서버 오류 발생 - userId: {}", id, e);
@@ -205,21 +216,24 @@ public class BasicUserService implements UserService {
   @Override
   @Transactional
   @PreAuthorize("hasRole('ADMIN')")
+  @CacheEvict(cacheNames = "users", allEntries = true)
   public UserDto updateRole(RoleUpdateRequest request) {
     User user = userRepository.findById(request.userId())
-        .orElseThrow(() -> new UserNotFoundException(request.userId()));
+        .orElseThrow(() -> {
+          log.warn("권한 변경 실패 - 사용자를 찾을 수 없음 - userId: {}", request.userId());
+          return new UserNotFoundException(request.userId());
+        });
+
+    Role oldRole = user.getRole();
     user.updateRole(request.newRole());
+    eventPublisher.publishEvent(new RoleUpdatedEvent(user.getId(), oldRole, request.newRole()));
 
     jwtRegistry.invalidateJwtInformationByUserId(request.userId());
 
-    boolean isOnline = jwtRegistry.hasActiveJwtInformationByUserId(user.getId());
-    return userMapper.toDto(user, isOnline);
+    return userMapper.toDto(user, false);
   }
 
   private Set<UUID> getOnlineUserIds() {
-    return userRepository.findAll().stream()
-        .map(User::getId)
-        .filter(jwtRegistry::hasActiveJwtInformationByUserId)
-        .collect(Collectors.toSet());
+    return jwtRegistry.getActiveUserIds();
   }
 }

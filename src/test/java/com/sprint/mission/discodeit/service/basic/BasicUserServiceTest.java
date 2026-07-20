@@ -8,18 +8,21 @@ import com.sprint.mission.discodeit.dto.user.UserCreateRequest;
 import com.sprint.mission.discodeit.dto.user.UserDto;
 import com.sprint.mission.discodeit.dto.user.UserUpdateRequest;
 import com.sprint.mission.discodeit.entity.BinaryContent;
+import com.sprint.mission.discodeit.entity.Role;
 import com.sprint.mission.discodeit.entity.User;
-import com.sprint.mission.discodeit.entity.UserStatus;
+import com.sprint.mission.discodeit.event.BinaryContentCreatedEvent;
 import com.sprint.mission.discodeit.exception.user.DuplicateUserException;
 import com.sprint.mission.discodeit.exception.user.EmailAlreadyExistsException;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.mapper.UserMapper;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
+import com.sprint.mission.discodeit.security.jwt.JwtRegistry;
 import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -27,6 +30,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -43,29 +47,33 @@ class BasicUserServiceTest {
   @Mock
   private BinaryContentStorage binaryContentStorage;
   @Mock
+  private ApplicationEventPublisher eventPublisher;
+  @Mock
   private UserMapper userMapper;
+  @Mock
+  private JwtRegistry jwtRegistry;
+  @Mock
+  private PasswordEncoder passwordEncoder;
 
   @InjectMocks
   private BasicUserService userService;
 
   private UUID userId;
   private User mockUser;
-  private UserStatus mockStatus;
   private UserDto mockUserDto;
 
   @BeforeEach
   void setUp() {
     userId = UUID.randomUUID();
     mockUser = new User("testUser", "test@test.com", "password123", null);
-    mockStatus = new UserStatus(mockUser);
-    mockUser.initStatus(mockStatus);
 
     mockUserDto = new UserDto(
         userId,
         "tester",
         "test@test.com",
         null,
-        true
+        true,
+        Role.USER
     );
   }
 
@@ -88,7 +96,7 @@ class BasicUserServiceTest {
       given(userRepository.findByUsername("tester")).willReturn(Optional.empty());
       given(userRepository.findByEmail("test@test.com")).willReturn(Optional.empty());
       given(userRepository.save(any(User.class))).willReturn(mockUser);
-      given(userMapper.toDto(any(User.class), any(UserStatus.class))).willReturn(mockUserDto);
+      given(userMapper.toDto(any(User.class), anyBoolean())).willReturn(mockUserDto);
 
       // when
       UserDto result = userService.createUser(request, null);
@@ -116,7 +124,8 @@ class BasicUserServiceTest {
       given(userRepository.findByEmail("test@test.com")).willReturn(Optional.empty());
       given(binaryContentRepository.save(any(BinaryContent.class))).willReturn(savedBinary);
       given(userRepository.save(any(User.class))).willReturn(mockUser);
-      given(userMapper.toDto(any(User.class), any(UserStatus.class))).willReturn(mockUserDto);
+      given(userMapper.toDto(any(User.class), anyBoolean())).willReturn(mockUserDto);
+      given(passwordEncoder.encode(any())).willReturn("encodedPassword");
 
       // when
       UserDto result = userService.createUser(request, profileFile);
@@ -124,7 +133,7 @@ class BasicUserServiceTest {
       // then
       assertThat(result).isNotNull();
       then(binaryContentRepository).should().save(any(BinaryContent.class));
-      then(binaryContentStorage).should().put(eq(binaryId), any(byte[].class));
+      then(eventPublisher).should().publishEvent(any(BinaryContentCreatedEvent.class));
     }
 
     // --- 실패 ---
@@ -167,7 +176,6 @@ class BasicUserServiceTest {
       // given
       BinaryContent profile = new BinaryContent("pic.png", "image/png", 20L);
       User userWithProfile = new User("tester", "test@test.com", "pw", profile);
-      userWithProfile.initStatus(mockStatus);
 
       given(userRepository.findById(userId)).willReturn(Optional.of(userWithProfile));
       given(userRepository.save(any(User.class))).willReturn(userWithProfile);
@@ -221,12 +229,13 @@ class BasicUserServiceTest {
       // given
       UserUpdateRequest updateRequest = new UserUpdateRequest("newName", "new@test.com",
           "newPassword123");
-      UserDto updatedDto = new UserDto(userId, "newName", "new@test.com", null, true);
+      UserDto updatedDto = new UserDto(userId, "newName", "new@test.com", null, true, Role.USER);
 
       given(userRepository.findById(userId)).willReturn(Optional.of(mockUser));
       given(userRepository.findByUsername("newName")).willReturn(Optional.empty());
       given(userRepository.findByEmail("new@test.com")).willReturn(Optional.empty());
-      given(userMapper.toDto(any(User.class), any(UserStatus.class))).willReturn(updatedDto);
+      given(userMapper.toDto(any(User.class), anyBoolean())).willReturn(updatedDto);
+      given(jwtRegistry.getActiveUserIds()).willReturn(java.util.Collections.emptySet());
 
       // when
       UserDto result = userService.updateUser(userId, updateRequest, null);
@@ -243,8 +252,6 @@ class BasicUserServiceTest {
       BinaryContent existingProfile = new BinaryContent("last.png", "image.png", 10L);
       User userWithProfile = new User("tester", "test@test.com", "password123", existingProfile);
 
-      userWithProfile.initStatus(mockStatus);
-
       MockMultipartFile newProfileFile = new MockMultipartFile(
           "profile", "new.png", "image/png", "new-image".getBytes()
       );
@@ -254,7 +261,8 @@ class BasicUserServiceTest {
 
       given(userRepository.findById(userId)).willReturn(Optional.of(userWithProfile));
       given(binaryContentRepository.save(any(BinaryContent.class))).willReturn(newBinary);
-      given(userMapper.toDto(any(User.class), any(UserStatus.class))).willReturn(mockUserDto);
+      given(userMapper.toDto(any(User.class), anyBoolean())).willReturn(mockUserDto);
+      given(jwtRegistry.getActiveUserIds()).willReturn(java.util.Collections.emptySet());
 
       // when
       userService.updateUser(userId, new UserUpdateRequest(null, null, null), newProfileFile);
@@ -262,7 +270,7 @@ class BasicUserServiceTest {
       // then
       then(binaryContentRepository).should().delete(existingProfile);
       then(binaryContentRepository).should().save(any(BinaryContent.class));
-      then(binaryContentStorage).should().put(any(UUID.class), any(byte[].class));
+      then(eventPublisher).should().publishEvent(any(BinaryContentCreatedEvent.class));
     }
 
     // --- 실패 ---

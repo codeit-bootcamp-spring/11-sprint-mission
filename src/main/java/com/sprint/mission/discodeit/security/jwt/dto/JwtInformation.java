@@ -10,8 +10,4 @@ public record JwtInformation(
     Instant expiration
 ) {
 
-  public JwtInformation rotate(String newAccessToken, String newRefreshToken,
-      Instant newExpiration) {
-    return new JwtInformation(userId, newAccessToken, newRefreshToken, newExpiration);
-  }
 }

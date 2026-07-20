@@ -19,6 +19,28 @@ spring:
     multipart:
       max-file-size: 10MB
       max-request-size: 30MB
+  cache:
+    type: redis
+    cache-names:
+      - channels
+      - notifications
+      - users
+    redis:
+      enable-statistics: true
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+    consumer:
+      group-id: discodeit-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
 
 logging:
   level:
@@ -26,6 +48,11 @@ logging:
     com.sprint.mission.discodeit: debug
     org.hibernate.SQL: warn
     org.hibernate.orm.jdbc.bind: warn
+
+management:
+  observations:
+    annotations:
+      enabled: true
 
 discodeit:
   repository:
@@ -48,6 +75,7 @@ discodeit:
       access-token-validity: ${JWT_ACCESS_TOKEN_VALIDITY:1800}
       refresh-token-validity: ${JWT_REFRESH_TOKEN_VALIDITY:1209600}
       max-active-count: ${JWT_MAX_ACTIVE_COUNT:1}
+      cookie-secure: ${JWT_COOKIE_SECURE:true}
 
 info:
   app:

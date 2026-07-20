@@ -3,12 +3,14 @@ package com.sprint.mission.discodeit.integration;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.mission.discodeit.dto.message.CreateMessageRequest;
 import com.sprint.mission.discodeit.dto.message.MessageUpdateRequest;
@@ -16,10 +18,11 @@ import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.ChannelType;
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.entity.User;
-import com.sprint.mission.discodeit.entity.UserStatus;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
+import jakarta.servlet.http.Cookie;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -28,10 +31,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
@@ -39,6 +44,9 @@ import org.springframework.transaction.annotation.Transactional;
 @ActiveProfiles("test")
 @Transactional
 public class MessageIntegrationTest {
+
+  private static final String CSRF_COOKIE_NAME = "XSRF-TOKEN";
+  private static final String CSRF_HEADER_NAME = "X-XSRF-TOKEN";
 
   @Autowired
   private MockMvc mockMvc;
@@ -55,15 +63,19 @@ public class MessageIntegrationTest {
   @Autowired
   private ChannelRepository channelRepository;
 
+  @Autowired
+  private PasswordEncoder passwordEncoder;
+
   private User savedUser;
   private Channel savedChannel;
   private Message savedMessage;
+  private String accessToken;
+  private String csrfToken;
+  private Cookie csrfCookie;
 
   @BeforeEach
-  void setUp() {
-    User user = new User("testUser", "test@test.com", "password123", null);
-    UserStatus status = new UserStatus(user);
-    user.initStatus(status);
+  void setUp() throws Exception {
+    User user = new User("testUser", "test@test.com", passwordEncoder.encode("password123"), null);
     savedUser = userRepository.save(user);
 
     savedChannel = channelRepository.save(
@@ -73,6 +85,25 @@ public class MessageIntegrationTest {
     savedMessage = messageRepository.save(
         new Message(savedChannel, savedUser, "기존 메시지")
     );
+
+    // 1. CSRF 토큰 발급
+    MvcResult csrfResult = mockMvc.perform(get("/api/auth/csrf-token"))
+        .andExpect(status().isNoContent())
+        .andReturn();
+    csrfCookie = csrfResult.getResponse().getCookie(CSRF_COOKIE_NAME);
+    csrfToken = csrfCookie.getValue();
+
+    // 2. 로그인
+    MvcResult loginResult = mockMvc.perform(post("/api/auth/login")
+            .param("username", "testUser")
+            .param("password", "password123")
+            .cookie(csrfCookie)
+            .header(CSRF_HEADER_NAME, csrfToken))
+        .andExpect(status().isOk())
+        .andReturn();
+
+    JsonNode json = objectMapper.readTree(loginResult.getResponse().getContentAsString());
+    accessToken = json.get("accessToken").asText();
   }
 
   // --- POST ---
@@ -88,7 +119,10 @@ public class MessageIntegrationTest {
         objectMapper.writeValueAsBytes(request)
     );
 
-    mockMvc.perform(multipart("/api/messages").file(requestPart))
+    mockMvc.perform(multipart("/api/messages").file(requestPart)
+            .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+            .cookie(csrfCookie)
+            .header(CSRF_HEADER_NAME, csrfToken))
         .andDo(print())
         .andExpect(status().isCreated())
         .andExpect(jsonPath("$.content").value("test"))
@@ -108,7 +142,10 @@ public class MessageIntegrationTest {
         objectMapper.writeValueAsBytes(request)
     );
 
-    mockMvc.perform(multipart("/api/messages").file(requestPart))
+    mockMvc.perform(multipart("/api/messages").file(requestPart)
+            .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+            .cookie(csrfCookie)
+            .header(CSRF_HEADER_NAME, csrfToken))
         .andDo(print())
         .andExpect(status().isNotFound())
         .andExpect(jsonPath("$.code").value("CHANNEL_NOT_FOUND"));
@@ -118,7 +155,8 @@ public class MessageIntegrationTest {
   @Test
   @DisplayName("channelId로 메시지 조회 시 200과 메시지 목록을 반환")
   void readMessage_returns200WithMessageList() throws Exception {
-    mockMvc.perform(get("/api/messages").param("channelId", savedChannel.getId().toString()))
+    mockMvc.perform(get("/api/messages").param("channelId", savedChannel.getId().toString())
+            .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken))
         .andDo(print())
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.content.length()").value(1))
@@ -133,7 +171,8 @@ public class MessageIntegrationTest {
         new Channel("empty", "empty Channel", ChannelType.PUBLIC)
     );
 
-    mockMvc.perform(get("/api/messages").param("channelId", emptyChannel.getId().toString()))
+    mockMvc.perform(get("/api/messages").param("channelId", emptyChannel.getId().toString())
+            .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken))
         .andDo(print())
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.content.length()").value(0))
@@ -144,7 +183,10 @@ public class MessageIntegrationTest {
   @Test
   @DisplayName("메시지 삭제 시 204를 반환하고 DB에서 삭제됨")
   void deleteMessage_returns204AndDeletedFromDb() throws Exception {
-    mockMvc.perform(delete("/api/messages/{messageId}", savedMessage.getId()))
+    mockMvc.perform(delete("/api/messages/{messageId}", savedMessage.getId())
+            .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+            .cookie(csrfCookie)
+            .header(CSRF_HEADER_NAME, csrfToken))
         .andDo(print())
         .andExpect(status().isNoContent());
 
@@ -154,7 +196,10 @@ public class MessageIntegrationTest {
   @Test
   @DisplayName("존재하지 않는 메시지 삭제 시 404를 반환")
   void deleteMessage_notFound_returns404() throws Exception {
-    mockMvc.perform(delete("/api/messages/{messageId}", UUID.randomUUID()))
+    mockMvc.perform(delete("/api/messages/{messageId}", UUID.randomUUID())
+            .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+            .cookie(csrfCookie)
+            .header(CSRF_HEADER_NAME, csrfToken))
         .andDo(print())
         .andExpect(status().isNotFound())
         .andExpect(jsonPath("$.code").value("MESSAGE_NOT_FOUND"));
@@ -168,7 +213,10 @@ public class MessageIntegrationTest {
 
     mockMvc.perform(patch("/api/messages/{messageId}", savedMessage.getId())
             .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(request)))
+            .content(objectMapper.writeValueAsString(request))
+            .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+            .cookie(csrfCookie)
+            .header(CSRF_HEADER_NAME, csrfToken))
         .andDo(print())
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.content").value("수정된 메시지"))
@@ -182,7 +230,10 @@ public class MessageIntegrationTest {
 
     mockMvc.perform(patch("/api/messages/{messageId}", UUID.randomUUID())
             .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(request)))
+            .content(objectMapper.writeValueAsString(request))
+            .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+            .cookie(csrfCookie)
+            .header(CSRF_HEADER_NAME, csrfToken))
         .andDo(print())
         .andExpect(status().isNotFound())
         .andExpect(jsonPath("$.code").value("MESSAGE_NOT_FOUND"));

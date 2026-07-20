@@ -6,6 +6,8 @@ import com.sprint.mission.discodeit.security.DiscodeitUserDetails;
 import com.sprint.mission.discodeit.security.jwt.JwtRegistry;
 import com.sprint.mission.discodeit.security.jwt.JwtTokenProvider;
 import com.sprint.mission.discodeit.security.jwt.dto.JwtInformation;
+import com.sprint.mission.discodeit.security.jwt.dto.JwtSessionResult;
+import com.sprint.mission.discodeit.service.jwt.JwtService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -22,8 +24,8 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class JwtLoginSuccessHandler implements AuthenticationSuccessHandler {
 
+  private final JwtService jwtService;
   private final JwtTokenProvider jwtTokenProvider;
-  private final JwtRegistry jwtRegistry;
   private final ObjectMapper objectMapper;
 
   @Override
@@ -31,22 +33,14 @@ public class JwtLoginSuccessHandler implements AuthenticationSuccessHandler {
       Authentication authentication) throws IOException, ServletException {
     DiscodeitUserDetails userDetails = (DiscodeitUserDetails) authentication.getPrincipal();
 
-    String accessToken = jwtTokenProvider.createAccessToken(
+    JwtSessionResult result = jwtService.createJwtSession(
         userDetails.getUserDto().id(), userDetails.getUsername());
-    String refreshToken = jwtTokenProvider.createRefreshToken(userDetails.getUserDto().id(),
-        userDetails.getUsername());
 
-    jwtRegistry.registerJwtInformation(new JwtInformation(
-        userDetails.getUserDto().id(),
-        accessToken,
-        refreshToken,
-        jwtTokenProvider.getExpiration(refreshToken)
-    ));
-
-    ResponseCookie refreshTokenCookie = jwtTokenProvider.createRefreshTokenCookie(refreshToken);
+    ResponseCookie refreshTokenCookie = jwtTokenProvider.createRefreshTokenCookie(
+        result.refreshToken());
     response.addHeader(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString());
 
-    JwtDto jwtDto = new JwtDto(userDetails.getUserDto(), accessToken);
+    JwtDto jwtDto = new JwtDto(result.userDto(), result.accessToken());
 
     response.setStatus(HttpServletResponse.SC_OK);
     response.setContentType(MediaType.APPLICATION_JSON_VALUE);
