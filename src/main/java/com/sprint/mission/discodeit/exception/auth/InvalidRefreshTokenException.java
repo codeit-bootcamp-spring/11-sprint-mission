@@ -9,10 +9,7 @@ public class InvalidRefreshTokenException extends AuthException {
     super(errorCode, details);
   }
 
-  public static InvalidRefreshTokenException withToken(String token) {
-    return new InvalidRefreshTokenException(
-        ErrorCode.INVALID_REFRESH_TOKEN,
-        Map.of("token", token)
-    );
+  public static InvalidRefreshTokenException withInvalidToken() {
+    return new InvalidRefreshTokenException(ErrorCode.INVALID_REFRESH_TOKEN, Map.of());
   }
 }

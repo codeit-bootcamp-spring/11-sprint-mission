@@ -65,7 +65,7 @@ public class BasicAuthService implements AuthService {
     if (refreshToken == null
         || !jwtTokenProvider.validateRefreshToken(refreshToken)
         || !jwtRegistry.hasActiveJwtInformationByRefreshToken(refreshToken)) {
-      throw InvalidRefreshTokenException.withToken(refreshToken != null ? refreshToken : "");
+      throw InvalidRefreshTokenException.withInvalidToken();
     }
 
     UUID userId = UUID.fromString(jwtTokenProvider.getSubject(refreshToken));

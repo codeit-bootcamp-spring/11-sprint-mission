@@ -37,8 +37,9 @@ public class JwtLogoutHandler implements LogoutHandler {
         .findFirst()
         .ifPresent(cookie -> {
           String refreshToken = cookie.getValue();
+          UUID userId = null;
           if (jwtTokenProvider.validateRefreshToken(refreshToken)) {
-            UUID userId = UUID.fromString(jwtTokenProvider.getSubject(refreshToken));
+            userId = UUID.fromString(jwtTokenProvider.getSubject(refreshToken));
             jwtRegistry.invalidateJwtInformationByUserId(userId);
           }
 
@@ -53,7 +54,7 @@ public class JwtLogoutHandler implements LogoutHandler {
 
           Optional.ofNullable(cacheManager.getCache("users")).ifPresent(Cache::clear);
 
-          log.info("auth logout: refreshToken={}", refreshToken);
+          log.info("auth logout: userId={}", userId);
         });
   }
 }
