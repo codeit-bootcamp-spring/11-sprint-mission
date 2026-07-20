@@ -6,7 +6,8 @@ import java.util.UUID;
 
 public interface NotificationService {
 
-  NotificationResponse createNotification(UUID receiverId, String title, String content);
+  List<NotificationResponse> createNotification(List<UUID> receiverIds, String title,
+      String content);
 
   List<NotificationResponse> findAllByReceiverId(UUID receiverId);
 
