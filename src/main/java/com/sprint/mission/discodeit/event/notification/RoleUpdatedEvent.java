@@ -1,4 +1,4 @@
-package com.sprint.mission.discodeit.event;
+package com.sprint.mission.discodeit.event.notification;
 
 import com.sprint.mission.discodeit.entity.Role;
 import java.util.UUID;
