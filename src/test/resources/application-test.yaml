@@ -16,6 +16,10 @@ spring:
       mode: never
 
 discodeit:
+  storage:
+    type: local
+    local:
+      root-path: build/test-storage
   admin:
     username: admin
     email: admin@test.com
