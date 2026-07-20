@@ -16,6 +16,7 @@ import com.sprint.mission.discodeit.entity.Role;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.event.MessageCreatedEvent;
 import com.sprint.mission.discodeit.event.RoleUpdatedEvent;
+import com.sprint.mission.discodeit.event.S3UploadFailedEvent;
 import com.sprint.mission.discodeit.exception.notification.NotificationNotFoundException;
 import com.sprint.mission.discodeit.mapper.NotificationMapper;
 import com.sprint.mission.discodeit.repository.NotificationRepository;
@@ -114,6 +115,36 @@ class BasicNotificationServiceTest {
     assertThat(notification.getReceiver()).isEqualTo(receiver);
     assertThat(notification.getTitle()).isEqualTo("권한이 변경되었습니다.");
     assertThat(notification.getContent()).isEqualTo("USER -> CHANNEL_MANAGER");
+  }
+
+  @Test
+  @DisplayName("업로드 실패 알림은 관리자에게 생성된다")
+  void createAll_S3UploadFailedEvent_Success() {
+    // given
+    User admin = new User("admin", "admin@example.com", "Password1!", null);
+    ReflectionTestUtils.setField(admin, "id", UUID.randomUUID());
+    UUID binaryContentId = UUID.randomUUID();
+    S3UploadFailedEvent event = new S3UploadFailedEvent(
+        "S3 파일 업로드", "test-request-id", binaryContentId, "Access Denied");
+
+    given(userRepository.findAllByRole(eq(Role.ADMIN))).willReturn(List.of(admin));
+
+    // when
+    notificationService.createAll(event);
+
+    // then
+    ArgumentCaptor<List<Notification>> captor = ArgumentCaptor.forClass(List.class);
+    verify(notificationRepository).saveAll(captor.capture());
+
+    List<Notification> notifications = captor.getValue();
+    assertThat(notifications).hasSize(1);
+    assertThat(notifications.get(0).getReceiver()).isEqualTo(admin);
+    assertThat(notifications.get(0).getTitle()).isEqualTo("파일 업로드에 실패했습니다.");
+    assertThat(notifications.get(0).getContent())
+        .contains("Task: S3 파일 업로드")
+        .contains("RequestId: test-request-id")
+        .contains("BinaryContentId: " + binaryContentId)
+        .contains("Error: Access Denied");
   }
 
   @Test

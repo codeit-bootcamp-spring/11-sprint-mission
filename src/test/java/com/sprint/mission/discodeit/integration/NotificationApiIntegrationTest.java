@@ -1,6 +1,7 @@
 package com.sprint.mission.discodeit.integration;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.anonymous;
@@ -12,7 +13,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.sprint.mission.discodeit.dto.data.ChannelDto;
-import com.sprint.mission.discodeit.dto.data.NotificationDto;
 import com.sprint.mission.discodeit.dto.data.ReadStatusDto;
 import com.sprint.mission.discodeit.dto.data.UserDto;
 import com.sprint.mission.discodeit.dto.request.MessageCreateRequest;
@@ -26,9 +26,9 @@ import com.sprint.mission.discodeit.service.MessageService;
 import com.sprint.mission.discodeit.service.NotificationService;
 import com.sprint.mission.discodeit.service.ReadStatusService;
 import com.sprint.mission.discodeit.service.UserService;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -108,6 +108,7 @@ class NotificationApiIntegrationTest {
     // Given
     messageService.create(
         new MessageCreateRequest("안녕하세요", channel.id(), author.id()), new ArrayList<>());
+    awaitOnlyNotificationId();
 
     // When & Then
     mockMvc.perform(get("/api/notifications").with(user(receiverDetails)))
@@ -136,7 +137,7 @@ class NotificationApiIntegrationTest {
     // Given
     messageService.create(
         new MessageCreateRequest("확인할 알림", channel.id(), author.id()), new ArrayList<>());
-    UUID notificationId = findOnlyNotificationId();
+    UUID notificationId = awaitOnlyNotificationId();
 
     // When & Then
     mockMvc.perform(delete("/api/notifications/{notificationId}", notificationId)
@@ -153,7 +154,7 @@ class NotificationApiIntegrationTest {
     // Given
     messageService.create(
         new MessageCreateRequest("남의 알림", channel.id(), author.id()), new ArrayList<>());
-    UUID notificationId = findOnlyNotificationId();
+    UUID notificationId = awaitOnlyNotificationId();
 
     // When & Then
     mockMvc.perform(delete("/api/notifications/{notificationId}", notificationId)
@@ -171,9 +172,11 @@ class NotificationApiIntegrationTest {
         .andExpect(status().isNotFound());
   }
 
-  private UUID findOnlyNotificationId() {
-    List<NotificationDto> notifications = notificationService.findAllByReceiverId(receiver.id());
-    assertThat(notifications).hasSize(1);
-    return notifications.get(0).id();
+  // 알림은 비동기로 생성되므로 생성될 때까지 기다린다
+  private UUID awaitOnlyNotificationId() {
+    await().atMost(Duration.ofSeconds(5))
+        .untilAsserted(() -> assertThat(notificationService.findAllByReceiverId(receiver.id()))
+            .hasSize(1));
+    return notificationService.findAllByReceiverId(receiver.id()).get(0).id();
   }
 }

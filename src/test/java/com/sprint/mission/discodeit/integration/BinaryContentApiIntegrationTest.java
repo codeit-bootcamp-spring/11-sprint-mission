@@ -1,6 +1,7 @@
 package com.sprint.mission.discodeit.integration;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
@@ -23,6 +24,7 @@ import com.sprint.mission.discodeit.service.BinaryContentService;
 import com.sprint.mission.discodeit.service.ChannelService;
 import com.sprint.mission.discodeit.service.MessageService;
 import com.sprint.mission.discodeit.service.UserService;
+import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -198,8 +200,9 @@ class BinaryContentApiIntegrationTest {
     UUID binaryContentId = binaryContent.id();
     
     assertThat(binaryContent.status()).isEqualTo(BinaryContentUploadStatus.PROCESSING);
-    assertThat(binaryContentService.find(binaryContentId).status())
-        .isEqualTo(BinaryContentUploadStatus.SUCCESS);
+    await().atMost(Duration.ofSeconds(5))
+        .untilAsserted(() -> assertThat(binaryContentService.find(binaryContentId).status())
+            .isEqualTo(BinaryContentUploadStatus.SUCCESS));
 
     // When & Then
     mockMvc.perform(get("/api/binaryContents/{binaryContentId}/download", binaryContentId))

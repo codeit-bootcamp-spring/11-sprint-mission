@@ -3,9 +3,11 @@ package com.sprint.mission.discodeit.service.basic;
 import com.sprint.mission.discodeit.dto.data.NotificationDto;
 import com.sprint.mission.discodeit.entity.Notification;
 import com.sprint.mission.discodeit.entity.ReadStatus;
+import com.sprint.mission.discodeit.entity.Role;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.event.MessageCreatedEvent;
 import com.sprint.mission.discodeit.event.RoleUpdatedEvent;
+import com.sprint.mission.discodeit.event.S3UploadFailedEvent;
 import com.sprint.mission.discodeit.exception.notification.NotificationNotFoundException;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.mapper.NotificationMapper;
@@ -66,6 +68,26 @@ public class BasicNotificationService implements NotificationService {
     notificationRepository.save(notification);
 
     log.info("권한 변경 알림 생성 완료: id={}, userId={}", notification.getId(), receiverId);
+  }
+
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
+  @Override
+  public void createAll(S3UploadFailedEvent event) {
+    log.debug("업로드 실패 알림 생성 시작: binaryContentId={}", event.binaryContentId());
+
+    String content = """
+        Task: %s
+        RequestId: %s
+        BinaryContentId: %s
+        Error: %s""".formatted(
+        event.taskName(), event.requestId(), event.binaryContentId(), event.errorMessage());
+    List<Notification> notifications = userRepository.findAllByRole(Role.ADMIN).stream()
+        .map(admin -> new Notification(admin, "파일 업로드에 실패했습니다.", content))
+        .toList();
+    notificationRepository.saveAll(notifications);
+
+    log.info("업로드 실패 알림 생성 완료: binaryContentId={}, 생성된 알림 수={}",
+        event.binaryContentId(), notifications.size());
   }
 
   @Transactional(readOnly = true)

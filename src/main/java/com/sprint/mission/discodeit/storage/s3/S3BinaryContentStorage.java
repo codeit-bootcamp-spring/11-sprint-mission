@@ -7,7 +7,14 @@ import java.io.InputStream;
 import java.time.Duration;
 import java.util.NoSuchElementException;
 import java.util.UUID;
+import com.sprint.mission.discodeit.config.MDCLoggingInterceptor;
+import com.sprint.mission.discodeit.event.S3UploadFailedEvent;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Recover;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpHeaders;
@@ -35,6 +42,7 @@ public class S3BinaryContentStorage implements BinaryContentStorage {
   private final String secretKey;
   private final String region;
   private final String bucket;
+  private final ApplicationEventPublisher eventPublisher;
 
   @Value("${discodeit.storage.s3.presigned-url-expiration:600}") // 기본값 10분
   private long presignedUrlExpirationSeconds;
@@ -43,14 +51,21 @@ public class S3BinaryContentStorage implements BinaryContentStorage {
       @Value("${discodeit.storage.s3.access-key}") String accessKey,
       @Value("${discodeit.storage.s3.secret-key}") String secretKey,
       @Value("${discodeit.storage.s3.region}") String region,
-      @Value("${discodeit.storage.s3.bucket}") String bucket
+      @Value("${discodeit.storage.s3.bucket}") String bucket,
+      ApplicationEventPublisher eventPublisher
   ) {
     this.accessKey = accessKey;
     this.secretKey = secretKey;
     this.region = region;
     this.bucket = bucket;
+    this.eventPublisher = eventPublisher;
   }
 
+  @Retryable(
+      retryFor = RuntimeException.class,
+      maxAttempts = 3,
+      backoff = @Backoff(delay = 1000, multiplier = 2)
+  )
   @Override
   public UUID put(UUID binaryContentId, byte[] bytes) {
     String key = binaryContentId.toString();
@@ -70,6 +85,19 @@ public class S3BinaryContentStorage implements BinaryContentStorage {
       log.error("S3에 파일 업로드 실패: {}", e.getMessage());
       throw new RuntimeException("S3에 파일 업로드 실패: " + key, e);
     }
+  }
+
+  // 재시도가 모두 실패하면 관리자에게 통지하고, 업로드 상태를 실패로 남기도록 예외를 그대로 전파한다.
+  @Recover
+  public UUID recoverPut(RuntimeException e, UUID binaryContentId, byte[] bytes) {
+    log.error("S3에 파일 업로드 재시도 실패: id={}", binaryContentId, e);
+    eventPublisher.publishEvent(new S3UploadFailedEvent(
+        "S3 파일 업로드",
+        MDC.get(MDCLoggingInterceptor.REQUEST_ID),
+        binaryContentId,
+        e.getMessage()
+    ));
+    throw e;
   }
 
   @Override
