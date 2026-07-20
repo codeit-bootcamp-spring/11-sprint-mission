@@ -2,7 +2,6 @@ package com.sprint.mission.discodeit.event.listener;
 
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -19,6 +18,7 @@ import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.service.NotificationService;
 import java.time.Instant;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -72,11 +72,9 @@ class NotificationRequiredEventListenerTest {
     // when
     listener.on(event);
 
-    // then
-    verify(notificationService, times(1)).create(eq(subscriber.getId()),
-        eq("author (#공지)"), eq("안녕하세요"));
-    verify(notificationService, never()).create(eq(author.getId()), org.mockito.ArgumentMatchers.anyString(),
-        org.mockito.ArgumentMatchers.anyString());
+    // then - 구독자만 포함된 수신자 집합으로 단 한 번 배치 생성되고, 작성자는 제외된다
+    verify(notificationService, times(1)).create(
+        eq(Set.of(subscriber.getId())), eq("author (#공지)"), eq("안녕하세요"));
   }
 
   @Test
@@ -90,7 +88,7 @@ class NotificationRequiredEventListenerTest {
     listener.on(event);
 
     // then
-    verify(notificationService).create(eq(userId), eq("권한이 변경되었습니다."),
+    verify(notificationService).create(eq(Set.of(userId)), eq("권한이 변경되었습니다."),
         eq("USER -> CHANNEL_MANAGER"));
   }
 }

@@ -14,6 +14,7 @@ import com.sprint.mission.discodeit.service.NotificationService;
 import com.sprint.mission.discodeit.service.UserService;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
@@ -135,7 +136,9 @@ class CachingIntegrationTest {
     assertThat(notificationsByUserCache.get(receiverId).get()).isEqualTo(firstCall);
 
     // when - 알림 생성 시 해당 사용자 캐시만 무효화
-    NotificationDto notification = notificationService.create(receiverId, "제목", "내용");
+    NotificationDto notification = notificationService
+        .create(Set.of(receiverId), "제목", "내용")
+        .get(0);
     assertThat(notificationsByUserCache.get(receiverId)).isNull();
 
     // given - 다시 조회해 캐시 재적재

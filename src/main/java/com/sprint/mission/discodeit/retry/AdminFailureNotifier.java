@@ -4,6 +4,7 @@ import com.sprint.mission.discodeit.config.MDCLoggingInterceptor;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.NotificationService;
+import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,7 +37,7 @@ public class AdminFailureNotifier {
     userRepository.findByUsername(adminUsername)
         .map(User::getId)
         .ifPresentOrElse(
-            adminId -> notificationService.create(adminId, title, content),
+            adminId -> notificationService.create(Set.of(adminId), title, content),
             () -> log.warn(
                 "관리자 계정을 찾을 수 없어 실패 알림을 생성하지 못했습니다. binaryContentId={}, requestId={}",
                 binaryContentId, requestId)

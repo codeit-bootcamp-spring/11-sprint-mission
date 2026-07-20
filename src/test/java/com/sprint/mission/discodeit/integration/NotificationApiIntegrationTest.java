@@ -33,6 +33,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -187,7 +188,8 @@ class NotificationApiIntegrationTest {
         new UserCreateRequest("notiother", "notiother@example.com", "Password1!"),
         Optional.empty());
 
-    NotificationDto notification = notificationService.create(owner.id(), "제목", "내용");
+    NotificationDto notification = notificationService.create(Set.of(owner.id()), "제목", "내용")
+        .get(0);
 
     DiscodeitUserDetails otherDetails = new DiscodeitUserDetails(other, "Password1!");
     DiscodeitUserDetails ownerDetails = new DiscodeitUserDetails(owner, "Password1!");

@@ -12,6 +12,7 @@ import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.NotificationService;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
@@ -64,7 +65,8 @@ class AdminFailureNotifierTest {
 
     // then
     ArgumentCaptor<String> contentCaptor = ArgumentCaptor.forClass(String.class);
-    verify(notificationService).create(eq(adminId), eq("S3 파일 업로드 실패"), contentCaptor.capture());
+    verify(notificationService).create(eq(Set.of(adminId)), eq("S3 파일 업로드 실패"),
+        contentCaptor.capture());
 
     String content = contentCaptor.getValue();
     assertThat(content).contains("RequestId: test-request-id");

@@ -6,7 +6,9 @@ import com.sprint.mission.discodeit.event.MessageCreatedEvent;
 import com.sprint.mission.discodeit.event.RoleUpdatedEvent;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.service.NotificationService;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
@@ -39,12 +41,17 @@ public class NotificationRequiredEventListener {
         ? "%s (#%s)".formatted(authorUsername, channelName)
         : authorUsername;
 
-    readStatusRepository.findAllByChannelIdAndNotificationEnabledTrue(channelId).stream()
+    Set<UUID> receiverIds = readStatusRepository
+        .findAllByChannelIdAndNotificationEnabledTrue(channelId).stream()
         .map(ReadStatus::getUser)
-        .filter(user -> !user.getId().equals(authorId))
-        .forEach(user -> notificationService.create(user.getId(), title, message.content()));
+        .map(user -> user.getId())
+        .filter(userId -> !userId.equals(authorId))
+        .collect(Collectors.toSet());
 
-    log.info("메시지 등록 알림 생성 완료: channelId={}, authorId={}", channelId, authorId);
+    notificationService.create(receiverIds, title, message.content());
+
+    log.info("메시지 등록 알림 생성 완료: channelId={}, authorId={}, 수신자 수={}",
+        channelId, authorId, receiverIds.size());
   }
 
   @Async
@@ -55,7 +62,7 @@ public class NotificationRequiredEventListener {
 
     String title = "권한이 변경되었습니다.";
     String content = "%s -> %s".formatted(event.previousRole(), event.newRole());
-    notificationService.create(event.userId(), title, content);
+    notificationService.create(Set.of(event.userId()), title, content);
 
     log.info("권한 변경 알림 생성 완료: userId={}", event.userId());
   }

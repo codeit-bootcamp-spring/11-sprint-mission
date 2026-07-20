@@ -3,21 +3,24 @@ package com.sprint.mission.discodeit.service.basic;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
+import com.sprint.mission.discodeit.config.CacheConfig;
 import com.sprint.mission.discodeit.dto.data.NotificationDto;
 import com.sprint.mission.discodeit.entity.Notification;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.exception.notification.NotificationNotFoundException;
-import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.mapper.NotificationMapper;
 import com.sprint.mission.discodeit.repository.NotificationRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -26,6 +29,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
@@ -39,6 +44,12 @@ class BasicNotificationServiceTest {
 
   @Mock
   private NotificationMapper notificationMapper;
+
+  @Mock
+  private CacheManager cacheManager;
+
+  @Mock
+  private Cache cache;
 
   @InjectMocks
   private BasicNotificationService notificationService;
@@ -65,29 +76,31 @@ class BasicNotificationServiceTest {
   }
 
   @Test
-  @DisplayName("알림 생성 성공")
+  @DisplayName("알림 생성 성공 - 수신자 각각에게 알림이 배치 저장되고 캐시가 무효화된다")
   void createNotification_Success() {
     // given
-    given(userRepository.findById(eq(receiverId))).willReturn(Optional.of(receiver));
+    given(userRepository.findAllById(Set.of(receiverId))).willReturn(List.of(receiver));
     given(notificationMapper.toDto(any(Notification.class))).willReturn(notificationDto);
+    given(cacheManager.getCache(CacheConfig.NOTIFICATIONS_BY_USER_CACHE)).willReturn(cache);
 
     // when
-    NotificationDto result = notificationService.create(receiverId, "제목", "내용");
+    List<NotificationDto> result = notificationService.create(Set.of(receiverId), "제목", "내용");
 
     // then
-    assertThat(result).isEqualTo(notificationDto);
-    verify(notificationRepository).save(any(Notification.class));
+    assertThat(result).containsExactly(notificationDto);
+    verify(notificationRepository).saveAll(anyList());
+    verify(cache).evict(receiverId);
   }
 
   @Test
-  @DisplayName("존재하지 않는 수신자로 알림 생성 시도 시 실패")
-  void createNotification_WithNonExistentReceiver_ThrowsException() {
-    // given
-    given(userRepository.findById(eq(receiverId))).willReturn(Optional.empty());
+  @DisplayName("수신자 집합이 비어있으면 아무 것도 하지 않는다")
+  void createNotification_WithEmptyReceiverIds_DoesNothing() {
+    // when
+    List<NotificationDto> result = notificationService.create(Set.of(), "제목", "내용");
 
-    // when & then
-    assertThatThrownBy(() -> notificationService.create(receiverId, "제목", "내용"))
-        .isInstanceOf(UserNotFoundException.class);
+    // then
+    assertThat(result).isEmpty();
+    verify(notificationRepository, never()).saveAll(any());
   }
 
   @Test
