@@ -19,6 +19,8 @@ import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -34,6 +36,7 @@ public class BasicNotificationService implements NotificationService {
   private final UserRepository userRepository;
   private final NotificationMapper notificationMapper;
 
+  @CacheEvict(cacheNames = "notifications", allEntries = true)
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   @Override
   public void createAll(MessageCreatedEvent event) {
@@ -52,6 +55,7 @@ public class BasicNotificationService implements NotificationService {
         event.messageId(), notifications.size());
   }
 
+  @CacheEvict(cacheNames = "notifications", allEntries = true)
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   @Override
   public void create(RoleUpdatedEvent event) {
@@ -70,6 +74,7 @@ public class BasicNotificationService implements NotificationService {
     log.info("권한 변경 알림 생성 완료: id={}, userId={}", notification.getId(), receiverId);
   }
 
+  @CacheEvict(cacheNames = "notifications", allEntries = true)
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   @Override
   public void createAll(S3UploadFailedEvent event) {
@@ -101,6 +106,7 @@ public class BasicNotificationService implements NotificationService {
     return dto;
   }
 
+  @Cacheable(cacheNames = "notifications", key = "#receiverId")
   @Transactional(readOnly = true)
   @Override
   public List<NotificationDto> findAllByReceiverId(UUID receiverId) {
@@ -112,6 +118,7 @@ public class BasicNotificationService implements NotificationService {
     return dtos;
   }
 
+  @CacheEvict(cacheNames = "notifications", allEntries = true)
   @PreAuthorize("principal.userDto.id == @basicNotificationService.find(#notificationId).receiverId")
   @Transactional
   @Override

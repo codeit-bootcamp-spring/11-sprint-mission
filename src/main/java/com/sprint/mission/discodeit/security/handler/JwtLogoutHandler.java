@@ -5,7 +5,10 @@ import com.sprint.mission.discodeit.security.jwt.JwtTokenProvider;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.Arrays;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.Authentication;
@@ -18,6 +21,7 @@ public class JwtLogoutHandler implements LogoutHandler {
 
   private final JwtTokenProvider jwtTokenProvider;
   private final JwtRegistry jwtRegistry;
+  private final CacheManager cacheManager;
 
   @Override
   public void logout(HttpServletRequest request, HttpServletResponse response,
@@ -33,6 +37,8 @@ public class JwtLogoutHandler implements LogoutHandler {
           String refreshToken = cookie.getValue();
           if (jwtTokenProvider.validateToken(refreshToken)) {
             jwtRegistry.invalidateJwtInformationByUserId(jwtTokenProvider.getUserId(refreshToken));
+            // 로그아웃으로 접속 상태가 바뀌므로 사용자 목록 캐시를 비운다
+            Optional.ofNullable(cacheManager.getCache("users")).ifPresent(Cache::clear);
           }
 
           ResponseCookie expiredCookie = jwtTokenProvider.expireRefreshTokenCookie();
