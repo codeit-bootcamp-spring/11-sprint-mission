@@ -10,7 +10,7 @@ public class JwtRegistryScheduler {
 
     private final JwtRegistry jwtRegistry;
 
-    @Scheduled(fixedRate = 3600000) // 1시간마다 만료된 토큰 정리
+    @Scheduled(fixedDelay = 300000)
     public void clearExpiredJwtInformation() {
         jwtRegistry.clearExpiredJwtInformation();
     }
