@@ -8,6 +8,8 @@ public interface JwtRegistry {
 
   void invalidateJwtInformationByUserId(UUID userId);
 
+  void invalidateJwtInformationByRefreshToken(String refreshToken);
+
   boolean hasActiveJwtInformationByUserId(UUID userId);
 
   boolean hasActiveJwtInformationByAccessToken(String accessToken);

@@ -8,6 +8,8 @@ import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.event.BinaryContentCreatedEvent;
+import com.sprint.mission.discodeit.event.MessageCreatedEvent;
 import com.sprint.mission.discodeit.exception.channel.ChannelNotFoundException;
 import com.sprint.mission.discodeit.exception.message.MessageNotFoundException;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
@@ -26,6 +28,7 @@ import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
 import org.springframework.security.access.prepost.PostAuthorize;
@@ -47,6 +50,7 @@ public class BasicMessageService implements MessageService {
   private final MessageMapper messageMapper;
   private final BinaryContentStorage binaryContentStorage;
   private final PageResponseMapper pageResponseMapper;
+  private final ApplicationEventPublisher eventPublisher;
 
   @Override
   @Transactional
@@ -85,7 +89,8 @@ public class BasicMessageService implements MessageService {
         for (int i = 0; i < attachments.size(); i++) {
           MultipartFile file = attachments.get(i);
           BinaryContent content = attachmentContents.get(i);
-          binaryContentStorage.put(content.getId(), file.getBytes());
+          eventPublisher.publishEvent(
+              new BinaryContentCreatedEvent(content.getId(), file.getBytes()));
           uploadedFileIds.add(content.getId());
         }
       } catch (Exception e) {
@@ -102,6 +107,15 @@ public class BasicMessageService implements MessageService {
     }
 
     log.info("메시지 생성 완료 - messageId: {}", message.getId());
+
+    eventPublisher.publishEvent(new MessageCreatedEvent(
+        message.getId(),
+        channel.getId(),
+        author.getId(),
+        channel.getName(),
+        message.getContent()
+    ));
+
     return messageMapper.toDto(message);
   }
 
@@ -138,9 +152,15 @@ public class BasicMessageService implements MessageService {
     return pageResponseMapper.fromSlice(dtoSlice, nextCursor);
   }
 
+  public boolean isAuthor(UUID messageId, UUID userId) {
+    return messageRepository.findById(messageId)
+        .map(message -> message.getAuthor().getId().equals(userId))
+        .orElse(false);
+  }
+
   @Override
   @Transactional
-  @PreAuthorize("@basicMessageService.findById(#id).author.id == principal.userDto.id or hasRole('ADMIN')")
+  @PreAuthorize("@basicMessageService.isAuthor(#id, principal.userDto.id) or hasRole('ADMIN')")
   public MessageDto update(UUID id, MessageUpdateRequest request) {
     log.debug("메시지 수정 시작 - messageId: {}", id);
     Message message = messageRepository.findById(id)
@@ -155,7 +175,7 @@ public class BasicMessageService implements MessageService {
 
   @Override
   @Transactional
-  @PreAuthorize("@messageRepository.findById(#id).orElse(null)?.author?.id == principal.userDto.id or hasRole('ADMIN')")
+  @PreAuthorize("@basicMessageService.isAuthor(#id, principal.userDto.id) or hasRole('ADMIN')")
   public void delete(UUID id) {
     log.debug("메시지 삭제 시작 - messageId: {}", id);
 

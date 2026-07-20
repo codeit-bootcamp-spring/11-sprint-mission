@@ -38,6 +38,17 @@ public class InMemoryJwtRegistry implements JwtRegistry {
   }
 
   @Override
+  public void invalidateJwtInformationByRefreshToken(String refreshToken) {
+    if (refreshToken == null) {
+      return;
+    }
+    origin.values().forEach(queue ->
+        queue.removeIf(info -> info.refreshToken().equals(refreshToken))
+    );
+    origin.entrySet().removeIf(entry -> entry.getValue().isEmpty());
+  }
+
+  @Override
   public boolean hasActiveJwtInformationByUserId(UUID userId) {
     Queue<JwtInformation> queue = origin.get(userId);
 
@@ -70,7 +81,7 @@ public class InMemoryJwtRegistry implements JwtRegistry {
 
     registerJwtInformation(newJwtInformation);
 
-    return null;
+    return newJwtInformation;
   }
 
   @Scheduled(fixedDelay = 1000 * 60 * 5)

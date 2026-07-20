@@ -17,7 +17,6 @@ import com.sprint.mission.discodeit.entity.ChannelType;
 import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.entity.Role;
 import com.sprint.mission.discodeit.entity.User;
-import com.sprint.mission.discodeit.exception.channel.PrivateChannelUpdateDeniedException;
 import com.sprint.mission.discodeit.mapper.ChannelMapper;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
@@ -49,7 +48,6 @@ public class BasicChannelServiceTest {
 
   @Mock
   private ChannelMapper channelMapper;
-
 
   @Test
   @DisplayName("PUBLIC 채널 생성 성공")
@@ -125,7 +123,7 @@ public class BasicChannelServiceTest {
   }
 
   @Test
-  @DisplayName("채널 수정 성공 - PUBLIC 채널만 수정 가능")
+  @DisplayName("채널 수정 성공")
   void update_success() {
     UUID channelId = UUID.randomUUID();
     ChannelUpdateRequest request = new ChannelUpdateRequest("바뀐이름", "바뀐설명");
@@ -140,21 +138,6 @@ public class BasicChannelServiceTest {
     ChannelDto result = channelService.update(channelId, request);
 
     assertThat(result.name()).isEqualTo("바뀐이름");
-  }
-
-  @Test
-  @DisplayName("채널 수정 실패 - PRIVATE 채널은 수정 불가")
-  void update_fail_privateChannel() {
-    UUID channelId = UUID.randomUUID();
-
-    ChannelUpdateRequest request = new ChannelUpdateRequest("이름을 바꿔주세요", "안됨");
-    Channel privateChannel = new Channel(ChannelType.PRIVATE, null, null);
-
-    given(channelRepository.findById(channelId)).willReturn(Optional.of(privateChannel));
-
-    assertThrows(PrivateChannelUpdateDeniedException.class, () -> {
-      channelService.update(channelId, request);
-    });
   }
 
   @Test

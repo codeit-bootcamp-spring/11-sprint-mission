@@ -3,6 +3,7 @@ package com.sprint.mission.discodeit.controller;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -10,7 +11,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.mission.discodeit.dto.UserCreateRequest;
 import com.sprint.mission.discodeit.dto.UserDto;
 import com.sprint.mission.discodeit.entity.Role;
+import com.sprint.mission.discodeit.security.jwt.JwtRegistry;
 import com.sprint.mission.discodeit.service.UserService;
+import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -37,6 +40,9 @@ public class UserControllerTest {
 
   @MockitoBean
   private UserService userService;
+
+  @MockitoBean
+  private JwtRegistry jwtRegistry;
 
   @MockitoBean
   private JpaMetamodelMappingContext jpaMappingContext;
@@ -83,5 +89,23 @@ public class UserControllerTest {
             .file(requestPart)
             .contentType(MediaType.MULTIPART_FORM_DATA))
         .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  @DisplayName("전체 사용자 목록 조회 성공 - 200 응답")
+  void getAllUsers_success() throws Exception {
+    UserDto user1 = new UserDto(UUID.randomUUID(), "user1", "user1@test.com", null, false,
+        Role.USER);
+    UserDto user2 = new UserDto(UUID.randomUUID(), "user2", "user2@test.com", null, false,
+        Role.USER);
+
+    given(userService.findAll()).willReturn(List.of(user1, user2));
+
+    mockMvc.perform(get("/api/users")
+            .accept(MediaType.APPLICATION_JSON))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.length()").value(2))
+        .andExpect(jsonPath("$[0].username").value("user1"))
+        .andExpect(jsonPath("$[1].username").value("user2"));
   }
 }

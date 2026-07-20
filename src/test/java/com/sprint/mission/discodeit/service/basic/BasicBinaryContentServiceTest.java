@@ -9,6 +9,7 @@ import static org.mockito.BDDMockito.then;
 import com.sprint.mission.discodeit.dto.BinaryContentCreateRequest;
 import com.sprint.mission.discodeit.dto.BinaryContentDto;
 import com.sprint.mission.discodeit.entity.BinaryContent;
+import com.sprint.mission.discodeit.event.BinaryContentCreatedEvent;
 import com.sprint.mission.discodeit.exception.binarycontent.BinaryContentNotFoundException;
 import com.sprint.mission.discodeit.mapper.BinaryContentMapper;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
@@ -21,6 +22,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 @ExtendWith(MockitoExtension.class)
 public class BasicBinaryContentServiceTest {
@@ -37,14 +39,17 @@ public class BasicBinaryContentServiceTest {
   @Mock
   private BinaryContentStorage binaryContentStorage;
 
+  @Mock
+  private ApplicationEventPublisher eventPublisher;
+
   @Test
-  @DisplayName("파일 업로드 성공")
+  @DisplayName("파일 업로드 성공 - 스토리지 저장은 이벤트로 위임됨")
   void create_success() {
     BinaryContentCreateRequest request = new BinaryContentCreateRequest(new byte[]{1, 2, 3},
         "image.png", 1024L,
         "image/png");
     BinaryContentDto dto = new BinaryContentDto(UUID.randomUUID(),
-        "image.png", 1024L, "image/png");
+        "image.png", 1024L, "image/png", "PENDING");
 
     given(binaryContentMapper.toDto(any(BinaryContent.class))).willReturn(dto);
 
@@ -52,7 +57,7 @@ public class BasicBinaryContentServiceTest {
 
     assertThat(result.fileName()).isEqualTo("image.png");
     then(binaryContentRepository).should().save(any(BinaryContent.class));
-    then(binaryContentStorage).should().put(any(UUID.class), any(byte[].class));
+    then(eventPublisher).should().publishEvent(any(BinaryContentCreatedEvent.class));
   }
 
   @Test
@@ -62,7 +67,7 @@ public class BasicBinaryContentServiceTest {
     BinaryContent content = new BinaryContent("image.png",
         1024L, "image/png");
     BinaryContentDto dto = new BinaryContentDto(fileId,
-        "image.png", 1024L, "image/png");
+        "image.png", 1024L, "image/png", "SUCCESS");
 
     given(binaryContentRepository.findById(fileId)).willReturn(Optional.of(content));
     given(binaryContentMapper.toDto(content)).willReturn(dto);

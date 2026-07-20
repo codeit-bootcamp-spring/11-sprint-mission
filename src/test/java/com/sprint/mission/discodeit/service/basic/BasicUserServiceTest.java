@@ -5,8 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
-import static org.mockito.Mockito.never;
 import static org.mockito.BDDMockito.willThrow;
+import static org.mockito.Mockito.never;
 
 import com.sprint.mission.discodeit.dto.UserCreateRequest;
 import com.sprint.mission.discodeit.dto.UserDto;
@@ -14,13 +14,14 @@ import com.sprint.mission.discodeit.dto.UserRoleUpdateRequest;
 import com.sprint.mission.discodeit.dto.UserUpdateRequest;
 import com.sprint.mission.discodeit.entity.Role;
 import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.event.RoleUpdatedEvent;
 import com.sprint.mission.discodeit.exception.user.UserAlreadyExistsException;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.mapper.UserMapper;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
+import com.sprint.mission.discodeit.security.jwt.JwtRegistry;
 import com.sprint.mission.discodeit.storage.BinaryContentStorage;
-import java.util.Collections;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
@@ -29,7 +30,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.core.session.SessionRegistry;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 @ExtendWith(MockitoExtension.class)
@@ -42,13 +43,22 @@ public class BasicUserServiceTest {
   private UserRepository userRepository;
 
   @Mock
+  private BinaryContentRepository binaryContentRepository;
+
+  @Mock
+  private BinaryContentStorage binaryContentStorage;
+
+  @Mock
+  private JwtRegistry jwtRegistry;
+
+  @Mock
+  private ApplicationEventPublisher eventPublisher;
+
+  @Mock
   private UserMapper userMapper;
 
   @Mock
   private PasswordEncoder passwordEncoder;
-
-  @Mock
-  private SessionRegistry sessionRegistry;
 
   @Test
   @DisplayName("사용자 생성 성공 - 중복 없는 정상적인 요청")
@@ -57,7 +67,7 @@ public class BasicUserServiceTest {
         "test@email.com", "password123", null);
     User savedUser = new User("testUser", "test@email.com", "password123");
     UserDto userDto = new UserDto(UUID.randomUUID(),
-        "testUser", "test@email.com", null, true, Role.USER);
+        "testUser", "test@email.com", null, false, Role.USER);
 
     given(userRepository.existsByUsername(request.username())).willReturn(false);
     given(userRepository.existsByEmail(request.email())).willReturn(false);
@@ -95,7 +105,7 @@ public class BasicUserServiceTest {
         "newUsername", null, null);
     User existingUser = new User("oldUsername", "test@email.com", "password");
     UserDto updatedDto = new UserDto(userId, "newUsername",
-        "test@email.com", null, true, Role.USER);
+        "test@email.com", null, false, Role.USER);
 
     given(userRepository.findById(userId)).willReturn(Optional.of(existingUser));
     given(userMapper.toDto(existingUser)).willReturn(updatedDto);
@@ -151,17 +161,18 @@ public class BasicUserServiceTest {
     UUID userId = UUID.randomUUID();
     UserRoleUpdateRequest request = new UserRoleUpdateRequest(userId, Role.CHANNEL_MANAGER);
     User existingUser = new User("testUser", "test@email.com", "password");
-    UserDto updatedDto = new UserDto(userId, "testUser", "test@email.com", null, true,
+    UserDto updatedDto = new UserDto(userId, "testUser", "test@email.com", null, false,
         Role.CHANNEL_MANAGER);
 
     given(userRepository.findById(userId)).willReturn(Optional.of(existingUser));
     given(userMapper.toDto(existingUser)).willReturn(updatedDto);
-    given(sessionRegistry.getAllPrincipals()).willReturn(Collections.emptyList());
 
     UserDto result = userService.updateRole(request);
 
     assertThat(existingUser.getRole()).isEqualTo(Role.CHANNEL_MANAGER);
     assertThat(result.role()).isEqualTo(Role.CHANNEL_MANAGER);
+    then(jwtRegistry).should().invalidateJwtInformationByUserId(userId);
+    then(eventPublisher).should().publishEvent(any(RoleUpdatedEvent.class));
   }
 
   @Test

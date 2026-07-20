@@ -15,10 +15,12 @@ import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.ChannelType;
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.event.MessageCreatedEvent;
 import com.sprint.mission.discodeit.exception.channel.ChannelNotFoundException;
 import com.sprint.mission.discodeit.exception.message.MessageNotFoundException;
 import com.sprint.mission.discodeit.mapper.MessageMapper;
 import com.sprint.mission.discodeit.mapper.PageResponseMapper;
+import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
@@ -33,8 +35,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
@@ -55,6 +57,12 @@ public class BasicMessageServiceTest {
   private ChannelRepository channelRepository;
 
   @Mock
+  private BinaryContentRepository binaryContentRepository;
+
+  @Mock
+  private ApplicationEventPublisher eventPublisher;
+
+  @Mock
   private MessageMapper messageMapper;
 
   @Mock
@@ -68,8 +76,7 @@ public class BasicMessageServiceTest {
   void create_success() {
     UUID authorId = UUID.randomUUID();
     UUID channelId = UUID.randomUUID();
-    MessageCreateRequest request = new MessageCreateRequest("안녕하세요"
-        , authorId, channelId);
+    MessageCreateRequest request = new MessageCreateRequest("안녕하세요", authorId, channelId);
 
     User author = new User("username", "email", "password");
     Channel channel = new Channel(ChannelType.PUBLIC, "채널", "설명");
@@ -84,6 +91,7 @@ public class BasicMessageServiceTest {
 
     assertThat(result.content()).isEqualTo("안녕하세요");
     then(messageRepository).should().save(any(Message.class));
+    then(eventPublisher).should().publishEvent(any(MessageCreatedEvent.class));
   }
 
   @Test
@@ -91,8 +99,7 @@ public class BasicMessageServiceTest {
   void create_fail_channelNotFound() {
     UUID authorId = UUID.randomUUID();
     UUID invalidChannelId = UUID.randomUUID();
-    MessageCreateRequest request = new MessageCreateRequest(
-        "내용", authorId, invalidChannelId);
+    MessageCreateRequest request = new MessageCreateRequest("내용", authorId, invalidChannelId);
 
     given(userRepository.findById(authorId)).willReturn(Optional.of(
         new User("유저", "mail", "pw")));
@@ -115,11 +122,9 @@ public class BasicMessageServiceTest {
         .willReturn(slice);
 
     List<MessageDto> emptyList = java.util.Collections.emptyList();
+    PageResponse<MessageDto> response = new PageResponse<>(emptyList, null, 50, false, 0L);
 
-    PageResponse<MessageDto> response = new PageResponse<>(emptyList,
-        null, 50, false, 0L);
-
-    given(pageResponseMapper.fromSlice(any(), any())).willReturn((PageResponse) response);
+    given(pageResponseMapper.fromSlice(any(Slice.class), any())).willReturn(response);
     PageResponse<MessageDto> result = messageService.findAllByChannelId(channelId, null, 50);
 
     assertThat(result).isNotNull();
@@ -161,7 +166,7 @@ public class BasicMessageServiceTest {
     UUID messageId = UUID.randomUUID();
 
     given(messageRepository.existsById(messageId)).willReturn(true);
-    
+
     messageService.delete(messageId);
     then(messageRepository).should().deleteById(messageId);
   }

@@ -23,6 +23,9 @@ public class ReadStatus extends BaseUpdatableEntity {
   @Column(name = "last_read_at", nullable = false)
   private Instant lastReadAt;
 
+  @Column(name = "notification_enabled", nullable = false)
+  private boolean notificationEnabled;
+
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false)
   private User user;
@@ -35,11 +38,21 @@ public class ReadStatus extends BaseUpdatableEntity {
     this.user = user;
     this.channel = channel;
     this.lastReadAt = (lastReadAt != null) ? lastReadAt : Instant.now();
+
+    if ("PRIVATE".equals(channel.getType())) {
+      this.notificationEnabled = true;
+    } else {
+      this.notificationEnabled = false;
+    }
   }
 
   public void update(Instant newLastReadAt) {
     if (newLastReadAt != null) {
       this.lastReadAt = newLastReadAt;
     }
+  }
+
+  public void updateNotificationStatus(boolean newNotificationEnabled) {
+    this.notificationEnabled = newNotificationEnabled;
   }
 }

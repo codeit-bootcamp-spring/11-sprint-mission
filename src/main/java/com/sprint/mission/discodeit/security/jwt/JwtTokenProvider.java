@@ -13,7 +13,6 @@ import com.sprint.mission.discodeit.security.DiscodeitUserDetails;
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.time.Instant;
-import java.util.Base64;
 import java.util.Date;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,22 +24,18 @@ public class JwtTokenProvider {
 
   public static final String REFRESH_TOKEN_COOKIE_NAME = "REFRESH_TOKEN";
 
-  private final String secretKey;
+  private final byte[] secretKeyBytes;
   private final long accessTokenExpiration;
   private final long refreshTokenExpiration;
-  private final String base64EncodedSecretKey;
 
   public JwtTokenProvider(
       @Value("${jwt.secret}") String secretKey,
       @Value("${jwt.access-token-expiration}") long accessTokenExpiration,
       @Value("${jwt.refresh-token-expiration}") long refreshTokenExpiration) {
 
-    this.secretKey = secretKey;
+    this.secretKeyBytes = secretKey.getBytes(StandardCharsets.UTF_8);
     this.accessTokenExpiration = accessTokenExpiration;
     this.refreshTokenExpiration = refreshTokenExpiration;
-
-    this.base64EncodedSecretKey = Base64.getEncoder()
-        .encodeToString(secretKey.getBytes(StandardCharsets.UTF_8));
   }
 
   // access 토큰 생성
@@ -56,8 +51,7 @@ public class JwtTokenProvider {
   // 토큰 생성
   private String createToken(String subject, long expirationTime) {
     try {
-      byte[] keyBytes = Base64.getDecoder().decode(base64EncodedSecretKey);
-      JWSSigner signer = new MACSigner(keyBytes);
+      JWSSigner signer = new MACSigner(secretKeyBytes);
 
       JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
           .subject(subject)
@@ -79,8 +73,7 @@ public class JwtTokenProvider {
   public boolean validateToken(String token) {
     try {
       SignedJWT signedJWT = SignedJWT.parse(token);
-      byte[] keyBytes = Base64.getDecoder().decode(base64EncodedSecretKey);
-      JWSVerifier verifier = new MACVerifier(keyBytes);
+      JWSVerifier verifier = new MACVerifier(secretKeyBytes);
 
       if (!signedJWT.verify(verifier)) {
         log.warn("유효하지 않은 JWT 서명입니다.");
