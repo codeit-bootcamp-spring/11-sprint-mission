@@ -19,6 +19,35 @@ spring:
       ddl-auto: validate # 운영때는 none으로 교체, 개발중에는 update, 스키마 구조 변경 방어 validate
     open-in-view: false
 
+  cache:
+    type: redis
+    cache-names:
+      - users
+      - userChannels
+      - userNotifications
+    caffeine:
+      spec: >
+        maximumSize=100,
+        expireAfterAccess=600s,
+        recordStats
+    redis:
+      enable-statistics: true
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+    consumer:
+      group-id: discodeit-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
 logging:
   level:
     root: info
@@ -27,10 +56,16 @@ management:
   endpoints:
     web:
       exposure:
-        include: health, info, metrics, loggers
+        include: health, info, metrics, loggers, caches
+  metrics:
+    enable:
+      cache: true
   endpoint:
     health:
       show-details: always
+  observations:
+    annotations:
+      enabled: true
 
 info:
   app:
@@ -73,7 +108,7 @@ admin:
   password: "1234"
 
 jwt:
-  secret-key: "discodeit-jwt-secret-key-anyone-can-not-know"
+  secret-key: ${JWT_SECRET_KEY:discodeit-jwt-secret-key-anyone-can-not-know}
   access-token-expiration: 30 # 30분
   refresh-token-expiration: 43200 # 30일(60분*24시*30일)
   max-active-login: 1 # 동시 로그인 제한

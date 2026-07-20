@@ -21,6 +21,7 @@ import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.entity.User.Role;
+import com.sprint.mission.discodeit.event.BinaryContentCreatedEvent;
 import com.sprint.mission.discodeit.exception.DiscodeitException;
 import com.sprint.mission.discodeit.mapper.MessageMapper;
 import com.sprint.mission.discodeit.mapper.PageResponseMapper;
@@ -29,7 +30,6 @@ import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.basic.BasicMessageService;
-import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -40,6 +40,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -59,9 +60,6 @@ public class MessageServiceTest {
   private UserRepository userRepository;
 
   @Mock
-  private BinaryContentStorage binaryContentStorage;
-
-  @Mock
   private BinaryContentRepository binaryContentRepository;
 
   @Mock
@@ -69,6 +67,9 @@ public class MessageServiceTest {
 
   @Mock
   private PageResponseMapper pageResponseMapper;
+
+  @Mock
+  private ApplicationEventPublisher eventPublisher;
 
   @InjectMocks
   private BasicMessageService messageService;
@@ -132,8 +133,6 @@ public class MessageServiceTest {
     given(channelRepository.findById(channelId)).willReturn(Optional.of(channel));
     given(userRepository.findById(userId)).willReturn(Optional.of(user));
     given(messageRepository.save(any(Message.class))).willAnswer(i -> i.getArgument(0));
-
-    given(binaryContentStorage.put(any(), any())).willReturn(null);
     given(binaryContentRepository.save(any())).willAnswer(i -> i.getArgument(0));
 
     given(messageMapper.toDto(any(Message.class))).willAnswer(i -> {
@@ -160,7 +159,7 @@ public class MessageServiceTest {
 
     then(messageRepository).should().save(any(Message.class));
     then(binaryContentRepository).should().save(any());
-    then(binaryContentStorage).should().put(any(), any());
+    then(eventPublisher).should().publishEvent(any(BinaryContentCreatedEvent.class));
   }
 
   @Test

@@ -8,6 +8,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.Arrays;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.logout.LogoutHandler;
 import org.springframework.stereotype.Component;
@@ -17,6 +19,8 @@ import org.springframework.stereotype.Component;
 public class JwtLogoutHandler implements LogoutHandler {
 
   private final JwtRegistry jwtRegistry;
+
+  private final CacheManager cacheManager;
 
   @Override
   public void logout(
@@ -47,8 +51,9 @@ public class JwtLogoutHandler implements LogoutHandler {
     // 쿠키 생성
     Cookie cookie = new Cookie(REFRESH_TOKEN_COOKIE_NAME, null);
 
-    // JavaScript 차단, 내 도메인 내의 모든 URI에 쿠키 적용
+    // JavaScript 차단, HTTPS에서만 접근 가능하도록 설정, 내 도메인 내의 모든 URI에 쿠키 적용
     cookie.setHttpOnly(true);
+    cookie.setSecure(true);
     cookie.setPath("/");
 
     // 즉시 만료되도록 유도
@@ -56,5 +61,12 @@ public class JwtLogoutHandler implements LogoutHandler {
 
     // 브라우저 쿠키 갱신(즉시 만료된 쿠키로 갱신되기 때문에 삭제 개념)
     response.addCookie(cookie);
+
+    // 캐시 조회 및 초기화
+    Cache cache = cacheManager.getCache("users");
+
+    if (cache != null) {
+      cache.clear();
+    }
   }
 }

@@ -1,4 +1,4 @@
-package com.sprint.mission.discodeit.security.properties;
+package com.sprint.mission.discodeit.security.jwt.properties;
 
 import lombok.Getter;
 import org.springframework.boot.context.properties.ConfigurationProperties;

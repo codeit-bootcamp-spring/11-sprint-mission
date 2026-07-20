@@ -7,7 +7,11 @@ import com.sprint.mission.discodeit.controller.api.AuthApi;
 import com.sprint.mission.discodeit.dto.request.UserRoleUpdateRequest;
 import com.sprint.mission.discodeit.dto.response.UserDto;
 import com.sprint.mission.discodeit.security.jwt.dto.JwtDto;
+import com.sprint.mission.discodeit.security.jwt.dto.RefreshTokenResult;
+import com.sprint.mission.discodeit.security.jwt.properties.JwtProperties;
+import com.sprint.mission.discodeit.security.jwt.provider.JwtTokenProvider;
 import com.sprint.mission.discodeit.service.AuthService;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +33,8 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController implements AuthApi {
 
   private final AuthService authService;
+  private final JwtProperties jwtProperties;
+  private final JwtTokenProvider jwtTokenProvider;
 
   @Override
   @GetMapping("/csrf-token")
@@ -55,7 +61,27 @@ public class AuthController implements AuthApi {
       @CookieValue(name = REFRESH_TOKEN_COOKIE_NAME, required = false) String refreshToken,
       HttpServletResponse response
   ) {
-    JwtDto jwtDto = authService.refresh(refreshToken, response);
+    RefreshTokenResult result = authService.refresh(refreshToken);
+
+    // Refresh Token 쿠키 교체
+    Cookie cookie = new Cookie(REFRESH_TOKEN_COOKIE_NAME, result.newRefreshToken());
+
+    // JavaScript 접근 차단
+    cookie.setHttpOnly(true);
+
+    // HTTPS에서만 접근 가능하도록 설정
+    cookie.setSecure(true);
+
+    // 내 도메인 내의 모든 URI에 쿠키 적용
+    cookie.setPath("/");
+
+    // 쿠키 유효기간을 30일로 설정(setMaxAge()는 초 단위이기 때문에 60을 곱하여 초 단위로 변환)
+    cookie.setMaxAge(jwtProperties.getRefreshTokenExpiration() * 60);
+
+    response.addCookie(cookie);
+
+    // Access Token 응답
+    JwtDto jwtDto = result.jwtDto();
 
     return ResponseEntity.status(HttpStatus.OK).body(jwtDto);
   }

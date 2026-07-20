@@ -12,7 +12,8 @@ public class ReadStatusMapper {
         readStatus.getId(), // id
         readStatus.getUser().getId(), // userId
         readStatus.getChannel().getId(), // channelId
-        readStatus.getLastReadAt() // lastReadAt
+        readStatus.getLastReadAt(), // lastReadAt
+        readStatus.isNotificationEnabled() // notificationEnabled
     );
   }
 }

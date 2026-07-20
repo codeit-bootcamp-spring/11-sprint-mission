@@ -22,6 +22,9 @@ public enum ErrorCode {
   BINARY_CONTENT_NOT_FOUND("해당 BinaryContent가 존재하지 않습니다."),
   ATTACHMENT_SAVE_FAILED("첨부파일 저장에 실패하였습니다."),
 
+  // NOTIFICATION
+  NOTIFICATION_NOT_FOUND("해당 Notification이 존재하지 않습니다."),
+
   // AUTH
   INVALID_LOGIN("로그인 정보가 올바르지 않습니다."),
   REFRESH_TOKEN_INVALID("Refresh Token이 유효하지 않습니다."),

@@ -9,4 +9,5 @@ public class EndPoints {
   public static final String BINARY_CONTENT = BASE + "binaryContents";
   public static final String READ_STATUS = BASE + "readStatuses";
   public static final String AUTH = BASE + "auth";
+  public static final String NOTIFICATION = BASE + "notifications";
 }

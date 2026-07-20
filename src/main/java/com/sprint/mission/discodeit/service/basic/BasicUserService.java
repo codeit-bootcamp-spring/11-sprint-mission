@@ -5,6 +5,7 @@ import com.sprint.mission.discodeit.dto.request.UserUpdateRequest;
 import com.sprint.mission.discodeit.dto.response.UserDto;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.event.BinaryContentCreatedEvent;
 import com.sprint.mission.discodeit.exception.user.UserEmailAlreadyExistsException;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.exception.user.UsernameAlreadyExistException;
@@ -12,12 +13,14 @@ import com.sprint.mission.discodeit.mapper.UserMapper;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.UserService;
-import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -31,13 +34,15 @@ public class BasicUserService implements UserService {
 
   private final UserRepository userRepository;
   private final BinaryContentRepository binaryContentRepository;
-  private final BinaryContentStorage binaryContentStorage;
   private final UserMapper userMapper;
+
   private final PasswordEncoder passwordEncoder;
+  private final ApplicationEventPublisher eventPublisher;
 
   // Create
   @Override
   @Transactional
+  @CacheEvict(value = "users", allEntries = true)
   public UserDto create(UserCreateRequest dto, MultipartFile profile) {
 
     log.debug("[USER_CREATE_START] 유저 생성 시작 - 유저 이름={}, 유저 이메일={}", dto.username(), dto.email());
@@ -73,8 +78,17 @@ public class BasicUserService implements UserService {
           profile.getContentType());
 
       BinaryContent savedProfileImage = binaryContentRepository.save(profileImage);
-      binaryContentStorage.put(savedProfileImage.getId(), getBytes(profile));
       savedUser.updateProfile(savedProfileImage);
+
+      // 기존 BinaryContentStorage.put 메서드를 이벤트로 처리
+      // 이벤트 리스너에서 AFTER_COMMIT 옵션으로 트랜잭션 커밋 후 전달받은 이벤트를 처리하기 때문에 DB 커넥션 점유 시간 감소
+      eventPublisher.publishEvent(
+          new BinaryContentCreatedEvent(
+              savedProfileImage.getId(),
+              getBytes(profile)
+          )
+      );
+
       log.debug("[USER_CREATE_PROFILE_SUCCESS] 유저 프로필 이미지 등록 완료 - 프로필 ID={}", profileImage.getId());
     }
 
@@ -98,7 +112,11 @@ public class BasicUserService implements UserService {
   // 모든 사용자를 조회
   @Override
   @Transactional(readOnly = true)
+  // (value만 있을 경우 생략 가능 - JLS(Java Language Specification)의 9.7.3 Single-Element Annotations)
+  @Cacheable("users")
   public List<UserDto> findAll() {
+    log.info("DB 사용자 목록 조회 실행");
+
     return userRepository.findAll().stream()
         .map(userMapper::toDto).toList();
   }
@@ -109,6 +127,7 @@ public class BasicUserService implements UserService {
   @Override
   @Transactional
   @PreAuthorize("#id == authentication.principal.userDto.id")
+  @CacheEvict(value = "users", allEntries = true)
   public UserDto update(UUID id, UserUpdateRequest dto, MultipartFile profile) {
 
     // 비밀번호는 X
@@ -144,8 +163,17 @@ public class BasicUserService implements UserService {
           profile.getContentType());
 
       BinaryContent savedProfileImage = binaryContentRepository.save(profileImage);
-      binaryContentStorage.put(savedProfileImage.getId(), getBytes(profile));
       user.updateProfile(savedProfileImage);
+
+      // 기존 BinaryContentStorage.put 메서드를 이벤트로 처리
+      // 이벤트 리스너에서 AFTER_COMMIT 옵션으로 트랜잭션 커밋 후 전달받은 이벤트를 처리하기 때문에 DB 커넥션 점유 시간 감소
+      eventPublisher.publishEvent(
+          new BinaryContentCreatedEvent(
+              savedProfileImage.getId(),
+              getBytes(profile)
+          )
+      );
+
       log.debug("[USER_UPDATE_PROFILE_SUCCESS] 유저 프로필 이미지 수정 완료 - 프로필 이미지 ID={}",
           profileImage.getId());
     }
@@ -175,6 +203,7 @@ public class BasicUserService implements UserService {
   @Override
   @Transactional
   @PreAuthorize("#id == authentication.principal.userDto.id")
+  @CacheEvict(value = "users", allEntries = true)
   public void delete(UUID id) {
     log.debug("[USER_DELETE_START] 유저 삭제 시작 - 삭제할 유저 ID={}", id);
 

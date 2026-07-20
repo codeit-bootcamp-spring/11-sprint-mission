@@ -7,9 +7,9 @@ import com.sprint.mission.discodeit.dto.response.UserDto;
 import com.sprint.mission.discodeit.security.auth.DiscodeitUserDetails;
 import com.sprint.mission.discodeit.security.jwt.dto.JwtDto;
 import com.sprint.mission.discodeit.security.jwt.model.JwtInformation;
+import com.sprint.mission.discodeit.security.jwt.properties.JwtProperties;
 import com.sprint.mission.discodeit.security.jwt.provider.JwtTokenProvider;
 import com.sprint.mission.discodeit.security.jwt.registry.JwtRegistry;
-import com.sprint.mission.discodeit.security.properties.JwtProperties;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -18,6 +18,8 @@ import java.io.IOException;
 import java.time.Instant;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
@@ -30,6 +32,8 @@ public class JwtLoginSuccessHandler implements AuthenticationSuccessHandler {
   private final JwtTokenProvider jwtTokenProvider;
   private final JwtRegistry jwtRegistry;
   private final ObjectMapper objectMapper;
+
+  private final CacheManager cacheManager;
 
   @Override
   public void onAuthenticationSuccess(
@@ -51,7 +55,7 @@ public class JwtLoginSuccessHandler implements AuthenticationSuccessHandler {
     String accessToken = jwtTokenProvider.generateAccessToken(userId);
     String refreshToken = jwtTokenProvider.generateRefreshToken(userId);
     Instant expiration = jwtTokenProvider.getTokenExpiration(
-        jwtProperties.getRefreshTokenExpiration()).toInstant();
+        jwtProperties.getRefreshTokenExpiration());
 
     JwtInformation jwtInformation = new JwtInformation(
         UUID.fromString(userId),
@@ -70,6 +74,9 @@ public class JwtLoginSuccessHandler implements AuthenticationSuccessHandler {
 
     // JavaScript에 접근 못하게 설정
     cookie.setHttpOnly(true);
+
+    // HTTPS에서만 접근 가능하도록 설정
+    cookie.setSecure(true);
 
     // 내 도메인 내의 모든 URI에 쿠키 적용
     cookie.setPath("/");
@@ -90,6 +97,13 @@ public class JwtLoginSuccessHandler implements AuthenticationSuccessHandler {
 
     // json 형태로 변환
     objectMapper.writeValue(response.getWriter(), jwtDto);
+
+    // 캐시 조회 및 초기화
+    Cache cache = cacheManager.getCache("users");
+
+    if (cache != null) {
+      cache.clear();
+    }
   }
 
 }

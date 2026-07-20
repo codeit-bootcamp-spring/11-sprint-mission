@@ -77,17 +77,24 @@ public class GlobalExceptionHandler {
     return switch (errorCode) {
 
       // 400
-      case INVALID_REQUEST, PRIVATE_CHANNEL_UPDATE -> HttpStatus.BAD_REQUEST;
+      case INVALID_REQUEST,
+           PRIVATE_CHANNEL_UPDATE -> HttpStatus.BAD_REQUEST;
 
       // 401
-      case INVALID_LOGIN, REFRESH_TOKEN_INVALID -> HttpStatus.UNAUTHORIZED;
+      case INVALID_LOGIN,
+           REFRESH_TOKEN_INVALID -> HttpStatus.UNAUTHORIZED;
 
       // 404
-      case USER_NOT_FOUND, CHANNEL_NOT_FOUND, MESSAGE_NOT_FOUND,
-           READ_STATUS_NOT_FOUND, BINARY_CONTENT_NOT_FOUND -> HttpStatus.NOT_FOUND;
+      case USER_NOT_FOUND,
+           CHANNEL_NOT_FOUND,
+           MESSAGE_NOT_FOUND,
+           READ_STATUS_NOT_FOUND,
+           BINARY_CONTENT_NOT_FOUND,
+           NOTIFICATION_NOT_FOUND -> HttpStatus.NOT_FOUND;
 
       // 409
-      case DUPLICATE_USERNAME, DUPLICATE_EMAIL -> HttpStatus.CONFLICT;
+      case DUPLICATE_USERNAME,
+           DUPLICATE_EMAIL -> HttpStatus.CONFLICT;
 
       // 500
       default -> HttpStatus.INTERNAL_SERVER_ERROR;

@@ -15,12 +15,15 @@ import com.sprint.mission.discodeit.dto.response.UserDto;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.security.auth.DiscodeitUserDetails;
+import java.util.Objects;
 import java.util.UUID;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.cache.CacheManager;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
@@ -40,6 +43,10 @@ public class UserIntegrationTest {
 
   @Autowired
   private UserRepository userRepository;
+
+  @Autowired
+  private CacheManager cacheManager;
+
 
   @Test
   @DisplayName("사용자 생성 성공")
@@ -252,7 +259,7 @@ public class UserIntegrationTest {
   }
 
   @Test
-  @DisplayName("유저 조회 실패(유저가 존재하지 않음")
+  @DisplayName("유저 조회 실패(유저가 존재하지 않음)")
   void findAll_fail_user_notfound_user() throws Exception {
     // given : List 크기가 0을 유도하도록 User 생성X
 
@@ -263,6 +270,13 @@ public class UserIntegrationTest {
         .andExpect(status().isOk())
         // admin 포함(0+1)
         .andExpect(jsonPath("$.length()").value(1));
+  }
+
+  @AfterEach
+  void tearDown() {
+    // DB 조회가 아닌 10분 이내에 캐시 데이터를 조회해서(Redis Config Ttl 600) @Transaction이 먹히지 않음
+    // 매 테스트 끝난 후 캐시 데이터를 비워줘야 함
+    Objects.requireNonNull(cacheManager.getCache("users")).clear();
   }
 
 }

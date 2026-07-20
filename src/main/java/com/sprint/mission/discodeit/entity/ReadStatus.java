@@ -1,5 +1,6 @@
 package com.sprint.mission.discodeit.entity;
 
+import com.sprint.mission.discodeit.entity.Channel.ChannelType;
 import com.sprint.mission.discodeit.entity.base.BaseUpdatableEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -32,6 +33,10 @@ public class ReadStatus extends BaseUpdatableEntity {
   @Column(name = "last_read_at")
   private Instant lastReadAt;
 
+  // notification_enabled boolean not null
+  @Column(name = "notification_enabled", nullable = false)
+  private boolean notificationEnabled;
+
 //    private final UUID messageId; // 특정 메시지를 읽은 시간이 아닌 채널 별 마지막으로 읽은 시간이기 때문에 X
 
   // 생성자
@@ -39,10 +44,20 @@ public class ReadStatus extends BaseUpdatableEntity {
     this.user = user;
     this.channel = channel;
     this.lastReadAt = lastReadAt;
+
+    // 채널 타입이 PRIVATE일 경우 true, PUBLIC일 경우 false
+    this.notificationEnabled = channel.getType() == ChannelType.PRIVATE;
   }
 
   // update
-  public void updateLastReadAt(Instant lastReadAt) {
-    this.lastReadAt = lastReadAt;
+  // 매개변수로는 요청 DTO로 설정됨
+  public void update(Instant lastReadAt, Boolean notificationEnabled) {
+    if (lastReadAt != null) {
+      this.lastReadAt = lastReadAt;
+    }
+
+    if (notificationEnabled != null) {
+      this.notificationEnabled = notificationEnabled;
+    }
   }
 }

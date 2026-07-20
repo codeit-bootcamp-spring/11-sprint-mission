@@ -12,11 +12,11 @@ import com.nimbusds.jwt.SignedJWT;
 import com.sprint.mission.discodeit.exception.auth.RefreshTokenInvalidException;
 import com.sprint.mission.discodeit.security.jwt.exception.JwtSignatureException;
 import com.sprint.mission.discodeit.security.jwt.model.TokenType;
-import com.sprint.mission.discodeit.security.properties.JwtProperties;
+import com.sprint.mission.discodeit.security.jwt.properties.JwtProperties;
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
+import java.time.Duration;
 import java.time.Instant;
-import java.util.Calendar;
 import java.util.Date;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -70,7 +70,10 @@ public class JwtTokenProvider {
       // 만료 시간(expiration)이 지금(new Date())보다 뒤인지 체크
       return expiration.after(new Date());
 
-    } catch (Exception e) {
+    } catch (JOSEException | ParseException e) {
+      // parse(), getJWTClaimsSet()는 ParseException 체크드 예외
+      // createVerifier()는 JOSEException 체크드 예외
+
       return false;
     }
   }
@@ -78,16 +81,18 @@ public class JwtTokenProvider {
   private String generateToken(
       TokenType tokenType,
       String subject,
-      Date expiration
+      Instant expiration
   ) {
     try {
       JWSSigner signer = createSigner();
 
       // claims set
       JWTClaimsSet.Builder builder = new JWTClaimsSet.Builder();
-      builder.subject(subject);
-      builder.issueTime(Calendar.getInstance().getTime());
-      builder.expirationTime(expiration);
+      builder.subject(subject); // sub
+      builder.issueTime(Date.from(Instant.now())); // iat
+      builder.expirationTime(Date.from(expiration)); // exp
+
+      builder.claim("tokenType", tokenType.name()); // tokenType(커스텀 Payload 필드)
 
       SignedJWT signedJWT = new SignedJWT(new JWSHeader(JWSAlgorithm.HS256), builder.build());
 
@@ -126,10 +131,8 @@ public class JwtTokenProvider {
   }
 
   // 유효기간 생성(분 단위)
-  public Date getTokenExpiration(int expirationMinutes) {
-    Calendar calendar = Calendar.getInstance();
-    calendar.add(Calendar.MINUTE, expirationMinutes);
-    return calendar.getTime();
+  public Instant getTokenExpiration(int expirationMinutes) {
+    return Instant.now().plus(Duration.ofMinutes(expirationMinutes));
   }
 
   // Signer

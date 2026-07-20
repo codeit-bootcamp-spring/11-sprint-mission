@@ -16,12 +16,12 @@ import com.sprint.mission.discodeit.dto.response.UserDto;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.entity.User.Role;
+import com.sprint.mission.discodeit.event.BinaryContentCreatedEvent;
 import com.sprint.mission.discodeit.exception.DiscodeitException;
 import com.sprint.mission.discodeit.mapper.UserMapper;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.basic.BasicUserService;
-import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import java.io.IOException;
 import java.util.Optional;
 import java.util.UUID;
@@ -33,12 +33,16 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.multipart.MultipartFile;
 
 @ExtendWith(MockitoExtension.class)
 public class UserServiceTest {
+
+  @Mock
+  private final ApplicationEventPublisher eventPublisher = mock(ApplicationEventPublisher.class);
 
   @Spy
   PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
@@ -48,9 +52,6 @@ public class UserServiceTest {
 
   @Mock
   private BinaryContentRepository binaryContentRepository;
-
-  @Mock
-  private BinaryContentStorage binaryContentStorage;
 
   @Mock
   private UserMapper userMapper;
@@ -105,7 +106,7 @@ public class UserServiceTest {
     assertThat(result).isNotNull();
     then(userRepository).should().save(any(User.class));
     then(binaryContentRepository).should().save(any());
-    then(binaryContentStorage).should().put(any(), any(byte[].class));
+    then(eventPublisher).should().publishEvent(any(BinaryContentCreatedEvent.class));
   }
 
   @Test
@@ -145,7 +146,6 @@ public class UserServiceTest {
     assertThat(result).isNotNull();
     then(userRepository).should().save(any(User.class));
     then(binaryContentRepository).should((never())).save(any());
-    then(binaryContentStorage).should((never())).put(any(), any(byte[].class));
   }
 
   @Test

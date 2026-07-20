@@ -2,9 +2,11 @@ create table binary_contents
 (
     id           UUID PRIMARY KEY,
     created_at   timestamptz  not null,
+    updated_at   timestamptz,
     file_name    varchar(255) not null,
     size         bigint       not null,
-    content_type varchar(100) not null
+    content_type varchar(100) not null,
+    status       varchar(20)  not null
 );
 
 create table users
@@ -31,12 +33,13 @@ create table channels
 
 create table read_statuses
 (
-    id           uuid primary key,
-    created_at   timestamptz not null,
-    updated_at   timestamptz,
-    user_id      uuid        not null references users (id) on delete cascade,
-    channel_id   uuid        not null references channels (id) on delete cascade,
-    last_read_at timestamptz,
+    id                   uuid primary key,
+    created_at           timestamptz not null,
+    updated_at           timestamptz,
+    user_id              uuid        not null references users (id) on delete cascade,
+    channel_id           uuid        not null references channels (id) on delete cascade,
+    last_read_at         timestamptz,
+    notification_enabled boolean     NOT NULL,
 
     UNIQUE (user_id, channel_id)
 );
@@ -55,4 +58,13 @@ create table message_attachments
 (
     message_id    uuid not null references messages (id) on delete cascade,
     attachment_id uuid not null references binary_contents (id) on delete cascade
+);
+
+create table notifications
+(
+    id          uuid primary key,
+    created_at  timestamptz  not null,
+    receiver_id uuid         not null,
+    title       varchar(255) not null,
+    content     varchar(255) not null
 );

@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.sprint.mission.discodeit.dto.response.BinaryContentDto;
+import com.sprint.mission.discodeit.entity.BinaryContent.BinaryContentStatus;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -16,12 +17,17 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 public class S3BinaryContentStorageTest {
 
   private S3BinaryContentStorage storage;
+
+  @Mock
+  private ApplicationEventPublisher eventPublisher;
 
   @BeforeEach
   void setup() throws Exception {
@@ -33,7 +39,7 @@ public class S3BinaryContentStorageTest {
     String region = properties.getProperty("AWS_S3_REGION");
     String bucket = properties.getProperty("AWS_S3_BUCKET");
 
-    storage = new S3BinaryContentStorage(accessKey, secretKey, region, bucket, 600);
+    storage = new S3BinaryContentStorage(accessKey, secretKey, region, bucket, 600, eventPublisher);
 
   }
 
@@ -79,7 +85,8 @@ public class S3BinaryContentStorageTest {
     // given
     UUID id = UUID.randomUUID();
 
-    BinaryContentDto dto = new BinaryContentDto(id, "test.txt", 100L, "text/plain");
+    BinaryContentDto dto = new BinaryContentDto(id, "test.txt", 100L, "text/plain",
+        BinaryContentStatus.SUCCESS);
 
     storage.put(id, "Presigned URL Test".getBytes(StandardCharsets.UTF_8));
 

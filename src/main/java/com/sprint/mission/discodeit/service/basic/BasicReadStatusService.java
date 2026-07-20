@@ -19,9 +19,11 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class BasicReadStatusService implements ReadStatusService {
@@ -79,8 +81,9 @@ public class BasicReadStatusService implements ReadStatusService {
     ReadStatus readStatus = readStatusRepository.findById(id).orElseThrow(
         () -> new ReadStatusNotFoundException(id)
     );
-    readStatus.updateLastReadAt(dto.newLastReadAt());
-    readStatusRepository.save(readStatus);
+
+    // 보내려는 필드가 null일 경우 해당 필드는 update하지 않음
+    readStatus.update(dto.newLastReadAt(), dto.newNotificationEnabled());
 
     return readStatusMapper.toDto(readStatus);
   }
