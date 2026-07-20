@@ -5,6 +5,7 @@ import com.sprint.mission.discodeit.dto.data.UserDto;
 import com.sprint.mission.discodeit.dto.request.RoleUpdateRequest;
 import com.sprint.mission.discodeit.entity.Role;
 import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.event.RoleUpdatedEvent;
 import com.sprint.mission.discodeit.exception.auth.RefreshTokenInvalidException;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.mapper.UserMapper;
@@ -17,6 +18,7 @@ import com.sprint.mission.discodeit.service.AuthService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,6 +32,7 @@ public class BasicAuthService implements AuthService {
   private final UserMapper userMapper;
   private final JwtRegistry jwtRegistry;
   private final JwtTokenProvider jwtTokenProvider;
+  private final ApplicationEventPublisher eventPublisher;
 
   @PreAuthorize("hasRole('ADMIN')")
   @Transactional
@@ -38,17 +41,21 @@ public class BasicAuthService implements AuthService {
     return updateRoleInternal(request);
   }
 
-  // 관리자 계정 부트스트랩 전용 권한 부여 경로. @PreAuthorize를 우회하므로 인터페이스에 노출하지 않는다.
   @Transactional
   public UserDto updateRoleInternal(RoleUpdateRequest request) {
     UUID userId = request.userId();
     User user = userRepository.findById(userId)
         .orElseThrow(() -> UserNotFoundException.withId(userId));
 
+    Role previousRole = user.getRole();
     Role newRole = request.newRole();
     user.updateRole(newRole);
 
     jwtRegistry.invalidateJwtInformationByUserId(userId);
+
+    if (previousRole != newRole) {
+      eventPublisher.publishEvent(new RoleUpdatedEvent(userId, previousRole, newRole));
+    }
 
     return userMapper.toDto(user);
   }
@@ -63,7 +70,6 @@ public class BasicAuthService implements AuthService {
       throw new RefreshTokenInvalidException();
     }
 
-    // 재발급 시 DB에서 최신 사용자 정보를 조회해 권한 변경을 반영한다.
     UUID userId = jwtTokenProvider.getUserId(refreshToken);
     User user = userRepository.findById(userId)
         .orElseThrow(() -> UserNotFoundException.withId(userId));
