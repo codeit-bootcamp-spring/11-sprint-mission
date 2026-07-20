@@ -20,6 +20,7 @@ import com.sprint.mission.discodeit.dto.request.PublicChannelCreateRequest;
 import com.sprint.mission.discodeit.dto.request.ReadStatusCreateRequest;
 import com.sprint.mission.discodeit.dto.request.ReadStatusUpdateRequest;
 import com.sprint.mission.discodeit.dto.request.UserCreateRequest;
+import com.sprint.mission.discodeit.event.kafka.KafkaTopic;
 import com.sprint.mission.discodeit.security.DiscodeitUserDetails;
 import com.sprint.mission.discodeit.service.ChannelService;
 import com.sprint.mission.discodeit.service.MessageService;
@@ -37,12 +38,19 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
-@SpringBootTest
+@SpringBootTest(properties = {
+    "spring.kafka.bootstrap-servers=${spring.embedded.kafka.brokers}",
+    "spring.kafka.listener.auto-startup=true"
+})
+@EmbeddedKafka(partitions = 1, topics = {
+    KafkaTopic.MESSAGE_CREATED, KafkaTopic.ROLE_UPDATED, KafkaTopic.S3_UPLOAD_FAILED
+})
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
@@ -174,7 +182,7 @@ class NotificationApiIntegrationTest {
 
   // 알림은 비동기로 생성되므로 생성될 때까지 기다린다
   private UUID awaitOnlyNotificationId() {
-    await().atMost(Duration.ofSeconds(5))
+    await().atMost(Duration.ofSeconds(20))
         .untilAsserted(() -> assertThat(notificationService.findAllByReceiverId(receiver.id()))
             .hasSize(1));
     return notificationService.findAllByReceiverId(receiver.id()).get(0).id();

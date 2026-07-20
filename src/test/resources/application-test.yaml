@@ -1,4 +1,11 @@
 spring:
+  kafka:
+    # 브로커가 필요한 테스트만 EmbeddedKafka로 리스너를 켠다
+    listener:
+      auto-startup: false
+    producer:
+      properties:
+        max.block.ms: 1000
   datasource:
     url: jdbc:h2:mem:testdb;MODE=PostgreSQL
     driver-class-name: org.h2.Driver
