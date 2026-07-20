@@ -55,7 +55,7 @@ public class AuthController implements AuthApi {
 
     return ResponseEntity
         .status(HttpStatus.OK)
-        .body(new JwtDto(tokenPair.accessToken()));
+        .body(new JwtDto(tokenPair.userDto(), tokenPair.accessToken()));
   }
 
   @PutMapping("role")

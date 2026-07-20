@@ -74,8 +74,8 @@ public class BasicAuthService implements AuthService {
     UUID userId = jwtTokenProvider.getUserId(refreshToken);
     User user = userRepository.findById(userId)
         .orElseThrow(() -> UserNotFoundException.withId(userId));
-    DiscodeitUserDetails userDetails =
-        new DiscodeitUserDetails(userMapper.toDto(user), user.getPassword());
+    UserDto userDto = userMapper.toDto(user);
+    DiscodeitUserDetails userDetails = new DiscodeitUserDetails(userDto, user.getPassword());
 
     String newAccessToken = jwtTokenProvider.generateAccessToken(userDetails);
     String newRefreshToken = jwtTokenProvider.generateRefreshToken(userDetails);
@@ -86,6 +86,6 @@ public class BasicAuthService implements AuthService {
         jwtTokenProvider.getExpiration(newRefreshToken));
     jwtRegistry.rotateJwtInformation(refreshToken, newJwtInformation);
 
-    return new TokenPair(newAccessToken, newRefreshToken);
+    return new TokenPair(userDto, newAccessToken, newRefreshToken);
   }
 }

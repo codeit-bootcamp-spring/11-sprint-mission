@@ -54,7 +54,7 @@ public class JwtLoginSuccessHandler implements AuthenticationSuccessHandler {
     response.setStatus(HttpServletResponse.SC_OK);
     response.setContentType(MediaType.APPLICATION_JSON_VALUE);
     response.setCharacterEncoding("UTF-8");
-    response.getWriter().write(objectMapper.writeValueAsString(new JwtDto(accessToken)));
+    response.getWriter().write(objectMapper.writeValueAsString(new JwtDto(userDetails.getUserDto(), accessToken)));
   }
 
   private void evictUsersCache() {
