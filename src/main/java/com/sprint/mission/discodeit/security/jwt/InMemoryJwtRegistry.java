@@ -77,7 +77,7 @@ public class InMemoryJwtRegistry implements JwtRegistry {
     });
   }
 
-  @Scheduled(fixedDelay = 1000 * 60 * 5)
+  @Scheduled(fixedDelayString = "${discodeit.jwt.cleanup-interval}")
   @Override
   public void clearExpiredJwtInformation() {
     Instant now = Instant.now();
