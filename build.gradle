@@ -38,6 +38,7 @@ dependencies {
     implementation 'com.nimbusds:nimbus-jose-jwt:10.3'
     implementation 'org.springframework.retry:spring-retry'
     implementation 'com.github.ben-manes.caffeine:caffeine'
+    implementation 'org.springframework.kafka:spring-kafka'
 
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
 
