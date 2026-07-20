@@ -12,16 +12,22 @@ spring:
       ddl-auto: validate
     open-in-view: false
   cache:
-    type: caffeine
+    type: redis
     cache-names:
       - channels
       - notifications
       - users
-    caffeine:
+    caffeine: # 브로커/서버가 없는 테스트 프로파일에서 로컬 캐시로 대체할 때 사용
       spec: >
         maximumSize=100,
         expireAfterAccess=600s,
         recordStats
+    redis:
+      enable-statistics: true
+  data:
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST:localhost}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
     producer:

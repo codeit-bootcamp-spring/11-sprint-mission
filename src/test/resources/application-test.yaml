@@ -1,4 +1,7 @@
 spring:
+  cache:
+    # Redis 서버 없이 캐시 동작을 검증하기 위해 로컬 캐시로 대체한다
+    type: caffeine
   kafka:
     # 브로커가 필요한 테스트만 EmbeddedKafka로 리스너를 켠다
     listener:
