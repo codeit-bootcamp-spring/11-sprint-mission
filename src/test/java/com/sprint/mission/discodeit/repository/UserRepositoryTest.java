@@ -15,6 +15,9 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.test.context.ActiveProfiles;
 
+/**
+ * UserRepository 슬라이스 테스트
+ */
 @DataJpaTest
 @EnableJpaAuditing
 @ActiveProfiles("test")
@@ -26,6 +29,9 @@ class UserRepositoryTest {
   @Autowired
   private TestEntityManager entityManager;
 
+  /**
+   * TestFixture: 테스트에서 일관된 상태를 제공하기 위한 고정된 객체 세트 여러 테스트에서 재사용할 수 있는 테스트 데이터를 생성하는 메서드
+   */
   private User createTestUser(String username, String email) {
     BinaryContent profile = new BinaryContent("profile.jpg", 1024L, "image/jpeg");
     User user = new User(username, email, "password123!@#", profile);
@@ -94,8 +100,8 @@ class UserRepositoryTest {
   }
 
   @Test
-  @DisplayName("모든 사용자를 프로필과 상태 정보와 함께 조회할 수 있다")
-  void findAllWithProfile_ReturnsUsersWithProfile() {
+  @DisplayName("모든 사용자를 프로필과 함께 조회할 수 있다")
+  void findAllWithProfileAndStatus_ReturnsUsersWithProfileAndStatus() {
     // given
     User user1 = createTestUser("user1", "user1@example.com");
     User user2 = createTestUser("user2", "user2@example.com");

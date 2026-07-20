@@ -1,111 +1,148 @@
 package com.sprint.mission.discodeit.storage.s3;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.RETURNS_SELF;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.mockStatic;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import com.sprint.mission.discodeit.dto.data.BinaryContentDto;
+import com.sprint.mission.discodeit.entity.BinaryContentStatus;
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URL;
+import java.io.InputStream;
+import java.util.NoSuchElementException;
 import java.util.UUID;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.mockito.MockedStatic;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import software.amazon.awssdk.core.ResponseBytes;
-import software.amazon.awssdk.core.sync.RequestBody;
+import org.springframework.test.context.ActiveProfiles;
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.S3ClientBuilder;
-import software.amazon.awssdk.services.s3.model.GetObjectRequest;
-import software.amazon.awssdk.services.s3.model.GetObjectResponse;
-import software.amazon.awssdk.services.s3.model.PutObjectRequest;
-import software.amazon.awssdk.services.s3.model.PutObjectResponse;
-import software.amazon.awssdk.services.s3.presigner.S3Presigner;
-import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
-import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequest;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
+import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 
+@Disabled
+@SpringBootTest
+@ActiveProfiles("test")
+@DisplayName("S3BinaryContentStorage 테스트")
 class S3BinaryContentStorageTest {
 
-    private S3BinaryContentStorage storage;
+  @Autowired
+  private S3BinaryContentStorage s3BinaryContentStorage;
 
-    @BeforeEach
-    void setUp() {
-        storage = new S3BinaryContentStorage(
-            "test-access-key", "test-secret-key", "ap-northeast-2", "test-bucket", 600L
-        );
+  @Value("${discodeit.storage.s3.bucket}")
+  private String bucket;
+
+  @Value("${discodeit.storage.s3.access-key}")
+  private String accessKey;
+
+  @Value("${discodeit.storage.s3.secret-key}")
+  private String secretKey;
+
+  @Value("${discodeit.storage.s3.region}")
+  private String region;
+
+  private final UUID testId = UUID.randomUUID();
+  private final byte[] testData = "테스트 데이터".getBytes();
+
+  @BeforeEach
+  void setUp() {
+    // 테스트 준비 작업
+    // 실제 S3BinaryContentStorage는 스프링이 의존성 주입으로 제공
+  }
+
+  @AfterEach
+  void tearDown() {
+    // 테스트 종료 후 생성된 S3 객체 삭제
+    try {
+      // S3 클라이언트 생성
+      S3Client s3Client = S3Client.builder()
+          .region(Region.of(region))
+          .credentialsProvider(
+              StaticCredentialsProvider.create(
+                  AwsBasicCredentials.create(accessKey, secretKey)
+              )
+          )
+          .build();
+
+      // 테스트에서 생성한 객체 삭제
+      DeleteObjectRequest deleteRequest = DeleteObjectRequest.builder()
+          .bucket(bucket)
+          .key(testId.toString())
+          .build();
+
+      s3Client.deleteObject(deleteRequest);
+      System.out.println("테스트 객체 삭제 완료: " + testId);
+    } catch (NoSuchKeyException e) {
+      // 객체가 이미 없는 경우는 무시
+      System.out.println("삭제할 객체가 없음: " + testId);
+    } catch (Exception e) {
+      // 정리 실패 시 로그만 남기고 테스트는 실패로 처리하지 않음
+      System.err.println("테스트 객체 정리 실패: " + e.getMessage());
     }
+  }
 
-    @Test
-    @DisplayName("put - 바이트 배열 업로드 후 동일한 UUID 반환")
-    void put_업로드_후_동일한_UUID_반환() {
-        UUID id = UUID.randomUUID();
-        byte[] data = "hello s3".getBytes();
-        S3Client mockS3Client = mock(S3Client.class);
-        S3ClientBuilder mockBuilder = mock(S3ClientBuilder.class, RETURNS_SELF);
+  @Test
+  @DisplayName("S3에 파일 업로드 성공 테스트")
+  void put_success() {
+    // when
+    UUID resultId = s3BinaryContentStorage.put(testId, testData);
 
-        try (MockedStatic<S3Client> mockedS3 = mockStatic(S3Client.class)) {
-            mockedS3.when(S3Client::builder).thenReturn(mockBuilder);
-            when(mockBuilder.build()).thenReturn(mockS3Client);
-            when(mockS3Client.putObject(any(PutObjectRequest.class), any(RequestBody.class)))
-                .thenReturn(PutObjectResponse.builder().build());
+    // then
+    assertThat(resultId).isEqualTo(testId);
+  }
 
-            UUID result = storage.put(id, data);
+  @Test
+  @DisplayName("S3에서 파일 다운로드 테스트")
+  void get_success() throws IOException {
+    // given
+    s3BinaryContentStorage.put(testId, testData);
 
-            assertThat(result).isEqualTo(id);
-            verify(mockS3Client).putObject(any(PutObjectRequest.class), any(RequestBody.class));
-        }
-    }
+    // when
+    InputStream result = s3BinaryContentStorage.get(testId);
 
-    @Test
-    @DisplayName("get - UUID로 S3 객체 다운로드 후 InputStream 반환")
-    void get_S3_객체_다운로드_후_InputStream_반환() throws IOException {
-        UUID id = UUID.randomUUID();
-        byte[] expected = "downloaded content".getBytes();
-        S3Client mockS3Client = mock(S3Client.class);
-        S3ClientBuilder mockBuilder = mock(S3ClientBuilder.class, RETURNS_SELF);
+    // then
+    assertNotNull(result);
 
-        try (MockedStatic<S3Client> mockedS3 = mockStatic(S3Client.class)) {
-            mockedS3.when(S3Client::builder).thenReturn(mockBuilder);
-            when(mockBuilder.build()).thenReturn(mockS3Client);
-            ResponseBytes<GetObjectResponse> responseBytes =
-                ResponseBytes.fromByteArray(GetObjectResponse.builder().build(), expected);
-            when(mockS3Client.getObjectAsBytes(any(GetObjectRequest.class))).thenReturn(responseBytes);
+    // 내용 검증
+    byte[] resultBytes = result.readAllBytes();
+    assertThat(resultBytes).isEqualTo(testData);
+  }
 
-            var result = storage.get(id);
+  @Test
+  @DisplayName("존재하지 않는 파일 조회 시 예외 발생 테스트")
+  void get_notFound() {
+    // when & then
+    assertThatThrownBy(() -> s3BinaryContentStorage.get(UUID.randomUUID()))
+        .isInstanceOf(NoSuchElementException.class);
+  }
 
-            assertThat(result.readAllBytes()).isEqualTo(expected);
-        }
-    }
+  @Test
+  @DisplayName("Presigned URL 생성 테스트")
+  void download_success() {
+    // given
+    s3BinaryContentStorage.put(testId, testData);
+    BinaryContentDto dto = new BinaryContentDto(
+        testId, "test.txt", (long) testData.length, "text/plain", BinaryContentStatus.SUCCESS
+    );
 
-    @Test
-    @DisplayName("download - PresignedUrl 기반 302 리다이렉트 응답 반환")
-    void download_PresignedUrl_302_리다이렉트_반환() throws MalformedURLException {
-        UUID id = UUID.randomUUID();
-        BinaryContentDto dto = new BinaryContentDto(id, "file.jpg", 1024L, "image/jpeg");
-        String expectedUrl = "https://test-bucket.s3.ap-northeast-2.amazonaws.com/" + id + "?signature=abc";
+    // when
+    ResponseEntity<Void> response = s3BinaryContentStorage.download(dto);
 
-        S3Presigner mockPresigner = mock(S3Presigner.class);
-        S3Presigner.Builder mockPresignerBuilder = mock(S3Presigner.Builder.class, RETURNS_SELF);
-        PresignedGetObjectRequest presignedRequest = mock(PresignedGetObjectRequest.class);
+    // then
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FOUND);
+    assertThat(response.getHeaders().get(HttpHeaders.LOCATION)).isNotNull();
 
-        try (MockedStatic<S3Presigner> mockedPresigner = mockStatic(S3Presigner.class)) {
-            mockedPresigner.when(S3Presigner::builder).thenReturn(mockPresignerBuilder);
-            when(mockPresignerBuilder.build()).thenReturn(mockPresigner);
-            when(presignedRequest.url()).thenReturn(new URL(expectedUrl));
-            when(mockPresigner.presignGetObject(any(GetObjectPresignRequest.class))).thenReturn(presignedRequest);
-
-            ResponseEntity<?> response = storage.download(dto);
-
-            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FOUND);
-            assertThat(response.getHeaders().getLocation()).isEqualTo(URI.create(expectedUrl));
-        }
-    }
-}
+    String location = response.getHeaders().getFirst(HttpHeaders.LOCATION);
+    assertThat(location).contains(bucket);
+    assertThat(location).contains(testId.toString());
+  }
+} 

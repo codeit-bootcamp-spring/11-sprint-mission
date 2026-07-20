@@ -5,7 +5,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.BDDMockito.willThrow;
-
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
@@ -15,29 +15,32 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.mission.discodeit.dto.data.BinaryContentDto;
 import com.sprint.mission.discodeit.dto.data.UserDto;
+import com.sprint.mission.discodeit.entity.BinaryContentStatus;
 import com.sprint.mission.discodeit.dto.request.UserCreateRequest;
 import com.sprint.mission.discodeit.dto.request.UserUpdateRequest;
 import com.sprint.mission.discodeit.entity.Role;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.service.UserService;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+@WebMvcTest(value = UserController.class,
+    excludeFilters = @ComponentScan.Filter(
+        type = FilterType.REGEX,
+        pattern = ".*\\.security\\.jwt\\..*"))
 @AutoConfigureMockMvc(addFilters = false)
-@WebMvcTest(UserController.class)
 class UserControllerTest {
 
   @Autowired
@@ -55,56 +58,58 @@ class UserControllerTest {
   void createUser_Success() throws Exception {
     // Given
     UserCreateRequest createRequest = new UserCreateRequest(
-            "testuser",
-            "test@example.com",
-            "Password1!"
+        "testuser",
+        "test@example.com",
+        "Password1!"
     );
 
     MockMultipartFile userCreateRequestPart = new MockMultipartFile(
-            "userCreateRequest",
-            "",
-            MediaType.APPLICATION_JSON_VALUE,
-            objectMapper.writeValueAsBytes(createRequest)
+        "userCreateRequest",
+        "",
+        MediaType.APPLICATION_JSON_VALUE,
+        objectMapper.writeValueAsBytes(createRequest)
     );
 
     MockMultipartFile profilePart = new MockMultipartFile(
-            "profile",
-            "profile.jpg",
-            MediaType.IMAGE_JPEG_VALUE,
-            "test-image".getBytes()
+        "profile",
+        "profile.jpg",
+        MediaType.IMAGE_JPEG_VALUE,
+        "test-image".getBytes()
     );
 
     UUID userId = UUID.randomUUID();
     BinaryContentDto profileDto = new BinaryContentDto(
-            UUID.randomUUID(),
-            "profile.jpg",
-            12L,
-            MediaType.IMAGE_JPEG_VALUE
+        UUID.randomUUID(),
+        "profile.jpg",
+        12L,
+        MediaType.IMAGE_JPEG_VALUE,
+        BinaryContentStatus.SUCCESS
     );
 
     UserDto createdUser = new UserDto(
-            userId,
-            "testuser",
-            "test@example.com",
-            profileDto,
-            false,
-            Role.USER
+        userId,
+        "testuser",
+        "test@example.com",
+        profileDto,
+        false,
+        Role.USER
     );
 
     given(userService.create(any(UserCreateRequest.class), any(Optional.class)))
-            .willReturn(createdUser);
+        .willReturn(createdUser);
 
     // When & Then
     mockMvc.perform(multipart("/api/users")
-                    .file(userCreateRequestPart)
-                    .file(profilePart)
-                    .contentType(MediaType.MULTIPART_FORM_DATA_VALUE))
-            .andExpect(status().isCreated())
-            .andExpect(jsonPath("$.id").value(userId.toString()))
-            .andExpect(jsonPath("$.username").value("testuser"))
-            .andExpect(jsonPath("$.email").value("test@example.com"))
-            .andExpect(jsonPath("$.profile.fileName").value("profile.jpg"))
-            .andExpect(jsonPath("$.online").value(false));
+            .file(userCreateRequestPart)
+            .file(profilePart)
+            .contentType(MediaType.MULTIPART_FORM_DATA_VALUE)
+            .with(csrf()))
+        .andExpect(status().isCreated())
+        .andExpect(jsonPath("$.id").value(userId.toString()))
+        .andExpect(jsonPath("$.username").value("testuser"))
+        .andExpect(jsonPath("$.email").value("test@example.com"))
+        .andExpect(jsonPath("$.profile.fileName").value("profile.jpg"))
+        .andExpect(jsonPath("$.online").value(false));
   }
 
   @Test
@@ -112,23 +117,24 @@ class UserControllerTest {
   void createUser_Failure_InvalidRequest() throws Exception {
     // Given
     UserCreateRequest invalidRequest = new UserCreateRequest(
-            "t", // 최소 길이 위반
-            "invalid-email", // 이메일 형식 위반
-            "short" // 비밀번호 정책 위반
+        "t", // 최소 길이 위반
+        "invalid-email", // 이메일 형식 위반
+        "short" // 비밀번호 정책 위반
     );
 
     MockMultipartFile userCreateRequestPart = new MockMultipartFile(
-            "userCreateRequest",
-            "",
-            MediaType.APPLICATION_JSON_VALUE,
-            objectMapper.writeValueAsBytes(invalidRequest)
+        "userCreateRequest",
+        "",
+        MediaType.APPLICATION_JSON_VALUE,
+        objectMapper.writeValueAsBytes(invalidRequest)
     );
 
     // When & Then
     mockMvc.perform(multipart("/api/users")
-                    .file(userCreateRequestPart)
-                    .contentType(MediaType.MULTIPART_FORM_DATA_VALUE))
-            .andExpect(status().isBadRequest());
+            .file(userCreateRequestPart)
+            .contentType(MediaType.MULTIPART_FORM_DATA_VALUE)
+            .with(csrf()))
+        .andExpect(status().isBadRequest());
   }
 
   @Test
@@ -139,21 +145,21 @@ class UserControllerTest {
     UUID userId2 = UUID.randomUUID();
 
     UserDto user1 = new UserDto(
-            userId1,
-            "user1",
-            "user1@example.com",
-            null,
-            true,
-            Role.USER
+        userId1,
+        "user1",
+        "user1@example.com",
+        null,
+        true,
+        Role.USER
     );
 
     UserDto user2 = new UserDto(
-            userId2,
-            "user2",
-            "user2@example.com",
-            null,
-            false,
-            Role.USER
+        userId2,
+        "user2",
+        "user2@example.com",
+        null,
+        false,
+        Role.USER
     );
 
     List<UserDto> users = List.of(user1, user2);
@@ -162,14 +168,14 @@ class UserControllerTest {
 
     // When & Then
     mockMvc.perform(get("/api/users")
-                    .contentType(MediaType.APPLICATION_JSON))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$[0].id").value(userId1.toString()))
-            .andExpect(jsonPath("$[0].username").value("user1"))
-            .andExpect(jsonPath("$[0].online").value(true))
-            .andExpect(jsonPath("$[1].id").value(userId2.toString()))
-            .andExpect(jsonPath("$[1].username").value("user2"))
-            .andExpect(jsonPath("$[1].online").value(false));
+            .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$[0].id").value(userId1.toString()))
+        .andExpect(jsonPath("$[0].username").value("user1"))
+        .andExpect(jsonPath("$[0].online").value(true))
+        .andExpect(jsonPath("$[1].id").value(userId2.toString()))
+        .andExpect(jsonPath("$[1].username").value("user2"))
+        .andExpect(jsonPath("$[1].online").value(false));
   }
 
   @Test
@@ -178,59 +184,61 @@ class UserControllerTest {
     // Given
     UUID userId = UUID.randomUUID();
     UserUpdateRequest updateRequest = new UserUpdateRequest(
-            "updateduser",
-            "updated@example.com",
-            "UpdatedPassword1!"
+        "updateduser",
+        "updated@example.com",
+        "UpdatedPassword1!"
     );
 
     MockMultipartFile userUpdateRequestPart = new MockMultipartFile(
-            "userUpdateRequest",
-            "",
-            MediaType.APPLICATION_JSON_VALUE,
-            objectMapper.writeValueAsBytes(updateRequest)
+        "userUpdateRequest",
+        "",
+        MediaType.APPLICATION_JSON_VALUE,
+        objectMapper.writeValueAsBytes(updateRequest)
     );
 
     MockMultipartFile profilePart = new MockMultipartFile(
-            "profile",
-            "updated-profile.jpg",
-            MediaType.IMAGE_JPEG_VALUE,
-            "updated-image".getBytes()
+        "profile",
+        "updated-profile.jpg",
+        MediaType.IMAGE_JPEG_VALUE,
+        "updated-image".getBytes()
     );
 
     BinaryContentDto profileDto = new BinaryContentDto(
-            UUID.randomUUID(),
-            "updated-profile.jpg",
-            14L,
-            MediaType.IMAGE_JPEG_VALUE
+        UUID.randomUUID(),
+        "updated-profile.jpg",
+        14L,
+        MediaType.IMAGE_JPEG_VALUE,
+        BinaryContentStatus.SUCCESS
     );
 
     UserDto updatedUser = new UserDto(
-            userId,
-            "updateduser",
-            "updated@example.com",
-            profileDto,
-            true,
-            Role.USER
+        userId,
+        "updateduser",
+        "updated@example.com",
+        profileDto,
+        true,
+        Role.USER
     );
 
     given(userService.update(eq(userId), any(UserUpdateRequest.class), any(Optional.class)))
-            .willReturn(updatedUser);
+        .willReturn(updatedUser);
 
     // When & Then
     mockMvc.perform(multipart("/api/users/{userId}", userId)
-                    .file(userUpdateRequestPart)
-                    .file(profilePart)
-                    .contentType(MediaType.MULTIPART_FORM_DATA_VALUE)
-                    .with(request -> {
-                      request.setMethod("PATCH");
-                      return request;
-                    }))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.id").value(userId.toString()))
-            .andExpect(jsonPath("$.username").value("updateduser"))
-            .andExpect(jsonPath("$.email").value("updated@example.com"))
-            .andExpect(jsonPath("$.profile.fileName").value("updated-profile.jpg"))
-            .andExpect(jsonPath("$.online").value(true));
+            .file(userUpdateRequestPart)
+            .file(profilePart)
+            .contentType(MediaType.MULTIPART_FORM_DATA_VALUE)
+            .with(request -> {
+              request.setMethod("PATCH");
+              return request;
+            })
+            .with(csrf()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.id").value(userId.toString()))
+        .andExpect(jsonPath("$.username").value("updateduser"))
+        .andExpect(jsonPath("$.email").value("updated@example.com"))
+        .andExpect(jsonPath("$.profile.fileName").value("updated-profile.jpg"))
+        .andExpect(jsonPath("$.online").value(true));
   }
 
   @Test
@@ -239,39 +247,40 @@ class UserControllerTest {
     // Given
     UUID nonExistentUserId = UUID.randomUUID();
     UserUpdateRequest updateRequest = new UserUpdateRequest(
-            "updateduser",
-            "updated@example.com",
-            "UpdatedPassword1!"
+        "updateduser",
+        "updated@example.com",
+        "UpdatedPassword1!"
     );
 
     MockMultipartFile userUpdateRequestPart = new MockMultipartFile(
-            "userUpdateRequest",
-            "",
-            MediaType.APPLICATION_JSON_VALUE,
-            objectMapper.writeValueAsBytes(updateRequest)
+        "userUpdateRequest",
+        "",
+        MediaType.APPLICATION_JSON_VALUE,
+        objectMapper.writeValueAsBytes(updateRequest)
     );
 
     MockMultipartFile profilePart = new MockMultipartFile(
-            "profile",
-            "updated-profile.jpg",
-            MediaType.IMAGE_JPEG_VALUE,
-            "updated-image".getBytes()
+        "profile",
+        "updated-profile.jpg",
+        MediaType.IMAGE_JPEG_VALUE,
+        "updated-image".getBytes()
     );
 
     given(userService.update(eq(nonExistentUserId), any(UserUpdateRequest.class),
-            any(Optional.class)))
-            .willThrow(UserNotFoundException.withId(nonExistentUserId));
+        any(Optional.class)))
+        .willThrow(UserNotFoundException.withId(nonExistentUserId));
 
     // When & Then
     mockMvc.perform(multipart("/api/users/{userId}", nonExistentUserId)
-                    .file(userUpdateRequestPart)
-                    .file(profilePart)
-                    .contentType(MediaType.MULTIPART_FORM_DATA_VALUE)
-                    .with(request -> {
-                      request.setMethod("PATCH");
-                      return request;
-                    }))
-            .andExpect(status().isNotFound());
+            .file(userUpdateRequestPart)
+            .file(profilePart)
+            .contentType(MediaType.MULTIPART_FORM_DATA_VALUE)
+            .with(request -> {
+              request.setMethod("PATCH");
+              return request;
+            })
+            .with(csrf()))
+        .andExpect(status().isNotFound());
   }
 
   @Test
@@ -283,8 +292,9 @@ class UserControllerTest {
 
     // When & Then
     mockMvc.perform(delete("/api/users/{userId}", userId)
-                    .contentType(MediaType.APPLICATION_JSON))
-            .andExpect(status().isNoContent());
+            .contentType(MediaType.APPLICATION_JSON)
+            .with(csrf()))
+        .andExpect(status().isNoContent());
   }
 
   @Test
@@ -293,11 +303,12 @@ class UserControllerTest {
     // Given
     UUID nonExistentUserId = UUID.randomUUID();
     willThrow(UserNotFoundException.withId(nonExistentUserId))
-            .given(userService).delete(nonExistentUserId);
+        .given(userService).delete(nonExistentUserId);
 
     // When & Then
     mockMvc.perform(delete("/api/users/{userId}", nonExistentUserId)
-                    .contentType(MediaType.APPLICATION_JSON))
-            .andExpect(status().isNotFound());
+            .contentType(MediaType.APPLICATION_JSON)
+            .with(csrf()))
+        .andExpect(status().isNotFound());
   }
-}
+} 
