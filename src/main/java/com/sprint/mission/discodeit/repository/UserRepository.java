@@ -1,5 +1,6 @@
 package com.sprint.mission.discodeit.repository;
 
+import com.sprint.mission.discodeit.entity.Role;
 import com.sprint.mission.discodeit.entity.User;
 import java.util.List;
 import java.util.Optional;
@@ -10,6 +11,8 @@ import org.springframework.data.jpa.repository.Query;
 public interface UserRepository extends JpaRepository<User, UUID> {
 
   Optional<User> findByUsername(String username);
+
+  List<User> findAllByRole(Role role);
 
   boolean existsByEmail(String email);
 

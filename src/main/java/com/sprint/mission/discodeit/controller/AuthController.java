@@ -8,7 +8,6 @@ import com.sprint.mission.discodeit.dto.request.RoleUpdateRequest;
 import com.sprint.mission.discodeit.security.jwt.JwtTokenProvider;
 import com.sprint.mission.discodeit.service.AuthService;
 import jakarta.servlet.http.HttpServletResponse;
-import java.time.Duration;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
@@ -50,18 +49,13 @@ public class AuthController implements AuthApi {
     log.info("액세스 토큰 재발급 요청");
     TokenPair tokenPair = authService.reissueToken(refreshToken);
 
-    ResponseCookie refreshTokenCookie = ResponseCookie
-        .from(JwtTokenProvider.REFRESH_TOKEN_COOKIE_NAME, tokenPair.refreshToken())
-        .httpOnly(true)
-        .path("/")
-        .maxAge(Duration.ofMillis(jwtTokenProvider.getRefreshTokenExpiration()))
-        .sameSite("Strict")
-        .build();
+    ResponseCookie refreshTokenCookie =
+        jwtTokenProvider.createRefreshTokenCookie(tokenPair.refreshToken());
     response.addHeader(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString());
 
     return ResponseEntity
         .status(HttpStatus.OK)
-        .body(new JwtDto(tokenPair.accessToken()));
+        .body(new JwtDto(tokenPair.userDto(), tokenPair.accessToken()));
   }
 
   @PutMapping("role")

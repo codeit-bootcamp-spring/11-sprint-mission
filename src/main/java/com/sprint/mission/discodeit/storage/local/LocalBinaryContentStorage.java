@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.NoSuchElementException;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,11 +25,14 @@ import org.springframework.stereotype.Component;
 public class LocalBinaryContentStorage implements BinaryContentStorage {
 
   private final Path root;
+  private final Duration putDelay;
 
   public LocalBinaryContentStorage(
-      @Value("${discodeit.storage.local.root-path}") Path root
+      @Value("${discodeit.storage.local.root-path}") Path root,
+      @Value("${discodeit.storage.local.put-delay:0ms}") Duration putDelay
   ) {
     this.root = root;
+    this.putDelay = putDelay;
   }
 
   @PostConstruct
@@ -44,6 +48,7 @@ public class LocalBinaryContentStorage implements BinaryContentStorage {
   }
 
   public UUID put(UUID binaryContentId, byte[] bytes) {
+    simulateDelay();
     Path filePath = resolvePath(binaryContentId);
     if (Files.exists(filePath)) {
       throw new IllegalArgumentException("File with key " + binaryContentId + " already exists");
@@ -66,6 +71,18 @@ public class LocalBinaryContentStorage implements BinaryContentStorage {
     } catch (IOException e) {
       e.printStackTrace();
       throw new RuntimeException(e);
+    }
+  }
+  
+  private void simulateDelay() {
+    if (putDelay.isZero()) {
+      return;
+    }
+    try {
+      Thread.sleep(putDelay.toMillis());
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new RuntimeException("Thread interrupted while simulating delay", e);
     }
   }
 

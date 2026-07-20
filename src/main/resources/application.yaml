@@ -11,6 +11,33 @@ spring:
     hibernate:
       ddl-auto: validate
     open-in-view: false
+  cache:
+    type: redis
+    cache-names:
+      - channels
+      - notifications
+      - users
+    caffeine: # 브로커/서버가 없는 테스트 프로파일에서 로컬 캐시로 대체할 때 사용
+      spec: >
+        maximumSize=100,
+        expireAfterAccess=600s,
+        recordStats
+    redis:
+      enable-statistics: true
+  data:
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST:localhost}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+    consumer:
+      group-id: discodeit-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
   profiles:
     active:
       - dev
@@ -18,13 +45,19 @@ spring:
     import: optional:file:.env[.properties]
 
 management:
+  observations:
+    annotations:
+      enabled: true
   endpoints:
     web:
       exposure:
-        include: health,info,metrics,loggers
+        include: health,info,metrics,loggers,caches
   endpoint:
     health:
       show-details: always
+  health:
+    redis:
+      enabled: false 
 
 info:
   name: Discodeit
@@ -51,6 +84,7 @@ discodeit:
     type: ${STORAGE_TYPE:local}  # local | s3 (기본값: local)
     local:
       root-path: ${STORAGE_LOCAL_ROOT_PATH:.discodeit/storage}
+      put-delay: ${STORAGE_LOCAL_PUT_DELAY:0ms} # 동기/비동기 응답 속도 비교용 지연
     s3:
       access-key: ${AWS_S3_ACCESS_KEY}
       secret-key: ${AWS_S3_SECRET_KEY}
@@ -65,6 +99,8 @@ discodeit:
     secret: ${JWT_SECRET}
     access-token-expiration: ${JWT_ACCESS_EXPIRATION:1800000}    # 30분 (ms)
     refresh-token-expiration: ${JWT_REFRESH_EXPIRATION:1209600000} # 2주 (ms)
+    cookie-secure: ${JWT_COOKIE_SECURE:false} # HTTPS 전용 전송 여부 (prod에서 true)
+    registry: ${JWT_REGISTRY:memory} # 토큰 저장소: memory(단일 인스턴스) | redis(다중 인스턴스)
 
 logging:
   level:

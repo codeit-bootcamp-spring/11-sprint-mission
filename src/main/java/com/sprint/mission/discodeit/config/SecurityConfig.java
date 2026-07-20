@@ -3,7 +3,7 @@ package com.sprint.mission.discodeit.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.mission.discodeit.entity.Role;
 import com.sprint.mission.discodeit.security.Http403ForbiddenAccessDeniedHandler;
-import com.sprint.mission.discodeit.security.DiscodeitUserDetailsService;
+import com.sprint.mission.discodeit.security.JwtAuthenticationEntryPoint;
 import com.sprint.mission.discodeit.security.LoginFailureHandler;
 import com.sprint.mission.discodeit.security.SpaCsrfTokenRequestHandler;
 import com.sprint.mission.discodeit.security.filter.JwtAuthenticationFilter;
@@ -16,8 +16,10 @@ import java.util.List;
 import java.util.stream.IntStream;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler;
@@ -31,7 +33,6 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.Http403ForbiddenEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.logout.HttpStatusReturningLogoutSuccessHandler;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
@@ -82,7 +83,7 @@ public class SecurityConfig {
             .anyRequest().authenticated()
         )
         .exceptionHandling(ex -> ex
-            .authenticationEntryPoint(new Http403ForbiddenEntryPoint())
+            .authenticationEntryPoint(new JwtAuthenticationEntryPoint(objectMapper))
             .accessDeniedHandler(new Http403ForbiddenAccessDeniedHandler(objectMapper))
         )
         .sessionManagement(session -> session
@@ -96,12 +97,12 @@ public class SecurityConfig {
   @Bean
   public JwtAuthenticationFilter jwtAuthenticationFilter(
       JwtTokenProvider jwtTokenProvider,
-      DiscodeitUserDetailsService userDetailsService,
-      JwtRegistry jwtRegistry) {
-    return new JwtAuthenticationFilter(jwtTokenProvider, userDetailsService, jwtRegistry);
+      ObjectMapper objectMapper) {
+    return new JwtAuthenticationFilter(jwtTokenProvider, objectMapper);
   }
 
   @Bean
+  @Profile("dev")
   public CommandLineRunner debugFilterChain(SecurityFilterChain filterChain) {
     return args -> {
       int filterSize = filterChain.getFilters().size();
@@ -138,7 +139,10 @@ public class SecurityConfig {
     return handler;
   }
 
+  // 기본은 InMemory. 다중 인스턴스 프로덕션은 discodeit.jwt.registry=redis 로 RedisJwtRegistry 사용.
   @Bean
+  @ConditionalOnProperty(prefix = "discodeit.jwt", name = "registry", havingValue = "memory",
+      matchIfMissing = true)
   public JwtRegistry jwtRegistry() {
     return new InMemoryJwtRegistry(1);
   }

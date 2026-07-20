@@ -1,4 +1,14 @@
 spring:
+  cache:
+    # Redis 서버 없이 캐시 동작을 검증하기 위해 로컬 캐시로 대체한다
+    type: caffeine
+  kafka:
+    # 브로커가 필요한 테스트만 EmbeddedKafka로 리스너를 켠다
+    listener:
+      auto-startup: false
+    producer:
+      properties:
+        max.block.ms: 1000
   datasource:
     url: jdbc:h2:mem:testdb;MODE=PostgreSQL
     driver-class-name: org.h2.Driver
@@ -14,6 +24,20 @@ spring:
   sql:
     init:
       mode: never
+
+discodeit:
+  storage:
+    type: local
+    local:
+      root-path: build/test-storage
+  admin:
+    username: admin
+    email: admin@test.com
+    password: admin1234
+  jwt:
+    secret: test-secret-key-for-jwt-must-be-at-least-256-bits-long-000000
+    access-token-expiration: 1800000
+    refresh-token-expiration: 1209600000
 
 logging:
   level:

@@ -18,7 +18,7 @@ import com.sprint.mission.discodeit.exception.auth.RefreshTokenInvalidException;
 import com.sprint.mission.discodeit.security.DiscodeitUserDetails;
 import com.sprint.mission.discodeit.security.DiscodeitUserDetailsService;
 import com.sprint.mission.discodeit.security.jwt.JwtTokenProvider;
-import com.sprint.mission.discodeit.service.AuthService;
+import com.sprint.mission.discodeit.service.basic.BasicAuthService;
 import jakarta.servlet.http.Cookie;
 import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
@@ -46,20 +46,24 @@ class AuthControllerTest {
   private DiscodeitUserDetailsService userDetailsService;
 
   @MockitoBean
-  private AuthService authService;
+  private BasicAuthService authService;
 
   @Test
   @DisplayName("액세스 토큰 재발급 - 성공")
   void refresh_Success() throws Exception {
     // Given
-    given(authService.reissueToken(any())).willReturn(new TokenPair("new-access", "new-refresh"));
+    UserDto userDto = new UserDto(UUID.randomUUID(), "tester", "tester@example.com", null, true,
+        Role.USER);
+    given(authService.reissueToken(any()))
+        .willReturn(new TokenPair(userDto, "new-access", "new-refresh"));
 
     // When & Then
     mockMvc.perform(post("/api/auth/refresh")
             .with(csrf())
             .cookie(new Cookie(JwtTokenProvider.REFRESH_TOKEN_COOKIE_NAME, "old-refresh")))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.accessToken").value("new-access"));
+        .andExpect(jsonPath("$.accessToken").value("new-access"))
+        .andExpect(jsonPath("$.userDto.username").value("tester"));
   }
 
   @Test
@@ -117,6 +121,6 @@ class AuthControllerTest {
             .with(csrf())
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(request)))
-        .andExpect(status().isForbidden());
+        .andExpect(status().isUnauthorized());
   }
 }

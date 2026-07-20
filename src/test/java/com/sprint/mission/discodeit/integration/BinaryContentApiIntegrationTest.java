@@ -1,5 +1,7 @@
 package com.sprint.mission.discodeit.integration;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
@@ -17,10 +19,12 @@ import com.sprint.mission.discodeit.dto.request.BinaryContentCreateRequest;
 import com.sprint.mission.discodeit.dto.request.MessageCreateRequest;
 import com.sprint.mission.discodeit.dto.request.PublicChannelCreateRequest;
 import com.sprint.mission.discodeit.dto.request.UserCreateRequest;
+import com.sprint.mission.discodeit.entity.BinaryContentUploadStatus;
 import com.sprint.mission.discodeit.service.BinaryContentService;
 import com.sprint.mission.discodeit.service.ChannelService;
 import com.sprint.mission.discodeit.service.MessageService;
 import com.sprint.mission.discodeit.service.UserService;
+import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -34,6 +38,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest
@@ -180,6 +185,7 @@ class BinaryContentApiIntegrationTest {
 
   @Test
   @WithMockUser(roles = "CHANNEL_MANAGER")
+  @Transactional(propagation = Propagation.NOT_SUPPORTED)
   @DisplayName("바이너리 컨텐츠 다운로드 API 통합 테스트")
   void downloadBinaryContent_Success() throws Exception {
     // Given
@@ -192,6 +198,11 @@ class BinaryContentApiIntegrationTest {
 
     BinaryContentDto binaryContent = binaryContentService.create(createRequest);
     UUID binaryContentId = binaryContent.id();
+    
+    assertThat(binaryContent.status()).isEqualTo(BinaryContentUploadStatus.PROCESSING);
+    await().atMost(Duration.ofSeconds(5))
+        .untilAsserted(() -> assertThat(binaryContentService.find(binaryContentId).status())
+            .isEqualTo(BinaryContentUploadStatus.SUCCESS));
 
     // When & Then
     mockMvc.perform(get("/api/binaryContents/{binaryContentId}/download", binaryContentId))

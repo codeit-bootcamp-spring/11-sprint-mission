@@ -11,6 +11,8 @@ public enum ErrorCode {
 
   // 인증(JWT) 관련 에러 코드
   REFRESH_TOKEN_INVALID("유효하지 않은 리프레시 토큰입니다."),
+  ACCESS_TOKEN_INVALID("유효하지 않은 액세스 토큰입니다."),
+  AUTHENTICATION_REQUIRED("인증이 필요합니다."),
 
   // Channel 관련 에러 코드
   CHANNEL_NOT_FOUND("채널을 찾을 수 없습니다."),
@@ -25,6 +27,9 @@ public enum ErrorCode {
   // ReadStatus 관련 에러 코드
   READ_STATUS_NOT_FOUND("읽음 상태를 찾을 수 없습니다."),
   DUPLICATE_READ_STATUS("이미 존재하는 읽음 상태입니다."),
+
+  // Notification 관련 에러 코드
+  NOTIFICATION_NOT_FOUND("알림을 찾을 수 없습니다."),
 
   // Server 에러 코드
   INTERNAL_SERVER_ERROR("서버 내부 오류가 발생했습니다."),

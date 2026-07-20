@@ -7,12 +7,14 @@ import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
 import java.util.UUID;
 import javax.crypto.SecretKey;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Component;
 
 @Slf4j
@@ -24,6 +26,7 @@ public class JwtTokenProvider {
 
   private static final String CLAIM_USER_ID = "userId";
   private static final String CLAIM_ROLE = "role";
+  private static final String CLAIM_TYPE = "type";
 
   private final SecretKey key;
   private final JwtProperties jwtProperties;
@@ -34,11 +37,11 @@ public class JwtTokenProvider {
   }
 
   public String generateAccessToken(DiscodeitUserDetails userDetails) {
-    return generateToken(userDetails, jwtProperties.accessTokenExpiration());
+    return generateToken(userDetails, TokenType.ACCESS, jwtProperties.accessTokenExpiration());
   }
 
   public String generateRefreshToken(DiscodeitUserDetails userDetails) {
-    return generateToken(userDetails, jwtProperties.refreshTokenExpiration());
+    return generateToken(userDetails, TokenType.REFRESH, jwtProperties.refreshTokenExpiration());
   }
 
   public boolean validateToken(String token) {
@@ -63,6 +66,14 @@ public class JwtTokenProvider {
     return Role.valueOf(parseClaims(token).get(CLAIM_ROLE, String.class));
   }
 
+  public boolean isAccessToken(String token) {
+    return getType(token) == TokenType.ACCESS;
+  }
+
+  public boolean isRefreshToken(String token) {
+    return getType(token) == TokenType.REFRESH;
+  }
+
   public Instant getExpiration(String token) {
     return parseClaims(token).getExpiration().toInstant();
   }
@@ -71,48 +82,54 @@ public class JwtTokenProvider {
     return jwtProperties.accessTokenExpiration();
   }
 
-  public long getRefreshTokenExpiration() {
-    return jwtProperties.refreshTokenExpiration();
+  // 리프레시 토큰 쿠키 생성을 한 곳에서 관리한다. (Secure 등 보안 속성 일관성 보장)
+  public ResponseCookie createRefreshTokenCookie(String refreshToken) {
+    return baseRefreshTokenCookie(refreshToken)
+        .maxAge(Duration.ofMillis(jwtProperties.refreshTokenExpiration()))
+        .build();
   }
 
-  // 리프레시 토큰으로 새 액세스 토큰 재발급
-  public String reissueAccessToken(String refreshToken) {
-    return reissueToken(refreshToken, jwtProperties.accessTokenExpiration());
+  public ResponseCookie expireRefreshTokenCookie() {
+    return baseRefreshTokenCookie("")
+        .maxAge(0)
+        .build();
   }
 
-  // 리프레시 토큰 로테이션: 기존 클레임으로 새 리프레시 토큰 발급
-  public String reissueRefreshToken(String refreshToken) {
-    return reissueToken(refreshToken, jwtProperties.refreshTokenExpiration());
-  }
-
-  private String reissueToken(String token, long expiration) {
-    Claims claims = parseClaims(token);
-    return generateToken(
-        claims.getSubject(),
-        claims.get(CLAIM_USER_ID, String.class),
-        claims.get(CLAIM_ROLE, String.class),
-        expiration);
+  private ResponseCookie.ResponseCookieBuilder baseRefreshTokenCookie(String value) {
+    return ResponseCookie.from(REFRESH_TOKEN_COOKIE_NAME, value)
+        .httpOnly(true)
+        .secure(jwtProperties.cookieSecure())
+        .path("/")
+        .sameSite("Strict");
   }
 
   // 토큰 생성
-  private String generateToken(DiscodeitUserDetails userDetails, long expiration) {
+  private String generateToken(DiscodeitUserDetails userDetails, TokenType type, long expiration) {
     return generateToken(
         userDetails.getUsername(),
         userDetails.getUserDto().id().toString(),
         userDetails.getUserDto().role().name(),
+        type,
         expiration);
   }
 
-  private String generateToken(String subject, String userId, String role, long expiration) {
+  private String generateToken(String subject, String userId, String role, TokenType type,
+      long expiration) {
     Instant now = Instant.now();
     return Jwts.builder()
         .subject(subject)
         .claim(CLAIM_USER_ID, userId)
         .claim(CLAIM_ROLE, role)
+        .claim(CLAIM_TYPE, type.name())
         .issuedAt(Date.from(now))
         .expiration(Date.from(now.plusMillis(expiration)))
         .signWith(key)
         .compact();
+  }
+
+  private TokenType getType(String token) {
+    String type = parseClaims(token).get(CLAIM_TYPE, String.class);
+    return type == null ? null : TokenType.valueOf(type);
   }
 
   // 토큰 파싱

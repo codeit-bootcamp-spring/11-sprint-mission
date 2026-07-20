@@ -5,8 +5,8 @@ import com.sprint.mission.discodeit.dto.request.RoleUpdateRequest;
 import com.sprint.mission.discodeit.dto.request.UserCreateRequest;
 import com.sprint.mission.discodeit.entity.Role;
 import com.sprint.mission.discodeit.exception.user.UserAlreadyExistsException;
-import com.sprint.mission.discodeit.service.AuthService;
 import com.sprint.mission.discodeit.service.UserService;
+import com.sprint.mission.discodeit.service.basic.BasicAuthService;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,7 +27,7 @@ public class AdminInitializer implements ApplicationRunner {
   @Value("${discodeit.admin.email}")
   private String email;
   private final UserService userService;
-  private final AuthService authService;
+  private final BasicAuthService authService;
 
   @Override
   public void run(ApplicationArguments args) {
@@ -39,8 +39,6 @@ public class AdminInitializer implements ApplicationRunner {
       log.info("관리자 계정이 성공적으로 생성되었습니다.");
     } catch (UserAlreadyExistsException e) {
       log.warn("관리자 계정이 이미 존재합니다");
-    } catch (Exception e) {
-      log.error("관리자 계정 생성 중 오류가 발생했습니다.: {}", e.getMessage());
     }
   }
 }

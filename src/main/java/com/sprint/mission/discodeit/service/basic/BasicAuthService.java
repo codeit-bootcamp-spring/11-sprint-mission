@@ -5,10 +5,12 @@ import com.sprint.mission.discodeit.dto.data.UserDto;
 import com.sprint.mission.discodeit.dto.request.RoleUpdateRequest;
 import com.sprint.mission.discodeit.entity.Role;
 import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.event.RoleUpdatedEvent;
 import com.sprint.mission.discodeit.exception.auth.RefreshTokenInvalidException;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.mapper.UserMapper;
 import com.sprint.mission.discodeit.repository.UserRepository;
+import com.sprint.mission.discodeit.security.DiscodeitUserDetails;
 import com.sprint.mission.discodeit.security.jwt.JwtInformation;
 import com.sprint.mission.discodeit.security.jwt.JwtRegistry;
 import com.sprint.mission.discodeit.security.jwt.JwtTokenProvider;
@@ -16,6 +18,8 @@ import com.sprint.mission.discodeit.service.AuthService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,6 +33,7 @@ public class BasicAuthService implements AuthService {
   private final UserMapper userMapper;
   private final JwtRegistry jwtRegistry;
   private final JwtTokenProvider jwtTokenProvider;
+  private final ApplicationEventPublisher eventPublisher;
 
   @PreAuthorize("hasRole('ADMIN')")
   @Transactional
@@ -38,38 +43,49 @@ public class BasicAuthService implements AuthService {
   }
 
   @Transactional
-  @Override
   public UserDto updateRoleInternal(RoleUpdateRequest request) {
     UUID userId = request.userId();
     User user = userRepository.findById(userId)
         .orElseThrow(() -> UserNotFoundException.withId(userId));
 
+    Role previousRole = user.getRole();
     Role newRole = request.newRole();
     user.updateRole(newRole);
 
     jwtRegistry.invalidateJwtInformationByUserId(userId);
 
+    if (previousRole != newRole) {
+      eventPublisher.publishEvent(new RoleUpdatedEvent(userId, previousRole, newRole));
+    }
+
     return userMapper.toDto(user);
   }
 
+  @Transactional(readOnly = true)
   @Override
   public TokenPair reissueToken(String refreshToken) {
     if (refreshToken == null
         || !jwtTokenProvider.validateToken(refreshToken)
+        || !jwtTokenProvider.isRefreshToken(refreshToken)
         || !jwtRegistry.hasActiveJwtInformationByRefreshToken(refreshToken)) {
       throw new RefreshTokenInvalidException();
     }
 
-    String newAccessToken = jwtTokenProvider.reissueAccessToken(refreshToken);
-    String newRefreshToken = jwtTokenProvider.reissueRefreshToken(refreshToken);
+    UUID userId = jwtTokenProvider.getUserId(refreshToken);
+    User user = userRepository.findById(userId)
+        .orElseThrow(() -> UserNotFoundException.withId(userId));
+    UserDto userDto = userMapper.toDto(user);
+    DiscodeitUserDetails userDetails = new DiscodeitUserDetails(userDto, user.getPassword());
+
+    String newAccessToken = jwtTokenProvider.generateAccessToken(userDetails);
+    String newRefreshToken = jwtTokenProvider.generateRefreshToken(userDetails);
 
     JwtInformation newJwtInformation = new JwtInformation(
-        jwtTokenProvider.getUserId(refreshToken),
-        newAccessToken,
+        userId,
         newRefreshToken,
         jwtTokenProvider.getExpiration(newRefreshToken));
     jwtRegistry.rotateJwtInformation(refreshToken, newJwtInformation);
 
-    return new TokenPair(newAccessToken, newRefreshToken);
+    return new TokenPair(userDto, newAccessToken, newRefreshToken);
   }
 }
