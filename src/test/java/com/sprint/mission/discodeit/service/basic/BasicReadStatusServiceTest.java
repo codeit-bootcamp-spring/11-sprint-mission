@@ -66,7 +66,8 @@ class BasicReadStatusServiceTest {
                 savedReadStatus.getId(),
                 user.getId(),
                 channel.getId(),
-                lastReadAt
+                lastReadAt,
+                false
         );
 
         given(userRepository.findById(user.getId())).willReturn(Optional.of(user));
@@ -179,7 +180,8 @@ class BasicReadStatusServiceTest {
                 readStatus.getId(),
                 user.getId(),
                 channel.getId(),
-                readStatus.getLastReadAt()
+                readStatus.getLastReadAt(),
+                false
         );
 
         given(readStatusRepository.findById(readStatus.getId()))
@@ -209,7 +211,8 @@ class BasicReadStatusServiceTest {
                 readStatus.getId(),
                 user.getId(),
                 channel.getId(),
-                readStatus.getLastReadAt()
+                readStatus.getLastReadAt(),
+                false
         );
 
         given(readStatusRepository.findAllByUser_Id(user.getId()))
@@ -238,14 +241,15 @@ class BasicReadStatusServiceTest {
 
         Instant newLastReadAt = Instant.parse("2026-05-09T11:00:00Z");
 
-        ReadStatusUpdateRequest request = new ReadStatusUpdateRequest(newLastReadAt);
+        ReadStatusUpdateRequest request = new ReadStatusUpdateRequest(newLastReadAt, null);
         ReadStatusUpdateParam param = new ReadStatusUpdateParam(readStatus.getId(), request);
 
         ReadStatusDto expectedDto = new ReadStatusDto(
                 readStatus.getId(),
                 user.getId(),
                 channel.getId(),
-                newLastReadAt
+                newLastReadAt,
+                false
         );
 
         given(readStatusRepository.findById(readStatus.getId()))
@@ -269,7 +273,8 @@ class BasicReadStatusServiceTest {
         UUID readStatusId = UUID.randomUUID();
 
         ReadStatusUpdateRequest request = new ReadStatusUpdateRequest(
-                Instant.parse("2026-05-09T11:00:00Z")
+                Instant.parse("2026-05-09T11:00:00Z"),
+                null
         );
         ReadStatusUpdateParam param = new ReadStatusUpdateParam(readStatusId, request);
 

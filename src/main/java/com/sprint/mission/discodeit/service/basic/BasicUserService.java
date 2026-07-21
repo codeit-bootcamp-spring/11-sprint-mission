@@ -3,15 +3,21 @@ package com.sprint.mission.discodeit.service.basic;
 import com.sprint.mission.discodeit.dto.*;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.event.BinaryContentCreatedEvent;
+import com.sprint.mission.discodeit.event.RoleUpdatedEvent;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.security.UserOnlineStatusResolver;
+import com.sprint.mission.discodeit.security.authority.UserRole;
 import com.sprint.mission.discodeit.service.UserService;
 import com.sprint.mission.discodeit.exception.user.UserAlreadyExistsException;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,9 +42,11 @@ public class BasicUserService implements UserService {
     private final BinaryContentStorage binaryContentStorage;
     private final PasswordEncoder passwordEncoder;
     private final UserOnlineStatusResolver userOnlineStatusResolver;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     @Transactional
+    @CacheEvict(value = "users", allEntries = true)
     public UserDto create(UserCreateRequest request) {
         log.info("사용자 생성 요청: username={}, email={}",
                 request.username(),
@@ -67,7 +75,9 @@ public class BasicUserService implements UserService {
             profile = binaryContentRepository.save(profile);
 
             if (request.profileImage().bytes() != null) {
-                binaryContentStorage.put(profile.getId(), request.profileImage().bytes());
+                eventPublisher.publishEvent(
+                        new BinaryContentCreatedEvent(profile.getId(), request.profileImage().bytes())
+                );
             }
         }
 
@@ -97,6 +107,7 @@ public class BasicUserService implements UserService {
     }
 
     @Override
+    @Cacheable(value = "users")
     public List<UserDto> findAll() {
         log.debug("사용자 목록 조회 처리 시작");
 
@@ -115,6 +126,7 @@ public class BasicUserService implements UserService {
     @Override
     @Transactional
     @PreAuthorize("@userSecurity.isSelf(#param.id, authentication)")
+    @CacheEvict(value = "users", allEntries = true)
     public UserDto update(UserUpdateParam param) {
         log.info("사용자 수정 처리 시작: userId={}", param.id());
 
@@ -200,7 +212,9 @@ public class BasicUserService implements UserService {
         BinaryContent savedProfile = binaryContentRepository.save(newProfile);
 
         if (newProfileImage.bytes() != null) {
-            binaryContentStorage.put(savedProfile.getId(), newProfileImage.bytes());
+            eventPublisher.publishEvent(
+                    new BinaryContentCreatedEvent(savedProfile.getId(), newProfileImage.bytes())
+            );
         }
 
         user.updateProfile(savedProfile);
@@ -214,6 +228,7 @@ public class BasicUserService implements UserService {
     @Override
     @Transactional
     @PreAuthorize("@userSecurity.isSelf(#id, authentication)")
+    @CacheEvict(value = "users", allEntries = true)
     public void delete(UUID id) {
         log.info("사용자 삭제 처리 시작: userId={}", id);
 
@@ -237,13 +252,20 @@ public class BasicUserService implements UserService {
     @Override
     @Transactional
     @PreAuthorize("hasAuthority('ADMIN')")
+    @CacheEvict(value = "users", allEntries = true)
     public UserDto updateRole(UserRoleUpdateRequest request) {
         User user = userRepository.findById(request.userId())
                 .orElseThrow(() -> new UserNotFoundException(request.userId()));
 
+        UserRole previousRole = user.getRole();
+
         user.updateRole(request.newRole());
 
-        userOnlineStatusResolver.expireSessions(user.getId());
+        eventPublisher.publishEvent(
+                new RoleUpdatedEvent(user.getId(), previousRole, request.newRole())
+        );
+
+        userOnlineStatusResolver.invalidateTokens(user.getId());
 
         return userMapper.toDto(user, Set.of());
     }

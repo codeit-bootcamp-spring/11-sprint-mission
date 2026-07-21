@@ -6,8 +6,8 @@ import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.entity.User;
-import com.sprint.mission.discodeit.exception.InvalidException;
-import com.sprint.mission.discodeit.exception.NotFoundException;
+import com.sprint.mission.discodeit.event.BinaryContentCreatedEvent;
+import com.sprint.mission.discodeit.event.MessageCreatedEvent;
 import com.sprint.mission.discodeit.mapper.MessageMapper;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
@@ -24,6 +24,7 @@ import com.sprint.mission.discodeit.security.UserOnlineStatusResolver;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
@@ -45,6 +46,7 @@ public class BasicMessageService implements MessageService {
     private final MessageMapper messageMapper;
     private final BinaryContentStorage binaryContentStorage;
     private final UserOnlineStatusResolver userOnlineStatusResolver;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     @Transactional
@@ -79,7 +81,9 @@ public class BasicMessageService implements MessageService {
                 BinaryContent savedAttachment = binaryContentRepository.save(attachment);
 
                 if (attachmentRequest.bytes() != null) {
-                    binaryContentStorage.put(savedAttachment.getId(), attachmentRequest.bytes());
+                    eventPublisher.publishEvent(
+                            new BinaryContentCreatedEvent(savedAttachment.getId(), attachmentRequest.bytes())
+                    );
                 }
 
                 attachments.add(savedAttachment);
@@ -90,6 +94,10 @@ public class BasicMessageService implements MessageService {
         message.updateAttachments(attachments);
 
         Message savedMessage = messageRepository.save(message);
+
+        eventPublisher.publishEvent(
+                new MessageCreatedEvent(savedMessage.getId())
+        );
 
         log.info("메세지 생성 완료: messageId={}, attachmentsCount={}", savedMessage.getId(), attachments.size());
         Set<UUID> onlineUserIds = userOnlineStatusResolver.getOnlineUserIds();

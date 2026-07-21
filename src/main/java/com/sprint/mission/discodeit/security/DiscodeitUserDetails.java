@@ -23,7 +23,6 @@ public class DiscodeitUserDetails implements UserDetails {
         return List.of(new SimpleGrantedAuthority(userDto.role().name()));
     }
 
-    //UserDetails 메서드 구현
     @Override
     public String getUsername() {
         return userDto.username();

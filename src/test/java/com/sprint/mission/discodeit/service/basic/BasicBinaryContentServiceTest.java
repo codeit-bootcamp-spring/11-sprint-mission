@@ -3,6 +3,7 @@ package com.sprint.mission.discodeit.service.basic;
 import com.sprint.mission.discodeit.dto.BinaryContentCreateRequest;
 import com.sprint.mission.discodeit.dto.BinaryContentDto;
 import com.sprint.mission.discodeit.entity.BinaryContent;
+import com.sprint.mission.discodeit.event.BinaryContentCreatedEvent;
 import com.sprint.mission.discodeit.mapper.BinaryContentMapper;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.storage.BinaryContentStorage;
@@ -11,6 +12,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.List;
 import java.util.Optional;
@@ -22,6 +24,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
+import static com.sprint.mission.discodeit.entity.BinaryContent.BinaryContentStatus.PROCESSING;
 
 @ExtendWith(MockitoExtension.class)
 class BasicBinaryContentServiceTest {
@@ -34,6 +37,9 @@ class BasicBinaryContentServiceTest {
 
     @Mock
     BinaryContentStorage binaryContentStorage;
+
+    @Mock
+    ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     BasicBinaryContentService binaryContentService;
@@ -59,7 +65,8 @@ class BasicBinaryContentServiceTest {
                 saved.getId(),
                 "hello.txt",
                 (long) bytes.length,
-                "text/plain"
+                "text/plain",
+                PROCESSING
         );
 
         given(binaryContentRepository.save(any(BinaryContent.class))).willReturn(saved);
@@ -72,7 +79,8 @@ class BasicBinaryContentServiceTest {
         assertThat(result).isEqualTo(expectedDto);
 
         then(binaryContentRepository).should().save(any(BinaryContent.class));
-        then(binaryContentStorage).should().put(saved.getId(), bytes);
+        then(eventPublisher).should().publishEvent(any(BinaryContentCreatedEvent.class));
+        then(binaryContentStorage).should(never()).put(any(UUID.class), any(byte[].class));
         then(binaryContentMapper).should().toDto(saved);
     }
 
@@ -95,7 +103,8 @@ class BasicBinaryContentServiceTest {
                 saved.getId(),
                 "empty.txt",
                 0L,
-                "text/plain"
+                "text/plain",
+                PROCESSING
         );
 
         given(binaryContentRepository.save(any(BinaryContent.class))).willReturn(saved);
@@ -125,7 +134,8 @@ class BasicBinaryContentServiceTest {
                 binaryContent.getId(),
                 "image.png",
                 100L,
-                "image/png"
+                "image/png",
+                PROCESSING
         );
 
         given(binaryContentRepository.findById(binaryContent.getId()))
@@ -167,7 +177,8 @@ class BasicBinaryContentServiceTest {
                 binaryContent.getId(),
                 "image.png",
                 100L,
-                "image/png"
+                "image/png",
+                PROCESSING
         );
 
         given(binaryContentRepository.findAllById(List.of(binaryContent.getId())))

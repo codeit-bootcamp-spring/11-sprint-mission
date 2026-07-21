@@ -29,14 +29,23 @@ public class ReadStatus extends MutableBaseEntity {
     @Column(name = "last_read_at", nullable = false)
     private Instant lastReadAt;
 
+    @Column(name = "notification_enabled", nullable = false)
+    private boolean notificationEnabled;
+
     public ReadStatus(User user, Channel channel, Instant lastReadAt) {
         this.id = UUID.randomUUID();
         this.user = user;
         this.channel = channel;
         this.lastReadAt = lastReadAt;
+        this.notificationEnabled = channel.getType() == ChannelType.PRIVATE;
     }
 
-    public void update(Instant lastReadAt) {
-        this.lastReadAt = lastReadAt;
+    public void update(Instant lastReadAt, Boolean notificationEnabled) {
+        if (lastReadAt != null) {
+            this.lastReadAt = lastReadAt;
+        }
+        if (notificationEnabled != null) {
+            this.notificationEnabled = notificationEnabled;
+        }
     }
 }

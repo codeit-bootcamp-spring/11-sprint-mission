@@ -8,6 +8,7 @@ import com.sprint.mission.discodeit.dto.response.PageResponse;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.event.MessageCreatedEvent;
 import com.sprint.mission.discodeit.exception.DiscodeitException;
 import com.sprint.mission.discodeit.exception.channel.ChannelNotFoundException;
 import com.sprint.mission.discodeit.exception.message.MessageNotFoundException;
@@ -24,6 +25,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Pageable;
 
 import java.util.List;
@@ -65,6 +67,9 @@ class BasicMessageServiceTest {
 
     @Mock
     UserOnlineStatusResolver userOnlineStatusResolver;
+
+    @Mock
+    ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     BasicMessageService messageService;
@@ -108,6 +113,7 @@ class BasicMessageServiceTest {
         then(userRepository).should().findById(author.getId());
         then(channelRepository).should().findById(channel.getId());
         then(messageRepository).should().save(any(Message.class));
+        then(eventPublisher).should().publishEvent(any(MessageCreatedEvent.class));
         then(messageMapper).should().toDto(eq(savedMessage), anySet());
     }
 

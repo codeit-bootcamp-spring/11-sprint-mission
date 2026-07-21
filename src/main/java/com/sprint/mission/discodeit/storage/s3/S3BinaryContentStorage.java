@@ -8,6 +8,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Recover;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
@@ -63,6 +66,11 @@ public class S3BinaryContentStorage implements BinaryContentStorage {
         this.presignedUrlExpiration = Duration.ofSeconds(presignedUrlExpirationSeconds);
     }
 
+    @Retryable(
+            retryFor = StorageException.class,
+            maxAttempts = 3,
+            backoff = @Backoff(delay = 1000, multiplier = 2)
+    )
     @Override
     public UUID put(UUID id, byte[] bytes) {
         try {
@@ -147,5 +155,10 @@ public class S3BinaryContentStorage implements BinaryContentStorage {
 
     private String toKey(UUID id) {
         return id.toString();
+    }
+
+    @Recover
+    public UUID recover(StorageException e, UUID id, byte[] bytes) {
+        throw e;
     }
 }
