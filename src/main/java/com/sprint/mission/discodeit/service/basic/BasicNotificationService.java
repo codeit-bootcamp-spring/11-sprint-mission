@@ -25,7 +25,7 @@ public class BasicNotificationService implements NotificationService {
   private final NotificationRepository notificationRepository;
   private final NotificationMapper notificationMapper;
 
-  @CacheEvict(value = "notifications", key = "#receiverId")
+  @CacheEvict(cacheNames = "notifications", key = "#receiverId")
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   @Override
   public NotificationDto create(UUID receiverId, String title, String content) {
@@ -42,7 +42,7 @@ public class BasicNotificationService implements NotificationService {
         .toList();
   }
 
-  @CacheEvict(value = "notifications", key = "#currentUserId")
+  @CacheEvict(cacheNames = "notifications", key = "#currentUserId")
   @Transactional
   @Override
   public void delete(UUID notificationId, UUID currentUserId) {

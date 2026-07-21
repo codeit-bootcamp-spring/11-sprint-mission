@@ -18,6 +18,8 @@ import com.sprint.mission.discodeit.service.ChannelService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -31,11 +33,11 @@ import lombok.extern.slf4j.Slf4j;
 public class BasicChannelService implements ChannelService {
 
   private final ChannelRepository channelRepository;
-  //
   private final ReadStatusRepository readStatusRepository;
   private final MessageRepository messageRepository;
   private final UserRepository userRepository;
   private final ChannelMapper channelMapper;
+  private final CacheManager cacheManager;
 
   @CacheEvict(cacheNames = "channels", allEntries = true)
   @PreAuthorize("hasRole('CHANNEL_MANAGER')")
@@ -52,7 +54,6 @@ public class BasicChannelService implements ChannelService {
     return channelMapper.toDto(channel);
   }
 
-  @CacheEvict(cacheNames = "channels", allEntries = true)
   @Transactional
   @Override
   public ChannelDto create(PrivateChannelCreateRequest request) {
@@ -64,6 +65,11 @@ public class BasicChannelService implements ChannelService {
         .map(user -> new ReadStatus(user, channel, channel.getCreatedAt(), true))
         .toList();
     readStatusRepository.saveAll(readStatuses);
+
+    Cache cache = cacheManager.getCache("channels");
+    if (cache != null) {
+      request.participantIds().forEach(cache::evict);
+    }
 
     log.info("채널 생성 완료: id={}, name={}", channel.getId(), channel.getName());
     return channelMapper.toDto(channel);
@@ -111,18 +117,33 @@ public class BasicChannelService implements ChannelService {
     return channelMapper.toDto(channel);
   }
 
-  @CacheEvict(cacheNames = "channels", allEntries = true)
   @PreAuthorize("hasRole('CHANNEL_MANAGER')")
   @Transactional
   @Override
   public void delete(UUID channelId) {
     log.debug("채널 삭제 시작: id={}", channelId);
-    if (!channelRepository.existsById(channelId)) {
-      throw ChannelNotFoundException.withId(channelId);
-    }
+    Channel channel = channelRepository.findById(channelId)
+        .orElseThrow(() -> ChannelNotFoundException.withId(channelId));
 
     messageRepository.deleteAllByChannelId(channelId);
-    readStatusRepository.deleteAllByChannelId(channelId);
+
+    Cache cache = cacheManager.getCache("channels");
+    if (channel.getType() == ChannelType.PUBLIC) {
+      readStatusRepository.deleteAllByChannelId(channelId);
+      if (cache != null) {
+        cache.clear();
+      }
+    } else {
+      List<UUID> participantIds = readStatusRepository.findAllByChannelIdWithUser(channelId)
+          .stream()
+          .map(rs -> rs.getUser().getId())
+          .toList();
+      readStatusRepository.deleteAllByChannelId(channelId);
+      if (cache != null) {
+        cache.evict(channelId);
+        participantIds.forEach(cache::evict);
+      }
+    }
 
     channelRepository.deleteById(channelId);
     log.info("채널 삭제 완료: id={}", channelId);
