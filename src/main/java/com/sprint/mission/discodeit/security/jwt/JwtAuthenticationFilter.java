@@ -1,7 +1,7 @@
 package com.sprint.mission.discodeit.security.jwt;
 
-import com.sprint.mission.discodeit.dto.data.UserDto;
-import com.sprint.mission.discodeit.security.DiscodeitUserDetails;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sprint.mission.discodeit.exception.ErrorResponse;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -9,71 +9,86 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 @Slf4j
+@Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-  private static final String BEARER_PREFIX = "Bearer ";
-
-  private final JwtTokenProvider jwtTokenProvider;
+  private final JwtTokenProvider tokenProvider;
+  private final UserDetailsService userDetailsService;
+  private final ObjectMapper objectMapper;
+  private final JwtRegistry jwtRegistry;
 
   @Override
   protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
       FilterChain filterChain) throws ServletException, IOException {
-    String accessToken = resolveToken(request);
 
-    if (accessToken != null) {
-      try {
-        authenticate(accessToken, request);
-      } catch (RuntimeException e) {
-        log.debug("JWT 인증 처리 중 오류가 발생하여 인증되지 않은 요청으로 처리합니다: {}", e.getMessage());
-        SecurityContextHolder.clearContext();
+    try {
+      String token = resolveToken(request);
+
+      if (StringUtils.hasText(token)) {
+        if (tokenProvider.validateAccessToken(token) && jwtRegistry.hasActiveJwtInformationByAccessToken(
+            token)) {
+          String username = tokenProvider.getUsernameFromToken(token);
+
+          UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+
+          UsernamePasswordAuthenticationToken authentication =
+              new UsernamePasswordAuthenticationToken(
+                  userDetails,
+                  null,
+                  userDetails.getAuthorities()
+              );
+
+          authentication.setDetails(
+              new WebAuthenticationDetailsSource().buildDetails(request)
+          );
+
+          SecurityContextHolder.getContext().setAuthentication(authentication);
+          log.debug("Set authentication for user: {}", username);
+        } else {
+          log.debug("Invalid JWT token");
+          sendErrorResponse(response, "Invalid JWT token", HttpServletResponse.SC_UNAUTHORIZED);
+          return;
+        }
       }
+    } catch (Exception e) {
+      log.debug("JWT authentication failed: {}", e.getMessage());
+      SecurityContextHolder.clearContext();
+      sendErrorResponse(response, "JWT authentication failed", HttpServletResponse.SC_UNAUTHORIZED);
+      return;
     }
 
     filterChain.doFilter(request, response);
   }
 
-  private void authenticate(String accessToken, HttpServletRequest request) {
-    if (!jwtTokenProvider.validateToken(accessToken)
-        || jwtTokenProvider.getTokenType(accessToken) != TokenType.ACCESS) {
-      return;
-    }
-
-    DiscodeitUserDetails userDetails = toUserDetails(accessToken);
-
-    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-        userDetails,
-        null,
-        userDetails.getAuthorities()
-    );
-    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-    SecurityContextHolder.getContext().setAuthentication(authentication);
-  }
-
   private String resolveToken(HttpServletRequest request) {
-    String authorizationHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
-    if (authorizationHeader != null && authorizationHeader.startsWith(BEARER_PREFIX)) {
-      return authorizationHeader.substring(BEARER_PREFIX.length());
+    String bearerToken = request.getHeader("Authorization");
+    if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
+      return bearerToken.substring(7);
     }
     return null;
   }
 
-  private DiscodeitUserDetails toUserDetails(String accessToken) {
-    UserDto userDto = new UserDto(
-        jwtTokenProvider.getUserId(accessToken),
-        jwtTokenProvider.getUsername(accessToken),
-        jwtTokenProvider.getEmail(accessToken),
-        null,
-        null,
-        jwtTokenProvider.getRole(accessToken)
-    );
-    return new DiscodeitUserDetails(userDto, "");
+  private void sendErrorResponse(HttpServletResponse response, String message, int status)
+      throws IOException {
+    ErrorResponse errorResponse = new ErrorResponse(new RuntimeException(message), status);
+
+    response.setStatus(status);
+    response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+    response.setCharacterEncoding("UTF-8");
+
+    String jsonResponse = objectMapper.writeValueAsString(errorResponse);
+    response.getWriter().write(jsonResponse);
   }
 }

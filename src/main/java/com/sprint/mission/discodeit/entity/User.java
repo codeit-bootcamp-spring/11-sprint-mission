@@ -32,8 +32,6 @@ public class User extends BaseUpdatableEntity {
   @Enumerated(EnumType.STRING)
   @Column(nullable = false)
   private Role role = Role.USER;
-  @Column(name = "refresh_token", length = 1000)
-  private String refreshToken;
 
   public User(String username, String email, String password, BinaryContent profile) {
     this.username = username;
@@ -62,9 +60,5 @@ public class User extends BaseUpdatableEntity {
     if (this.role != newRole) {
       this.role = newRole;
     }
-  }
-
-  public void updateRefreshToken(String newRefreshToken) {
-    this.refreshToken = newRefreshToken;
   }
 }

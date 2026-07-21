@@ -24,11 +24,16 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-@WebMvcTest(ReadStatusController.class)
+@WebMvcTest(value = ReadStatusController.class,
+    excludeFilters = @ComponentScan.Filter(
+        type = FilterType.REGEX,
+        pattern = ".*\\.security\\.jwt\\..*"))
 @AutoConfigureMockMvc(addFilters = false)
 class ReadStatusControllerTest {
 
@@ -60,7 +65,8 @@ class ReadStatusControllerTest {
         readStatusId,
         userId,
         channelId,
-        lastReadAt
+        lastReadAt,
+        false
     );
 
     given(readStatusService.create(any(ReadStatusCreateRequest.class)))
@@ -105,13 +111,14 @@ class ReadStatusControllerTest {
     UUID channelId = UUID.randomUUID();
     Instant newLastReadAt = Instant.now();
 
-    ReadStatusUpdateRequest updateRequest = new ReadStatusUpdateRequest(newLastReadAt);
+    ReadStatusUpdateRequest updateRequest = new ReadStatusUpdateRequest(newLastReadAt, null);
 
     ReadStatusDto updatedReadStatus = new ReadStatusDto(
         readStatusId,
         userId,
         channelId,
-        newLastReadAt
+        newLastReadAt,
+        false
     );
 
     given(readStatusService.update(eq(readStatusId), any(ReadStatusUpdateRequest.class)))
@@ -136,7 +143,7 @@ class ReadStatusControllerTest {
     UUID nonExistentId = UUID.randomUUID();
     Instant newLastReadAt = Instant.now();
 
-    ReadStatusUpdateRequest updateRequest = new ReadStatusUpdateRequest(newLastReadAt);
+    ReadStatusUpdateRequest updateRequest = new ReadStatusUpdateRequest(newLastReadAt, null);
 
     given(readStatusService.update(eq(nonExistentId), any(ReadStatusUpdateRequest.class)))
         .willThrow(ReadStatusNotFoundException.withId(nonExistentId));
@@ -159,8 +166,8 @@ class ReadStatusControllerTest {
     Instant now = Instant.now();
 
     List<ReadStatusDto> readStatuses = List.of(
-        new ReadStatusDto(UUID.randomUUID(), userId, channelId1, now.minusSeconds(60)),
-        new ReadStatusDto(UUID.randomUUID(), userId, channelId2, now)
+        new ReadStatusDto(UUID.randomUUID(), userId, channelId1, now.minusSeconds(60), false),
+        new ReadStatusDto(UUID.randomUUID(), userId, channelId2, now, false)
     );
 
     given(readStatusService.findAllByUserId(userId)).willReturn(readStatuses);

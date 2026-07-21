@@ -20,6 +20,7 @@ import com.sprint.mission.discodeit.dto.data.UserDto;
 import com.sprint.mission.discodeit.dto.request.MessageCreateRequest;
 import com.sprint.mission.discodeit.dto.request.MessageUpdateRequest;
 import com.sprint.mission.discodeit.dto.response.PageResponse;
+import com.sprint.mission.discodeit.entity.BinaryContentStatus;
 import com.sprint.mission.discodeit.entity.Role;
 import com.sprint.mission.discodeit.exception.message.MessageNotFoundException;
 import com.sprint.mission.discodeit.service.MessageService;
@@ -32,6 +33,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -40,7 +43,10 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-@WebMvcTest(MessageController.class)
+@WebMvcTest(value = MessageController.class,
+    excludeFilters = @ComponentScan.Filter(
+        type = FilterType.REGEX,
+        pattern = ".*\\.security\\.jwt\\..*"))
 @AutoConfigureMockMvc(addFilters = false)
 class MessageControllerTest {
 
@@ -95,7 +101,8 @@ class MessageControllerTest {
         UUID.randomUUID(),
         "test.jpg",
         10L,
-        MediaType.IMAGE_JPEG_VALUE
+        MediaType.IMAGE_JPEG_VALUE,
+        BinaryContentStatus.SUCCESS
     );
 
     MessageDto createdMessage = new MessageDto(

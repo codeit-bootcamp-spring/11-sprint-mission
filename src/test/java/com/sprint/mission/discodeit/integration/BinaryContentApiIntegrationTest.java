@@ -17,10 +17,12 @@ import com.sprint.mission.discodeit.dto.request.BinaryContentCreateRequest;
 import com.sprint.mission.discodeit.dto.request.MessageCreateRequest;
 import com.sprint.mission.discodeit.dto.request.PublicChannelCreateRequest;
 import com.sprint.mission.discodeit.dto.request.UserCreateRequest;
+import com.sprint.mission.discodeit.entity.BinaryContentStatus;
 import com.sprint.mission.discodeit.service.BinaryContentService;
 import com.sprint.mission.discodeit.service.ChannelService;
 import com.sprint.mission.discodeit.service.MessageService;
 import com.sprint.mission.discodeit.service.UserService;
+import com.sprint.mission.discodeit.util.AsyncTestUtils;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -33,6 +35,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.transaction.TestTransaction;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -192,6 +195,20 @@ class BinaryContentApiIntegrationTest {
 
     BinaryContentDto binaryContent = binaryContentService.create(createRequest);
     UUID binaryContentId = binaryContent.id();
+
+    // 바이너리 데이터 저장은 BinaryContentCreatedEvent 리스너가 트랜잭션 커밋 이후에 처리합니다.
+    // 테스트는 클래스 전체가 트랜잭션으로 감싸져 롤백되므로, 리스너가 실행되도록
+    // 여기서 명시적으로 트랜잭션을 커밋시킵니다.
+    TestTransaction.flagForCommit();
+    TestTransaction.end();
+    TestTransaction.start();
+
+    // 리스너가 @Async로 별도 스레드에서 처리되므로(+ 저장 로직에 3초 지연이 있으므로),
+    // 상태가 SUCCESS/FAIL로 바뀔 때까지 폴링으로 기다립니다.
+    AsyncTestUtils.awaitUntil(
+        () -> binaryContentService.find(binaryContentId).status() != BinaryContentStatus.PROCESSING,
+        8000
+    );
 
     // When & Then
     mockMvc.perform(get("/api/binaryContents/{binaryContentId}/download", binaryContentId))

@@ -5,9 +5,11 @@ import com.sprint.mission.discodeit.entity.Role;
 import com.sprint.mission.discodeit.security.Http403ForbiddenAccessDeniedHandler;
 import com.sprint.mission.discodeit.security.LoginFailureHandler;
 import com.sprint.mission.discodeit.security.SpaCsrfTokenRequestHandler;
+import com.sprint.mission.discodeit.security.jwt.InMemoryJwtRegistry;
 import com.sprint.mission.discodeit.security.jwt.JwtAuthenticationFilter;
 import com.sprint.mission.discodeit.security.jwt.JwtLoginSuccessHandler;
 import com.sprint.mission.discodeit.security.jwt.JwtLogoutHandler;
+import com.sprint.mission.discodeit.security.jwt.JwtRegistry;
 import com.sprint.mission.discodeit.security.jwt.JwtTokenProvider;
 import java.util.List;
 import java.util.stream.IntStream;
@@ -46,9 +48,9 @@ public class SecurityConfig {
       HttpSecurity http,
       JwtLoginSuccessHandler jwtLoginSuccessHandler,
       LoginFailureHandler loginFailureHandler,
-      JwtLogoutHandler jwtLogoutHandler,
       ObjectMapper objectMapper,
-      JwtTokenProvider jwtTokenProvider
+      JwtAuthenticationFilter jwtAuthenticationFilter,
+      JwtLogoutHandler jwtLogoutHandler
   )
       throws Exception {
     http
@@ -61,8 +63,6 @@ public class SecurityConfig {
             .successHandler(jwtLoginSuccessHandler)
             .failureHandler(loginFailureHandler)
         )
-        .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider),
-            UsernamePasswordAuthenticationFilter.class)
         .logout(logout -> logout
             .logoutUrl("/api/auth/logout")
             .addLogoutHandler(jwtLogoutHandler)
@@ -74,8 +74,8 @@ public class SecurityConfig {
                 AntPathRequestMatcher.antMatcher(HttpMethod.GET, "/api/auth/csrf-token"),
                 AntPathRequestMatcher.antMatcher(HttpMethod.POST, "/api/users"),
                 AntPathRequestMatcher.antMatcher(HttpMethod.POST, "/api/auth/login"),
-                AntPathRequestMatcher.antMatcher(HttpMethod.POST, "/api/auth/logout"),
                 AntPathRequestMatcher.antMatcher(HttpMethod.POST, "/api/auth/refresh"),
+                AntPathRequestMatcher.antMatcher(HttpMethod.POST, "/api/auth/logout"),
                 new NegatedRequestMatcher(AntPathRequestMatcher.antMatcher("/api/**"))
             ).permitAll()
             .anyRequest().authenticated()
@@ -87,6 +87,8 @@ public class SecurityConfig {
         .sessionManagement(session -> session
             .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
         )
+        // Add JWT authentication filter
+        .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
     ;
     return http.build();
   }
@@ -128,4 +130,8 @@ public class SecurityConfig {
     return handler;
   }
 
+  @Bean
+  public JwtRegistry jwtRegistry(JwtTokenProvider jwtTokenProvider) {
+    return new InMemoryJwtRegistry(1, jwtTokenProvider);
+  }
 }

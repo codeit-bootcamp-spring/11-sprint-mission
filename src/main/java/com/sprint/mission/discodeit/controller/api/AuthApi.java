@@ -26,15 +26,6 @@ public interface AuthApi {
       @Parameter(hidden = true) CsrfToken csrfToken
   );
 
-  @Operation(summary = "리프레시 토큰을 활용한 액세스 토큰 재발급")
-  @ApiResponses(value = {
-      @ApiResponse(responseCode = "200", description = "재발급 성공", content = @Content(schema = @Schema(implementation = JwtDto.class))),
-      @ApiResponse(responseCode = "401", description = "유효하지 않은 리프레시 토큰")
-  })
-  ResponseEntity<JwtDto> refresh(
-      @Parameter(hidden = true) String refreshToken,
-      @Parameter(hidden = true) HttpServletResponse response
-  );
 
   @Operation(summary = "사용자 권한 수정")
   @ApiResponses(value = {
@@ -45,4 +36,17 @@ public interface AuthApi {
   })
   ResponseEntity<UserDto> updateRole(
       @Parameter(description = "권한 수정 요청 정보") RoleUpdateRequest request);
+
+  @Operation(summary = "토큰 리프레시")
+  @ApiResponses(value = {
+      @ApiResponse(
+          responseCode = "200", description = "토큰 리프레시 성공",
+          content = @Content(schema = @Schema(implementation = UserDto.class))
+      ),
+      @ApiResponse(responseCode = "401", description = "유효하지 않은 토큰")
+  })
+  ResponseEntity<JwtDto> refresh(
+      @Parameter(description = "리프레시 토큰") String refreshToken,
+      @Parameter(hidden = true) HttpServletResponse response
+  );
 } 
