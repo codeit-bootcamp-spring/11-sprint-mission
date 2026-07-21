@@ -55,6 +55,16 @@ CREATE TABLE message_attachments
     PRIMARY KEY (message_id, attachment_id)
 );
 
+-- Notification
+CREATE TABLE notifications
+(
+    id          uuid PRIMARY KEY,
+    created_at  timestamp with time zone NOT NULL,
+    receiver_id uuid                     NOT NULL,
+    title       varchar(255)             NOT NULL,
+    content     text                     NOT NULL
+);
+
 -- ReadStatus
 CREATE TABLE read_statuses
 (
@@ -63,7 +73,8 @@ CREATE TABLE read_statuses
     updated_at   timestamp with time zone,
     user_id      uuid                     NOT NULL,
     channel_id   uuid                     NOT NULL,
-    last_read_at timestamp with time zone NOT NULL,
+    last_read_at          timestamp with time zone NOT NULL,
+    notification_enabled  boolean                  NOT NULL DEFAULT false,
     UNIQUE (user_id, channel_id)
 );
 
