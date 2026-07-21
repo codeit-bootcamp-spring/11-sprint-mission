@@ -82,6 +82,13 @@ public class BasicMessageService implements MessageService {
     );
 
     messageRepository.save(message);
+    eventPublisher.publishEvent(new MessageCreatedEvent(
+        channelId,
+        authorId,
+        author.getUsername(),
+        content,
+        channel.getName()
+    ));
     log.info("메시지 생성 완료: id={}, channelId={}", message.getId(), channelId);
     return messageMapper.toDto(message);
   }

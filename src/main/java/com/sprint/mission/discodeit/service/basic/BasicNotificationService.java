@@ -12,6 +12,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
@@ -21,6 +22,13 @@ public class BasicNotificationService implements NotificationService {
 
   private final NotificationRepository notificationRepository;
   private final NotificationMapper notificationMapper;
+
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
+  @Override
+  public NotificationDto create(UUID receiverId, String title, String content) {
+    Notification notification = notificationRepository.save(new Notification(receiverId, title, content));
+    return notificationMapper.toDto(notification);
+  }
 
   @Transactional(readOnly = true)
   @Override
