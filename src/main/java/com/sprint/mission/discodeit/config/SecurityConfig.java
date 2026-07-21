@@ -1,11 +1,11 @@
 package com.sprint.mission.discodeit.config;
 
-import com.sprint.mission.discodeit.security.DiscodeitUserDetailsService;
 import com.sprint.mission.discodeit.security.LoginFailureHandler;
 import com.sprint.mission.discodeit.security.SpaCsrfTokenRequestHandler;
 import com.sprint.mission.discodeit.security.filter.JwtAuthenticationFilter;
 import com.sprint.mission.discodeit.security.handler.JwtLoginSuccessHandler;
 import com.sprint.mission.discodeit.security.handler.JwtLogoutHandler;
+import com.sprint.mission.discodeit.security.jwt.JwtRegistry;
 import com.sprint.mission.discodeit.security.jwt.JwtTokenProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
@@ -74,7 +74,7 @@ public class SecurityConfig {
             .requestMatchers("/api/auth/login").permitAll()
             .requestMatchers("/api/auth/logout").permitAll()
             .requestMatchers("/api/auth/refresh").permitAll()
-            .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "swaggger-ui.html").permitAll()
+            .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "swagger-ui.html").permitAll()
             .requestMatchers("/", "/assets/**", "/favicon.ico", "/index.html").permitAll()
             .requestMatchers("/actuator/**").permitAll()
             .requestMatchers("/error").permitAll()
@@ -102,10 +102,10 @@ public class SecurityConfig {
 
   @Bean
   public RoleHierarchy roleHierarchy() {
-    RoleHierarchyImpl hierarchy = new RoleHierarchyImpl();
-    hierarchy.setHierarchy("ROLE_ADMIN > ROLE_CHANNEL_MANAGER\n" +
-        "ROLE_CHANNEL_MANAGER > ROLE_USER");
-    return hierarchy;
+    return RoleHierarchyImpl.withDefaultRolePrefix()
+        .role("ADMIN").implies("CHANNEL_MANAGER")
+        .role("CHANNEL_MANAGER").implies("USER")
+        .build();
   }
 
   @Bean
@@ -117,8 +117,8 @@ public class SecurityConfig {
 
   @Bean
   public JwtAuthenticationFilter jwtAuthenticationFilter(
-      JwtTokenProvider jwtTokenProvider, DiscodeitUserDetailsService userDetailsService
+      JwtTokenProvider jwtTokenProvider, JwtRegistry jwtRegistry
   ) {
-    return new JwtAuthenticationFilter(jwtTokenProvider, userDetailsService);
+    return new JwtAuthenticationFilter(jwtTokenProvider, jwtRegistry);
   }
 }

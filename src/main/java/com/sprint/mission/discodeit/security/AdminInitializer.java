@@ -29,7 +29,7 @@ public class AdminInitializer implements ApplicationRunner {
 
   @Override
   public void run(ApplicationArguments args) throws Exception {
-    if (!userRepository.existsByUsernameOrEmail("admin", "admin@discodeit.com")) {
+    if (!userRepository.existsByUsernameOrEmail(adminUsername, adminEmail)) {
       String encodedAdminPassword = passwordEncoder.encode(adminPassword);
       User admin = new User(adminUsername, adminEmail, encodedAdminPassword, null);
       admin.updateRole(Role.ADMIN);

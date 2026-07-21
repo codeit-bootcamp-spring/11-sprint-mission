@@ -6,7 +6,7 @@ plugins {
 }
 
 group = 'com.sprint.mission'
-version = '2.0-M9' // 'api-doc버전'-미션9
+version = '2.2-M11' // 'api-doc버전'-미션11
 description = 'Discode project for Spring Boot'
 
 java {
@@ -53,6 +53,19 @@ dependencies {
 
     // API Documentation (문서화)
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.9'
+
+    // Spring Retry
+    implementation 'org.springframework.retry:spring-retry'
+
+    // Caffeine Cache
+    implementation 'org.springframework.boot:spring-boot-starter-cache'
+    implementation 'com.github.ben-manes.caffeine:caffeine'
+
+    // Spring Kafka
+    implementation 'org.springframework.kafka:spring-kafka'
+
+    // Redis Cache
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 
     // Code Generation (코드 자동 생성)
     compileOnly 'org.projectlombok:lombok'

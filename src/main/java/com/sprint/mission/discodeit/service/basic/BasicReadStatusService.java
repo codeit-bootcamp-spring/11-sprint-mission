@@ -4,6 +4,7 @@ import com.sprint.mission.discodeit.dto.readstatus.ReadStatusCreateRequest;
 import com.sprint.mission.discodeit.dto.readstatus.ReadStatusDto;
 import com.sprint.mission.discodeit.dto.readstatus.ReadStatusUpdateRequest;
 import com.sprint.mission.discodeit.entity.Channel;
+import com.sprint.mission.discodeit.entity.ChannelType;
 import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.exception.channel.ChannelNotFoundException;
@@ -14,8 +15,10 @@ import com.sprint.mission.discodeit.mapper.ReadStatusMapper;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
+import com.sprint.mission.discodeit.service.ReadStatusService;
 import java.util.NoSuchElementException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -23,11 +26,11 @@ import java.util.List;
 import java.util.UUID;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class BasicReadStatusService implements
-    com.sprint.mission.discodeit.service.ReadStatusService {
+public class BasicReadStatusService implements ReadStatusService {
 
   private final ReadStatusRepository readStatusRepository;
   private final UserRepository userRepository;
@@ -48,7 +51,10 @@ public class BasicReadStatusService implements
       throw new ReadStatusAlreadyExistsException(user.getId(), channel.getId());
     }
 
-    ReadStatus readStatus = new ReadStatus(user, channel, Instant.now());
+    boolean initialNotificationEnabled = (channel.getType() == ChannelType.PRIVATE);
+
+    ReadStatus readStatus = new ReadStatus(user, channel, Instant.now(),
+        initialNotificationEnabled);
     readStatus = readStatusRepository.save(readStatus);
 
     return readStatusMapper.toDto(readStatus);
@@ -73,14 +79,23 @@ public class BasicReadStatusService implements
         .toList();
   }
 
-  // 채팅방 읽음
   @Override
   @Transactional
   public ReadStatusDto update(UUID readStatusId, ReadStatusUpdateRequest dto) {
     ReadStatus readStatus = readStatusRepository.findById(readStatusId)
         .orElseThrow(() -> new ReadStatusNotFoundException(readStatusId));
 
-    readStatus.updateLastReadAt(Instant.now());
+    if (dto.newLastReadAt() != null) {
+      readStatus.updateLastReadAt(dto.newLastReadAt());
+    } else {
+      readStatus.updateLastReadAt(Instant.now());
+    }
+
+    if (dto.notificationEnabled() != null) {
+      readStatus.updateNotificationEnabled(dto.notificationEnabled());
+      log.info("알림 설정 변경 완료 - userId: {}, channelId: {}, 알림 켜짐: {}", readStatus.getUser().getId(),
+          readStatus.getChannel().getId(), dto.notificationEnabled());
+    }
 
     return readStatusMapper.toDto(readStatus);
   }

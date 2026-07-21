@@ -3,18 +3,21 @@ package com.sprint.mission.discodeit.service.basic;
 import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentCreateRequest;
 import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentDto;
 import com.sprint.mission.discodeit.entity.BinaryContent;
+import com.sprint.mission.discodeit.entity.BinaryContentStatus;
+import com.sprint.mission.discodeit.event.binarycontent.BinaryContentCreatedEvent;
 import com.sprint.mission.discodeit.exception.binarycontent.BinaryContentNotFoundException;
 import com.sprint.mission.discodeit.exception.binarycontent.MissingFileContentException;
 import com.sprint.mission.discodeit.mapper.BinaryContentMapper;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.service.BinaryContentService;
-import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.UUID;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
@@ -25,7 +28,7 @@ public class BasicBinaryContentService implements BinaryContentService {
 
   private final BinaryContentRepository binaryContentRepository;
   private final BinaryContentMapper binaryContentMapper;
-  private final BinaryContentStorage binaryContentStorage;
+  private final ApplicationEventPublisher eventPublisher;
 
   @Override
   @Transactional
@@ -44,10 +47,21 @@ public class BasicBinaryContentService implements BinaryContentService {
         contentType
     );
     binaryContent = binaryContentRepository.save(binaryContent);
-    binaryContentStorage.put(binaryContent.getId(), bytes);
-    log.info("파일 업로드 완료 - binaryContentId: {}", binaryContent.getId());
 
+    eventPublisher.publishEvent(new BinaryContentCreatedEvent(binaryContent.getId(), bytes));
+
+    log.info("파일 메타데이터 DB 저장 완료 및 이벤트 발행 - id: {}", binaryContent.getId());
     return binaryContentMapper.toDto(binaryContent);
+  }
+
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
+  @Override
+  public void updateStatus(UUID id, BinaryContentStatus status) {
+    BinaryContent binaryContent = binaryContentRepository.findById(id)
+        .orElseThrow(() -> new BinaryContentNotFoundException(id));
+
+    binaryContent.updateStatus(status);
+    log.debug("Binary Content 상태 업데이트 완료 - id: {}, status: {}", id, status);
   }
 
   @Override

@@ -22,6 +22,16 @@ public interface ReadStatusRepository extends JpaRepository<ReadStatus, UUID> {
   @EntityGraph(attributePaths = {"channel"})
   List<ReadStatus> findAllByUserId(UUID userId);
 
+  @EntityGraph(attributePaths = {"user"})
+  @Query("SELECT rs FROM ReadStatus rs " +
+      "WHERE rs.channel.id = :channelId " +
+      "AND rs.notificationEnabled = true " +
+      "AND rs.user.id != :authorId")
+  List<ReadStatus> findNotificationEnabledTargets(
+      @Param("channelId") UUID channelId,
+      @Param("authorId") UUID authorId
+  );
+
   boolean existsByUserIdAndChannelId(UUID userId, UUID channelId);
 
 }

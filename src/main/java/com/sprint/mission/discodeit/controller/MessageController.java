@@ -6,12 +6,12 @@ import com.sprint.mission.discodeit.dto.message.MessageDto;
 import com.sprint.mission.discodeit.dto.message.MessageUpdateRequest;
 import com.sprint.mission.discodeit.response.PageResponse;
 import com.sprint.mission.discodeit.service.MessageService;
+import io.micrometer.core.annotation.Timed;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import java.io.IOException;
 import java.time.Instant;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +23,6 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.server.ResponseStatusException;
 
 @Tag(name = "Message")
 @RestController
@@ -38,6 +37,7 @@ public class MessageController {
       @ApiResponse(responseCode = "404", description = "Channel 또는 User를 찾을 수 없음"),
       @ApiResponse(responseCode = "201", description = "Message가 성공적으로 생성됨")
   })
+  @Timed("message.create.async")
   @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<MessageDto> create(
       @Valid

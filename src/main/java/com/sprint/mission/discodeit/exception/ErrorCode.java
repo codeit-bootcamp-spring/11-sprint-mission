@@ -35,7 +35,11 @@ public enum ErrorCode {
   UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "로그인이 필요한 서비스입니다."),
   ACCESS_DENIED(HttpStatus.FORBIDDEN, "이 기능을 실행할 권한이 부족합니다."),
 
-  REFRESH_TOKEN_INVALID(HttpStatus.UNAUTHORIZED, "유효하지 않거나 만료된 리프레시 토큰입니다.");
+  REFRESH_TOKEN_INVALID(HttpStatus.UNAUTHORIZED, "유효하지 않거나 만료된 리프레시 토큰입니다."),
+  JWT_GENERATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "토큰 발급에 실패했습니다."),
+
+  // Notification
+  NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "알림을 찾을 수 없습니다.");
 
   private final HttpStatus status; // Enum 클래스에서는 상수들을 무조건 최상단에 먼저 선언해야 한다.
   private final String message;

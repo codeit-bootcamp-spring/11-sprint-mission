@@ -14,6 +14,6 @@ public class MessageSecurity {
   public boolean isAuthor(UUID messageId, UUID userId) {
     return messageRepository.findById(messageId)
         .map(message -> message.getAuthor().getId().equals(userId))
-        .orElse(true);
+        .orElse(false);
   }
 }

@@ -8,6 +8,8 @@ import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.event.binarycontent.BinaryContentCreatedEvent;
+import com.sprint.mission.discodeit.event.notification.MessageCreatedEvent;
 import com.sprint.mission.discodeit.exception.channel.ChannelNotFoundException;
 import com.sprint.mission.discodeit.exception.message.MessageNotFoundException;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
@@ -19,14 +21,13 @@ import com.sprint.mission.discodeit.repository.MessageRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.response.PageResponse;
 import com.sprint.mission.discodeit.service.MessageService;
-import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
-import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
@@ -45,14 +46,14 @@ public class BasicMessageService implements MessageService {
   private final ChannelRepository channelRepository;
   private final BinaryContentRepository binaryContentRepository;
   private final MessageMapper messageMapper;
-  private final BinaryContentStorage binaryContentStorage;
   private final PageResponseMapper pageResponseMapper;
+  private final ApplicationEventPublisher eventPublisher;
 
   @Override
   @Transactional
   public MessageDto create(MessageCreateRequest dto,
       List<BinaryContentCreateRequest> binaryContentDto) {
-    log.debug("create 시작 - 입력값: {}, {}", dto, binaryContentDto);
+    log.debug("메시지 생성 시작 - 입력값: {}, {}", dto, binaryContentDto);
 
     User author = userRepository.findById(dto.authorId())
         .orElseThrow(
@@ -68,11 +69,15 @@ public class BasicMessageService implements MessageService {
     attachments = binaryContentRepository.saveAll(attachments);
 
     for (int i = 0; i < attachments.size(); i++) {
-      binaryContentStorage.put(attachments.get(i).getId(), binaryContentDto.get(i).bytes());
+      eventPublisher.publishEvent(new BinaryContentCreatedEvent(attachments.get(i).getId(),
+          binaryContentDto.get(i).bytes()));
     }
 
     Message message = new Message(author, channel, dto.content(), attachments);
     messageRepository.save(message);
+
+    eventPublisher.publishEvent(new MessageCreatedEvent(channel.getId(), author.getId(),
+        author.getUsername(), channel.getName(), message.getContent()));
     log.info("메시지 생성 완료 - messageId: {}, 첨부파일 수: {}", message.getId(), attachments.size());
 
     return messageMapper.toDto(message);
@@ -106,9 +111,9 @@ public class BasicMessageService implements MessageService {
 
   @Override
   @Transactional
-  @PostAuthorize("returnObject.author.id == principal.userDto.id")
+  @PreAuthorize("@messageSecurity.isAuthor(#id, principal.userDto.id)")
   public MessageDto update(UUID id, MessageUpdateRequest dto) {
-    log.debug("update 시작 - 입력값: {}", dto);
+    log.debug("메시지 수정 시작 - 입력값: {}", dto);
 
     Message message = messageRepository.findById(id)
         .orElseThrow(() -> new MessageNotFoundException(id));
@@ -123,18 +128,16 @@ public class BasicMessageService implements MessageService {
   @Transactional
   @PreAuthorize("@messageSecurity.isAuthor(#id, principal.userDto.id)")
   public void delete(UUID id) {
-    log.debug("delete 시작 - 입력값: {}", id);
+    log.debug("메시지 삭제 시작 - 입력값: {}", id);
 
-    // 메시지가 없을 경우 예외를 던지기 보다 멱등성을 보장하는 방향으로 구현
-    var messageOptional = messageRepository.findById(id);
+    Message message = messageRepository.findById(id)
+        .orElseThrow(() -> new MessageNotFoundException(id));
 
-    if (messageOptional.isPresent()) {
-      Message message = messageOptional.get();
-      if (message.getAttachments() != null && !message.getAttachments().isEmpty()) {
-        binaryContentRepository.deleteAll(message.getAttachments());
-      }
-      messageRepository.delete(message);
-      log.info("메시지 삭제 완료 - messageId: {}", message.getId());
+    if (message.getAttachments() != null && !message.getAttachments().isEmpty()) {
+      binaryContentRepository.deleteAll(message.getAttachments());
     }
+
+    messageRepository.delete(message);
+    log.info("메시지 삭제 완료 - messageId: {}", message.getId());
   }
 }

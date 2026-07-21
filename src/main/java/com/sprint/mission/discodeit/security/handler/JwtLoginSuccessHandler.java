@@ -1,14 +1,18 @@
 package com.sprint.mission.discodeit.security.handler;
 
+import static org.springframework.http.HttpHeaders.SET_COOKIE;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.nimbusds.jose.JOSEException;
+import com.sprint.mission.discodeit.exception.auth.JwtGenerationFailedException;
 import com.sprint.mission.discodeit.security.DiscodeitUserDetails;
 import com.sprint.mission.discodeit.security.JwtDto;
+import com.sprint.mission.discodeit.security.jwt.JwtInformation;
+import com.sprint.mission.discodeit.security.jwt.JwtRegistry;
 import com.sprint.mission.discodeit.security.jwt.JwtTokenProvider;
-import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.text.ParseException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseCookie;
@@ -22,17 +26,25 @@ public class JwtLoginSuccessHandler implements AuthenticationSuccessHandler {
 
   private final JwtTokenProvider jwtTokenProvider;
   private final ObjectMapper objectMapper;
-  // private final JwtRegistry jwtRegistry;
+  private final JwtRegistry jwtRegistry;
 
   @Override
   public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
-      Authentication authentication) throws IOException, ServletException {
+      Authentication authentication) throws IOException {
 
     DiscodeitUserDetails userDetails = (DiscodeitUserDetails) authentication.getPrincipal();
 
     try {
       String accessToken = jwtTokenProvider.generateAccessToken(userDetails);
       String refreshToken = jwtTokenProvider.generateRefreshToken(userDetails);
+
+      JwtInformation jwtInfo = new JwtInformation(
+          userDetails.getUserDto().id(),
+          accessToken,
+          refreshToken,
+          jwtTokenProvider.getExpiration(refreshToken)
+      );
+      jwtRegistry.registerJwtInformation(jwtInfo);
 
       ResponseCookie responseCookie = ResponseCookie.from(
               JwtTokenProvider.REFRESH_TOKEN_COOKIE_NAME, refreshToken)
@@ -42,16 +54,15 @@ public class JwtLoginSuccessHandler implements AuthenticationSuccessHandler {
           .maxAge(jwtTokenProvider.getRefreshTokenExpiration() / 1000)
           .build();
 
-      response.addHeader("Set-Cookie", responseCookie.toString());
+      response.addHeader(SET_COOKIE, responseCookie.toString());
       response.setStatus(HttpServletResponse.SC_OK);
       response.setContentType(MediaType.APPLICATION_JSON_VALUE);
       response.setCharacterEncoding("UTF-8");
 
       JwtDto jwtDto = new JwtDto(userDetails.getUserDto(), accessToken);
       response.getWriter().write(objectMapper.writeValueAsString(jwtDto));
-    } catch (JOSEException e) {
-      // TODO: 커스텀 예외 작성 (토큰 서명 시크릿 키 길이가 짧거나 서버 암호화 모듈이 고장 난 '서버측 인프라 에러(500)' 이다.
-      throw new RuntimeException("토큰 발급 중 오류가 발생했습니다.");
+    } catch (ParseException e) {
+      throw new JwtGenerationFailedException();
     }
   }
 }

@@ -38,18 +38,26 @@ public class ReadStatus extends BaseUpdatableEntity {
   @OnDelete(action = OnDeleteAction.CASCADE)
   private Channel channel;
 
-  @Column(name = "last_read_at", nullable = false)
+  @Column(nullable = false)
   private Instant lastReadAt;
 
-  public ReadStatus(User user, Channel channel, Instant lastReadAt) {
+  @Column(nullable = false)
+  private boolean notificationEnabled;
+
+  public ReadStatus(User user, Channel channel, Instant lastReadAt, boolean notificationEnabled) {
     this.user = user;
     this.channel = channel;
     this.lastReadAt = lastReadAt != null ? lastReadAt : Instant.now();
+    this.notificationEnabled = notificationEnabled;
   }
 
   public void updateLastReadAt(Instant newLastReadAt) {
     if (newLastReadAt != null && !newLastReadAt.equals(this.lastReadAt)) {
       this.lastReadAt = newLastReadAt;
     }
+  }
+
+  public void updateNotificationEnabled(boolean notificationEnabled) {
+    this.notificationEnabled = notificationEnabled;
   }
 }

@@ -19,6 +19,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -48,12 +49,15 @@ public class S3BinaryContentStorageTest {
 
   @BeforeEach
   void setup() {
+    ApplicationEventPublisher mockEventPublisher = Mockito.mock(ApplicationEventPublisher.class);
+
     storage = new S3BinaryContentStorage(
         "dummy-access-key",
         "dummy-secret-key",
         "ap-northeast-2",
         testBucket,
-        10L
+        10L,
+        mockEventPublisher
     );
 
     // 현재 S3BinaryContentStorage 내부에서 S3Client와 S3Presigner를 받고 있으므로, 테스트를 위해 ReflectionTestUtils를 사용해 내부의 진짜 객체를 가짜(Mock) 객체로 덮어씌운다.

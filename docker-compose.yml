@@ -25,15 +25,18 @@ services:
       SPRING_PROFILES_ACTIVE: prod
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/discodeit
       # application.yaml의 ${STORAGE_TYPE}을 s3 로 지정
-      STORAGE_TYPE: s3
+      STORAGE_TYPE: ${STORAGE_TYPE}
+      # 도커 내부망 통신을 위해 카프카 주소 지정
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: broker:29092
     # 컨테이너가 재시작되어도 BinaryContentStorage 데이터가 유지되도록 함
     volumes:
-      - ./uploads:/app/uploads
+      - binary-content-storage:/app/.discodeit/storage
     ports:
-      - "8080:80"
+      - "8081:80"
     depends_on:
       - db
 
 # 최상위 볼륨에는 내 로컬 말고 '도커 내부'에 저장할 볼륨을 적는다.
 volumes:
   db-data:
+  binary-content-storage:
