@@ -1,11 +1,13 @@
 package com.sprint.mission.discodeit.event;
 
+import com.sprint.mission.discodeit.dto.NotificationDto;
 import com.sprint.mission.discodeit.entity.Notification;
 import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.repository.NotificationRepository;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
+import com.sprint.mission.discodeit.service.SseService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +27,7 @@ public class NotificationRequiredEventListener {
   private final ReadStatusRepository readStatusRepository;
   private final NotificationRepository notificationRepository;
   private final UserRepository userRepository;
+  private final SseService sseService;
 
   @Async("eventTaskExecutor")
   @TransactionalEventListener
@@ -47,6 +50,14 @@ public class NotificationRequiredEventListener {
         )).toList();
 
     notificationRepository.saveAll(notifications);
+
+    for (Notification n : notifications) {
+      NotificationDto dto = new NotificationDto(n.getId(), n.getCreatedAt(),
+          n.getReceiver().getId(), n.getTitle(), n.getContent());
+      sseService.send(List.of(n.getReceiver().getId()), "notifications.created", dto);
+
+    }
+    
     log.info("{}명에게 메시지 알림 전송 완료", notifications.size());
   }
 
@@ -65,6 +76,10 @@ public class NotificationRequiredEventListener {
     );
 
     notificationRepository.save(notification);
+    NotificationDto dto = new NotificationDto(notification.getId(), notification.getCreatedAt(),
+        notification.getReceiver().getId(), notification.getTitle(), notification.getContent());
+    sseService.send(List.of(notification.getReceiver().getId()), "notifications.created", dto);
+
     log.info("권한 변경 알림 전송 완료 - userId: {}", event.getUserId());
   }
 }

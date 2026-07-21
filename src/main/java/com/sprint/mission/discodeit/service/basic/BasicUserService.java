@@ -14,6 +14,7 @@ import com.sprint.mission.discodeit.mapper.UserMapper;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.security.jwt.JwtRegistry;
+import com.sprint.mission.discodeit.service.SseService;
 import com.sprint.mission.discodeit.service.UserService;
 import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import java.io.IOException;
@@ -44,6 +45,7 @@ public class BasicUserService implements UserService {
   private final PasswordEncoder passwordEncoder;
   private final JwtRegistry jwtRegistry;
   private final ApplicationEventPublisher eventPublisher;
+  private final SseService sseService;
 
   @Override
   @Transactional
@@ -84,10 +86,14 @@ public class BasicUserService implements UserService {
     }
 
     userRepository.save(user);
+    UserDto dto = userMapper.toDto(user);
+    UserDto finalDto = new UserDto(dto.id(), dto.username(), dto.email(), dto.profile(), false,
+        dto.role());
+    sseService.broadcast("users.created", finalDto);
+
     log.info("사용자 생성 완료 - userId: {}", user.getId());
 
-    UserDto dto = userMapper.toDto(user);
-    return new UserDto(dto.id(), dto.username(), dto.email(), dto.profile(), false, dto.role());
+    return finalDto;
   }
 
   @Override
@@ -151,9 +157,12 @@ public class BasicUserService implements UserService {
       throw new RuntimeException("파일 처리 중 오류가 발생했습니다.", e);
     }
 
+    UserDto dto = userMapper.toDto(user);
+    sseService.broadcast("users.updated", dto);
+
     log.info("사용자 수정 완료 - userId: {}", user.getId());
 
-    return userMapper.toDto(user);
+    return dto;
   }
 
   @Override
@@ -167,8 +176,11 @@ public class BasicUserService implements UserService {
       log.warn("사용자 삭제 실패(존재하지 않는 유저) - userId: {}", id);
       throw new UserNotFoundException(id);
     }
-
+    
+    UserDto deletedUserDto = findById(id);
     userRepository.deleteById(id);
+    sseService.broadcast("users.deleted", deletedUserDto);
+
     log.info("사용자 삭제 완료 - userId: {}", id);
   }
 
@@ -187,8 +199,6 @@ public class BasicUserService implements UserService {
     String oldRole = String.valueOf(user.getRole());
 
     user.updateRole(request.newRole());
-    log.info("사용자 권한 변경 완료 - userId: {}, newRole: {}", user.getId(), request.newRole());
-
     expireUserTokens(request.userId());
 
     eventPublisher.publishEvent(new RoleUpdatedEvent(
@@ -197,7 +207,12 @@ public class BasicUserService implements UserService {
         String.valueOf(request.newRole())
     ));
 
-    return userMapper.toDto(user);
+    UserDto dto = userMapper.toDto(user);
+    sseService.broadcast("users.updated", dto);
+
+    log.info("사용자 권한 변경 완료 - userId: {}, newRole: {}", user.getId(), request.newRole());
+
+    return dto;
   }
 
   private void expireUserTokens(UUID targetUserId) {

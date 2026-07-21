@@ -16,6 +16,7 @@ import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.ChannelService;
+import com.sprint.mission.discodeit.service.SseService;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -37,6 +38,7 @@ public class BasicChannelService implements ChannelService {
   private final ReadStatusRepository readStatusRepository;
   private final UserRepository userRepository;
   private final ChannelMapper channelMapper;
+  private final SseService sseService;
 
   @Override
   @Transactional
@@ -44,10 +46,15 @@ public class BasicChannelService implements ChannelService {
   @CacheEvict(cacheNames = "channels", allEntries = true)
   public ChannelDto createPublic(PublicChannelCreateRequest request) {
     log.debug("PUBLIC 채널 생성 시작: - name: {}", request.name());
+
     Channel channel = new Channel(ChannelType.PUBLIC, request.name(), request.description());
     channelRepository.save(channel);
+    ChannelDto dto = channelMapper.toDto(channel);
+    sseService.broadcast("channels.created", dto);
+
     log.info("PUBLIC 채널 생성 완료: - channelId: {}", channel.getId());
-    return channelMapper.toDto(channel);
+
+    return dto;
   }
 
   @Override
@@ -70,8 +77,14 @@ public class BasicChannelService implements ChannelService {
       }
     }
 
+    ChannelDto dto = channelMapper.toDto(channel);
+    if (request.participantIds() != null && !request.participantIds().isEmpty()) {
+      sseService.send(request.participantIds(), "channels.created", dto);
+    }
+
     log.info("PRIVATE 채널 생성 완료 - channelId: {}", savedChannel.getId());
-    return channelMapper.toDto(channel);
+
+    return dto;
   }
 
   @Override
@@ -109,9 +122,12 @@ public class BasicChannelService implements ChannelService {
         });
 
     channel.update(request.newName(), request.newDescription());
+    ChannelDto dto = channelMapper.toDto(channel);
+    sseService.broadcast("channels.created", dto);
+
     log.info("채널 수정 완료 - channelId: {}", id);
 
-    return channelMapper.toDto(channel);
+    return dto;
   }
 
   @Override
@@ -120,6 +136,7 @@ public class BasicChannelService implements ChannelService {
   @CacheEvict(cacheNames = "channels", allEntries = true)
   public void delete(UUID id) {
     log.debug("채널 삭제 시작 - channelId: {}", id);
+    ChannelDto deletedChannelDto = findById(id);
 
     if (!channelRepository.existsById(id)) {
       log.warn("채널 삭제 실패(존재하지 않는 채널) - channelId: {}", id);
@@ -127,6 +144,8 @@ public class BasicChannelService implements ChannelService {
     }
 
     channelRepository.deleteById(id);
+    sseService.broadcast("channels.deleted", deletedChannelDto);
+
     log.info("채널 삭제 완료 - channelId: {}", id);
   }
 
