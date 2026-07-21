@@ -1,4 +1,6 @@
 spring:
+  main:
+    allow-bean-definition-overriding: true
   datasource:
     url: jdbc:h2:mem:testdb;MODE=PostgreSQL
     driver-class-name: org.h2.Driver
@@ -24,6 +26,11 @@ discodeit:
     username: admin
     email: admin@discodeit.com
     password: admin1234!
+  jwt:
+    secret: test-secret-key-for-discodeit-application-minimum-256-bits
+    access-token-expiration: 1800000
+    refresh-token-expiration: 1209600000
+    max-active-jwt-count: 5
 
 logging:
   level:

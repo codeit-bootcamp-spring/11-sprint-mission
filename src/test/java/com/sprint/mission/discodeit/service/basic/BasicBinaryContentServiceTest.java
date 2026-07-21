@@ -10,6 +10,8 @@ import static org.mockito.Mockito.verify;
 import com.sprint.mission.discodeit.dto.data.BinaryContentDto;
 import com.sprint.mission.discodeit.dto.request.BinaryContentCreateRequest;
 import com.sprint.mission.discodeit.entity.BinaryContent;
+import com.sprint.mission.discodeit.entity.BinaryContentStatus;
+import com.sprint.mission.discodeit.event.BinaryContentCreatedEvent;
 import com.sprint.mission.discodeit.exception.binarycontent.BinaryContentNotFoundException;
 import com.sprint.mission.discodeit.mapper.BinaryContentMapper;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
@@ -25,6 +27,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
@@ -37,7 +40,7 @@ class BasicBinaryContentServiceTest {
   private BinaryContentMapper binaryContentMapper;
 
   @Mock
-  private BinaryContentStorage binaryContentStorage;
+  private ApplicationEventPublisher eventPublisher;
 
   @InjectMocks
   private BasicBinaryContentService binaryContentService;
@@ -63,7 +66,8 @@ class BasicBinaryContentServiceTest {
         binaryContentId,
         fileName,
         (long) bytes.length,
-        contentType
+        contentType,
+        BinaryContentStatus.PROCESSING
     );
   }
 
@@ -87,7 +91,7 @@ class BasicBinaryContentServiceTest {
     // then
     assertThat(result).isEqualTo(binaryContentDto);
     verify(binaryContentRepository).save(any(BinaryContent.class));
-    verify(binaryContentStorage).put(binaryContentId, bytes);
+    verify(eventPublisher).publishEvent(any(BinaryContentCreatedEvent.class));
   }
 
   @Test
@@ -132,8 +136,8 @@ class BasicBinaryContentServiceTest {
 
     List<BinaryContent> contents = Arrays.asList(content1, content2);
 
-    BinaryContentDto dto1 = new BinaryContentDto(id1, "file1.jpg", 100L, "image/jpeg");
-    BinaryContentDto dto2 = new BinaryContentDto(id2, "file2.jpg", 200L, "image/png");
+    BinaryContentDto dto1 = new BinaryContentDto(id1, "file1.jpg", 100L, "image/jpeg", BinaryContentStatus.PROCESSING);
+    BinaryContentDto dto2 = new BinaryContentDto(id2, "file2.jpg", 200L, "image/png", BinaryContentStatus.PROCESSING);
 
     given(binaryContentRepository.findAllById(eq(ids))).willReturn(contents);
     given(binaryContentMapper.toDto(eq(content1))).willReturn(dto1);
@@ -167,6 +171,51 @@ class BasicBinaryContentServiceTest {
 
     // when & then
     assertThatThrownBy(() -> binaryContentService.delete(binaryContentId))
+        .isInstanceOf(BinaryContentNotFoundException.class);
+  }
+
+  @Test
+  @DisplayName("바이너리 콘텐츠 상태 업데이트 성공 - PROCESSING → SUCCESS")
+  void updateStatus_ToSuccess() {
+    // given
+    BinaryContentDto successDto = new BinaryContentDto(
+        binaryContentId, fileName, (long) bytes.length, contentType, BinaryContentStatus.SUCCESS
+    );
+    given(binaryContentRepository.findById(eq(binaryContentId))).willReturn(Optional.of(binaryContent));
+    given(binaryContentMapper.toDto(eq(binaryContent))).willReturn(successDto);
+
+    // when
+    BinaryContentDto result = binaryContentService.updateStatus(binaryContentId, BinaryContentStatus.SUCCESS);
+
+    // then
+    assertThat(result.status()).isEqualTo(BinaryContentStatus.SUCCESS);
+  }
+
+  @Test
+  @DisplayName("바이너리 콘텐츠 상태 업데이트 성공 - PROCESSING → FAIL")
+  void updateStatus_ToFail() {
+    // given
+    BinaryContentDto failDto = new BinaryContentDto(
+        binaryContentId, fileName, (long) bytes.length, contentType, BinaryContentStatus.FAIL
+    );
+    given(binaryContentRepository.findById(eq(binaryContentId))).willReturn(Optional.of(binaryContent));
+    given(binaryContentMapper.toDto(eq(binaryContent))).willReturn(failDto);
+
+    // when
+    BinaryContentDto result = binaryContentService.updateStatus(binaryContentId, BinaryContentStatus.FAIL);
+
+    // then
+    assertThat(result.status()).isEqualTo(BinaryContentStatus.FAIL);
+  }
+
+  @Test
+  @DisplayName("존재하지 않는 바이너리 콘텐츠 상태 업데이트 시 예외 발생")
+  void updateStatus_WithNonExistentId_ThrowsException() {
+    // given
+    given(binaryContentRepository.findById(eq(binaryContentId))).willReturn(Optional.empty());
+
+    // when & then
+    assertThatThrownBy(() -> binaryContentService.updateStatus(binaryContentId, BinaryContentStatus.SUCCESS))
         .isInstanceOf(BinaryContentNotFoundException.class);
   }
 } 

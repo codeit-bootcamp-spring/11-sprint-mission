@@ -15,6 +15,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.mission.discodeit.dto.data.BinaryContentDto;
+import com.sprint.mission.discodeit.entity.BinaryContentStatus;
 import com.sprint.mission.discodeit.dto.data.MessageDto;
 import com.sprint.mission.discodeit.dto.data.UserDto;
 import com.sprint.mission.discodeit.dto.request.MessageCreateRequest;
@@ -95,7 +96,8 @@ class MessageControllerTest {
         UUID.randomUUID(),
         "test.jpg",
         10L,
-        MediaType.IMAGE_JPEG_VALUE
+        MediaType.IMAGE_JPEG_VALUE,
+        BinaryContentStatus.PROCESSING
     );
 
     MessageDto createdMessage = new MessageDto(

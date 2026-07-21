@@ -20,7 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.security.core.userdetails.UserDetailsService;
+import com.sprint.mission.discodeit.security.DiscodeitUserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
@@ -39,7 +39,7 @@ public class LoginTest {
   @Autowired
   private PasswordEncoder passwordEncoder;
   @MockitoBean
-  private UserDetailsService userDetailsService;
+  private DiscodeitUserDetailsService userDetailsService;
 
   @Test
   @DisplayName("로그인 성공 테스트")
@@ -72,10 +72,11 @@ public class LoginTest {
                 "password", List.of(loginRequest.password())
             ))))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.id").value(userId.toString()))
-        .andExpect(jsonPath("$.username").value("testuser"))
-        .andExpect(jsonPath("$.email").value("test@example.com"))
-        .andExpect(jsonPath("$.online").value(false));
+        .andExpect(jsonPath("$.userDto.id").value(userId.toString()))
+        .andExpect(jsonPath("$.userDto.username").value("testuser"))
+        .andExpect(jsonPath("$.userDto.email").value("test@example.com"))
+        .andExpect(jsonPath("$.userDto.online").value(false))
+        .andExpect(jsonPath("$.accessToken").exists());
   }
 
   @Test

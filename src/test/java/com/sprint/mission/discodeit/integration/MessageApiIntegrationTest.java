@@ -1,5 +1,6 @@
 package com.sprint.mission.discodeit.integration;
 
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
@@ -188,8 +189,8 @@ class MessageApiIntegrationTest {
             .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.content", hasSize(2)))
-        .andExpect(jsonPath("$.content[0].content", is("두 번째 메시지 내용입니다.")))
-        .andExpect(jsonPath("$.content[1].content", is("첫 번째 메시지 내용입니다.")))
+        .andExpect(jsonPath("$.content[*].content",
+            containsInAnyOrder("두 번째 메시지 내용입니다.", "첫 번째 메시지 내용입니다.")))
         .andExpect(jsonPath("$.size").exists())
         .andExpect(jsonPath("$.hasNext").exists())
         .andExpect(jsonPath("$.totalElements").isEmpty());

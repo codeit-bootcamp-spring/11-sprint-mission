@@ -23,7 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.security.core.userdetails.UserDetailsService;
+import com.sprint.mission.discodeit.security.DiscodeitUserDetailsService;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -40,7 +40,7 @@ class AuthControllerTest {
   private ObjectMapper objectMapper;
 
   @MockitoBean
-  private UserDetailsService userDetailsService;
+  private DiscodeitUserDetailsService userDetailsService;
 
   @MockitoBean
   private AuthService authService;
