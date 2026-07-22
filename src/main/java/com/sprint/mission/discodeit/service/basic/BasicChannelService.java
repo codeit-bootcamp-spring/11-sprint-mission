@@ -8,8 +8,8 @@ import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.ChannelType;
 import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.event.PrivateChannelCreatedEvent;
 import com.sprint.mission.discodeit.exception.channel.ChannelNotFoundException;
-import com.sprint.mission.discodeit.exception.channel.PrivateChannelUpdateDeniedException;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.mapper.ChannelMapper;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
@@ -24,6 +24,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,6 +40,7 @@ public class BasicChannelService implements ChannelService {
   private final UserRepository userRepository;
   private final ChannelMapper channelMapper;
   private final SseService sseService;
+  private final ApplicationEventPublisher eventPublisher;
 
   @Override
   @Transactional
@@ -59,7 +61,6 @@ public class BasicChannelService implements ChannelService {
 
   @Override
   @Transactional
-  @CacheEvict(cacheNames = "channels", allEntries = true)
   public ChannelDto createPrivate(PrivateChannelCreateRequest request) {
     log.debug("PRIVATE 채널 생성 시작 - participantCount: {}", request.participantIds());
     Channel channel = new Channel(ChannelType.PRIVATE, null, null);
@@ -81,6 +82,9 @@ public class BasicChannelService implements ChannelService {
     if (request.participantIds() != null && !request.participantIds().isEmpty()) {
       sseService.send(request.participantIds(), "channels.created", dto);
     }
+
+    eventPublisher.publishEvent(
+        new PrivateChannelCreatedEvent(savedChannel.getId(), request.participantIds()));
 
     log.info("PRIVATE 채널 생성 완료 - channelId: {}", savedChannel.getId());
 
