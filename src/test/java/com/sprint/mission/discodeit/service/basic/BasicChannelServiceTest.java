@@ -34,6 +34,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
@@ -53,6 +55,12 @@ class BasicChannelServiceTest {
 
   @Mock
   private ChannelMapper channelMapper;
+
+  @Mock
+  private CacheManager cacheManager;
+
+  @Mock
+  private Cache cache;
 
   @InjectMocks
   private BasicChannelService channelService;
@@ -103,6 +111,7 @@ class BasicChannelServiceTest {
     PrivateChannelCreateRequest request = new PrivateChannelCreateRequest(participantIds);
     given(userRepository.findAllById(eq(participantIds))).willReturn(List.of(user));
     given(channelMapper.toDto(any(Channel.class))).willReturn(channelDto);
+    given(cacheManager.getCache("channels")).willReturn(cache);
 
     // when
     ChannelDto result = channelService.create(request);
@@ -111,6 +120,7 @@ class BasicChannelServiceTest {
     assertThat(result).isEqualTo(channelDto);
     verify(channelRepository).save(any(Channel.class));
     verify(readStatusRepository).<ReadStatus>saveAll(anyList());
+    verify(cache).evict(userId);
   }
 
   @Test
@@ -142,7 +152,7 @@ class BasicChannelServiceTest {
   @DisplayName("사용자별 채널 목록 조회 성공")
   void findAllByUserId_Success() {
     // given
-    List<ReadStatus> readStatuses = List.of(new ReadStatus(user, channel, Instant.now()));
+    List<ReadStatus> readStatuses = List.of(new ReadStatus(user, channel, Instant.now(), false));
     given(readStatusRepository.findAllByUserId(eq(userId))).willReturn(readStatuses);
     given(channelRepository.findAllByTypeOrIdIn(eq(ChannelType.PUBLIC), eq(List.of(channel.getId()))))
         .willReturn(List.of(channel));
@@ -201,10 +211,11 @@ class BasicChannelServiceTest {
   }
 
   @Test
-  @DisplayName("채널 삭제 성공")
-  void deleteChannel_Success() {
+  @DisplayName("공개 채널 삭제 성공")
+  void deletePublicChannel_Success() {
     // given
-    given(channelRepository.existsById(eq(channelId))).willReturn(true);
+    given(channelRepository.findById(eq(channelId))).willReturn(Optional.of(channel));
+    given(cacheManager.getCache("channels")).willReturn(cache);
 
     // when
     channelService.delete(channelId);
@@ -213,13 +224,38 @@ class BasicChannelServiceTest {
     verify(messageRepository).deleteAllByChannelId(eq(channelId));
     verify(readStatusRepository).deleteAllByChannelId(eq(channelId));
     verify(channelRepository).deleteById(eq(channelId));
+    verify(cache).clear();
+  }
+
+  @Test
+  @DisplayName("비공개 채널 삭제 성공 — 참여자 캐시만 evict")
+  void deletePrivateChannel_Success() {
+    // given
+    Channel privateChannel = new Channel(ChannelType.PRIVATE, null, null);
+    ReflectionTestUtils.setField(privateChannel, "id", channelId);
+    ReflectionTestUtils.setField(user, "id", userId);
+
+    ReadStatus readStatus = new ReadStatus(user, privateChannel, Instant.now(), false);
+    given(channelRepository.findById(eq(channelId))).willReturn(Optional.of(privateChannel));
+    given(readStatusRepository.findAllByChannelIdWithUser(eq(channelId))).willReturn(List.of(readStatus));
+    given(cacheManager.getCache("channels")).willReturn(cache);
+
+    // when
+    channelService.delete(channelId);
+
+    // then
+    verify(messageRepository).deleteAllByChannelId(eq(channelId));
+    verify(readStatusRepository).deleteAllByChannelId(eq(channelId));
+    verify(channelRepository).deleteById(eq(channelId));
+    verify(cache).evict(channelId);
+    verify(cache).evict(userId);
   }
 
   @Test
   @DisplayName("존재하지 않는 채널 삭제 시도 시 실패")
   void deleteChannel_WithNonExistentId_ThrowsException() {
     // given
-    given(channelRepository.existsById(eq(channelId))).willReturn(false);
+    given(channelRepository.findById(eq(channelId))).willReturn(Optional.empty());
 
     // when & then
     assertThatThrownBy(() -> channelService.delete(channelId))

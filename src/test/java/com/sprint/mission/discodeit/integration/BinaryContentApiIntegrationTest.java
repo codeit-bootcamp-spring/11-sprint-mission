@@ -30,14 +30,21 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.annotation.DirtiesContext;
+import com.sprint.mission.discodeit.config.TestAsyncConfig;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 @Transactional
+@Import(TestAsyncConfig.class)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 class BinaryContentApiIntegrationTest {
 
   @Autowired
@@ -59,6 +66,7 @@ class BinaryContentApiIntegrationTest {
   private MessageService messageService;
 
   @Test
+  @WithMockUser(roles = "CHANNEL_MANAGER")
   @DisplayName("바이너리 컨텐츠 조회 API 통합 테스트")
   void findBinaryContent_Success() throws Exception {
     // Given
@@ -105,6 +113,7 @@ class BinaryContentApiIntegrationTest {
   }
 
   @Test
+  @WithMockUser(roles = "USER")
   @DisplayName("존재하지 않는 바이너리 컨텐츠 조회 API 통합 테스트")
   void findBinaryContent_Failure_NotFound() throws Exception {
     // Given
@@ -116,6 +125,7 @@ class BinaryContentApiIntegrationTest {
   }
 
   @Test
+  @WithMockUser(roles = "CHANNEL_MANAGER")
   @DisplayName("여러 바이너리 컨텐츠 조회 API 통합 테스트")
   void findAllBinaryContentsByIds_Success() throws Exception {
     // Given
@@ -173,6 +183,8 @@ class BinaryContentApiIntegrationTest {
   }
 
   @Test
+  @WithMockUser(roles = "CHANNEL_MANAGER")
+  @Transactional(propagation = Propagation.NOT_SUPPORTED)
   @DisplayName("바이너리 컨텐츠 다운로드 API 통합 테스트")
   void downloadBinaryContent_Success() throws Exception {
     // Given
@@ -196,6 +208,7 @@ class BinaryContentApiIntegrationTest {
   }
 
   @Test
+  @WithMockUser(roles = "USER")
   @DisplayName("존재하지 않는 바이너리 컨텐츠 다운로드 API 통합 테스트")
   void downloadBinaryContent_Failure_NotFound() throws Exception {
     // Given

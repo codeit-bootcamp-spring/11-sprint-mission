@@ -1,6 +1,17 @@
 spring:
   application:
     name: discodeit
+  cache:
+    type: caffeine
+    cache-names:
+      - channels
+      - notifications
+      - users
+    caffeine:
+      spec: >
+        maximumSize=100,
+        expireAfterAccess=600s,
+        recordStats
   servlet:
     multipart:
       maxFileSize: 10MB # 파일 하나의 최대 크기
@@ -57,6 +68,15 @@ discodeit:
       region: ${AWS_S3_REGION}
       bucket: ${AWS_S3_BUCKET}
       presigned-url-expiration: ${AWS_S3_PRESIGNED_URL_EXPIRATION:600} # (기본값: 10분)
+  admin:
+    username: ${DISCODEIT_ADMIN_USERNAME}
+    email: ${DISCODEIT_ADMIN_EMAIL}
+    password: ${DISCODEIT_ADMIN_PASSWORD}
+  jwt:
+    secret: ${JWT_SECRET}
+    access-token-expiration: ${JWT_ACCESS_EXPIRATION:1800000}        # 기본값: 30분
+    refresh-token-expiration: ${JWT_REFRESH_EXPIRATION:1209600000}   # 기본값: 2주
+    max-active-jwt-count: ${JWT_MAX_ACTIVE_COUNT:1}                  # 기본값: 동시 로그인 1개
 
 logging:
   level:

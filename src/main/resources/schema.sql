@@ -17,20 +17,12 @@ CREATE TABLE binary_contents
 (
     id           uuid PRIMARY KEY,
     created_at   timestamp with time zone NOT NULL,
+    updated_at   timestamp with time zone,
     file_name    varchar(255)             NOT NULL,
     size         bigint                   NOT NULL,
-    content_type varchar(100)             NOT NULL
+    content_type varchar(100)             NOT NULL,
+    status       varchar(20)              NOT NULL DEFAULT 'PROCESSING'
 --     ,bytes        bytea        NOT NULL
-);
-
--- UserStatus
-CREATE TABLE user_statuses
-(
-    id             uuid PRIMARY KEY,
-    created_at     timestamp with time zone NOT NULL,
-    updated_at     timestamp with time zone,
-    user_id        uuid UNIQUE              NOT NULL,
-    last_active_at timestamp with time zone NOT NULL
 );
 
 -- Channel
@@ -63,6 +55,16 @@ CREATE TABLE message_attachments
     PRIMARY KEY (message_id, attachment_id)
 );
 
+-- Notification
+CREATE TABLE notifications
+(
+    id          uuid PRIMARY KEY,
+    created_at  timestamp with time zone NOT NULL,
+    receiver_id uuid                     NOT NULL,
+    title       varchar(255)             NOT NULL,
+    content     text                     NOT NULL
+);
+
 -- ReadStatus
 CREATE TABLE read_statuses
 (
@@ -71,7 +73,8 @@ CREATE TABLE read_statuses
     updated_at   timestamp with time zone,
     user_id      uuid                     NOT NULL,
     channel_id   uuid                     NOT NULL,
-    last_read_at timestamp with time zone NOT NULL,
+    last_read_at          timestamp with time zone NOT NULL,
+    notification_enabled  boolean                  NOT NULL DEFAULT false,
     UNIQUE (user_id, channel_id)
 );
 
@@ -83,13 +86,6 @@ ALTER TABLE users
         FOREIGN KEY (profile_id)
             REFERENCES binary_contents (id)
             ON DELETE SET NULL;
-
--- UserStatus (1) -> User (1)
-ALTER TABLE user_statuses
-    ADD CONSTRAINT fk_user_status_user
-        FOREIGN KEY (user_id)
-            REFERENCES users (id)
-            ON DELETE CASCADE;
 
 -- Message (N) -> Channel (1)
 ALTER TABLE messages

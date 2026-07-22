@@ -18,10 +18,15 @@ import com.sprint.mission.discodeit.service.ChannelService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.access.prepost.PreAuthorize;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -32,7 +37,9 @@ public class BasicChannelService implements ChannelService {
   private final MessageRepository messageRepository;
   private final UserRepository userRepository;
   private final ChannelMapper channelMapper;
+  private final CacheManager cacheManager;
 
+  @CacheEvict(cacheNames = "channels", allEntries = true)
   @PreAuthorize("hasRole('CHANNEL_MANAGER')")
   @Transactional
   @Override
@@ -55,14 +62,20 @@ public class BasicChannelService implements ChannelService {
     channelRepository.save(channel);
 
     List<ReadStatus> readStatuses = userRepository.findAllById(request.participantIds()).stream()
-        .map(user -> new ReadStatus(user, channel, channel.getCreatedAt()))
+        .map(user -> new ReadStatus(user, channel, channel.getCreatedAt(), true))
         .toList();
     readStatusRepository.saveAll(readStatuses);
+
+    Cache cache = cacheManager.getCache("channels");
+    if (cache != null) {
+      request.participantIds().forEach(cache::evict);
+    }
 
     log.info("채널 생성 완료: id={}, name={}", channel.getId(), channel.getName());
     return channelMapper.toDto(channel);
   }
 
+  @Cacheable(cacheNames = "channels", key = "#channelId")
   @Transactional(readOnly = true)
   @Override
   public ChannelDto find(UUID channelId) {
@@ -71,6 +84,7 @@ public class BasicChannelService implements ChannelService {
         .orElseThrow(() -> ChannelNotFoundException.withId(channelId));
   }
 
+  @Cacheable(cacheNames = "channels", key = "#userId")
   @Transactional(readOnly = true)
   @Override
   public List<ChannelDto> findAllByUserId(UUID userId) {
@@ -85,6 +99,7 @@ public class BasicChannelService implements ChannelService {
         .toList();
   }
 
+  @CacheEvict(cacheNames = "channels", allEntries = true)
   @PreAuthorize("hasRole('CHANNEL_MANAGER')")
   @Transactional
   @Override
@@ -107,12 +122,28 @@ public class BasicChannelService implements ChannelService {
   @Override
   public void delete(UUID channelId) {
     log.debug("채널 삭제 시작: id={}", channelId);
-    if (!channelRepository.existsById(channelId)) {
-      throw ChannelNotFoundException.withId(channelId);
-    }
+    Channel channel = channelRepository.findById(channelId)
+        .orElseThrow(() -> ChannelNotFoundException.withId(channelId));
 
     messageRepository.deleteAllByChannelId(channelId);
-    readStatusRepository.deleteAllByChannelId(channelId);
+
+    Cache cache = cacheManager.getCache("channels");
+    if (channel.getType() == ChannelType.PUBLIC) {
+      readStatusRepository.deleteAllByChannelId(channelId);
+      if (cache != null) {
+        cache.clear();
+      }
+    } else {
+      List<UUID> participantIds = readStatusRepository.findAllByChannelIdWithUser(channelId)
+          .stream()
+          .map(rs -> rs.getUser().getId())
+          .toList();
+      readStatusRepository.deleteAllByChannelId(channelId);
+      if (cache != null) {
+        cache.evict(channelId);
+        participantIds.forEach(cache::evict);
+      }
+    }
 
     channelRepository.deleteById(channelId);
     log.info("채널 삭제 완료: id={}", channelId);

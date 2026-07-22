@@ -3,13 +3,8 @@ build/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
 !**/src/test/**/build/
-.kotlin
 
 ### IntelliJ IDEA ###
-.idea/modules.xml
-.idea/jarRepositories.xml
-.idea/compiler.xml
-.idea/libraries/
 .idea
 *.iws
 *.iml
@@ -42,6 +37,15 @@ bin/
 
 ### Mac OS ###
 .DS_Store
-.env
-sb11-monew-team1/
-.logs/
+
+### Discodeit ###
+.discodeit
+application-dev.yaml
+
+### 숨김 파일 ###
+.*
+!.gitignore
+
+
+### Github Actions ###
+!.github/
