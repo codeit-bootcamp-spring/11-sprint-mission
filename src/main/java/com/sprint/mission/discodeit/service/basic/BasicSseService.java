@@ -19,12 +19,14 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 @RequiredArgsConstructor
 public class BasicSseService implements SseService {
 
+  private static final Long TIMEOUT = 1000L * 60 * 30;
+
   private final SseEmitterRepository emitterRepository;
   private final SseMessageRepository messageRepository;
 
   @Override
   public SseEmitter connect(UUID receiverId, UUID lastEventId) {
-    SseEmitter emitter = new SseEmitter(1000L * 60 * 30);
+    SseEmitter emitter = new SseEmitter(TIMEOUT);
     emitterRepository.save(receiverId, emitter);
 
     emitter.onCompletion(() -> emitterRepository.delete(receiverId, emitter));
