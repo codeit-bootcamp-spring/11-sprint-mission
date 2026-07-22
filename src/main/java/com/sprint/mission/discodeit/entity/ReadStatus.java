@@ -32,16 +32,26 @@ public class ReadStatus extends BaseUpdatableEntity {
   private Channel channel;
   @Column(columnDefinition = "timestamp with time zone", nullable = false)
   private Instant lastReadAt;
+  @Column(nullable = false)
+  private boolean notificationEnabled;
 
   public ReadStatus(User user, Channel channel, Instant lastReadAt) {
     this.user = user;
     this.channel = channel;
     this.lastReadAt = lastReadAt;
+    // 비공개 채널은 기본 알림 켜고 공개 채널은 기본 알림 끔
+    this.notificationEnabled = channel.getType() == ChannelType.PRIVATE;
   }
 
-  public void update(Instant newLastReadAt) {
+  public void update(Instant newLastReadAt, Boolean newNotificationEnabled) {
     if (newLastReadAt != null && !newLastReadAt.equals(this.lastReadAt)) {
       this.lastReadAt = newLastReadAt;
+    }
+
+    // null이면 기존 알림 설정 유지함
+    if (newNotificationEnabled != null
+        && this.notificationEnabled != newNotificationEnabled) {
+      this.notificationEnabled = newNotificationEnabled;
     }
   }
 }
