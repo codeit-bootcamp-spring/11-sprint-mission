@@ -57,7 +57,6 @@ public class BasicNotificationService implements NotificationService {
 
   @Override
   @Transactional
-  @CacheEvict(cacheNames = "notifications", allEntries = true)
   public void notifyAdmins(String title, String content) {
     log.info("관리자 알림 발송 시작 - title: {}", title);
 
@@ -72,6 +71,11 @@ public class BasicNotificationService implements NotificationService {
         .map(admin -> new Notification(admin, title, content)).toList();
 
     notificationRepository.saveAll(notifications);
+
+    Cache cache = cacheManager.getCache("notifications");
+    if (cache != null) {
+      admins.forEach(admin -> cache.evict(admin.getId()));
+    }
 
     log.info("관리자 알림 발송 완료 - 대상: {}명", admins.size());
   }
