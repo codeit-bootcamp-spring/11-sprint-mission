@@ -39,7 +39,7 @@ public class AdminAccountInitializer implements ApplicationRunner {
             return;
         }
         User admin = new User(adminUsername, adminEmail, passwordEncoder.encode(adminPassword), null);
-        admin.changeRole(Role.ADMIN);
+        admin.updateRole(Role.ADMIN);
         userRepository.save(admin);
         log.info("ADMIN 계정 초기화 완료: username={}", adminUsername);
     }
