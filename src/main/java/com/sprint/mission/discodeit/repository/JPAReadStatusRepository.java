@@ -20,4 +20,6 @@ public interface JPAReadStatusRepository extends JpaRepository<ReadStatus, UUID>
 
   @EntityGraph(attributePaths = {"user", "channel", "user.profile"})
   List<ReadStatus> findAllByChannel_IdIn(List<UUID> channelIds);
+
+  List<ReadStatus> findAllByChannelIdAndNotificationEnabledTrue(UUID uuid);
 }

@@ -1,6 +1,8 @@
 package com.sprint.mission.discodeit.service.basic;
 
+import com.sprint.mission.discodeit.dto.binarycontentdto.event.BinaryContentCreatedEvent;
 import com.sprint.mission.discodeit.dto.messagedto.MessageDto;
+import com.sprint.mission.discodeit.dto.messagedto.event.MessageCreatedEvent;
 import com.sprint.mission.discodeit.dto.messagedto.request.MessageCreateRequest;
 import com.sprint.mission.discodeit.dto.messagedto.request.MessageUpdateRequest;
 import com.sprint.mission.discodeit.dto.response.PageResponse;
@@ -17,13 +19,14 @@ import com.sprint.mission.discodeit.repository.JPAChannelRepository;
 import com.sprint.mission.discodeit.repository.JPAMessageRepository;
 import com.sprint.mission.discodeit.repository.JPAUserRepository;
 import com.sprint.mission.discodeit.service.MessageService;
-import com.sprint.mission.discodeit.storage.BinaryContentStorage;
+import io.micrometer.core.annotation.Timed;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -48,11 +51,12 @@ public class BasicMessageService implements MessageService {
   private final MessageMapper messageMapper;
   private final PageResponseMapper pageResponseMapper;
 
-  private final BinaryContentStorage binaryContentStorage;
+  private final ApplicationEventPublisher eventPublisher;
 
 
   @Override
   @Transactional
+  @Timed("message.create.async")
   public MessageDto create(MessageCreateRequest messageCreateRequest,
       List<MultipartFile> attachments) {
 
@@ -87,7 +91,9 @@ public class BasicMessageService implements MessageService {
               binaryFile.getSize()
           );
           //데이터 저장하기.
-          binaryContentStorage.put(binaryContent.getId(), binaryFile.getBytes());
+          eventPublisher.publishEvent(
+              new BinaryContentCreatedEvent(binaryContent.getId(), binaryContent,
+                  binaryFile.getBytes()));
 
           //파일리스트에 등록
           binaryContents.add(binaryContent);
@@ -101,7 +107,20 @@ public class BasicMessageService implements MessageService {
       });
       //첨부파일 목록 업데이트
       message.updateAttachments(binaryContents);
+
     }
+
+    //알림 발생
+    eventPublisher.publishEvent(
+        new MessageCreatedEvent(
+            message.getId(),
+            channel.getId(),
+            channel.getName(),
+            message.getAuthor().getId(),
+            message.getAuthor().getUsername(),
+            message.getContent()
+        )
+    );
 
     //메시지 저장 + 영속성 전이로 메타데이터도 저장
     message = messageRepository.saveAndFlush(message);
@@ -176,7 +195,6 @@ public class BasicMessageService implements MessageService {
 
     log.info("메시지 수정 완료, message : {}", message);
     return messageMapper.toDto(message);
-
 
   }
 

@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.BDDAssertions.tuple;
 
 import com.sprint.mission.discodeit.entity.User;
-import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -34,7 +33,6 @@ public class UserRepositoryTest {
         "테스트1",
         "test1@test.com",
         "testpassword1",
-        null,
         null
 
     );
@@ -42,15 +40,10 @@ public class UserRepositoryTest {
         "테스트2",
         "test2@test.com",
         "testpassword2",
-        null,
         null
 
     );
 
-    UserStatus status1 = new UserStatus(user1, Instant.now());
-    UserStatus status2 = new UserStatus(user2, Instant.now());
-    user1.updateStatus(status1);
-    user2.updateStatus(status2);
     userRepository.save(user1);
     userRepository.save(user2);
   }

@@ -15,6 +15,18 @@ spring:
         format_sql: true
         use_sql_comments: true
 
+  cache:
+    type: caffeine
+    cache-names:
+      - channels
+      - notifications
+      - users
+    caffeine:
+      spec: >
+        maximumSize=100,
+        expireAfterAccess=600s,
+        recordStats
+
 
 
 
@@ -72,6 +84,10 @@ management:
   info:
     env:
       enabled: true # info 블록의 모든 값을 보기 위한 설정
+
+  observations:
+    annotations:
+      enabled: true
 
 info:
   app:

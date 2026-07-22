@@ -2,9 +2,11 @@ CREATE TABLE binary_content
 (
     id           UUID PRIMARY KEY,
     created_at   TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    updated_at   TIMESTAMPTZ,
     file_name    VARCHAR(255) NOT NULL,
     size         BIGINT       NOT NULL,
-    content_type VARCHAR(100) NOT NULL
+    content_type VARCHAR(100) NOT NULL,
+    status       VARCHAR(20)  NOT NULL DEFAULT 'PROCESSING'
 );
 
 
@@ -39,12 +41,13 @@ CREATE TABLE channel
 CREATE TABLE read_status
 (
 
-    id           UUID PRIMARY KEY,
-    created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at   TIMESTAMPTZ,
-    user_id      UUID        NOT NULL,
-    channel_id   UUID        NOT NULL,
-    last_read_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    id                   UUID PRIMARY KEY,
+    created_at           TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at           TIMESTAMPTZ,
+    user_id              UUID        NOT NULL,
+    channel_id           UUID        NOT NULL,
+    last_read_at         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    notification_enabled boolean     NOT NULL,
 
     UNIQUE (user_id, channel_id),
 
@@ -83,4 +86,13 @@ CREATE TABLE message_attachment
     FOREIGN KEY (message_id) REFERENCES message (id) ON DELETE CASCADE,
     FOREIGN KEY (attachment_id) REFERENCES binary_content (id) ON DELETE CASCADE
 
+);
+
+CREATE TABLE notification
+(
+    id          UUID PRIMARY KEY,
+    created_at  TIMESTAMP WITH TIME ZONE NOT NULL,
+    receiver_id UUID                     NOT NULL,
+    title       VARCHAR(255)             NOT NULL,
+    content     VARCHAR(255)             NOT NULL
 );

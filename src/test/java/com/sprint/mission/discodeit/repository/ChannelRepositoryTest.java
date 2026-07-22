@@ -61,12 +61,12 @@ public class ChannelRepositoryTest {
 
     channelRepository.save(channel1);
     channelRepository.save(channel2);
-    User user = new User("유저", "test@test.com", "password1", null, null);
+    User user = new User("유저", "test@test.com", "password1", null);
 
     userRepository.save(user);
 
-    readStatusRepository.save(new ReadStatus(user, channel1, Instant.now()));
-    readStatusRepository.save(new ReadStatus(user, channel2, Instant.now()));
+    readStatusRepository.save(new ReadStatus(user, channel1, Instant.now(), false));
+    readStatusRepository.save(new ReadStatus(user, channel2, Instant.now(), true));
 
     // when
     List<Channel> result = channelRepository.findAllByUser_Id(user.getId());
@@ -102,7 +102,7 @@ public class ChannelRepositoryTest {
 
     channelRepository.save(channel1);
     channelRepository.save(channel2);
-    User user = new User("유저", "test@test.com", "password1", null, null);
+    User user = new User("유저", "test@test.com", "password1", null);
 
     userRepository.save(user);
 

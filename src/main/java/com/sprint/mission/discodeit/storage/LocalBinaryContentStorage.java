@@ -2,18 +2,15 @@ package com.sprint.mission.discodeit.storage;
 
 
 import com.sprint.mission.discodeit.dto.binarycontentdto.BinaryContentDto;
-
 import jakarta.annotation.PostConstruct;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.UUID;
-
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
@@ -42,6 +39,15 @@ public class LocalBinaryContentStorage implements BinaryContentStorage {
 
   @Override
   public UUID put(UUID id, byte[] bytes) {
+
+    //시간 체크
+//    try {
+//      Thread.sleep(3000);
+//    } catch (InterruptedException e) {
+//      Thread.currentThread().interrupt();
+//      throw new RuntimeException("Thread interrupted while simulating delay", e);
+//    }
+
     Path filePath = resolvePath(id);
     try {
       Files.createDirectories(filePath.getParent());

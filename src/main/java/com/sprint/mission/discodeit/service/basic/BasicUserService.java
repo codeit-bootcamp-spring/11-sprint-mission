@@ -1,7 +1,9 @@
 package com.sprint.mission.discodeit.service.basic;
 
+import com.sprint.mission.discodeit.dto.binarycontentdto.event.BinaryContentCreatedEvent;
 import com.sprint.mission.discodeit.dto.userdto.UserDto;
 import com.sprint.mission.discodeit.dto.userdto.UserUpdateRequest;
+import com.sprint.mission.discodeit.dto.userdto.event.RoleUpdatedEvent;
 import com.sprint.mission.discodeit.dto.userdto.request.UserCreateRequest;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.Channel.ChannelType;
@@ -18,12 +20,14 @@ import com.sprint.mission.discodeit.repository.JPAReadStatusRepository;
 import com.sprint.mission.discodeit.repository.JPAUserRepository;
 import com.sprint.mission.discodeit.security.jwt.JwtRegistry;
 import com.sprint.mission.discodeit.service.UserService;
-import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -42,7 +46,7 @@ public class BasicUserService implements UserService {
   private final JPAChannelRepository channelRepository;
   private final JwtRegistry jwtRegistry;
 
-  private final BinaryContentStorage binaryContentStorage;
+  private final ApplicationEventPublisher eventPublisher;
 
   private final UserMapper userMapper;
 
@@ -50,6 +54,7 @@ public class BasicUserService implements UserService {
 
   @Override
   @Transactional
+  @CacheEvict(cacheNames = "users", allEntries = true)
   public UserDto create(UserCreateRequest userCreateRequest, MultipartFile file) {
 
     log.info("유저 생성 요청 : {}", userCreateRequest);
@@ -88,7 +93,9 @@ public class BasicUserService implements UserService {
             file.getContentType(),
             file.getSize()
         );
-        binaryContentStorage.put(content.getId(), file.getBytes());
+        eventPublisher.publishEvent(
+            new BinaryContentCreatedEvent(content.getId(), content, file.getBytes())
+        );
       } catch (Exception e) {
         throw new RuntimeException(e);
       }
@@ -107,7 +114,7 @@ public class BasicUserService implements UserService {
 
       if (channel.getType() == ChannelType.PUBLIC) {
         readStatusRepository.save(
-            new ReadStatus(user, channel, Instant.now().minusSeconds(1)));
+            new ReadStatus(user, channel, Instant.now().minusSeconds(1), false));
       }
 
     });
@@ -129,6 +136,7 @@ public class BasicUserService implements UserService {
   }
 
   @Transactional(readOnly = true)
+  @Cacheable(cacheNames = "users")
   @Override
   public List<UserDto> findAll() {
 
@@ -144,6 +152,7 @@ public class BasicUserService implements UserService {
   @Override
   @Transactional
   @PreAuthorize("#userId == principal.userDto.id")
+  @CacheEvict(cacheNames = "users", allEntries = true)
   public UserDto updateUser(UUID userId, UserUpdateRequest userUpdateRequest, MultipartFile file) {
     log.info("유저 업데이트 요청, userId : {}, updateUserDto : {}", userId, userUpdateRequest);
 
@@ -189,7 +198,10 @@ public class BasicUserService implements UserService {
             file.getContentType(),
             file.getSize()
         );
-        binaryContentStorage.put(newContent.getId(), file.getBytes());
+
+        eventPublisher.publishEvent(
+            new BinaryContentCreatedEvent(newContent.getId(), newContent, file.getBytes()));
+
         log.info("프로필 생성 완료, newContent : {}", newContent);
 
       } catch (Exception e) {
@@ -216,9 +228,19 @@ public class BasicUserService implements UserService {
     User user = userRepository.findById(userId)
         .orElseThrow(() -> new NonExistUserException(userId));
 
+    Role oldRole = user.getRole();
+
     user.updateRole(role);
 
     jwtRegistry.invalidateJwtInformationByUserId(userId);
+
+    //알림 발생 이벤트
+    eventPublisher.publishEvent(new RoleUpdatedEvent(
+
+        userId,
+        oldRole,
+        role
+    ));
 
     return userMapper.toDto(user);
   }
@@ -226,6 +248,7 @@ public class BasicUserService implements UserService {
   @Override
   @Transactional
   @PreAuthorize("#userId == principal.userDto.id")
+  @CacheEvict(cacheNames = "users", allEntries = true)
   public boolean delete(UUID userId) {
 
     log.info("유저 삭제 요청, userId : {}", userId);

@@ -1,7 +1,7 @@
 package com.sprint.mission.discodeit.service.basic;
 
-import com.sprint.mission.discodeit.dto.readstatusdto.request.ReadStatusCreateRequest;
 import com.sprint.mission.discodeit.dto.readstatusdto.ReadStatusDto;
+import com.sprint.mission.discodeit.dto.readstatusdto.request.ReadStatusCreateRequest;
 import com.sprint.mission.discodeit.dto.readstatusdto.request.ReadStatusUpdateRequest;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.ReadStatus;
@@ -16,11 +16,10 @@ import com.sprint.mission.discodeit.repository.JPAReadStatusRepository;
 import com.sprint.mission.discodeit.repository.JPAUserRepository;
 import com.sprint.mission.discodeit.service.ReadStatusService;
 import java.time.Instant;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-
 import java.util.List;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
@@ -50,11 +49,15 @@ public class BasicReadStatusService implements ReadStatusService {
     Channel channel = channelRepository.findById(readStatusCreateRequest.channelId())
         .orElseThrow(() -> new NonExistChannelException(readStatusCreateRequest.channelId()));
 
+    boolean isChannelPrivate = channel.getType() == Channel.ChannelType.PRIVATE;
+
     //ReadStatus 생성
     ReadStatus readStatus = new ReadStatus(
         user,
         channel,
-        readStatusCreateRequest.lastReadAt()
+        readStatusCreateRequest.lastReadAt(),
+        isChannelPrivate
+
     );
 
     if (readStatusCreateRequest.lastReadAt() == null) {
@@ -95,6 +98,7 @@ public class BasicReadStatusService implements ReadStatusService {
         .orElseThrow(() -> new NonExistReadStatusException(readStatusId));
 
     readStatus.updateLastReadAt(readStatusUpdateRequestDto.newLastReadAt());
+    readStatus.updateNotificationEnabled(readStatusUpdateRequestDto.notificationEnabled());
 
     if (readStatusUpdateRequestDto.newLastReadAt() == null) {
       readStatus.updateLastReadAt(Instant.now().minusSeconds(1));

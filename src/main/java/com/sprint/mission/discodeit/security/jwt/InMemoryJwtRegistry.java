@@ -8,6 +8,7 @@ import java.util.Queue;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.scheduling.annotation.Scheduled;
 
 
@@ -24,6 +25,7 @@ public class InMemoryJwtRegistry implements JwtRegistry {
   }
 
   @Override
+  @CacheEvict(value = "users", key = "'all'")
   public void registerJwtInformation(JwtInformation jwtInformation) {
     UUID userId = jwtInformation.getUserDto().id();
 
@@ -40,6 +42,7 @@ public class InMemoryJwtRegistry implements JwtRegistry {
   }
 
   @Override
+  @CacheEvict(value = "users", key = "'all'")
   public void invalidateJwtInformationByUserId(UUID userId) {
     origin.remove(userId);
   }
