@@ -8,6 +8,9 @@ import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.event.BinaryContentCreatedEvent;
 import com.sprint.mission.discodeit.event.RoleUpdatedEvent;
+import com.sprint.mission.discodeit.event.sse.SseEvents.UserCreatedEvent;
+import com.sprint.mission.discodeit.event.sse.SseEvents.UserDeletedEvent;
+import com.sprint.mission.discodeit.event.sse.SseEvents.UserUpdatedEvent;
 import com.sprint.mission.discodeit.exception.user.UserAlreadyExistsException;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.mapper.UserMapper;
@@ -45,7 +48,6 @@ public class BasicUserService implements UserService {
   private final PasswordEncoder passwordEncoder;
   private final JwtRegistry jwtRegistry;
   private final ApplicationEventPublisher eventPublisher;
-  private final SseService sseService;
 
   @Override
   @Transactional
@@ -89,7 +91,8 @@ public class BasicUserService implements UserService {
     UserDto dto = userMapper.toDto(user);
     UserDto finalDto = new UserDto(dto.id(), dto.username(), dto.email(), dto.profile(), false,
         dto.role());
-    sseService.broadcast("users.created", finalDto);
+
+    eventPublisher.publishEvent(new UserCreatedEvent(finalDto));
 
     log.info("사용자 생성 완료 - userId: {}", user.getId());
 
@@ -158,7 +161,8 @@ public class BasicUserService implements UserService {
     }
 
     UserDto dto = userMapper.toDto(user);
-    sseService.broadcast("users.updated", dto);
+
+    eventPublisher.publishEvent(new UserUpdatedEvent(dto));
 
     log.info("사용자 수정 완료 - userId: {}", user.getId());
 
@@ -176,10 +180,11 @@ public class BasicUserService implements UserService {
       log.warn("사용자 삭제 실패(존재하지 않는 유저) - userId: {}", id);
       throw new UserNotFoundException(id);
     }
-    
+
     UserDto deletedUserDto = findById(id);
     userRepository.deleteById(id);
-    sseService.broadcast("users.deleted", deletedUserDto);
+
+    eventPublisher.publishEvent(new UserDeletedEvent(deletedUserDto));
 
     log.info("사용자 삭제 완료 - userId: {}", id);
   }
@@ -208,7 +213,8 @@ public class BasicUserService implements UserService {
     ));
 
     UserDto dto = userMapper.toDto(user);
-    sseService.broadcast("users.updated", dto);
+    
+    eventPublisher.publishEvent(new UserUpdatedEvent(dto));
 
     log.info("사용자 권한 변경 완료 - userId: {}, newRole: {}", user.getId(), request.newRole());
 
