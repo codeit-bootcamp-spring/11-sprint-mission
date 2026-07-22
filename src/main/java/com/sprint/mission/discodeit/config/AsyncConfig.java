@@ -1,5 +1,9 @@
 package com.sprint.mission.discodeit.config;
 
+import com.sprint.mission.discodeit.config.task.CompositeTaskDecorator;
+import com.sprint.mission.discodeit.config.task.MdcTaskDecorator;
+import com.sprint.mission.discodeit.config.task.SecurityContextTaskDecorator;
+import java.util.List;
 import java.util.Map;
 import org.slf4j.MDC;
 import org.springframework.context.annotation.Bean;
@@ -21,24 +25,9 @@ public class AsyncConfig {
     executor.setMaxPoolSize(8);
     executor.setQueueCapacity(50);
     executor.setThreadNamePrefix("event-");
-    executor.setTaskDecorator(task -> {
-      Map<String, String> mdcContext = MDC.getCopyOfContextMap();
-
-      SecurityContext securityContext = SecurityContextHolder.getContext();
-      return () -> {
-        try {
-          if (mdcContext != null) {
-            MDC.setContextMap(mdcContext);
-          }
-          SecurityContextHolder.setContext(securityContext);
-          task.run();
-        } finally {
-          MDC.clear();
-          SecurityContextHolder.clearContext();
-          ;
-        }
-      };
-    });
+    executor.setTaskDecorator(new CompositeTaskDecorator(
+        List.of(new MdcTaskDecorator(), new SecurityContextTaskDecorator())
+    ));
     executor.initialize();
     return executor;
   }
