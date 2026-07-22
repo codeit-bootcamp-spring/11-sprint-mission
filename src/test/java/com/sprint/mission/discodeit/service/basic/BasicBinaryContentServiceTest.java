@@ -10,10 +10,11 @@ import static org.mockito.Mockito.verify;
 import com.sprint.mission.discodeit.dto.data.BinaryContentDto;
 import com.sprint.mission.discodeit.dto.request.BinaryContentCreateRequest;
 import com.sprint.mission.discodeit.entity.BinaryContent;
+import com.sprint.mission.discodeit.entity.BinaryContentStatus;
+import com.sprint.mission.discodeit.event.BinaryContentCreatedEvent;
 import com.sprint.mission.discodeit.exception.binarycontent.BinaryContentNotFoundException;
 import com.sprint.mission.discodeit.mapper.BinaryContentMapper;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
-import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -25,19 +26,20 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
 class BasicBinaryContentServiceTest {
 
   @Mock
-  private BinaryContentRepository binaryContentRepository;
+  private ApplicationEventPublisher applicationEventPublisher;
 
   @Mock
   private BinaryContentMapper binaryContentMapper;
 
   @Mock
-  private BinaryContentStorage binaryContentStorage;
+  private BinaryContentRepository binaryContentRepository;
 
   @InjectMocks
   private BasicBinaryContentService binaryContentService;
@@ -87,7 +89,7 @@ class BasicBinaryContentServiceTest {
     // then
     assertThat(result).isEqualTo(binaryContentDto);
     verify(binaryContentRepository).save(any(BinaryContent.class));
-    verify(binaryContentStorage).put(binaryContentId, bytes);
+    verify(applicationEventPublisher).publishEvent(any(BinaryContentCreatedEvent.class));
   }
 
   @Test
@@ -144,6 +146,17 @@ class BasicBinaryContentServiceTest {
 
     // then
     assertThat(result).containsExactly(dto1, dto2);
+  }
+
+  @Test
+  @DisplayName("바이너리 콘텐츠 상태 변경 성공")
+  void updateStatus_Success() {
+
+    given(binaryContentRepository.findById(eq(binaryContentId))).willReturn(Optional.of(binaryContent));
+
+    binaryContentService.updateStatus(binaryContentId, BinaryContentStatus.SUCCESS);
+
+    assertThat(binaryContent.getStatus()).isEqualTo(BinaryContentStatus.SUCCESS);
   }
 
   @Test
