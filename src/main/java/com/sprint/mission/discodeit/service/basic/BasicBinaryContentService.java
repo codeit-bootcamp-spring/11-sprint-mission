@@ -5,10 +5,13 @@ import com.sprint.mission.discodeit.dto.request.BinaryContentCreateRequest;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.BinaryContentStatus;
 import com.sprint.mission.discodeit.event.message.BinaryContentCreatedEvent;
+import com.sprint.mission.discodeit.event.message.BinaryContentUpdatedEvent;
 import com.sprint.mission.discodeit.exception.binarycontent.BinaryContentNotFoundException;
 import com.sprint.mission.discodeit.mapper.BinaryContentMapper;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.service.BinaryContentService;
+
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -90,9 +93,12 @@ public class BasicBinaryContentService implements BinaryContentService {
   public BinaryContentDto updateStatus(UUID binaryContentId, BinaryContentStatus status) {
     log.debug("바이너리 컨텐츠 상태 업데이트 시작: id={}, status={}", binaryContentId, status);
     BinaryContent binaryContent = binaryContentRepository.findById(binaryContentId)
-        .orElseThrow(() -> BinaryContentNotFoundException.withId(binaryContentId));
+        .orElseThrow(() ->
+                BinaryContentNotFoundException.withId(binaryContentId));
     binaryContent.updateStatus(status);
     binaryContentRepository.save(binaryContent);
-    return binaryContentMapper.toDto(binaryContent);
+    BinaryContentDto dto = binaryContentMapper.toDto(binaryContent);
+    eventPublisher.publishEvent(new BinaryContentUpdatedEvent(dto, Instant.now()));
+    return dto;
   }
 }
