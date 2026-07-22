@@ -56,6 +56,7 @@ public class NotificationRequiredTopicListener {
     }
   }
 
+  @KafkaListener(topics = "discodeit.S3UploadFailedEvent")
   public void onS3UploadFailedEvent(String kafkaEvent) {
     try {
       S3UploadFailedEvent event = objectMapper.readValue(kafkaEvent, S3UploadFailedEvent.class);
@@ -67,7 +68,7 @@ public class NotificationRequiredTopicListener {
           event.requestId(), event.binaryContentId(), event.errorMessage()
       );
 
-      if(admins.isEmpty()) {
+      if (admins.isEmpty()) {
         log.warn("S3 업로드 실패 알림을 받을 관리자가 없습니다 - requestId: {}", event.requestId());
         return;
       }
