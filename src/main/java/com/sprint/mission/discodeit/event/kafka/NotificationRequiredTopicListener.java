@@ -75,9 +75,13 @@ public class NotificationRequiredTopicListener {
   public void onS3UploadFailedEvent(String kafkaEvent) {
     try {
       S3UploadFailedEvent event = objectMapper.readValue(kafkaEvent, S3UploadFailedEvent.class);
-      log.info("Kafka S3 업로드 실패 이벤트 수신");
+      log.info("Kafka S3 업로드 실패 이벤트 수신 - requestId: {}", event.getRequestId());
 
-      notificationService.notifyAdmins("S3 업로드 실패", "S3 업로드 중 문제가 발생했습니다.");
+      String content = String.format("S3 업로드 중 문제가 발생했습니다.\n- Request ID: %s\n- Error: %s",
+          event.getRequestId(),
+          event.getErrorMessage());
+
+      notificationService.notifyAdmins("S3 업로드 실패", content);
     } catch (JsonProcessingException e) {
       throw new RuntimeException(e);
     }
