@@ -11,4 +11,6 @@ public interface NotificationService {
   void delete(UUID id);
 
   void notifyAdmins(String title, String content);
+
+  NotificationDto create(UUID receiverId, String title, String content);
 }

@@ -75,4 +75,21 @@ public class BasicNotificationService implements NotificationService {
 
     log.info("관리자 알림 발송 완료 - 대상: {}명", admins.size());
   }
+
+  @Override
+  @Transactional
+  @CacheEvict(cacheNames = "notifications", key = "#receiverId")
+  public NotificationDto create(UUID receiverId, String title, String content) {
+    User receiver = userRepository.findById(receiverId).orElseThrow();
+    Notification notification = new Notification(receiver, title, content);
+    notificationRepository.save(notification);
+
+    return new NotificationDto(
+        notification.getId(),
+        notification.getCreatedAt(),
+        receiver.getId(),
+        title,
+        content
+    );
+  }
 }

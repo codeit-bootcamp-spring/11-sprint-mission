@@ -57,7 +57,7 @@ public class NotificationRequiredEventListener {
       sseService.send(List.of(n.getReceiver().getId()), "notifications.created", dto);
 
     }
-    
+
     log.info("{}명에게 메시지 알림 전송 완료", notifications.size());
   }
 

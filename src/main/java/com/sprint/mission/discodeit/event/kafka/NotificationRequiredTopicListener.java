@@ -2,13 +2,11 @@ package com.sprint.mission.discodeit.event.kafka;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.sprint.mission.discodeit.entity.Notification;
 import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.event.MessageCreatedEvent;
 import com.sprint.mission.discodeit.event.RoleUpdatedEvent;
 import com.sprint.mission.discodeit.event.S3UploadFailedEvent;
-import com.sprint.mission.discodeit.repository.NotificationRepository;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.NotificationService;
@@ -25,7 +23,6 @@ public class NotificationRequiredTopicListener {
 
   private final ObjectMapper objectMapper;
   private final ReadStatusRepository readStatusRepository;
-  private final NotificationRepository notificationRepository;
   private final UserRepository userRepository;
   private final NotificationService notificationService;
 
@@ -36,20 +33,21 @@ public class NotificationRequiredTopicListener {
       log.info("Kafka 메시지 생성 이벤트 수신 - channelId: {}", event.getChannelId());
 
       User author = userRepository.findById(event.getAuthorId()).orElseThrow();
+
       List<ReadStatus> activeReadStatuses = readStatusRepository.findByChannelIdAndNotificationEnabledTrue(
           event.getChannelId());
 
-      List<Notification> notifications = activeReadStatuses.stream()
-          .map(ReadStatus::getUser)
-          .filter(user -> !user.getId().equals(event.getAuthorId()))
-          .map(user -> new Notification(
-              user,
-              author.getUsername() + " (#" + event.getChannelName() + ")",
-              event.getContent()
-          )).toList();
+      String title = author.getUsername() + " (#" + event.getChannelName() + ")";
+      int count = 0;
 
-      notificationRepository.saveAll(notifications);
-      log.info("Kafka: {}명에게 메시지 알림 전송 완료", notifications.size());
+      for (ReadStatus readStatus : activeReadStatuses) {
+        if (!readStatus.getUser().getId().equals(event.getAuthorId())) {
+          notificationService.create(readStatus.getUser().getId(), title, event.getContent());
+          count++;
+        }
+      }
+
+      log.info("Kafka: {}명에게 메시지 알림 전송 완료", count);
     } catch (JsonProcessingException e) {
       throw new RuntimeException(e);
     }
@@ -61,15 +59,12 @@ public class NotificationRequiredTopicListener {
       RoleUpdatedEvent event = objectMapper.readValue(kafkaEvent, RoleUpdatedEvent.class);
       log.info("Kafka 권한 변경 이벤트 수신 - userId: {}", event.getUserId());
 
-      User user = userRepository.findById(event.getUserId()).orElseThrow();
-
-      Notification notification = new Notification(
-          user,
+      notificationService.create(
+          event.getUserId(),
           "권한이 변경되었습니다.",
           event.getOldRole() + " -> " + event.getNewRole()
       );
 
-      notificationRepository.save(notification);
       log.info("Kafka: 권한 변경 알림 전송 완료 - userId: {}", event.getUserId());
     } catch (JsonProcessingException e) {
       throw new RuntimeException(e);
