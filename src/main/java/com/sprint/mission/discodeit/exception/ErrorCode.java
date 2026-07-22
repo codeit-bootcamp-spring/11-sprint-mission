@@ -24,6 +24,10 @@ public enum ErrorCode {
   // Auth
   INVALID_PASSWORD("비밀번호가 올바르지 않습니다."),
 
+  // Notification
+  NOTIFICATION_NOT_FOUND("알림을 찾을 수 없습니다."),
+  NOTIFICATION_ACCESS_DENIED("본인의 알림만 접근할 수 있습니다."),
+
   // Common
   INVALID_REQUEST("잘못된 요청입니다.");
 

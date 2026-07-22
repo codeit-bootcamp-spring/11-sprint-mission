@@ -5,7 +5,8 @@ import java.time.Instant;
 
 public record ReadStatusUpdateRequest(
     @NotNull(message = "마지막 읽은 시간을 입력해주세요.")
-    Instant newLastReadAt
+    Instant newLastReadAt,
+    Boolean notificationEnabled // null이면 변경하지 않음
 ) {
 
 }

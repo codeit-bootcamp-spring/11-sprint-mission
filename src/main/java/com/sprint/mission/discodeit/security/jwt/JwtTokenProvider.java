@@ -71,7 +71,7 @@ public class JwtTokenProvider {
       signedJWT.sign(signer);
       return signedJWT.serialize();
     } catch (JOSEException e) {
-      throw new RuntimeException("토큰 생성 실패", e);
+      throw new JwtTokenGenerationException("토큰 생성 실패", e);
     }
   }
 

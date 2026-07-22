@@ -5,7 +5,10 @@ import com.sprint.mission.discodeit.dto.request.UserRoleUpdateRequest;
 import com.sprint.mission.discodeit.dto.request.UserUpdateRequest;
 import com.sprint.mission.discodeit.dto.response.UserDto;
 import com.sprint.mission.discodeit.entity.BinaryContent;
+import com.sprint.mission.discodeit.entity.Role;
 import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.event.BinaryContentCreatedEvent;
+import com.sprint.mission.discodeit.event.RoleUpdatedEvent;
 import com.sprint.mission.discodeit.exception.UserAlreadyExistsException;
 import com.sprint.mission.discodeit.exception.UserNotFoundException;
 import com.sprint.mission.discodeit.mapper.UserMapper;
@@ -13,11 +16,13 @@ import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.security.jwt.JwtRegistry;
 import com.sprint.mission.discodeit.service.UserService;
-import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -32,13 +37,14 @@ public class BasicUserService implements UserService {
 
   private final UserRepository userRepository;
   private final BinaryContentRepository binaryContentRepository;
-  private final BinaryContentStorage binaryContentStorage;
+  private final ApplicationEventPublisher eventPublisher;
   private final UserMapper userMapper;
   private final PasswordEncoder passwordEncoder;
   private final JwtRegistry jwtRegistry;
 
   @Override
   @Transactional
+  @CacheEvict(cacheNames = "users", allEntries = true)
   public UserDto create(UserCreateRequest request, MultipartFile profile) {
     log.debug("사용자 생성 요청 - username: {}, email: {}", request.username(), request.email());
 
@@ -60,8 +66,9 @@ public class BasicUserService implements UserService {
             profile.getContentType()
         );
         binaryContentRepository.save(profileContent);
-        binaryContentStorage.put(profileContent.getId(), profile.getBytes());
-        log.debug("프로필 이미지 저장 완료 - fileId: {}", profileContent.getId());
+        eventPublisher.publishEvent(
+            new BinaryContentCreatedEvent(profileContent.getId(), profile.getBytes()));
+        log.debug("프로필 이미지 메타데이터 저장 완료 - fileId: {}", profileContent.getId());
       } catch (Exception e) {
         log.error("프로필 이미지 저장 실패 - username: {}", request.username(), e);
         throw new RuntimeException("프로필 이미지 저장 실패", e);
@@ -88,6 +95,7 @@ public class BasicUserService implements UserService {
   }
 
   @Override
+  @Cacheable(cacheNames = "users")
   public List<UserDto> findAll() {
     log.debug("사용자 전체 조회");
     return userRepository.findAll().stream()
@@ -97,6 +105,7 @@ public class BasicUserService implements UserService {
 
   @Override
   @Transactional
+  @CacheEvict(cacheNames = "users", allEntries = true)
   @PreAuthorize("authentication.principal.userDto.id == #id")
   public UserDto update(UUID id, UserUpdateRequest request, MultipartFile profile) {
     log.debug("사용자 수정 요청 - id: {}", id);
@@ -126,8 +135,9 @@ public class BasicUserService implements UserService {
             profile.getContentType()
         );
         binaryContentRepository.save(profileContent);
-        binaryContentStorage.put(profileContent.getId(), profile.getBytes());
-        log.debug("프로필 이미지 수정 완료 - fileId: {}", profileContent.getId());
+        eventPublisher.publishEvent(
+            new BinaryContentCreatedEvent(profileContent.getId(), profile.getBytes()));
+        log.debug("프로필 이미지 메타데이터 수정 완료 - fileId: {}", profileContent.getId());
       } catch (Exception e) {
         log.error("프로필 이미지 저장 실패 - userId: {}", id, e);
         throw new RuntimeException("프로필 이미지 저장 실패", e);
@@ -145,6 +155,7 @@ public class BasicUserService implements UserService {
 
   @Override
   @Transactional
+  @CacheEvict(cacheNames = "users", allEntries = true)
   @PreAuthorize("authentication.principal.userDto.id == #id")
   public void delete(UUID id) {
     log.debug("사용자 삭제 요청 - id: {}", id);
@@ -159,11 +170,16 @@ public class BasicUserService implements UserService {
 
   @Override
   @Transactional
+  @CacheEvict(cacheNames = "users", allEntries = true)
   @PreAuthorize("hasRole('ADMIN')")
   public UserDto updateRole(UserRoleUpdateRequest request) {
     User user = userRepository.findById(request.userId())
         .orElseThrow(() -> new UserNotFoundException(request.userId()));
+    Role previousRole = user.getRole();
     user.updateRole(request.newRole());
+    jwtRegistry.invalidateJwtInformationByUserId(user.getId());
+    eventPublisher.publishEvent(
+        new RoleUpdatedEvent(user.getId(), previousRole, request.newRole()));
     return toDto(user);
   }
 

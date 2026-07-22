@@ -43,6 +43,20 @@ public class GlobalExceptionHandler {
         .body(ErrorResponseDto.of(HttpStatus.NOT_FOUND.value(), e, e.getDetails()));
   }
 
+  @ExceptionHandler(NotificationNotFoundException.class)
+  public ResponseEntity<ErrorResponseDto> handleNotificationNotFound(
+      NotificationNotFoundException e) {
+    return ResponseEntity.status(HttpStatus.NOT_FOUND)
+        .body(ErrorResponseDto.of(HttpStatus.NOT_FOUND.value(), e, e.getDetails()));
+  }
+
+  @ExceptionHandler(NotificationAccessDeniedException.class)
+  public ResponseEntity<ErrorResponseDto> handleNotificationAccessDenied(
+      NotificationAccessDeniedException e) {
+    return ResponseEntity.status(HttpStatus.FORBIDDEN)
+        .body(ErrorResponseDto.of(HttpStatus.FORBIDDEN.value(), e, e.getDetails()));
+  }
+
   @ExceptionHandler(DiscodeitException.class)
   public ResponseEntity<ErrorResponseDto> handleDiscodeit(DiscodeitException e) {
     return ResponseEntity.status(HttpStatus.BAD_REQUEST)

@@ -75,20 +75,8 @@ public class InMemoryJwtRegistry implements JwtRegistry {
         .flatMap(Queue::stream)
         .filter(info -> info.getRefreshToken().equals(refreshToken))
         .findFirst()
-        .ifPresent(info -> {
-          UUID userId = info.getUserId();
-          Queue<JwtInformation> queue = origin.get(userId);
-          queue.remove(info);
-
-          JwtInformation newInfo = new JwtInformation(
-              userId,
-              newAccessToken,
-              newRefreshToken,
-              newAccessTokenExpiration,
-              newRefreshTokenExpiration
-          );
-          queue.add(newInfo);
-        });
+        .ifPresent(info -> info.rotate(
+            newAccessToken, newRefreshToken, newAccessTokenExpiration, newRefreshTokenExpiration));
   }
 
   @Scheduled(fixedDelay = 1000 * 60 * 5)

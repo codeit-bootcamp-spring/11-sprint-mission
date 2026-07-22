@@ -8,8 +8,8 @@ import lombok.Getter;
 public class JwtInformation {
 
   private final UUID userId;
-  private final String accessToken;
-  private final Date accessTokenExpiration;
+  private String accessToken;
+  private Date accessTokenExpiration;
   private String refreshToken;
   private Date refreshTokenExpiration;
 
@@ -32,6 +32,8 @@ public class JwtInformation {
 
   public void rotate(String newAccessToken, String newRefreshToken,
       Date newAccessTokenExpiration, Date newRefreshTokenExpiration) {
+    this.accessToken = newAccessToken;
+    this.accessTokenExpiration = newAccessTokenExpiration;
     this.refreshToken = newRefreshToken;
     this.refreshTokenExpiration = newRefreshTokenExpiration;
   }

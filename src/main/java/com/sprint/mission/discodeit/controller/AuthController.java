@@ -60,6 +60,8 @@ public class AuthController {
     // 새 리프레시 토큰 쿠키 갱신
     Cookie refreshCookie = new Cookie(JwtTokenProvider.REFRESH_TOKEN_COOKIE_NAME, newRefreshToken);
     refreshCookie.setHttpOnly(true);
+    refreshCookie.setSecure(true);
+    refreshCookie.setAttribute("SameSite", "Lax");
     refreshCookie.setPath("/");
     refreshCookie.setMaxAge((int) (jwtTokenProvider.getRefreshTokenExpiration() / 1000));
     response.addCookie(refreshCookie);

@@ -9,6 +9,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
@@ -24,6 +25,7 @@ public class JwtLoginSuccessHandler implements AuthenticationSuccessHandler {
   private final JwtRegistry jwtRegistry;
 
   @Override
+  @CacheEvict(cacheNames = "users", allEntries = true)
   public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
       Authentication authentication) throws IOException {
     DiscodeitUserDetails userDetails = (DiscodeitUserDetails) authentication.getPrincipal();
@@ -39,6 +41,8 @@ public class JwtLoginSuccessHandler implements AuthenticationSuccessHandler {
     // 리프레시 토큰 → 쿠키
     Cookie refreshCookie = new Cookie(JwtTokenProvider.REFRESH_TOKEN_COOKIE_NAME, refreshToken);
     refreshCookie.setHttpOnly(true);
+    refreshCookie.setSecure(true);
+    refreshCookie.setAttribute("SameSite", "Lax");
     refreshCookie.setPath("/");
     refreshCookie.setMaxAge((int) (jwtTokenProvider.getRefreshTokenExpiration() / 1000));
     response.addCookie(refreshCookie);

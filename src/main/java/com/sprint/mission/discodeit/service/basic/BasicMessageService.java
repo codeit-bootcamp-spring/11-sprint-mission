@@ -9,6 +9,8 @@ import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.event.BinaryContentCreatedEvent;
+import com.sprint.mission.discodeit.event.MessageCreatedEvent;
 import com.sprint.mission.discodeit.exception.ChannelNotFoundException;
 import com.sprint.mission.discodeit.exception.MessageNotFoundException;
 import com.sprint.mission.discodeit.exception.UserNotFoundException;
@@ -20,12 +22,12 @@ import com.sprint.mission.discodeit.repository.MessageRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.security.jwt.JwtRegistry;
 import com.sprint.mission.discodeit.service.MessageService;
-import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -45,7 +47,7 @@ public class BasicMessageService implements MessageService {
   private final ChannelRepository channelRepository;
   private final UserRepository userRepository;
   private final BinaryContentRepository binaryContentRepository;
-  private final BinaryContentStorage binaryContentStorage;
+  private final ApplicationEventPublisher eventPublisher;
   private final MessageMapper messageMapper;
   private final UserMapper userMapper;
   private final JwtRegistry jwtRegistry;
@@ -77,9 +79,9 @@ public class BasicMessageService implements MessageService {
               file.getContentType()
           );
           binaryContentRepository.save(bc);
-          binaryContentStorage.put(bc.getId(), file.getBytes());
+          eventPublisher.publishEvent(new BinaryContentCreatedEvent(bc.getId(), file.getBytes()));
           message.addAttachment(bc);
-          log.debug("첨부파일 저장 완료 - fileId: {}, fileName: {}", bc.getId(), bc.getFileName());
+          log.debug("첨부파일 메타데이터 저장 완료 - fileId: {}, fileName: {}", bc.getId(), bc.getFileName());
         } catch (Exception e) {
           log.error("첨부파일 저장 실패 - fileName: {}", file.getOriginalFilename(), e);
           throw new RuntimeException("파일 저장 실패", e);
@@ -89,6 +91,15 @@ public class BasicMessageService implements MessageService {
 
     messageRepository.saveAndFlush(message);
     log.info("메시지 생성 완료 - id: {}, channelId: {}", message.getId(), channel.getId());
+
+    eventPublisher.publishEvent(new MessageCreatedEvent(
+        message.getId(),
+        channel.getId(),
+        author.getId(),
+        author.getUsername(),
+        channel.getName(),
+        message.getContent()
+    ));
 
     boolean isOnline = message.getAuthor() != null && jwtRegistry.hasActiveJwtInformationByUserId(
         message.getAuthor().getId());
