@@ -65,4 +65,17 @@ public class JwtService {
     UserDto userDto = userService.readUser(userId);
     return new JwtSessionResult(userDto, newAccessToken, newRefreshToken);
   }
+
+  public void logoutJwtSession(String refreshToken) {
+    if (!StringUtils.hasText(refreshToken)
+        || !jwtTokenProvider.validateToken(refreshToken)
+        || !jwtTokenProvider.isRefreshToken(refreshToken)) {
+      log.warn("로그아웃 요청 - 유효하지 않은 refresh token (이미 만료되었거나 위조됨, 정상 흐름으로 간주)");
+      return;
+    }
+
+    UUID userId = jwtTokenProvider.getUserId(refreshToken);
+    jwtRegistry.invalidateJwtInformationByUserId(userId);
+    log.info("로그아웃 처리 완료 - userId: {}", userId);
+  }
 }
