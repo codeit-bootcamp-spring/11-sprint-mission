@@ -1,4 +1,10 @@
 package com.sprint.mission.discodeit.dto.user;
 
-public class UserOnlineStatusChangedEvent {
+import java.util.UUID;
+
+public record UserOnlineStatusChangedEvent(
+    UUID userId,
+    boolean online
+) {
+
 }

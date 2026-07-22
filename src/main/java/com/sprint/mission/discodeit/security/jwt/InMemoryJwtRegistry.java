@@ -1,5 +1,6 @@
 package com.sprint.mission.discodeit.security.jwt;
 
+import com.sprint.mission.discodeit.dto.user.UserOnlineStatusChangedEvent;
 import com.sprint.mission.discodeit.security.jwt.dto.JwtInformation;
 import java.time.Instant;
 import java.util.ArrayDeque;
@@ -8,6 +9,7 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.annotation.Scheduled;
 
 public class InMemoryJwtRegistry implements JwtRegistry {
@@ -16,17 +18,22 @@ public class InMemoryJwtRegistry implements JwtRegistry {
   private final Map<String, JwtInformation> accessTokenIndex = new ConcurrentHashMap<>();
   private final Map<String, JwtInformation> refreshTokenIndex = new ConcurrentHashMap<>();
   private final int maxActiveJwtCount;
+  private final ApplicationEventPublisher eventPublisher;
 
-  public InMemoryJwtRegistry(int maxActiveJwtCount) {
+  public InMemoryJwtRegistry(int maxActiveJwtCount, ApplicationEventPublisher eventPublisher) {
     this.maxActiveJwtCount = maxActiveJwtCount;
+    this.eventPublisher = eventPublisher;
   }
 
   @Override
   public void registerJwtInformation(JwtInformation jwtInformation) {
+    UUID userId = jwtInformation.userId();
     Queue<JwtInformation> queue = origin.computeIfAbsent(
-        jwtInformation.userId(), id -> new ArrayDeque<>());
+        userId, id -> new ArrayDeque<>());
 
+    boolean wasOffline;
     synchronized (queue) {
+      wasOffline = queue.isEmpty();
       queue.add(jwtInformation);
       indexPut(jwtInformation);
       while (queue.size() > maxActiveJwtCount) {
@@ -36,14 +43,23 @@ public class InMemoryJwtRegistry implements JwtRegistry {
         }
       }
     }
+
+    if (wasOffline) {
+      eventPublisher.publishEvent(new UserOnlineStatusChangedEvent(userId, true));
+    }
   }
 
   @Override
   public void invalidateJwtInformationByUserId(UUID userId) {
     Queue<JwtInformation> queue = origin.remove(userId);
     if (queue != null) {
+      boolean wasOnline;
       synchronized (queue) {
+        wasOnline = !queue.isEmpty();
         queue.forEach(this::indexRemove);
+      }
+      if (wasOnline) {
+        eventPublisher.publishEvent(new UserOnlineStatusChangedEvent(userId, false));
       }
     }
   }
@@ -93,8 +109,11 @@ public class InMemoryJwtRegistry implements JwtRegistry {
   @Override
   public void clearExpiredJwtInformation() {
     Instant now = Instant.now();
-    origin.values().forEach(queue -> {
+    origin.forEach((userId, queue) -> {
+      boolean hadEntries;
+      boolean emptyAfter;
       synchronized (queue) {
+        hadEntries = !queue.isEmpty();
         queue.removeIf(info -> {
           boolean expired = info.expiration().isBefore(now);
           if (expired) {
@@ -102,6 +121,10 @@ public class InMemoryJwtRegistry implements JwtRegistry {
           }
           return expired;
         });
+        emptyAfter = queue.isEmpty();
+      }
+      if (hadEntries && emptyAfter) {
+        eventPublisher.publishEvent(new UserOnlineStatusChangedEvent(userId, false));
       }
     });
     origin.values().removeIf(Queue::isEmpty);

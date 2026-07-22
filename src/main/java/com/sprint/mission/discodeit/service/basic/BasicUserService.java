@@ -112,7 +112,7 @@ public class BasicUserService implements UserService {
   }
 
   @Override
-  @Cacheable(cacheNames = "users")
+  @Cacheable(cacheNames = "users", key = "'all'")
   public List<UserDto> allReadUser() {
     List<User> users = userRepository.findAll();
     Set<UUID> onlineUserIds = getOnlineUserIds();
