@@ -2,6 +2,7 @@ package com.sprint.mission.discodeit.service.basic;
 
 import com.sprint.mission.discodeit.dto.channel.ChannelDto;
 import com.sprint.mission.discodeit.dto.channel.ChannelUpdateRequest;
+import com.sprint.mission.discodeit.dto.channel.PrivateChannelCreatedEvent;
 import com.sprint.mission.discodeit.dto.channel.PrivateChannelRequest;
 import com.sprint.mission.discodeit.dto.channel.PublicChannelRequest;
 import com.sprint.mission.discodeit.dto.user.UserDto;
@@ -24,6 +25,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
@@ -45,6 +47,7 @@ public class BasicChannelService implements ChannelService {
 
   private final UserMapper userMapper;
   private final ChannelMapper channelMapper;
+  private final ApplicationEventPublisher applicationEventPublisher;
 
   @Override
   @Transactional
@@ -67,7 +70,6 @@ public class BasicChannelService implements ChannelService {
 
   @Override
   @Transactional
-  @CacheEvict(cacheNames = "channels", allEntries = true)
   public ChannelDto createPrivateChannel(PrivateChannelRequest request) {
     log.debug("Private 채널 생성 비즈니스 로직 시작 - participantCount: {}", request.participantIds().size());
     Channel channel = new Channel(
@@ -92,6 +94,10 @@ public class BasicChannelService implements ChannelService {
 
       participants.add(userMapper.toDto(user, false));
     });
+
+    applicationEventPublisher.publishEvent(
+        new PrivateChannelCreatedEvent(request.participantIds())
+    );
 
     log.info("Private 채널 생성 완료 - channelId: {}, participantCount: {}", createdChannel.getId(),
         participants.size());
