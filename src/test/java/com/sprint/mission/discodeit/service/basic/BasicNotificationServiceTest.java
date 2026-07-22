@@ -2,9 +2,7 @@ package com.sprint.mission.discodeit.service.basic;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.never;
@@ -13,6 +11,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 
 import com.sprint.mission.discodeit.dto.data.NotificationDto;
 import com.sprint.mission.discodeit.entity.Notification;
+import com.sprint.mission.discodeit.event.message.NotificationCreatedEvent;
 import com.sprint.mission.discodeit.exception.notification.NotificationNotFoundException;
 import com.sprint.mission.discodeit.mapper.NotificationMapper;
 import com.sprint.mission.discodeit.repository.NotificationRepository;
@@ -28,6 +27,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.cache.CacheManager;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -39,6 +39,9 @@ class BasicNotificationServiceTest {
 
   @Mock
   private NotificationMapper notificationMapper;
+
+  @Mock
+  private CacheManager cacheManager;
 
   @Mock
   private ApplicationEventPublisher eventPublisher;
@@ -195,5 +198,24 @@ class BasicNotificationServiceTest {
 
     // then
     verify(notificationRepository).saveAll(any(List.class));
+  }
+
+  @Test
+  @DisplayName("알림 생성 시 수신자별로 NotificationCreatedEvent 발행")
+  void create_PublishesNotificationCreatedEventPerReceiver() {
+    // given
+    Set<UUID> receiverIds = Set.of(receiverId);
+    String title = "Test Title";
+    String content = "Test Content";
+
+    given(notificationRepository.saveAll(anyList())).willReturn(List.of(notification));
+    given(notificationMapper.toDto(notification)).willReturn(notificationDto);
+
+    //when
+    notificationService.create(receiverIds, title, content);
+
+    //then
+    verify(eventPublisher).publishEvent(any(NotificationCreatedEvent.class));
+
   }
 }
