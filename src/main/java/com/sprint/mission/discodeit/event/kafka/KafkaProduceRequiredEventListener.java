@@ -4,41 +4,50 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.mission.discodeit.event.MessageCreatedEvent;
 import com.sprint.mission.discodeit.event.RoleUpdatedEvent;
+import com.sprint.mission.discodeit.event.S3UploadFailedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.event.EventListener;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
 @Slf4j
-@Component
 @RequiredArgsConstructor
+@Component
 public class KafkaProduceRequiredEventListener {
 
   private final KafkaTemplate<String, String> kafkaTemplate;
   private final ObjectMapper objectMapper;
 
   @Async("eventTaskExecutor")
-  @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+  @TransactionalEventListener
   public void on(MessageCreatedEvent event) {
-    publish(KafkaTopics.MESSAGE_CREATED, MessageCreatedMessage.from(event));
+    try {
+      kafkaTemplate.send(KafkaTopics.MESSAGE_CREATED, objectMapper.writeValueAsString(event));
+    } catch (JsonProcessingException e) {
+      log.error("Kafka 발행 실패: topic={}", KafkaTopics.MESSAGE_CREATED, e);
+    }
   }
 
   @Async("eventTaskExecutor")
-  @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+  @TransactionalEventListener
   public void on(RoleUpdatedEvent event) {
-    publish(KafkaTopics.ROLE_UPDATED, RoleUpdatedMessage.from(event));
+    try {
+      kafkaTemplate.send(KafkaTopics.ROLE_UPDATED, objectMapper.writeValueAsString(event));
+    } catch (JsonProcessingException e) {
+      log.error("Kafka 발행 실패: topic={}", KafkaTopics.ROLE_UPDATED, e);
+    }
   }
 
-  private void publish(String topic, Object payload) {
+  @Async("eventTaskExecutor")
+  @EventListener
+  public void on(S3UploadFailedEvent event) {
     try {
-      String json = objectMapper.writeValueAsString(payload);
-      kafkaTemplate.send(topic, json);
-      log.debug("Kafka 메시지 발행 완료: topic={}", topic);
+      kafkaTemplate.send(KafkaTopics.S3_UPLOAD_FAILED, objectMapper.writeValueAsString(event));
     } catch (JsonProcessingException e) {
-      log.error("Kafka 메시지 직렬화 실패: topic={}", topic, e);
+      log.error("Kafka 발행 실패: topic={}", KafkaTopics.S3_UPLOAD_FAILED, e);
     }
   }
 }

@@ -12,6 +12,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.entity.Role;
 import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.event.MessageCreatedEvent;
+import com.sprint.mission.discodeit.event.RoleUpdatedEvent;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.service.NotificationService;
 import java.util.List;
@@ -48,10 +50,8 @@ class NotificationRequiredTopicListenerTest {
     UUID subscriber1Id = UUID.randomUUID();
     UUID subscriber2Id = UUID.randomUUID();
 
-    MessageCreatedMessage message = new MessageCreatedMessage(
-        channelId, authorId, "작성자", "메시지 내용", "일반채널"
-    );
-    String payload = objectMapper.writeValueAsString(message);
+    String payload = objectMapper.writeValueAsString(
+        new MessageCreatedEvent(channelId, authorId, "작성자", "메시지 내용", "일반채널"));
 
     ReadStatus rs1 = mockReadStatusWithUserId(subscriber1Id);
     ReadStatus rs2 = mockReadStatusWithUserId(subscriber2Id);
@@ -75,10 +75,8 @@ class NotificationRequiredTopicListenerTest {
     UUID channelId = UUID.randomUUID();
     UUID authorId = UUID.randomUUID();
 
-    MessageCreatedMessage message = new MessageCreatedMessage(
-        channelId, authorId, "작성자", "메시지 내용", "일반채널"
-    );
-    String payload = objectMapper.writeValueAsString(message);
+    String payload = objectMapper.writeValueAsString(
+        new MessageCreatedEvent(channelId, authorId, "작성자", "메시지 내용", "일반채널"));
 
     given(readStatusRepository.findAllByChannelIdAndNotificationEnabledTrueAndUserIdNot(
         channelId, authorId)).willReturn(List.of());
@@ -98,10 +96,8 @@ class NotificationRequiredTopicListenerTest {
     UUID authorId = UUID.randomUUID();
     UUID subscriberId = UUID.randomUUID();
 
-    MessageCreatedMessage message = new MessageCreatedMessage(
-        channelId, authorId, "홍길동", "안녕하세요", "공지채널"
-    );
-    String payload = objectMapper.writeValueAsString(message);
+    String payload = objectMapper.writeValueAsString(
+        new MessageCreatedEvent(channelId, authorId, "홍길동", "안녕하세요", "공지채널"));
 
     ReadStatus rs = mockReadStatusWithUserId(subscriberId);
     given(readStatusRepository.findAllByChannelIdAndNotificationEnabledTrueAndUserIdNot(
@@ -119,8 +115,8 @@ class NotificationRequiredTopicListenerTest {
   void onRoleUpdated_CreatesNotification() throws Exception {
     // given
     UUID userId = UUID.randomUUID();
-    RoleUpdatedMessage message = new RoleUpdatedMessage(userId, Role.USER, Role.ADMIN);
-    String payload = objectMapper.writeValueAsString(message);
+    String payload = objectMapper.writeValueAsString(
+        new RoleUpdatedEvent(userId, Role.USER, Role.ADMIN));
 
     // when
     listener.onRoleUpdated(payload);
@@ -134,8 +130,8 @@ class NotificationRequiredTopicListenerTest {
   void onRoleUpdated_ContentFormat() throws Exception {
     // given
     UUID userId = UUID.randomUUID();
-    RoleUpdatedMessage message = new RoleUpdatedMessage(userId, Role.ADMIN, Role.USER);
-    String payload = objectMapper.writeValueAsString(message);
+    String payload = objectMapper.writeValueAsString(
+        new RoleUpdatedEvent(userId, Role.ADMIN, Role.USER));
 
     // when
     listener.onRoleUpdated(payload);
