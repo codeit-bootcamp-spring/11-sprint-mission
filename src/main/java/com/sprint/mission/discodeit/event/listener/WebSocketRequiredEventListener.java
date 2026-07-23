@@ -1,6 +1,6 @@
 package com.sprint.mission.discodeit.event.listener;
 
-import com.sprint.mission.discodeit.event.MessageCreatedEvent;
+import com.sprint.mission.discodeit.dto.message.MessageDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
@@ -14,9 +14,9 @@ public class WebSocketRequiredEventListener {
   private final SimpMessagingTemplate messagingTemplate;
 
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-  public void handleMessage(MessageCreatedEvent event) {
+  public void handleMessage(MessageDto message) {
     messagingTemplate.convertAndSend(
-        "/sub/channels." + event.channelId() + ".messages", event
+        "/sub/channels." + message.channelId() + ".messages", message
     );
   }
 }
