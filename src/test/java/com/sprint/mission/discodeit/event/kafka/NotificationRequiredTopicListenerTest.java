@@ -14,7 +14,9 @@ import com.sprint.mission.discodeit.entity.Role;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.event.MessageCreatedEvent;
 import com.sprint.mission.discodeit.event.RoleUpdatedEvent;
+import com.sprint.mission.discodeit.event.S3UploadFailedEvent;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
+import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.NotificationService;
 import java.util.List;
 import java.util.UUID;
@@ -31,6 +33,9 @@ class NotificationRequiredTopicListenerTest {
 
   @Mock
   private ReadStatusRepository readStatusRepository;
+
+  @Mock
+  private UserRepository userRepository;
 
   @Mock
   private NotificationService notificationService;
@@ -59,7 +64,7 @@ class NotificationRequiredTopicListenerTest {
         channelId, authorId)).willReturn(List.of(rs1, rs2));
 
     // when
-    listener.onMessageCreated(payload);
+    listener.onMessageCreatedEvent(payload);
 
     // then
     String expectedTitle = "작성자 (#일반채널)";
@@ -82,7 +87,7 @@ class NotificationRequiredTopicListenerTest {
         channelId, authorId)).willReturn(List.of());
 
     // when
-    listener.onMessageCreated(payload);
+    listener.onMessageCreatedEvent(payload);
 
     // then
     verify(notificationService, never()).create(any(), any(), any());
@@ -104,7 +109,7 @@ class NotificationRequiredTopicListenerTest {
         channelId, authorId)).willReturn(List.of(rs));
 
     // when
-    listener.onMessageCreated(payload);
+    listener.onMessageCreatedEvent(payload);
 
     // then
     verify(notificationService).create(subscriberId, "홍길동 (#공지채널)", "안녕하세요");
@@ -119,7 +124,7 @@ class NotificationRequiredTopicListenerTest {
         new RoleUpdatedEvent(userId, Role.USER, Role.ADMIN));
 
     // when
-    listener.onRoleUpdated(payload);
+    listener.onRoleUpdatedEvent(payload);
 
     // then
     verify(notificationService).create(userId, "권한이 변경되었습니다.", "USER -> ADMIN");
@@ -134,10 +139,52 @@ class NotificationRequiredTopicListenerTest {
         new RoleUpdatedEvent(userId, Role.ADMIN, Role.USER));
 
     // when
-    listener.onRoleUpdated(payload);
+    listener.onRoleUpdatedEvent(payload);
 
     // then
     verify(notificationService).create(userId, "권한이 변경되었습니다.", "ADMIN -> USER");
+  }
+
+  @Test
+  @DisplayName("S3 업로드 실패 시 모든 관리자에게 알림이 생성된다")
+  void onS3UploadFailed_NotifiesAdmins() throws Exception {
+    // given
+    UUID admin1Id = UUID.randomUUID();
+    UUID admin2Id = UUID.randomUUID();
+    UUID binaryContentId = UUID.randomUUID();
+
+    User admin1 = mock(User.class);
+    given(admin1.getId()).willReturn(admin1Id);
+    User admin2 = mock(User.class);
+    given(admin2.getId()).willReturn(admin2Id);
+    given(userRepository.findAllByRole(Role.ADMIN)).willReturn(List.of(admin1, admin2));
+
+    String payload = objectMapper.writeValueAsString(
+        new S3UploadFailedEvent("req-001", binaryContentId, "연결 실패"));
+
+    // when
+    listener.onS3UploadFailedEvent(payload);
+
+    // then
+    verify(notificationService).create(eq(admin1Id), eq("S3 업로드 실패"), any());
+    verify(notificationService).create(eq(admin2Id), eq("S3 업로드 실패"), any());
+  }
+
+  @Test
+  @DisplayName("S3 업로드 실패 시 관리자가 없으면 알림이 생성되지 않는다")
+  void onS3UploadFailed_NoAdmins_NoNotifications() throws Exception {
+    // given
+    UUID binaryContentId = UUID.randomUUID();
+    given(userRepository.findAllByRole(Role.ADMIN)).willReturn(List.of());
+
+    String payload = objectMapper.writeValueAsString(
+        new S3UploadFailedEvent("req-001", binaryContentId, "연결 실패"));
+
+    // when
+    listener.onS3UploadFailedEvent(payload);
+
+    // then
+    verify(notificationService, never()).create(any(), any(), any());
   }
 
   private ReadStatus mockReadStatusWithUserId(UUID userId) {
