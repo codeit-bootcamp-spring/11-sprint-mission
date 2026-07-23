@@ -46,7 +46,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
   private AuthorizationChannelInterceptor authorizationChannelInterceptor() {
     AuthorizationManager<Message<?>> authorizationManager =
         MessageMatcherDelegatingAuthorizationManager.builder()
-            .anyMessage().hasRole(Role.USER.name())
+            .anyMessage()
+            .hasAnyRole(Role.USER.name(), Role.CHANNEL_MANAGER.name(), Role.ADMIN.name())
             .build();
     return new AuthorizationChannelInterceptor(authorizationManager);
   }
