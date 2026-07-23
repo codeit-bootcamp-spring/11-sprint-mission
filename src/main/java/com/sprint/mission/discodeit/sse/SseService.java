@@ -55,7 +55,7 @@ public class SseService {
                 .forEach(emitters -> emitters.forEach(emitter -> sendToEmitter(emitter, message)));
     }
 
-    @Scheduled(fixedDelay = 1000 * 60 * 30)
+    @Scheduled(fixedDelay = 1000 * 20)
     public void cleanup() {
         log.debug("SSE emitter 정리 시작");
         sseEmitterRepository.findAll().forEach((receiverId, emitters) ->
