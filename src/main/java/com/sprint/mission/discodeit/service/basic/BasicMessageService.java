@@ -79,7 +79,8 @@ public class BasicMessageService implements MessageService {
               file.getContentType()
           );
           binaryContentRepository.save(bc);
-          eventPublisher.publishEvent(new BinaryContentCreatedEvent(bc.getId(), file.getBytes()));
+          eventPublisher.publishEvent(
+              new BinaryContentCreatedEvent(bc.getId(), file.getBytes(), author.getId()));
           message.addAttachment(bc);
           log.debug("첨부파일 메타데이터 저장 완료 - fileId: {}, fileName: {}", bc.getId(), bc.getFileName());
         } catch (Exception e) {
