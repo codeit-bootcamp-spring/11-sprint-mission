@@ -2,6 +2,7 @@ package com.sprint.mission.discodeit.service.basic;
 
 import com.sprint.mission.discodeit.dto.notification.NotificationDto;
 import com.sprint.mission.discodeit.entity.Notification;
+import com.sprint.mission.discodeit.event.NotificationCreatedEvent;
 import com.sprint.mission.discodeit.exception.notification.NotificationAccessDeniedException;
 import com.sprint.mission.discodeit.exception.notification.NotificationNotFoundException;
 import com.sprint.mission.discodeit.repository.NotificationRepository;
@@ -11,6 +12,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class BasicNotificationService implements NotificationService {
 
   private final NotificationRepository notificationRepository;
+  private final ApplicationEventPublisher eventPublisher;
 
 
   @Override
@@ -27,8 +30,11 @@ public class BasicNotificationService implements NotificationService {
   public NotificationDto create(UUID receiverId, String title, String content) {
     Notification notification = new Notification(receiverId, title, content);
     Notification saved = notificationRepository.save(notification);
-    return new NotificationDto(saved.getId(), saved.getCreatedAt(), saved.getReceiverId(),
+    NotificationDto dto = new NotificationDto(saved.getId(), saved.getCreatedAt(),
+        saved.getReceiverId(),
         saved.getTitle(), saved.getContent());
+    eventPublisher.publishEvent(new NotificationCreatedEvent(dto, saved.getCreatedAt()));
+    return dto;
   }
 
   @Override
