@@ -86,7 +86,7 @@ public class S3BinaryContentStorage implements BinaryContentStorage {
     log.error("S3 파일 업로드 최종 실패 - id: {}, 원인: {}", binaryContentId, e.getMessage());
     String requestId = MDC.get("requestId");
     eventPublisher.publishEvent(new S3UploadFailedEvent(requestId, binaryContentId, e.getMessage()));
-    return binaryContentId;
+    throw e;
   }
 
   @Override
