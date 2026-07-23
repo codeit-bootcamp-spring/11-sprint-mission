@@ -4,15 +4,21 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.JOSEException;
 import com.sprint.mission.discodeit.dto.data.JwtDto;
 import com.sprint.mission.discodeit.dto.data.JwtInformation;
+import com.sprint.mission.discodeit.dto.data.UserDto;
+import com.sprint.mission.discodeit.event.message.UserUpdatedEvent;
 import com.sprint.mission.discodeit.exception.ErrorResponse;
 import com.sprint.mission.discodeit.security.DiscodeitUserDetails;
+import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.time.Instant;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
@@ -26,6 +32,7 @@ public class JwtLoginSuccessHandler implements AuthenticationSuccessHandler {
   private final ObjectMapper objectMapper;
   private final JwtTokenProvider tokenProvider;
   private final JwtRegistry jwtRegistry;
+  private final ApplicationEventPublisher eventPublisher;
 
   @Override
   public void onAuthenticationSuccess(HttpServletRequest request,
@@ -60,6 +67,16 @@ public class JwtLoginSuccessHandler implements AuthenticationSuccessHandler {
             )
         );
 
+        UserDto onlineUserDto = new UserDto(
+                userDetails.getUserDto().id(),
+                userDetails.getUserDto().username(),
+                userDetails.getUserDto().email(),
+                userDetails.getUserDto().profile(),
+                true,
+                userDetails.getUserDto().role()
+        );
+        eventPublisher.publishEvent(new UserUpdatedEvent(onlineUserDto, Instant.now()));
+
         log.info("JWT access and refresh tokens issued for user: {}", userDetails.getUsername());
 
       } catch (JOSEException e) {
@@ -69,6 +86,7 @@ public class JwtLoginSuccessHandler implements AuthenticationSuccessHandler {
             new RuntimeException("Token generation failed"),
             HttpServletResponse.SC_INTERNAL_SERVER_ERROR
         );
+
         response.getWriter().write(objectMapper.writeValueAsString(errorResponse));
       }
     } else {
@@ -80,5 +98,4 @@ public class JwtLoginSuccessHandler implements AuthenticationSuccessHandler {
       response.getWriter().write(objectMapper.writeValueAsString(errorResponse));
     }
   }
-
 }

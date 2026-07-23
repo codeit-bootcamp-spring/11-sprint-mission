@@ -7,6 +7,7 @@ import com.sprint.mission.discodeit.dto.request.RoleUpdateRequest;
 import com.sprint.mission.discodeit.entity.Role;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.event.message.RoleUpdatedEvent;
+import com.sprint.mission.discodeit.event.message.UserUpdatedEvent;
 import com.sprint.mission.discodeit.exception.DiscodeitException;
 import com.sprint.mission.discodeit.exception.ErrorCode;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
@@ -16,6 +17,8 @@ import com.sprint.mission.discodeit.security.DiscodeitUserDetails;
 import com.sprint.mission.discodeit.security.jwt.JwtRegistry;
 import com.sprint.mission.discodeit.security.jwt.JwtTokenProvider;
 import com.sprint.mission.discodeit.service.AuthService;
+
+import java.time.Instant;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -61,7 +64,9 @@ public class BasicAuthService implements AuthService {
         new RoleUpdatedEvent(user.getId(), previousRole, newRole, user.getUpdatedAt())
     );
 
-    return userMapper.toDto(user);
+    UserDto dto = userMapper.toDto(user);
+    eventPublisher.publishEvent(new UserUpdatedEvent(dto, Instant.now()));
+    return dto;
   }
 
   @Override

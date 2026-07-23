@@ -51,6 +51,21 @@ public class SseEventListener {
         routeChannelEvent("channels.deleted", event.getData());
     }
 
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    public void on(UserCreatedEvent event) {
+        sseService.broadcast("users.created", event.getData());
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    public void on(UserUpdatedEvent event) {
+        sseService.broadcast("users.updated", event.getData());
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    public void on(UserDeletedEvent event) {
+        sseService.broadcast("users.deleted", event.getData());
+    }
+
     private void routeChannelEvent(String eventName, ChannelDto channel) {
         if (channel.type() == ChannelType.PUBLIC) {
             sseService.broadcast(eventName, channel);
