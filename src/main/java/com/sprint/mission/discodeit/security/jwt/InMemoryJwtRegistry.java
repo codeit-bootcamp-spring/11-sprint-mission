@@ -77,22 +77,22 @@ public class InMemoryJwtRegistry implements JwtRegistry {
     });
   }
 
-  @Scheduled(fixedDelay = 1000 * 60 * 5)
+  @Scheduled(fixedDelayString = "${discodeit.jwt.cleanup-interval}")
   @Override
   public void clearExpiredJwtInformation() {
     Instant now = Instant.now();
-    origin.forEach((userId, queue) -> {
-      queue.removeIf(info -> {
-        if (info.getExpiration().isBefore(now)) {
-          removeTokenIndex(info.getAccessToken(), info.getRefreshToken());
-          return true;
-        }
-        return false;
-      });
-      if (queue.isEmpty()) {
-        origin.remove(userId);
-      }
-    });
+    origin.keySet().forEach(userId ->
+        origin.computeIfPresent(userId, (key, queue) -> {
+          queue.removeIf(info -> {
+            if (info.getExpiration().isBefore(now)) {
+              removeTokenIndex(info.getAccessToken(), info.getRefreshToken());
+              return true;
+            }
+            return false;
+          });
+          return queue.isEmpty() ? null : queue;
+        })
+    );
   }
 
   private void addTokenIndex(String accessToken, String refreshToken) {

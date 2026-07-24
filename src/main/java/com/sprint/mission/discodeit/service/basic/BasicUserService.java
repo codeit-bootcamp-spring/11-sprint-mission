@@ -6,18 +6,21 @@ import com.sprint.mission.discodeit.dto.user.UserResponse;
 import com.sprint.mission.discodeit.dto.user.UserUpdateRequest;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.event.binarycontent.BinaryContentCreatedEvent;
 import com.sprint.mission.discodeit.exception.user.DuplicateUserException;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.mapper.UserMapper;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.UserService;
-import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -32,9 +35,10 @@ public class BasicUserService implements UserService {
   private final UserRepository userRepository;
   private final ReadStatusRepository readStatusRepository;
   private final UserMapper mapper;
-  private final BinaryContentStorage binaryContentStorage;
+  private final ApplicationEventPublisher eventPublisher;
   private final PasswordEncoder passwordEncoder;
 
+  @CacheEvict(cacheNames = "users", allEntries = true)
   @Transactional
   @Override
   public UserResponse createUser(UserCreateRequest userCreateRequest,
@@ -52,7 +56,7 @@ public class BasicUserService implements UserService {
     if (binaryContentCreateRequest.isPresent()) {
       BinaryContentCreateRequest req = binaryContentCreateRequest.get();
       profile = new BinaryContent(req.fileName(), req.size(), req.contentType());
-      this.binaryContentStorage.put(profile.getId(), req.bytes());
+      this.eventPublisher.publishEvent(new BinaryContentCreatedEvent(profile.getId(), req.bytes()));
     }
 
     User user = new User(
@@ -78,6 +82,7 @@ public class BasicUserService implements UserService {
     return this.mapper.toResponse(user);
   }
 
+  @Cacheable(cacheNames = "users")
   @Override
   public List<UserResponse> findAll() {
     log.debug("user find-all trial");
@@ -89,6 +94,7 @@ public class BasicUserService implements UserService {
         .toList();
   }
 
+  @CacheEvict(cacheNames = "users", allEntries = true)
   @PreAuthorize("hasRole('ADMIN') or authentication.principal.user.id == #id")
   @Transactional
   @Override
@@ -126,7 +132,7 @@ public class BasicUserService implements UserService {
     if (binaryContentCreateRequest.isPresent()) {
       BinaryContentCreateRequest req = binaryContentCreateRequest.get();
       profile = new BinaryContent(req.fileName(), req.size(), req.contentType());
-      this.binaryContentStorage.put(profile.getId(), req.bytes());
+      this.eventPublisher.publishEvent(new BinaryContentCreatedEvent(profile.getId(), req.bytes()));
     }
 
     user.update(username, email, password, profile);
@@ -135,6 +141,7 @@ public class BasicUserService implements UserService {
     return this.mapper.toResponse(user);
   }
 
+  @CacheEvict(cacheNames = "users", allEntries = true)
   @PreAuthorize("hasRole('ADMIN') or authentication.principal.user.id == #id")
   @Transactional
   @Override

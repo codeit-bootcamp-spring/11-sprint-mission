@@ -24,6 +24,8 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,6 +42,7 @@ public class BasicChannelService implements ChannelService {
   private final MessageRepository messageRepository;
   private final ChannelMapper mapper;
 
+  @CacheEvict(cacheNames = "channels", allEntries = true)
   @PreAuthorize("hasRole('CHANNEL_MANAGER')")
   @Transactional
   @Override
@@ -59,6 +62,7 @@ public class BasicChannelService implements ChannelService {
   }
 
 
+  @CacheEvict(cacheNames = "channels", allEntries = true)
   @Transactional
   @Override
   public ChannelResponse createPrivateChannel(
@@ -79,7 +83,7 @@ public class BasicChannelService implements ChannelService {
     this.channelRepository.save(channel);
 
     List<ReadStatus> readStatuses = participants.stream()
-        .map(user -> new ReadStatus(user, channel, Instant.now()))
+        .map(user -> new ReadStatus(user, channel, Instant.now(), true))
         .toList();
 
     this.readStatusRepository.saveAll(readStatuses);
@@ -106,6 +110,7 @@ public class BasicChannelService implements ChannelService {
     return this.mapper.toResponse(channel, participants, lastMessageAt);
   }
 
+  @Cacheable(cacheNames = "channels", key = "#userId")
   @Override
   public List<ChannelResponse> findAllByUserId(UUID userId) {
     log.debug("channel find-all-by-user-id trial: userId={}", userId);
@@ -138,6 +143,7 @@ public class BasicChannelService implements ChannelService {
         .toList();
   }
 
+  @CacheEvict(cacheNames = "channels", allEntries = true)
   @PreAuthorize("hasRole('CHANNEL_MANAGER')")
   @Transactional
   @Override
@@ -171,6 +177,7 @@ public class BasicChannelService implements ChannelService {
     return this.mapper.toResponse(channel, participants, lastMessageAt);
   }
 
+  @CacheEvict(cacheNames = "channels", allEntries = true)
   @PreAuthorize("hasRole('CHANNEL_MANAGER')")
   @Transactional
   @Override

@@ -3,16 +3,19 @@ package com.sprint.mission.discodeit.service.basic;
 import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentCreateRequest;
 import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentResponse;
 import com.sprint.mission.discodeit.entity.BinaryContent;
+import com.sprint.mission.discodeit.entity.BinaryContentStatus;
+import com.sprint.mission.discodeit.event.binarycontent.BinaryContentCreatedEvent;
 import com.sprint.mission.discodeit.exception.binarycontent.BinaryContentNotFoundException;
 import com.sprint.mission.discodeit.mapper.BinaryContentMapper;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.service.BinaryContentService;
-import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
@@ -23,7 +26,7 @@ public class BasicBinaryContentService implements BinaryContentService {
 
   private final BinaryContentRepository binaryContentRepository;
   private final BinaryContentMapper mapper;
-  private final BinaryContentStorage binaryContentStorage;
+  private final ApplicationEventPublisher eventPublisher;
 
   @Transactional
   @Override
@@ -33,7 +36,8 @@ public class BasicBinaryContentService implements BinaryContentService {
     BinaryContent binaryContent = new BinaryContent(req.fileName(), req.size(), req.contentType());
     this.binaryContentRepository.save(binaryContent);
 
-    this.binaryContentStorage.put(binaryContent.getId(), req.bytes());
+    this.eventPublisher.publishEvent(
+        new BinaryContentCreatedEvent(binaryContent.getId(), req.bytes()));
 
     log.info("binary-content create success: id={}, file-name={}, content-type={}, size={}",
         binaryContent.getId(), binaryContent.getFileName(), binaryContent.getContentType(),
@@ -74,5 +78,17 @@ public class BasicBinaryContentService implements BinaryContentService {
     this.binaryContentRepository.delete(binaryContent);
 
     log.info("binary-content delete success: id={}", binaryContent.getId());
+  }
+
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
+  @Override
+  public void updateStatus(UUID id, BinaryContentStatus status) {
+    log.debug("binary-content update-status trial: id={}, status={}", id, status);
+    BinaryContent binaryContent = this.binaryContentRepository.findById(id)
+        .orElseThrow(() -> BinaryContentNotFoundException.withId(id));
+
+    binaryContent.updateStatus(status);
+
+    log.info("binary-content update-status success: id={}, status={}", id, status);
   }
 }

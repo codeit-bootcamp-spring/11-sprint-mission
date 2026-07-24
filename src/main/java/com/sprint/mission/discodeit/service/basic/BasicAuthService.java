@@ -2,7 +2,9 @@ package com.sprint.mission.discodeit.service.basic;
 
 import com.sprint.mission.discodeit.dto.auth.UserRoleUpdateRequest;
 import com.sprint.mission.discodeit.dto.user.UserResponse;
+import com.sprint.mission.discodeit.entity.Role;
 import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.event.notification.RoleUpdatedEvent;
 import com.sprint.mission.discodeit.exception.auth.InvalidRefreshTokenException;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.mapper.UserMapper;
@@ -16,6 +18,8 @@ import java.time.Instant;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,7 +34,9 @@ public class BasicAuthService implements AuthService {
   private final UserMapper mapper;
   private final JwtTokenProvider jwtTokenProvider;
   private final JwtRegistry jwtRegistry;
+  private final ApplicationEventPublisher eventPublisher;
 
+  @CacheEvict(cacheNames = "users", allEntries = true)
   @PreAuthorize("hasRole('ADMIN')")
   @Transactional
   @Override
@@ -44,8 +50,12 @@ public class BasicAuthService implements AuthService {
     log.debug("auth update-role trial: userId={}, newRole={}", request.userId(), request.newRole());
     User user = userRepository.findById(request.userId())
         .orElseThrow(() -> UserNotFoundException.withId(request.userId()));
+    Role oldRole = user.getRole();
     user.updateRole(request.newRole());
     jwtRegistry.invalidateJwtInformationByUserId(user.getId());
+
+    eventPublisher.publishEvent(new RoleUpdatedEvent(user.getId(), oldRole, request.newRole()));
+
     log.info("auth update-role success: userId={}, newRole={}", user.getId(), user.getRole());
     return mapper.toResponse(user);
   }
@@ -55,7 +65,7 @@ public class BasicAuthService implements AuthService {
     if (refreshToken == null
         || !jwtTokenProvider.validateRefreshToken(refreshToken)
         || !jwtRegistry.hasActiveJwtInformationByRefreshToken(refreshToken)) {
-      throw InvalidRefreshTokenException.withToken(refreshToken != null ? refreshToken : "");
+      throw InvalidRefreshTokenException.withInvalidToken();
     }
 
     UUID userId = UUID.fromString(jwtTokenProvider.getSubject(refreshToken));
