@@ -13,6 +13,7 @@ import com.sprint.mission.discodeit.security.jwt.filter.JwtAuthenticationFilter;
 import com.sprint.mission.discodeit.security.jwt.handler.JwtLoginSuccessHandler;
 import com.sprint.mission.discodeit.security.jwt.handler.JwtLogoutHandler;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -134,8 +135,11 @@ public class SecurityConfig {
     return new JwtAuthenticationFilter(jwtTokenProvider, jwtRegistry);
   }
 
+  @Value("${discodeit.jwt.max-active-sessions}")
+  private int maxActiveSessions;
+
   @Bean
   public JwtRegistry jwtRegistry() {
-    return new InMemoryJwtRegistry(1);
+    return new InMemoryJwtRegistry(maxActiveSessions);
   }
 }

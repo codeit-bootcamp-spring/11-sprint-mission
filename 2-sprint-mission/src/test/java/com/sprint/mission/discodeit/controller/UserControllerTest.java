@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.BDDMockito.willThrow;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
@@ -25,12 +26,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(UserController.class)
 @ActiveProfiles("test")
+@WithMockUser(roles = {"USER", "ADMIN"})
 class UserControllerTest {
 
   @Autowired
@@ -89,7 +92,8 @@ class UserControllerTest {
     mockMvc.perform(multipart("/api/users")
             .file(userCreateRequestPart)
             .file(profilePart)
-            .contentType(MediaType.MULTIPART_FORM_DATA_VALUE))
+            .contentType(MediaType.MULTIPART_FORM_DATA_VALUE)
+            .with(csrf()))
         .andExpect(status().isCreated())
         .andExpect(jsonPath("$.id").value(userId.toString()))
         .andExpect(jsonPath("$.username").value("testuser"))
@@ -118,7 +122,8 @@ class UserControllerTest {
     // When & Then
     mockMvc.perform(multipart("/api/users")
             .file(userCreateRequestPart)
-            .contentType(MediaType.MULTIPART_FORM_DATA_VALUE))
+            .contentType(MediaType.MULTIPART_FORM_DATA_VALUE)
+            .with(csrf()))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.code").value("COMMON-002"))
         .andExpect(jsonPath("$.details.username").exists())
@@ -131,6 +136,7 @@ class UserControllerTest {
   void create_unsupportedMediaType_returnsError() throws Exception {
     // When & Then
     mockMvc.perform(post("/api/users")
+            .with(csrf())
             .contentType(MediaType.APPLICATION_XML_VALUE)
             .content("<xml>test</xml>"))
         .andExpect(status().isUnsupportedMediaType())
@@ -190,7 +196,8 @@ class UserControllerTest {
             .with(request -> {
               request.setMethod("PATCH");
               return request;
-            }))
+            })
+            .with(csrf()))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.id").value(userId.toString()))
         .andExpect(jsonPath("$.username").value("updateduser"))
@@ -235,7 +242,8 @@ class UserControllerTest {
             .with(request -> {
               request.setMethod("PATCH");
               return request;
-            }))
+            })
+            .with(csrf()))
         .andExpect(status().isNotFound())
         .andExpect(jsonPath("$.code").value("USER-001"))
         .andExpect(jsonPath("$.message").value("존재하지 않는 유저입니다."));
@@ -251,6 +259,7 @@ class UserControllerTest {
 
     // When & Then
     mockMvc.perform(delete("/api/users/{userId}", userId)
+            .with(csrf())
             .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isNoContent());
   }
@@ -265,6 +274,7 @@ class UserControllerTest {
 
     // When & Then
     mockMvc.perform(delete("/api/users/{userId}", nonExistentUserId)
+            .with(csrf())
             .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isNotFound())
         .andExpect(jsonPath("$.code").value("USER-001"))

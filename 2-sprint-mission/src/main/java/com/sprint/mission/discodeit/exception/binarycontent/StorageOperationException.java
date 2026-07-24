@@ -8,6 +8,14 @@ public class StorageOperationException extends BinaryContentException {
     super(errorCode);
   }
 
+  private StorageOperationException(ErrorCode errorCode, Throwable cause) {
+    super(errorCode, cause);
+  }
+
+  public static StorageOperationException uploadFailed(Throwable cause) {
+    return new StorageOperationException(ErrorCode.FILE_UPLOAD_FAILED, cause);
+  }
+
   public static StorageOperationException uploadFailed() {
     return new StorageOperationException(ErrorCode.FILE_UPLOAD_FAILED);
   }

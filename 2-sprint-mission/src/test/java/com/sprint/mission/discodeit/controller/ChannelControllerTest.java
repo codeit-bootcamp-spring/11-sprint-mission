@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.BDDMockito.willThrow;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -13,12 +14,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.navercorp.fixturemonkey.FixtureMonkey;
 import com.sprint.mission.discodeit.dto.ChannelDto;
 import com.sprint.mission.discodeit.dto.UserDto;
 import com.sprint.mission.discodeit.entity.ChannelType;
 import com.sprint.mission.discodeit.exception.channel.ChannelNotFoundException;
 import com.sprint.mission.discodeit.exception.channel.PrivateChannelUpdateException;
 import com.sprint.mission.discodeit.service.ChannelService;
+import com.sprint.mission.discodeit.support.FixtureMonkeyFactory;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,12 +31,14 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(ChannelController.class)
 @ActiveProfiles("test")
+@WithMockUser(roles = {"USER", "CHANNEL_MANAGER", "ADMIN"})
 class ChannelControllerTest {
 
   @Autowired
@@ -70,6 +75,7 @@ class ChannelControllerTest {
 
     // When & Then
     mockMvc.perform(post("/api/channels/public")
+            .with(csrf())
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isCreated())
@@ -90,6 +96,7 @@ class ChannelControllerTest {
 
     // When & Then
     mockMvc.perform(post("/api/channels/public")
+            .with(csrf())
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(invalidRequest)))
         .andExpect(status().isBadRequest())
@@ -131,6 +138,7 @@ class ChannelControllerTest {
 
     // When & Then
     mockMvc.perform(post("/api/channels/private")
+            .with(csrf())
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isCreated())
@@ -165,6 +173,7 @@ class ChannelControllerTest {
 
     // When & Then
     mockMvc.perform(patch("/api/channels/{channelId}", channelId)
+            .with(csrf())
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isOk())
@@ -185,6 +194,7 @@ class ChannelControllerTest {
 
     // When & Then
     mockMvc.perform(patch("/api/channels/{channelId}", nonExistentChannelId)
+            .with(csrf())
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isNotFound())
@@ -204,6 +214,7 @@ class ChannelControllerTest {
 
     // When & Then
     mockMvc.perform(patch("/api/channels/{channelId}", privateChannelId)
+            .with(csrf())
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isForbidden())
@@ -221,6 +232,7 @@ class ChannelControllerTest {
 
     // When & Then
     mockMvc.perform(delete("/api/channels/{channelId}", channelId)
+            .with(csrf())
             .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isNoContent());
   }
@@ -235,6 +247,7 @@ class ChannelControllerTest {
 
     // When & Then
     mockMvc.perform(delete("/api/channels/{channelId}", nonExistentChannelId)
+            .with(csrf())
             .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isNotFound())
         .andExpect(jsonPath("$.code").value("CHANNEL-001"))
@@ -250,25 +263,18 @@ class ChannelControllerTest {
     UUID channelId1 = UUID.randomUUID();
     UUID channelId2 = UUID.randomUUID();
 
+    FixtureMonkey fixture = FixtureMonkeyFactory.get();
+
     List<ChannelDto.Response> channels = List.of(
-        ChannelDto.Response.builder()
-            .id(channelId1)
-            .type(ChannelType.PUBLIC)
-            .name("public-channel")
-            .description("공개 채널 설명")
-            .participants(new ArrayList<>())
-            .lastMessageAt(Instant.now())
-            .build(),
-        ChannelDto.Response.builder()
-            .id(channelId2)
-            .type(ChannelType.PRIVATE)
-            .name(null)
-            .description(null)
-            .participants(List.of(
-                UserDto.Response.builder().id(userId).username("user1").email("user1@example.com")
-                    .online(true).build()))
-            .lastMessageAt(Instant.now().minusSeconds(3600))
-            .build()
+        fixture.giveMeBuilder(ChannelDto.Response.class)
+            .set("id", channelId1)
+            .set("type", ChannelType.PUBLIC)
+            .set("name", "public-channel")
+            .sample(),
+        fixture.giveMeBuilder(ChannelDto.Response.class)
+            .set("id", channelId2)
+            .set("type", ChannelType.PRIVATE)
+            .sample()
     );
 
     given(channelService.findAllByUserId(userId)).willReturn(channels);

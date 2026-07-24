@@ -7,11 +7,43 @@ spring:
 
   jpa:
     hibernate:
+      ddl-auto: create-drop
       format_sql: true
       show_sql: false
   sql:
     init:
-      mode: always
+      mode: never
+
+  cache:
+    type: none
+
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration
+
+discodeit:
+  storage:
+    type: s3
+    s3:
+      access-key: test-access-key
+      secret-key: test-secret-key
+      region: ap-northeast-2
+      bucket: discodeit-binary-content-storage-ks
+
+  admin:
+    username: test-admin
+    email: admin@test.com
+    password: test1234!
+
+  jwt:
+    cleanup-interval: 300000
+    max-active-sessions: 1
+    access-token:
+      secret: test-access-secret-must-be-at-least-32-bytes-long!!
+      expiration: 1800000
+    refresh-token:
+      secret: test-refresh-secret-must-be-at-least-32-bytes-long!!
+      expiration: 1209600000
 
 logging:
   level:

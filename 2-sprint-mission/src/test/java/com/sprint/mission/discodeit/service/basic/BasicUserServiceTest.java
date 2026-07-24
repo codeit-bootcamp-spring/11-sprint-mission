@@ -12,6 +12,7 @@ import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.exception.user.UserAlreadyExistsException;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.mapper.UserMapper;
+import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import java.util.Optional;
 import java.util.UUID;
@@ -21,14 +22,26 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 @ExtendWith(MockitoExtension.class)
 class BasicUserServiceTest {
 
   @Mock
   private UserRepository userRepository;
+
+  @Mock
+  private BinaryContentRepository binaryContentRepository;
+
   @Mock
   private UserMapper userMapper;
+
+  @Mock
+  private ApplicationEventPublisher eventPublisher;
+
+  @Mock
+  private PasswordEncoder passwordEncoder;
 
   @InjectMocks
   private BasicUserService userService;
@@ -139,7 +152,7 @@ class BasicUserServiceTest {
         .email("woody@test.com")
         .password("pass1234!")
         .build();
-    
+
     UserDto.UpdateRequest updateRequest = new UserDto.UpdateRequest(
         "woody", "woody@test.com", "pass1234!"
     );

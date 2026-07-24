@@ -1,6 +1,34 @@
 spring:
   application:
     name: discodeit
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+    consumer:
+      group-id: discodeit-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+  cache:
+    type: redis  # caffeine | redis
+    cache-names:
+      - channels
+      - notifications
+      - users
+    caffeine:
+      spec: >
+        maximumSize=100,
+        expireAfterAccess=600s,
+        recordStats
+    redis: # ← 추가
+      enable-statistics: true
+    data: # ← 추가
+      redis:
+        host: ${REDIS_HOST:localhost}
+        port: ${REDIS_PORT:6379}
+
   servlet:
     multipart:
       enabled: true
@@ -22,9 +50,12 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics,loggers
+        include: health,info,metrics,loggers,caches
   info:
     env:
+      enabled: true
+  observations:
+    annotations:
       enabled: true
 
 info:
@@ -34,7 +65,7 @@ info:
   java:
     version: 17
   spring-boot:
-    version: 3.4.0
+    version: 3.5.11
   config:
     datasource:
       url: ${SPRING_DATASOURCE_URL}
@@ -54,7 +85,7 @@ discodeit:
     file-directory: .discodeit
 
   storage:
-    type: ${STORAGE_TYPE:local} # local | s3 (기본값: local)
+    type: ${STORAGE_TYPE:s3} # local | s3 (기본값: local)
     local:
       root-path: ${STORAGE_LOCAL_ROOT_PATH:.discodeit/storage}
 
@@ -70,6 +101,8 @@ discodeit:
     email: ${DISCODEIT_ADMIN_EMAIL}
     password: ${DISCODEIT_ADMIN_PASSWORD}
   jwt:
+    cleanup-interval: 300000 # (기본값: 5분)
+    max-active-sessions: 1
     access-token:
       secret: ${JWT_ACCESS_SECRET}
       expiration: ${JWT_ACCESS_EXPIRATION:1800000} # (기본값: 30분)

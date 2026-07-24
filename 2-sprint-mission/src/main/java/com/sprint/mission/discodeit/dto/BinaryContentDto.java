@@ -1,6 +1,7 @@
 package com.sprint.mission.discodeit.dto;
 
 import com.sprint.mission.discodeit.entity.BinaryContent;
+import com.sprint.mission.discodeit.entity.BinaryContentStatus;
 import com.sprint.mission.discodeit.exception.binarycontent.FileOperationException;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
@@ -77,6 +78,7 @@ public class BinaryContentDto {
       String fileName,
       Long size,
       String contentType,
+      BinaryContentStatus status,
       byte[] bytes
   ) {
 

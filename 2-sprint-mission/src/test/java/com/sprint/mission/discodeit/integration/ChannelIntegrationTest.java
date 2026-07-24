@@ -1,5 +1,6 @@
 package com.sprint.mission.discodeit.integration;
 
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -24,6 +25,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,6 +34,7 @@ import org.springframework.transaction.annotation.Transactional;
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 @Transactional
+@WithMockUser(roles = {"USER", "CHANNEL_MANAGER", "ADMIN"})
 class ChannelIntegrationTest {
 
   @Autowired
@@ -98,6 +101,7 @@ class ChannelIntegrationTest {
 
     // When & Then
     mockMvc.perform(post("/api/channels/public")
+            .with(csrf())
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isCreated())
@@ -118,6 +122,7 @@ class ChannelIntegrationTest {
 
     // When & Then
     mockMvc.perform(post("/api/channels/public")
+            .with(csrf())
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(invalidRequest)))
         .andExpect(status().isBadRequest());
@@ -139,6 +144,7 @@ class ChannelIntegrationTest {
 
     // When & Then
     mockMvc.perform(post("/api/channels/private")
+            .with(csrf())
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isCreated())
@@ -196,6 +202,7 @@ class ChannelIntegrationTest {
 
     // When & Then
     mockMvc.perform(patch("/api/channels/{channelId}", channel.getId())
+            .with(csrf())
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isOk())
@@ -216,6 +223,7 @@ class ChannelIntegrationTest {
 
     // When & Then
     mockMvc.perform(patch("/api/channels/{channelId}", nonExistentChannelId)
+            .with(csrf())
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isNotFound());
@@ -237,6 +245,7 @@ class ChannelIntegrationTest {
 
     // When & Then
     mockMvc.perform(patch("/api/channels/{channelId}", channel.getId())
+            .with(csrf())
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isForbidden());
@@ -253,7 +262,8 @@ class ChannelIntegrationTest {
     entityManager.clear();
 
     // When
-    mockMvc.perform(delete("/api/channels/{channelId}", channel.getId()))
+    mockMvc.perform(delete("/api/channels/{channelId}", channel.getId())
+            .with(csrf()))
         .andExpect(status().isNoContent());
 
     // Then (삭제 후 조회 검증)
@@ -271,7 +281,8 @@ class ChannelIntegrationTest {
     UUID nonExistentChannelId = UUID.randomUUID();
 
     // When & Then
-    mockMvc.perform(delete("/api/channels/{channelId}", nonExistentChannelId))
+    mockMvc.perform(delete("/api/channels/{channelId}", nonExistentChannelId)
+            .with(csrf()))
         .andExpect(status().isNotFound());
   }
 }

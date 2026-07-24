@@ -94,6 +94,10 @@ public class BasicReadStatusService implements ReadStatusService {
         : Instant.now();
     readStatus.update(newLastReadAt);
 
+    if (request != null && request.newNotificationEnabled() != null) {
+      readStatus.updateNotificationEnabled(request.newNotificationEnabled());
+    }
+
     log.info("읽음 상태 업데이트 완료: id={}", id);
     return readStatusMapper.toDto(readStatus);
   }

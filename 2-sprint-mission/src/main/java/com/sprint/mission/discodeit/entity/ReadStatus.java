@@ -37,18 +37,26 @@ public class ReadStatus extends BaseUpdatableEntity {
   @Column(columnDefinition = "timestamp with time zone", nullable = false)
   private Instant lastReadAt;
 
+  @Column(nullable = false)
+  private boolean notificationEnabled;
+
   @Builder
-  public ReadStatus(User user, Channel channel, Instant lastReadAt) {
+  public ReadStatus(User user, Channel channel, Instant lastReadAt, boolean notificationEnabled) {
     this.user = user;
     this.channel = channel;
     this.lastReadAt = lastReadAt != null ? lastReadAt : Instant.now();
+    this.notificationEnabled = notificationEnabled;
   }
-
 
   // updatedAt을 현재 시간으로 갱신
   public void update(Instant newLastReadAt) {
     if (newLastReadAt != null && !newLastReadAt.equals(this.lastReadAt)) {
       this.lastReadAt = newLastReadAt;
     }
+  }
+
+  // 채널 알림 여부 변경
+  public void updateNotificationEnabled(boolean notificationEnabled) {
+    this.notificationEnabled = notificationEnabled;
   }
 }

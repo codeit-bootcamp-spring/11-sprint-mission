@@ -41,6 +41,9 @@ public enum ErrorCode {
   DUPLICATE_READ_STATUS(HttpStatus.CONFLICT, "READ-STATUS-002",
       "해당 채널에 이미 유저의 수신 정보가 존재합니다."),
 
+  // ==== Notification ====
+  NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "NOTIFICATION-001", "존재하지 않는 알림입니다."),
+
   // ==== File/BinaryContent ====
   FILE_DIRECTORY_CREATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "FILE-001",
       "데이터 디렉토리 생성에 실패했습니다."),

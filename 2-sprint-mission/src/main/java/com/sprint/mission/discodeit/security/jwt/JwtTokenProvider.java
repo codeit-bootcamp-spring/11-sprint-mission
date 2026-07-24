@@ -150,30 +150,4 @@ public class JwtTokenProvider {
       throw new IllegalArgumentException("유효하지 않은 JWT입니다.", e);
     }
   }
-
-  public String reissueAccessToken(String refreshToken) {
-    if (!validateRefreshToken(refreshToken)) {
-      throw new IllegalArgumentException("유효하지 않은 리프레시 토큰입니다.");
-    }
-    JWTClaimsSet claims = parse(refreshToken);
-    Date now = new Date();
-    Date expiry = new Date(now.getTime() + accessTokenExpirationMs);
-
-    try {
-      JWTClaimsSet newClaims = new JWTClaimsSet.Builder()
-          .subject(claims.getSubject())
-          .claim("userId", claims.getClaim("userId"))
-          .claim("role", claims.getClaim("role"))
-          .claim("type", TOKEN_TYPE_ACCESS)
-          .issueTime(now)
-          .expirationTime(expiry)
-          .build();
-
-      SignedJWT signedJWT = new SignedJWT(new JWSHeader(JWSAlgorithm.HS256), newClaims);
-      signedJWT.sign(new MACSigner(accessSecretKey));
-      return signedJWT.serialize();
-    } catch (JOSEException e) {
-      throw new IllegalStateException("JWT 재발급에 실패했습니다.", e);
-    }
-  }
 }

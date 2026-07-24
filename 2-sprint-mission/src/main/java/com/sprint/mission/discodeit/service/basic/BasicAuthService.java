@@ -4,6 +4,7 @@ import com.sprint.mission.discodeit.dto.UserDto;
 import com.sprint.mission.discodeit.dto.UserRoleUpdateRequest;
 import com.sprint.mission.discodeit.entity.Role;
 import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.event.RoleUpdatedEvent;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.mapper.UserMapper;
 import com.sprint.mission.discodeit.repository.UserRepository;
@@ -12,6 +13,8 @@ import com.sprint.mission.discodeit.service.AuthService;
 import com.sprint.mission.discodeit.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +29,7 @@ public class BasicAuthService implements AuthService {
   private final UserMapper userMapper;
   private final JwtRegistry jwtRegistry;
   private final UserService userService;
+  private final ApplicationEventPublisher eventPublisher;
 
   @Override
   @Transactional
@@ -38,10 +42,20 @@ public class BasicAuthService implements AuthService {
   @Override
   @Transactional
   @PreAuthorize("hasRole('ADMIN')")
+  @CacheEvict(cacheNames = "users", allEntries = true)
   public UserDto.Response updateRole(UserRoleUpdateRequest request) {
     log.debug("권한 수정 요청: userId={}, newRole={}", request.userId(), request.newRole());
+
+    User user = userRepository.findById(request.userId())
+        .orElseThrow(() -> UserNotFoundException.withId(request.userId()));
+    Role oldRole = user.getRole();
+
     jwtRegistry.invalidateJwtInformationByUserId(request.userId());
-    return applyRole(request);
+    UserDto.Response response = applyRole(request);
+
+    eventPublisher.publishEvent(new RoleUpdatedEvent(request.userId(), oldRole, request.newRole()));
+
+    return response;
   }
 
   private UserDto.Response updateRoleInternal(UserRoleUpdateRequest request) {

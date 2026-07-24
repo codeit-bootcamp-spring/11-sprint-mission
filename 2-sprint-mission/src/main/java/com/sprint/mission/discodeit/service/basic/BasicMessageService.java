@@ -8,6 +8,8 @@ import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.event.BinaryContentCreatedEvent;
+import com.sprint.mission.discodeit.event.MessageCreatedEvent;
 import com.sprint.mission.discodeit.exception.channel.ChannelNotFoundException;
 import com.sprint.mission.discodeit.exception.message.MessageNotFoundException;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
@@ -18,13 +20,13 @@ import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.MessageService;
-import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -43,7 +45,7 @@ public class BasicMessageService implements MessageService {
   private final BinaryContentRepository binaryContentRepository;
   private final MessageMapper messageMapper;
   private final PageResponseMapper pageResponseMapper;
-  private final BinaryContentStorage binaryContentStorage;
+  private final ApplicationEventPublisher eventPublisher;
 
   @Override
   @Transactional
@@ -61,37 +63,30 @@ public class BasicMessageService implements MessageService {
         ? fileRequests.stream().map(BinaryContentDto.CreateRequest::toEntity).toList()
         : new ArrayList<>();
 
-    List<UUID> savedFileIds = new ArrayList<>();
+    if (!attachments.isEmpty()) {
+      binaryContentRepository.saveAll(attachments);
 
-    try {
-      if (!attachments.isEmpty()) {
-        binaryContentRepository.saveAll(attachments);
-
-        for (int i = 0; i < attachments.size(); i++) {
-          BinaryContent entity = attachments.get(i);
-          BinaryContentDto.CreateRequest fileReq = fileRequests.get(i);
-
-          binaryContentStorage.put(entity.getId(), fileReq.bytes());
-
-          savedFileIds.add(entity.getId());
-        }
+      for (int i = 0; i < attachments.size(); i++) {
+        eventPublisher.publishEvent(new BinaryContentCreatedEvent(
+            attachments.get(i).getId(),
+            fileRequests.get(i).bytes()
+        ));
       }
-
-      Message message = request.toEntity(channel, author, attachments);
-      messageRepository.save(message);
-
-      log.info("메시지 생성 완료: messageId={}, channelId={}", message.getId(), channel.getId());
-      return messageMapper.toDto(message);
-
-    } catch (RuntimeException e) {
-      if (!savedFileIds.isEmpty()) {
-        log.warn("메시지 저장 중 오류 발생으로 저장된 이미지 삭제: savedFileIds={}", savedFileIds);
-        for (UUID id : savedFileIds) {
-          binaryContentStorage.delete(id);
-        }
-      }
-      throw e;
     }
+
+    Message message = request.toEntity(channel, author, attachments);
+    messageRepository.save(message);
+
+    eventPublisher.publishEvent(new MessageCreatedEvent(
+        channel.getId(),
+        channel.getName(),
+        author.getId(),
+        author.getUsername(),
+        message.getContent()
+    ));
+
+    log.info("메시지 생성 완료: messageId={}, channelId={}", message.getId(), channel.getId());
+    return messageMapper.toDto(message);
   }
 
 

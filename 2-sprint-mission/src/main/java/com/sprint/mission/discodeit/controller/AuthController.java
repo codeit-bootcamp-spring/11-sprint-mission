@@ -8,11 +8,11 @@ import com.sprint.mission.discodeit.exception.auth.RefreshTokenInvalidException;
 import com.sprint.mission.discodeit.security.DiscodeitUserDetails;
 import com.sprint.mission.discodeit.security.jwt.JwtRegistry;
 import com.sprint.mission.discodeit.security.jwt.JwtTokenProvider;
+import com.sprint.mission.discodeit.security.jwt.RefreshTokenCookieFactory;
 import com.sprint.mission.discodeit.service.AuthService;
 import com.sprint.mission.discodeit.service.UserService;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
-import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -40,6 +40,7 @@ public class AuthController {
   private final AuthService authService;
   private final JwtTokenProvider jwtTokenProvider;
   private final JwtRegistry jwtRegistry;
+  private final RefreshTokenCookieFactory refreshTokenCookieFactory;
 
   @GetMapping("/csrf-token")
   public ResponseEntity<Void> getCsrfToken(CsrfToken csrfToken) {
@@ -83,14 +84,7 @@ public class AuthController {
         expiration);
     jwtRegistry.rotateJwtInformation(refreshToken, newInfo);
 
-    ResponseCookie refreshCookie = ResponseCookie
-        .from(JwtTokenProvider.REFRESH_TOKEN_COOKIE_NAME, newRefreshToken)
-        .httpOnly(true)
-        .secure(false)
-        .path("/")
-        .maxAge(Duration.ofMillis(jwtTokenProvider.getRefreshTokenExpirationMs()))
-        .sameSite("Lax")
-        .build();
+    ResponseCookie refreshCookie = refreshTokenCookieFactory.create(newRefreshToken);
     response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
 
     return ResponseEntity.ok(new JwtDto(userDto, newAccessToken));
