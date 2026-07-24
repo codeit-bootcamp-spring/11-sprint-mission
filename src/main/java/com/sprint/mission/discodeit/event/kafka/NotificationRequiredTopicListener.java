@@ -1,7 +1,5 @@
 package com.sprint.mission.discodeit.event.kafka;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.event.MessageCreatedEvent;
@@ -21,69 +19,51 @@ import org.springframework.stereotype.Component;
 @Component
 public class NotificationRequiredTopicListener {
 
-  private final ObjectMapper objectMapper;
   private final ReadStatusRepository readStatusRepository;
   private final UserRepository userRepository;
   private final NotificationService notificationService;
 
-  @KafkaListener(topics = "discodeit.MessageCreatedEvent", groupId = "discodeit-group")
-  public void onMessageCreatedEvent(String kafkaEvent) {
-    try {
-      MessageCreatedEvent event = objectMapper.readValue(kafkaEvent, MessageCreatedEvent.class);
-      log.info("Kafka 메시지 생성 이벤트 수신 - channelId: {}", event.getChannelId());
+  @KafkaListener(topics = "discodeit.MessageCreatedEvent.v2", groupId = "notification-group-v3")
+  public void onMessageCreatedEvent(MessageCreatedEvent event) {
+    log.info("Kafka 메시지 생성 이벤트 수신 - channelId: {}", event.getChannelId());
 
-      User author = userRepository.findById(event.getAuthorId()).orElseThrow();
+    User author = userRepository.findById(event.getAuthorId()).orElseThrow();
 
-      List<ReadStatus> activeReadStatuses = readStatusRepository.findByChannelIdAndNotificationEnabledTrue(
-          event.getChannelId());
+    List<ReadStatus> activeReadStatuses = readStatusRepository.findByChannelIdAndNotificationEnabledTrue(
+        event.getChannelId());
 
-      String title = author.getUsername() + " (#" + event.getChannelName() + ")";
-      int count = 0;
+    String title = author.getUsername() + " (#" + event.getChannelName() + ")";
+    int count = 0;
 
-      for (ReadStatus readStatus : activeReadStatuses) {
-        if (!readStatus.getUser().getId().equals(event.getAuthorId())) {
-          notificationService.create(readStatus.getUser().getId(), title, event.getContent());
-          count++;
-        }
+    for (ReadStatus readStatus : activeReadStatuses) {
+      if (!readStatus.getUser().getId().equals(event.getAuthorId())) {
+        notificationService.create(readStatus.getUser().getId(), title, event.getContent());
+        count++;
       }
-
-      log.info("Kafka: {}명에게 메시지 알림 전송 완료", count);
-    } catch (JsonProcessingException e) {
-      throw new RuntimeException(e);
     }
+
+    log.info("Kafka: {}명에게 메시지 알림 전송 완료", count);
   }
 
-  @KafkaListener(topics = "discodeit.RoleUpdatedEvent", groupId = "discodeit-group")
-  public void onRoleUpdatedEvent(String kafkaEvent) {
-    try {
-      RoleUpdatedEvent event = objectMapper.readValue(kafkaEvent, RoleUpdatedEvent.class);
-      log.info("Kafka 권한 변경 이벤트 수신 - userId: {}", event.getUserId());
+  @KafkaListener(topics = "discodeit.RoleUpdatedEvent", groupId = "notification-group-v3")
+  public void onRoleUpdatedEvent(RoleUpdatedEvent event) {
+    log.info("Kafka 권한 변경 이벤트 수신 - userId: {}", event.getUserId());
 
-      notificationService.create(
-          event.getUserId(),
-          "권한이 변경되었습니다.",
-          event.getOldRole() + " -> " + event.getNewRole()
-      );
-
-      log.info("Kafka: 권한 변경 알림 전송 완료 - userId: {}", event.getUserId());
-    } catch (JsonProcessingException e) {
-      throw new RuntimeException(e);
-    }
+    notificationService.create(
+        event.getUserId(),
+        "권한이 변경되었습니다.",
+        event.getOldRole() + " -> " + event.getNewRole()
+    );
   }
 
-  @KafkaListener(topics = "discodeit.S3UploadFailedEvent", groupId = "discodeit-group")
-  public void onS3UploadFailedEvent(String kafkaEvent) {
-    try {
-      S3UploadFailedEvent event = objectMapper.readValue(kafkaEvent, S3UploadFailedEvent.class);
-      log.info("Kafka S3 업로드 실패 이벤트 수신 - requestId: {}", event.getRequestId());
+  @KafkaListener(topics = "discodeit.S3UploadFailedEvent", groupId = "notification-group-v3")
+  public void onS3UploadFailedEvent(S3UploadFailedEvent event) {
+    log.info("Kafka S3 업로드 실패 이벤트 수신 - requestId: {}", event.getRequestId());
 
-      String content = String.format("S3 업로드 중 문제가 발생했습니다.\n- Request ID: %s\n- Error: %s",
-          event.getRequestId(),
-          event.getErrorMessage());
+    String content = String.format("S3 업로드 중 문제가 발생했습니다.\n- Request ID: %s\n- Error: %s",
+        event.getRequestId(),
+        event.getErrorMessage());
 
-      notificationService.notifyAdmins("S3 업로드 실패", content);
-    } catch (JsonProcessingException e) {
-      throw new RuntimeException(e);
-    }
+    notificationService.notifyAdmins("S3 업로드 실패", content);
   }
 }

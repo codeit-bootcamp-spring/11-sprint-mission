@@ -3,7 +3,10 @@ package com.sprint.mission.discodeit.config;
 import com.sprint.mission.discodeit.entity.Role;
 import com.sprint.mission.discodeit.security.jwt.JwtAuthenticationChannelInterceptor;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.kafka.support.converter.RecordMessageConverter;
+import org.springframework.kafka.support.converter.StringJsonMessageConverter;
 import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.security.messaging.access.intercept.AuthorizationChannelInterceptor;
@@ -45,7 +48,10 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
   private AuthorizationChannelInterceptor authorizationChannelInterceptor() {
     return new AuthorizationChannelInterceptor(
         MessageMatcherDelegatingAuthorizationManager.builder()
-            .anyMessage().hasRole(Role.USER.name())
+            .nullDestMatcher().authenticated()
+            .simpDestMatchers("/pub/**").authenticated()
+            .simpSubscribeDestMatchers("/sub/**").authenticated()
+            .anyMessage().denyAll()
             .build()
     );
   }
