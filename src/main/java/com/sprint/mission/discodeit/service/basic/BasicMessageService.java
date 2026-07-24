@@ -21,7 +21,6 @@ import com.sprint.mission.discodeit.repository.MessageRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.MessageService;
 import com.sprint.mission.discodeit.storage.BinaryContentStorage;
-import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,7 +30,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
-import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -168,7 +166,7 @@ public class BasicMessageService implements MessageService {
           log.warn("메시지 수정 실패(존재하지 않는 메시지) - messageId: {}", id);
           return new MessageNotFoundException(id);
         });
-    message.update(request.newContent());
+    message.update(request.content());
     log.info("메시지 수정 완료 - messageId: {}", id);
     return messageMapper.toDto(message);
   }
