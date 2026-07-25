@@ -60,6 +60,8 @@ public class S3BinaryContentStorage implements BinaryContentStorage {
     this.eventPublisher = eventPublisher;
   }
 
+  @Value("${discodeit.storage.s3.presigned-url-expiration:600}") // 기본값 10분
+  private long presignedUrlExpirationSeconds;
 
   @Retryable(
       retryFor = S3Exception.class,

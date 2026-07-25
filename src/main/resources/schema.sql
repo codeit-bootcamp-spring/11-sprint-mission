@@ -25,6 +25,7 @@ CREATE TABLE binary_contents
 --     ,bytes        bytea        NOT NULL
 );
 
+
 -- Channel
 CREATE TABLE channels
 (
@@ -68,6 +69,15 @@ CREATE TABLE read_statuses
     UNIQUE (user_id, channel_id)
 );
 
+-- Notification
+CREATE TABLE notifications
+(
+    id          uuid PRIMARY KEY,
+    created_at  timestamp with time zone NOT NULL,
+    title       varchar(255)             NOT NULL,
+    content     text                     NOT NULL,
+    receiver_id uuid                     NOT NULL
+);
 
 CREATE TABLE notifications
 (
@@ -120,4 +130,11 @@ ALTER TABLE read_statuses
     ADD CONSTRAINT fk_read_status_channel
         FOREIGN KEY (channel_id)
             REFERENCES channels (id)
+            ON DELETE CASCADE;
+
+-- Notification (N) -> User (1)
+ALTER TABLE notifications
+    ADD CONSTRAINT fk_notification_receiver
+        FOREIGN KEY (receiver_id)
+            REFERENCES users (id)
             ON DELETE CASCADE;

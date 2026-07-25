@@ -180,6 +180,7 @@ class MessageApiIntegrationTest {
     );
 
     messageService.create(messageRequest1, new ArrayList<>());
+    Thread.sleep(20);
     messageService.create(messageRequest2, new ArrayList<>());
 
     // When & Then

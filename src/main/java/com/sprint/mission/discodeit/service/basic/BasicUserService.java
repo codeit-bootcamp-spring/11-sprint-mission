@@ -66,7 +66,8 @@ public class BasicUserService implements UserService {
           String fileName = profileRequest.fileName();
           String contentType = profileRequest.contentType();
           byte[] bytes = profileRequest.bytes();
-          BinaryContent binaryContent = new BinaryContent(fileName, (long) bytes.length, contentType);
+          BinaryContent binaryContent = new BinaryContent(fileName, (long) bytes.length,
+              contentType);
           binaryContentRepository.save(binaryContent);
           eventPublisher.publishEvent(
               new BinaryContentCreatedEvent(
@@ -143,7 +144,8 @@ public class BasicUserService implements UserService {
           String fileName = profileRequest.fileName();
           String contentType = profileRequest.contentType();
           byte[] bytes = profileRequest.bytes();
-          BinaryContent binaryContent = new BinaryContent(fileName, (long) bytes.length, contentType);
+          BinaryContent binaryContent = new BinaryContent(fileName, (long) bytes.length,
+              contentType);
           binaryContentRepository.save(binaryContent);
           eventPublisher.publishEvent(
               new BinaryContentCreatedEvent(
