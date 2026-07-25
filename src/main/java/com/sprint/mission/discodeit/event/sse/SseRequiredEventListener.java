@@ -54,6 +54,29 @@ public class SseRequiredEventListener {
     log.info("sse channel-deleted success: id={}", event.channel().id());
   }
 
+  @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+  public void on(UserCreatedEvent event) {
+    log.debug("sse user-created trial: id={}", event.user().id());
+    this.sseService.broadcast("users.created", event.user());
+    log.info("sse user-created success: id={}", event.user().id());
+  }
+
+  // 로그인/로그아웃 핸들러는 트랜잭션 밖에서 이 이벤트를 발행하므로, fallbackExecution 없이는
+  // AFTER_COMMIT 리스너가 아예 호출되지 않는다.
+  @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+  public void on(UserUpdatedEvent event) {
+    log.debug("sse user-updated trial: id={}", event.user().id());
+    this.sseService.broadcast("users.updated", event.user());
+    log.info("sse user-updated success: id={}", event.user().id());
+  }
+
+  @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+  public void on(UserDeletedEvent event) {
+    log.debug("sse user-deleted trial: id={}", event.user().id());
+    this.sseService.broadcast("users.deleted", event.user());
+    log.info("sse user-deleted success: id={}", event.user().id());
+  }
+
   private void dispatch(Set<UUID> receiverIds, String eventName, Object data) {
     if (receiverIds == null) {
       this.sseService.broadcast(eventName, data);

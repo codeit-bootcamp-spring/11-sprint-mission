@@ -7,6 +7,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.mission.discodeit.dto.auth.JwtResponse;
 import com.sprint.mission.discodeit.dto.user.UserResponse;
+import com.sprint.mission.discodeit.event.sse.UserUpdatedEvent;
 import com.sprint.mission.discodeit.exception.ErrorResponse;
 import com.sprint.mission.discodeit.exception.auth.InvalidUserDetailsException;
 import com.sprint.mission.discodeit.security.DiscodeitUserDetails;
@@ -21,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
@@ -35,6 +37,7 @@ public class JwtLoginSuccessHandler implements AuthenticationSuccessHandler {
   private final JwtRegistry jwtRegistry;
   private final ObjectMapper objectMapper;
   private final CacheManager cacheManager;
+  private final ApplicationEventPublisher eventPublisher;
 
   @Override
   public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
@@ -67,13 +70,20 @@ public class JwtLoginSuccessHandler implements AuthenticationSuccessHandler {
     response.addHeader(SET_COOKIE, cookie.toString());
 
     response.setStatus(SC_OK);
-    UserResponse userResponse = userDetails.getUser();
+    // userDetails.getUser() was mapped before this session existed in jwtRegistry, so its
+    // online flag reflects any prior session rather than this login. We're about to
+    // register this session unconditionally below, so online=true is already guaranteed.
+    UserResponse loaded = userDetails.getUser();
+    UserResponse userResponse = new UserResponse(loaded.id(), loaded.username(), loaded.email(),
+        loaded.profile(), true, loaded.role());
     JwtResponse jwtResponse = new JwtResponse(userResponse, accessToken);
     response.getWriter().write(objectMapper.writeValueAsString(jwtResponse));
 
     jwtRegistry.registerJwtInformation(
         new JwtInformation(userResponse, accessToken, refreshToken, expiration)
     );
+
+    eventPublisher.publishEvent(new UserUpdatedEvent(userResponse));
 
     Optional.ofNullable(cacheManager.getCache("users")).ifPresent(Cache::clear);
 
