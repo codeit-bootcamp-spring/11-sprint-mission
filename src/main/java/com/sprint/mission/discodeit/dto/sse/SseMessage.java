@@ -18,8 +18,11 @@ public record SseMessage(
     createdAt = Instant.now();
   }
 
+  public SseMessage(Set<UUID> receiverIds, String eventName, Object data) {
+    this(null, receiverIds, eventName, data, null);
+  }
+
   public boolean isTargetedTo(UUID receiverId) {
-    return this.receiverIds == null || this.receiverIds.isEmpty()
-        || this.receiverIds.contains(receiverId);
+    return this.receiverIds == null || this.receiverIds.contains(receiverId);
   }
 }

@@ -55,4 +55,8 @@ public class SseMessageRepository {
         .filter(message -> message.isTargetedTo(receiverId))
         .toList();
   }
+
+  public UUID getLatestEventId() {
+    return this.eventIdQueue.peekLast();
+  }
 }
