@@ -2,6 +2,7 @@ package com.sprint.mission.discodeit.service.basic;
 
 import com.sprint.mission.discodeit.dto.notification.NotificationResponse;
 import com.sprint.mission.discodeit.entity.Notification;
+import com.sprint.mission.discodeit.event.sse.NotificationCreatedEvent;
 import com.sprint.mission.discodeit.exception.auth.ForbiddenException;
 import com.sprint.mission.discodeit.exception.notification.NotificationNotFoundException;
 import com.sprint.mission.discodeit.mapper.NotificationMapper;
@@ -15,6 +16,7 @@ import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,6 +29,7 @@ public class BasicNotificationService implements NotificationService {
   private final NotificationRepository notificationRepository;
   private final NotificationMapper mapper;
   private final CacheManager cacheManager;
+  private final ApplicationEventPublisher eventPublisher;
 
   @Transactional
   @Override
@@ -43,10 +46,14 @@ public class BasicNotificationService implements NotificationService {
       receiverIds.forEach(cache::evict);
     }
 
-    log.info("notification create success: count={}", notifications.size());
-    return notifications.stream()
+    List<NotificationResponse> responses = notifications.stream()
         .map(this.mapper::toResponse)
         .toList();
+    responses.forEach(
+        response -> this.eventPublisher.publishEvent(new NotificationCreatedEvent(response)));
+
+    log.info("notification create success: count={}", notifications.size());
+    return responses;
   }
 
   @Cacheable(cacheNames = "notifications", key = "#receiverId")
