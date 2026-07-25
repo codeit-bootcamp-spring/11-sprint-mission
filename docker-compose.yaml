@@ -42,6 +42,8 @@ services:
       AWS_S3_BUCKET: ${AWS_S3_BUCKET}
     volumes:
       - discodeit-storage:/app/.discodeit/storage
+    deploy:
+      replicas: 3
     depends_on:
       - db
       - redis
