@@ -11,6 +11,7 @@ import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.event.binarycontent.BinaryContentCreatedEvent;
 import com.sprint.mission.discodeit.event.notification.MessageCreatedEvent;
+import com.sprint.mission.discodeit.event.websocket.MessagePublishedEvent;
 import com.sprint.mission.discodeit.exception.channel.ChannelNotFoundException;
 import com.sprint.mission.discodeit.exception.message.MessageNotFoundException;
 import com.sprint.mission.discodeit.exception.message.MessageWithoutChannelAccessException;
@@ -91,9 +92,12 @@ public class BasicMessageService implements MessageService {
         channel.getId(), channel.getName(), author.getId(), author.getUsername(),
         message.getContent()));
 
+    MessageResponse response = this.mapper.toResponse(message);
+    this.eventPublisher.publishEvent(new MessagePublishedEvent(channel.getId(), response));
+
     log.info("message create success: id={}, channelId={}, authorId={}, attachments-count={}",
         message.getId(), channel.getId(), author.getId(), attachments.size());
-    return this.mapper.toResponse(message);
+    return response;
   }
 
   @Override
