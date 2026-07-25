@@ -1,20 +1,12 @@
 services:
-  db:
-    image: postgres:17
-    environment:
-      POSTGRES_DB: discodeit
-      POSTGRES_USER: ${DB_USERNAME}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
-      - ./src/main/resources/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+  nginx:
+    build:
+      context: .
+      dockerfile: nginx/Dockerfile
     ports:
-      - "5433:5432"
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d discodeit" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      - "3000:80"
+    depends_on:
+      - app
 
   app:
     build:
@@ -26,15 +18,63 @@ services:
       SPRING_PROFILES_ACTIVE: prod
       STORAGE_TYPE: ${STORAGE_TYPE:-local}
       STORAGE_LOCAL_ROOT_PATH: ${STORAGE_LOCAL_ROOT_PATH:-.discodeit/storage}
-      DB_URL: jdbc:postgresql://db:5432/discodeit
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${DB_NAME:-discodeit}
+      SPRING_DATASOURCE_USERNAME: ${DB_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+      REDIS_HOST: redis
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: broker:29092
     volumes:
       - discodeit-storage:/app/.discodeit
-    ports:
-      - "8080:80"
     depends_on:
       db:
         condition: service_healthy
+      redis:
+        condition: service_started
+      broker:
+        condition: service_started
+
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: ${DB_NAME:-discodeit}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./src/main/resources/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d ${DB_NAME:-discodeit}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7.2-alpine
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+
+  broker:
+    image: apache/kafka:latest
+    hostname: broker
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_NODE_ID: 1
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@broker:29093
+      KAFKA_LISTENERS: PLAINTEXT://broker:29092,CONTROLLER://broker:29093,PLAINTEXT_HOST://0.0.0.0:9092
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LOG_DIRS: /tmp/kraft-combined-logs
+      CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
 
 volumes:
   postgres-data:
+  redis-data:
   discodeit-storage:
