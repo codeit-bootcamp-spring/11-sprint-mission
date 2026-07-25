@@ -10,8 +10,11 @@ import com.sprint.mission.discodeit.security.handler.JwtLogoutHandler;
 import com.sprint.mission.discodeit.security.jwt.InMemoryJwtRegistry;
 import com.sprint.mission.discodeit.security.jwt.JwtRegistry;
 import com.sprint.mission.discodeit.security.jwt.JwtTokenProvider;
+import com.sprint.mission.discodeit.security.jwt.RedisJwtRegistry;
+import com.sprint.mission.discodeit.redis.RedisLockProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler;
@@ -27,6 +30,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.logout.HttpStatusReturningLogoutSuccessHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.data.redis.core.RedisTemplate;
 
 @Configuration
 @EnableMethodSecurity
@@ -46,6 +50,7 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf
                         .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
                         .csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler())
+                        .ignoringRequestMatchers("/ws/**")
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
@@ -54,6 +59,7 @@ public class SecurityConfig {
                                 "/assets/**",
                                 "/favicon.ico",
                                 "/default-avatar.png",
+                                "/ws/**",
                                 "/error"
                         ).permitAll()
                         .requestMatchers("/api/auth/csrf-token").permitAll()
@@ -113,7 +119,17 @@ public class SecurityConfig {
     }
 
     @Bean
-    public JwtRegistry jwtRegistry() {
+    @Profile("!test")
+    public JwtRegistry redisJwtRegistry(
+            RedisTemplate<String, Object> redisTemplate,
+            RedisLockProvider redisLockProvider
+    ) {
+        return new RedisJwtRegistry(1, redisTemplate, redisLockProvider);
+    }
+
+    @Bean
+    @Profile("test")
+    public JwtRegistry inMemoryJwtRegistry() {
         return new InMemoryJwtRegistry(1);
     }
 

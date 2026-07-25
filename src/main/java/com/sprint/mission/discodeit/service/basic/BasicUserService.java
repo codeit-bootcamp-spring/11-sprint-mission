@@ -5,6 +5,7 @@ import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.event.BinaryContentCreatedEvent;
 import com.sprint.mission.discodeit.event.RoleUpdatedEvent;
+import com.sprint.mission.discodeit.event.UserChangedEvent;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.security.UserOnlineStatusResolver;
@@ -16,7 +17,6 @@ import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -42,6 +42,7 @@ public class BasicUserService implements UserService {
     private final BinaryContentStorage binaryContentStorage;
     private final PasswordEncoder passwordEncoder;
     private final UserOnlineStatusResolver userOnlineStatusResolver;
+    private final UserCacheService userCacheService;
     private final ApplicationEventPublisher eventPublisher;
 
     @Override
@@ -93,8 +94,13 @@ public class BasicUserService implements UserService {
 
         User savedUser = userRepository.save(user);
 
+        UserDto userDto = userMapper.toDto(savedUser, Set.of());
+        eventPublisher.publishEvent(
+                new UserChangedEvent("users.created", userDto)
+        );
+
         log.info("사용자 생성 완료: userId={}", savedUser.getId());
-        return userMapper.toDto(savedUser, Set.of());
+        return userDto;
     }
 
     @Override
@@ -107,15 +113,21 @@ public class BasicUserService implements UserService {
     }
 
     @Override
-    @Cacheable(value = "users")
     public List<UserDto> findAll() {
         log.debug("사용자 목록 조회 처리 시작");
 
         Set<UUID> onlineUserIds =
                 userOnlineStatusResolver.getOnlineUserIds();
 
-        List<UserDto> users = userRepository.findAll().stream()
-                .map(user -> userMapper.toDto(user, onlineUserIds))
+        List<UserDto> users = userCacheService.findAll().stream()
+                .map(user -> new UserDto(
+                        user.id(),
+                        user.username(),
+                        user.email(),
+                        user.profile(),
+                        onlineUserIds.contains(user.id()),
+                        user.role()
+                ))
                 .toList();
 
         log.debug("사용자 목록 조회 완료: count={}", users.size());
@@ -162,9 +174,14 @@ public class BasicUserService implements UserService {
             replaceProfileImage(user, param.request().newProfileImage());
         }
 
-        log.info("사용자 수정 처리 완료: userId={}", user.getId());
         Set<UUID> onlineUserIds = userOnlineStatusResolver.getOnlineUserIds();
-        return userMapper.toDto(user, onlineUserIds);
+        UserDto userDto = userMapper.toDto(user, onlineUserIds);
+        eventPublisher.publishEvent(
+                new UserChangedEvent("users.updated", userDto)
+        );
+
+        log.info("사용자 수정 처리 완료: userId={}", user.getId());
+        return userDto;
     }
 
     private void validateUsername(String newUsername, User user) {
@@ -244,7 +261,14 @@ public class BasicUserService implements UserService {
             binaryContentStorage.delete(profileId);
         }
 
+        UserDto userDto = userMapper.toDto(
+                user,
+                userOnlineStatusResolver.getOnlineUserIds()
+        );
         userRepository.deleteById(id);
+        eventPublisher.publishEvent(
+                new UserChangedEvent("users.deleted", userDto)
+        );
 
         log.info("사용자 삭제 완료: userId={}", id);
     }
@@ -267,6 +291,10 @@ public class BasicUserService implements UserService {
 
         userOnlineStatusResolver.invalidateTokens(user.getId());
 
-        return userMapper.toDto(user, Set.of());
+        UserDto userDto = userMapper.toDto(user, Set.of());
+        eventPublisher.publishEvent(
+                new UserChangedEvent("users.updated", userDto)
+        );
+        return userDto;
     }
 }

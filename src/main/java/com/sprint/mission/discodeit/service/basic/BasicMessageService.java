@@ -12,6 +12,7 @@ import com.sprint.mission.discodeit.mapper.MessageMapper;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
+import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.MessageService;
 import com.sprint.mission.discodeit.storage.BinaryContentStorage;
@@ -42,6 +43,7 @@ public class BasicMessageService implements MessageService {
     private final MessageRepository messageRepository;
     private final ChannelRepository channelRepository;
     private final UserRepository userRepository;
+    private final ReadStatusRepository readStatusRepository;
     private final BinaryContentRepository binaryContentRepository;
     private final MessageMapper messageMapper;
     private final BinaryContentStorage binaryContentStorage;
@@ -95,13 +97,26 @@ public class BasicMessageService implements MessageService {
 
         Message savedMessage = messageRepository.save(message);
 
+        List<UUID> receiverIds =
+                readStatusRepository.findAllByChannel_IdAndNotificationEnabledTrue(channel.getId()).stream()
+                        .map(readStatus -> readStatus.getUser().getId())
+                        .filter(receiverId -> !receiverId.equals(author.getId()))
+                        .distinct()
+                        .toList();
+
+        Set<UUID> onlineUserIds = userOnlineStatusResolver.getOnlineUserIds();
+        MessageDto messageDto = messageMapper.toDto(savedMessage, onlineUserIds);
+
         eventPublisher.publishEvent(
-                new MessageCreatedEvent(savedMessage.getId())
+                new MessageCreatedEvent(
+                        messageDto,
+                        channel.getName(),
+                        receiverIds
+                )
         );
 
         log.info("메세지 생성 완료: messageId={}, attachmentsCount={}", savedMessage.getId(), attachments.size());
-        Set<UUID> onlineUserIds = userOnlineStatusResolver.getOnlineUserIds();
-        return messageMapper.toDto(savedMessage, onlineUserIds);
+        return messageDto;
     }
 
     @Override

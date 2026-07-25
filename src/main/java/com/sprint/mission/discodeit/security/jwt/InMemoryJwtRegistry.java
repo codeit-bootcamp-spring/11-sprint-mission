@@ -4,6 +4,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 
 import java.time.Instant;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
 import java.util.UUID;
@@ -73,6 +74,17 @@ public class InMemoryJwtRegistry implements JwtRegistry {
                 .flatMap(Queue::stream)
                 .anyMatch(jwtInformation -> isActive(jwtInformation)
                         && jwtInformation.refreshToken().equals(refreshToken));
+    }
+
+    @Override
+    public Optional<UUID> findUserIdByRefreshToken(String refreshToken) {
+        return origin.entrySet().stream()
+                .filter(entry -> entry.getValue().stream()
+                        .anyMatch(jwtInformation ->
+                                jwtInformation.refreshToken().equals(refreshToken)
+                                        && isActive(jwtInformation)))
+                .map(Map.Entry::getKey)
+                .findFirst();
     }
 
     @Override

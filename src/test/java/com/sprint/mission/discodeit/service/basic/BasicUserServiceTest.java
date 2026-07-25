@@ -19,8 +19,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.context.ApplicationEventPublisher;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -53,6 +56,12 @@ class BasicUserServiceTest {
 
     @Mock
     UserOnlineStatusResolver userOnlineStatusResolver;
+
+    @Mock
+    UserCacheService userCacheService;
+
+    @Mock
+    ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     BasicUserService userService;
@@ -99,6 +108,40 @@ class BasicUserServiceTest {
         then(passwordEncoder).should().encode(request.password());
         then(userRepository).should().save(any(User.class));
         then(userMapper).should().toDto(eq(savedUser), anySet());
+    }
+
+    @Test
+    void findAll_appliesCurrentOnlineStatus() {
+        // given
+        UUID onlineUserId = UUID.randomUUID();
+        UUID offlineUserId = UUID.randomUUID();
+        UserDto onlineUser = new UserDto(
+                onlineUserId,
+                "evan",
+                "evan@test.com",
+                null,
+                false,
+                UserRole.USER
+        );
+        UserDto offlineUser = new UserDto(
+                offlineUserId,
+                "wendy",
+                "wendy@test.com",
+                null,
+                false,
+                UserRole.USER
+        );
+
+        given(userCacheService.findAll()).willReturn(List.of(onlineUser, offlineUser));
+        given(userOnlineStatusResolver.getOnlineUserIds()).willReturn(Set.of(onlineUserId));
+
+        // when
+        List<UserDto> result = userService.findAll();
+
+        // then
+        assertThat(result)
+                .extracting(UserDto::online)
+                .containsExactly(true, false);
     }
 
     @Test
