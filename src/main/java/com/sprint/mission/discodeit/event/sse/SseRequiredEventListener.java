@@ -2,6 +2,7 @@ package com.sprint.mission.discodeit.event.sse;
 
 import com.sprint.mission.discodeit.service.SseService;
 import java.util.Set;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -28,11 +29,36 @@ public class SseRequiredEventListener {
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
   public void on(BinaryContentStatusUpdatedEvent event) {
     log.debug("sse binary-content-status-updated trial: id={}", event.binaryContent().id());
-    if (event.receiverIds() == null) {
-      this.sseService.broadcast("binaryContents.updated", event.binaryContent());
-    } else {
-      this.sseService.send(event.receiverIds(), "binaryContents.updated", event.binaryContent());
-    }
+    dispatch(event.receiverIds(), "binaryContents.updated", event.binaryContent());
     log.info("sse binary-content-status-updated success: id={}", event.binaryContent().id());
+  }
+
+  @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+  public void on(ChannelCreatedEvent event) {
+    log.debug("sse channel-created trial: id={}", event.channel().id());
+    dispatch(event.receiverIds(), "channels.created", event.channel());
+    log.info("sse channel-created success: id={}", event.channel().id());
+  }
+
+  @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+  public void on(ChannelUpdatedEvent event) {
+    log.debug("sse channel-updated trial: id={}", event.channel().id());
+    dispatch(event.receiverIds(), "channels.updated", event.channel());
+    log.info("sse channel-updated success: id={}", event.channel().id());
+  }
+
+  @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+  public void on(ChannelDeletedEvent event) {
+    log.debug("sse channel-deleted trial: id={}", event.channel().id());
+    dispatch(event.receiverIds(), "channels.deleted", event.channel());
+    log.info("sse channel-deleted success: id={}", event.channel().id());
+  }
+
+  private void dispatch(Set<UUID> receiverIds, String eventName, Object data) {
+    if (receiverIds == null) {
+      this.sseService.broadcast(eventName, data);
+    } else {
+      this.sseService.send(receiverIds, eventName, data);
+    }
   }
 }
