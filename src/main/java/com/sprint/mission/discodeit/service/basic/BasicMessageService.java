@@ -26,7 +26,9 @@ import com.sprint.mission.discodeit.service.MessageService;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -67,6 +69,7 @@ public class BasicMessageService implements MessageService {
           channel.getId());
     }
 
+    Set<UUID> attachmentReceiverIds = resolveAttachmentReceiverIds(channel);
     List<BinaryContent> attachments = new ArrayList<>();
     if (binaryContentCreateRequests != null && !binaryContentCreateRequests.isEmpty()) {
       attachments = binaryContentCreateRequests.stream()
@@ -74,7 +77,8 @@ public class BasicMessageService implements MessageService {
             BinaryContent attachment = new BinaryContent(req.fileName(), req.size(),
                 req.contentType());
             this.eventPublisher.publishEvent(
-                new BinaryContentCreatedEvent(attachment.getId(), req.bytes()));
+                new BinaryContentCreatedEvent(attachment.getId(), req.bytes(),
+                    attachmentReceiverIds));
             return attachment;
           })
           .toList();
@@ -139,6 +143,7 @@ public class BasicMessageService implements MessageService {
       }
     }
 
+    Set<UUID> attachmentReceiverIds = resolveAttachmentReceiverIds(message.getChannel());
     List<BinaryContent> newAttachments = new ArrayList<>();
     if (binaryContentCreateRequests != null && !binaryContentCreateRequests.isEmpty()) {
       newAttachments = binaryContentCreateRequests.stream()
@@ -146,7 +151,8 @@ public class BasicMessageService implements MessageService {
             BinaryContent attachment = new BinaryContent(req.fileName(), req.size(),
                 req.contentType());
             this.eventPublisher.publishEvent(
-                new BinaryContentCreatedEvent(attachment.getId(), req.bytes()));
+                new BinaryContentCreatedEvent(attachment.getId(), req.bytes(),
+                    attachmentReceiverIds));
             return attachment;
           })
           .toList();
@@ -170,5 +176,14 @@ public class BasicMessageService implements MessageService {
     this.messageRepository.delete(message);
 
     log.info("message delete success: id={}", id);
+  }
+
+  private Set<UUID> resolveAttachmentReceiverIds(Channel channel) {
+    if (!channel.isPrivate()) {
+      return null;
+    }
+    return this.readStatusRepository.findAllByChannelId(channel.getId()).stream()
+        .map(readStatus -> readStatus.getUser().getId())
+        .collect(Collectors.toSet());
   }
 }

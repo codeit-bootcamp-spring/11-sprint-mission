@@ -15,6 +15,7 @@ import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.UserService;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -56,7 +57,6 @@ public class BasicUserService implements UserService {
     if (binaryContentCreateRequest.isPresent()) {
       BinaryContentCreateRequest req = binaryContentCreateRequest.get();
       profile = new BinaryContent(req.fileName(), req.size(), req.contentType());
-      this.eventPublisher.publishEvent(new BinaryContentCreatedEvent(profile.getId(), req.bytes()));
     }
 
     User user = new User(
@@ -65,6 +65,12 @@ public class BasicUserService implements UserService {
         this.passwordEncoder.encode(userCreateRequest.password()),
         profile
     );
+
+    if (binaryContentCreateRequest.isPresent()) {
+      BinaryContentCreateRequest req = binaryContentCreateRequest.get();
+      this.eventPublisher.publishEvent(
+          new BinaryContentCreatedEvent(profile.getId(), req.bytes(), Set.of(user.getId())));
+    }
 
     this.userRepository.save(user);
 
@@ -132,7 +138,8 @@ public class BasicUserService implements UserService {
     if (binaryContentCreateRequest.isPresent()) {
       BinaryContentCreateRequest req = binaryContentCreateRequest.get();
       profile = new BinaryContent(req.fileName(), req.size(), req.contentType());
-      this.eventPublisher.publishEvent(new BinaryContentCreatedEvent(profile.getId(), req.bytes()));
+      this.eventPublisher.publishEvent(
+          new BinaryContentCreatedEvent(profile.getId(), req.bytes(), Set.of(user.getId())));
     }
 
     user.update(username, email, password, profile);

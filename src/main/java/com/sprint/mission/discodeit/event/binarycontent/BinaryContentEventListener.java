@@ -25,13 +25,15 @@ public class BinaryContentEventListener {
 
     try {
       this.binaryContentStorage.put(event.binaryContentId(), event.bytes());
-      this.binaryContentService.updateStatus(event.binaryContentId(), BinaryContentStatus.SUCCESS);
+      this.binaryContentService.updateStatus(event.binaryContentId(), BinaryContentStatus.SUCCESS,
+          event.receiverIds());
 
       log.info("binary-content upload success: id={}", event.binaryContentId());
     } catch (Exception e) {
       log.error("binary-content upload fail: id={}", event.binaryContentId(), e);
 
-      this.binaryContentService.updateStatus(event.binaryContentId(), BinaryContentStatus.FAIL);
+      this.binaryContentService.updateStatus(event.binaryContentId(), BinaryContentStatus.FAIL,
+          event.receiverIds());
     }
   }
 }

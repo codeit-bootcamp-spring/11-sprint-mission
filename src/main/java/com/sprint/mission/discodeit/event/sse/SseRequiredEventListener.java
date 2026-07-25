@@ -24,4 +24,15 @@ public class SseRequiredEventListener {
     log.info("sse notification-created success: receiverId={}",
         event.notification().receiverId());
   }
+
+  @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+  public void on(BinaryContentStatusUpdatedEvent event) {
+    log.debug("sse binary-content-status-updated trial: id={}", event.binaryContent().id());
+    if (event.receiverIds() == null) {
+      this.sseService.broadcast("binaryContents.updated", event.binaryContent());
+    } else {
+      this.sseService.send(event.receiverIds(), "binaryContents.updated", event.binaryContent());
+    }
+    log.info("sse binary-content-status-updated success: id={}", event.binaryContent().id());
+  }
 }
