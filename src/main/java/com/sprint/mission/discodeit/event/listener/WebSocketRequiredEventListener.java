@@ -28,7 +28,7 @@ public class WebSocketRequiredEventListener {
     kafkaTemplate.send(TOPIC, event);
   }
 
-  @KafkaListener(topics = TOPIC, groupId = "discodeit-group-v7")
+  @KafkaListener(topics = TOPIC, groupId = "#{T(java.util.UUID).randomUUID().toString()}")
   public void consumeFromKafkaAndBroadcast(MessageCreatedEvent event) {
     String destination = "/sub/channels." + event.getChannelId() + ".messages";
 
