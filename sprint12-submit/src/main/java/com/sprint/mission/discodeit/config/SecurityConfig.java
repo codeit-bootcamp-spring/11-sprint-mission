@@ -11,11 +11,11 @@ import com.sprint.mission.discodeit.security.jwt.JwtLoginSuccessHandler;
 import com.sprint.mission.discodeit.security.jwt.JwtLogoutHandler;
 import com.sprint.mission.discodeit.security.jwt.JwtRegistry;
 import com.sprint.mission.discodeit.security.jwt.JwtTokenProvider;
-import com.sprint.mission.discodeit.service.SseService;
 import java.util.List;
 import java.util.stream.IntStream;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -134,8 +134,8 @@ public class SecurityConfig {
   @Bean
   public JwtRegistry jwtRegistry(
       JwtTokenProvider jwtTokenProvider,
-      SseService sseService
+      ApplicationEventPublisher eventPublisher
   ) {
-    return new InMemoryJwtRegistry(1, jwtTokenProvider, sseService);
+    return new InMemoryJwtRegistry(1, jwtTokenProvider, eventPublisher);
   }
 }

@@ -7,13 +7,16 @@ import com.sprint.mission.discodeit.dto.request.UserUpdateRequest;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.event.message.BinaryContentCreatedEvent;
+import com.sprint.mission.discodeit.event.message.UserCreatedEvent;
+import com.sprint.mission.discodeit.event.message.UserDeletedEvent;
+import com.sprint.mission.discodeit.event.message.UserUpdatedEvent;
 import com.sprint.mission.discodeit.exception.user.UserAlreadyExistsException;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.mapper.UserMapper;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
-import com.sprint.mission.discodeit.service.SseService;
 import com.sprint.mission.discodeit.service.UserService;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -37,13 +40,14 @@ public class BasicUserService implements UserService {
   private final BinaryContentRepository binaryContentRepository;
   private final PasswordEncoder passwordEncoder;
   private final ApplicationEventPublisher eventPublisher;
-  private final SseService sseService;
 
   @CacheEvict(value = "users", key = "'all'")
   @Transactional
   @Override
-  public UserDto create(UserCreateRequest userCreateRequest,
-      Optional<BinaryContentCreateRequest> optionalProfileCreateRequest) {
+  public UserDto create(
+      UserCreateRequest userCreateRequest,
+      Optional<BinaryContentCreateRequest> optionalProfileCreateRequest
+  ) {
     log.debug("사용자 생성 시작: {}", userCreateRequest);
 
     String username = userCreateRequest.username();
@@ -61,27 +65,38 @@ public class BasicUserService implements UserService {
           String fileName = profileRequest.fileName();
           String contentType = profileRequest.contentType();
           byte[] bytes = profileRequest.bytes();
-          BinaryContent binaryContent = new BinaryContent(fileName, (long) bytes.length,
-              contentType);
+
+          BinaryContent binaryContent = new BinaryContent(
+              fileName,
+              (long) bytes.length,
+              contentType
+          );
+
           binaryContentRepository.save(binaryContent);
           eventPublisher.publishEvent(
               new BinaryContentCreatedEvent(
-                  binaryContent, binaryContent.getCreatedAt(), bytes
+                  binaryContent,
+                  binaryContent.getCreatedAt(),
+                  bytes
               )
           );
+
           return binaryContent;
         })
         .orElse(null);
+
     String password = userCreateRequest.password();
     String encodedPassword = passwordEncoder.encode(password);
 
     User user = new User(username, email, encodedPassword, nullableProfile);
-
     userRepository.save(user);
 
     UserDto userDto = userMapper.toDto(user);
-    sseService.broadcast("users.created", userDto);
+    eventPublisher.publishEvent(
+        new UserCreatedEvent(userDto, user.getCreatedAt())
+    );
 
+    log.info("사용자 생성 완료: id={}, username={}", user.getId(), username);
     return userDto;
   }
 
@@ -89,9 +104,11 @@ public class BasicUserService implements UserService {
   @Override
   public UserDto find(UUID userId) {
     log.debug("사용자 조회 시작: id={}", userId);
+
     UserDto userDto = userRepository.findById(userId)
         .map(userMapper::toDto)
         .orElseThrow(() -> UserNotFoundException.withId(userId));
+
     log.info("사용자 조회 완료: id={}", userId);
     return userDto;
   }
@@ -101,10 +118,12 @@ public class BasicUserService implements UserService {
   @Override
   public List<UserDto> findAll() {
     log.debug("모든 사용자 조회 시작");
+
     List<UserDto> userDtos = userRepository.findAllWithProfile()
         .stream()
         .map(userMapper::toDto)
         .toList();
+
     log.info("모든 사용자 조회 완료: 총 {}명", userDtos.size());
     return userDtos;
   }
@@ -113,15 +132,15 @@ public class BasicUserService implements UserService {
   @PreAuthorize("principal.userDto.id == #userId")
   @Transactional
   @Override
-  public UserDto update(UUID userId, UserUpdateRequest userUpdateRequest,
-      Optional<BinaryContentCreateRequest> optionalProfileCreateRequest) {
+  public UserDto update(
+      UUID userId,
+      UserUpdateRequest userUpdateRequest,
+      Optional<BinaryContentCreateRequest> optionalProfileCreateRequest
+  ) {
     log.debug("사용자 수정 시작: id={}, request={}", userId, userUpdateRequest);
 
     User user = userRepository.findById(userId)
-        .orElseThrow(() -> {
-          UserNotFoundException exception = UserNotFoundException.withId(userId);
-          return exception;
-        });
+        .orElseThrow(() -> UserNotFoundException.withId(userId));
 
     String newUsername = userUpdateRequest.newUsername();
     String newEmail = userUpdateRequest.newEmail();
@@ -136,32 +155,45 @@ public class BasicUserService implements UserService {
 
     BinaryContent nullableProfile = optionalProfileCreateRequest
         .map(profileRequest -> {
-
           String fileName = profileRequest.fileName();
           String contentType = profileRequest.contentType();
           byte[] bytes = profileRequest.bytes();
-          BinaryContent binaryContent = new BinaryContent(fileName, (long) bytes.length,
-              contentType);
+
+          BinaryContent binaryContent = new BinaryContent(
+              fileName,
+              (long) bytes.length,
+              contentType
+          );
+
           binaryContentRepository.save(binaryContent);
           eventPublisher.publishEvent(
               new BinaryContentCreatedEvent(
-                  binaryContent, binaryContent.getCreatedAt(), bytes
+                  binaryContent,
+                  binaryContent.getCreatedAt(),
+                  bytes
               )
           );
+
           return binaryContent;
         })
         .orElse(null);
 
     String newPassword = userUpdateRequest.newPassword();
-    String encodedPassword = Optional.ofNullable(newPassword).map(passwordEncoder::encode)
+    String encodedPassword = Optional.ofNullable(newPassword)
+        .map(passwordEncoder::encode)
         .orElse(user.getPassword());
+
+    UserDto before = userMapper.toDto(user);
+
     user.update(newUsername, newEmail, encodedPassword, nullableProfile);
 
-    UserDto userDto = userMapper.toDto(user);
-    sseService.broadcast("users.updated", userDto);
+    UserDto after = userMapper.toDto(user);
+    eventPublisher.publishEvent(
+        new UserUpdatedEvent(before, after, user.getUpdatedAt())
+    );
 
     log.info("사용자 수정 완료: id={}", userId);
-    return userDto;
+    return after;
   }
 
   @CacheEvict(value = "users", key = "'all'")
@@ -178,6 +210,10 @@ public class BasicUserService implements UserService {
 
     userRepository.delete(user);
 
-    sseService.broadcast("users.deleted", userDto);
+    eventPublisher.publishEvent(
+        new UserDeletedEvent(userDto, Instant.now())
+    );
+
+    log.info("사용자 삭제 완료: id={}", userId);
   }
 }

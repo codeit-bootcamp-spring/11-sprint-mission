@@ -2,7 +2,8 @@ package com.sprint.mission.discodeit.security.jwt;
 
 import com.sprint.mission.discodeit.dto.data.JwtInformation;
 import com.sprint.mission.discodeit.dto.data.UserDto;
-import com.sprint.mission.discodeit.service.SseService;
+import com.sprint.mission.discodeit.event.message.UserUpdatedEvent;
+import java.time.Instant;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
@@ -10,8 +11,9 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import lombok.RequiredArgsConstructor;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.scheduling.annotation.Scheduled;
 
 
 @RequiredArgsConstructor
@@ -24,11 +26,13 @@ public class InMemoryJwtRegistry implements JwtRegistry {
 
   private final int maxActiveJwtCount;
   private final JwtTokenProvider jwtTokenProvider;
-  private final SseService sseService;
+  private final ApplicationEventPublisher eventPublisher;
 
   @CacheEvict(value = "users", key = "'all'")
   @Override
   public void registerJwtInformation(JwtInformation jwtInformation) {
+    UserDto before = withOnline(jwtInformation.getUserDto(), false);
+
     origin.compute(jwtInformation.getUserDto().id(), (key, queue) -> {
       if (queue == null) {
         queue = new ConcurrentLinkedQueue<>();
@@ -51,7 +55,10 @@ public class InMemoryJwtRegistry implements JwtRegistry {
       return queue;
     });
 
-    sseService.broadcast("users.updated", withOnline(jwtInformation.getUserDto(), true));
+    UserDto after = withOnline(jwtInformation.getUserDto(), true);
+    eventPublisher.publishEvent(
+        new UserUpdatedEvent(before, after, Instant.now())
+    );
   }
 
   @CacheEvict(value = "users", key = "'all'")
@@ -75,7 +82,12 @@ public class InMemoryJwtRegistry implements JwtRegistry {
     });
 
     if (userDto != null) {
-      sseService.broadcast("users.updated", withOnline(userDto, false));
+      UserDto before = withOnline(userDto, true);
+      UserDto after = withOnline(userDto, false);
+
+      eventPublisher.publishEvent(
+          new UserUpdatedEvent(before, after, Instant.now())
+      );
     }
   }
 
@@ -119,6 +131,11 @@ public class InMemoryJwtRegistry implements JwtRegistry {
   public void clearExpiredJwtInformation() {
     origin.entrySet().removeIf(entry -> {
       Queue<JwtInformation> queue = entry.getValue();
+      UserDto userDto = queue.stream()
+          .findFirst()
+          .map(JwtInformation::getUserDto)
+          .orElse(null);
+
       queue.removeIf(jwtInformation -> {
         boolean isExpired =
             !jwtTokenProvider.validateAccessToken(jwtInformation.getAccessToken()) ||
@@ -131,7 +148,20 @@ public class InMemoryJwtRegistry implements JwtRegistry {
         }
         return isExpired;
       });
-      return queue.isEmpty(); // Remove the entry if the queue is empty
+
+      boolean empty = queue.isEmpty();
+
+      if (empty && userDto != null) {
+        eventPublisher.publishEvent(
+            new UserUpdatedEvent(
+                withOnline(userDto, true),
+                withOnline(userDto, false),
+                Instant.now()
+            )
+        );
+      }
+
+      return empty; // Remove the entry if the queue is empty
     });
   }
 

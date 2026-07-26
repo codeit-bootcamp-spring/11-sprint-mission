@@ -2,12 +2,12 @@ package com.sprint.mission.discodeit.service.basic;
 
 import com.sprint.mission.discodeit.dto.data.NotificationDto;
 import com.sprint.mission.discodeit.entity.Notification;
+import com.sprint.mission.discodeit.event.message.NotificationCreatedEvent;
 import com.sprint.mission.discodeit.exception.notification.NotificationForbiddenException;
 import com.sprint.mission.discodeit.exception.notification.NotificationNotFoundException;
 import com.sprint.mission.discodeit.mapper.NotificationMapper;
 import com.sprint.mission.discodeit.repository.NotificationRepository;
 import com.sprint.mission.discodeit.service.NotificationService;
-import com.sprint.mission.discodeit.service.SseService;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -17,6 +17,7 @@ import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -30,7 +31,7 @@ public class BasicNotificationService implements NotificationService {
   private final NotificationRepository notificationRepository;
   private final NotificationMapper notificationMapper;
   private final CacheManager cacheManager;
-  private final SseService sseService;
+  private final ApplicationEventPublisher eventPublisher;
 
   @Cacheable(value = "notifications", key = "#receiverId", unless = "#result.isEmpty()")
   @PreAuthorize("principal.userDto.id == #receiverId")
@@ -83,10 +84,8 @@ public class BasicNotificationService implements NotificationService {
 
     savedNotifications.stream()
         .map(notificationMapper::toDto)
-        .forEach(notification -> sseService.send(
-            Set.of(notification.receiverId()),
-            "notifications.created",
-            notification
+        .forEach(notification -> eventPublisher.publishEvent(
+            new NotificationCreatedEvent(notification, notification.createdAt())
         ));
 
     evictNotificationCache(receiverIds);
