@@ -15,6 +15,7 @@ import com.sprint.mission.discodeit.repository.MessageRepository;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.ChannelService;
+import com.sprint.mission.discodeit.service.SseService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -33,12 +34,12 @@ import lombok.extern.slf4j.Slf4j;
 public class BasicChannelService implements ChannelService {
 
   private final ChannelRepository channelRepository;
-  //
   private final ReadStatusRepository readStatusRepository;
   private final MessageRepository messageRepository;
   private final UserRepository userRepository;
   private final ChannelMapper channelMapper;
   private final CacheManager cacheManager;
+  private final SseService sseService;
 
   @CacheEvict(value = "channels", allEntries = true)
   @PreAuthorize("hasRole('CHANNEL_MANAGER')")
@@ -51,8 +52,12 @@ public class BasicChannelService implements ChannelService {
     Channel channel = new Channel(ChannelType.PUBLIC, name, description);
 
     channelRepository.save(channel);
+
+    ChannelDto channelDto = channelMapper.toDto(channel);
+    sseService.broadcast("channels.created", channelDto);
+
     log.info("채널 생성 완료: id={}, name={}", channel.getId(), channel.getName());
-    return channelMapper.toDto(channel);
+    return channelDto;
   }
 
   @Transactional
@@ -67,8 +72,12 @@ public class BasicChannelService implements ChannelService {
         .toList();
     readStatusRepository.saveAll(readStatuses);
     evictCache(request.participantIds());
+
+    ChannelDto channelDto = channelMapper.toDto(channel);
+    sseService.broadcast("channels.created", channelDto);
+
     log.info("채널 생성 완료: id={}, name={}", channel.getId(), channel.getName());
-    return channelMapper.toDto(channel);
+    return channelDto;
   }
 
   @Transactional(readOnly = true)
@@ -108,8 +117,12 @@ public class BasicChannelService implements ChannelService {
       throw PrivateChannelUpdateException.forChannel(channelId);
     }
     channel.update(newName, newDescription);
+
+    ChannelDto channelDto = channelMapper.toDto(channel);
+    sseService.broadcast("channels.updated", channelDto);
+
     log.info("채널 수정 완료: id={}, name={}", channelId, channel.getName());
-    return channelMapper.toDto(channel);
+    return channelDto;
   }
 
   @CacheEvict(value = "channels", allEntries = true)
@@ -118,15 +131,17 @@ public class BasicChannelService implements ChannelService {
   @Override
   public void delete(UUID channelId) {
     log.debug("채널 삭제 시작: id={}", channelId);
-    if (!channelRepository.existsById(channelId)) {
-      throw ChannelNotFoundException.withId(channelId);
-    }
+    Channel channel = channelRepository.findById(channelId)
+        .orElseThrow(() -> ChannelNotFoundException.withId(channelId));
+
+    ChannelDto channelDto = channelMapper.toDto(channel);
 
     messageRepository.deleteAllByChannelId(channelId);
     readStatusRepository.deleteAllByChannelId(channelId);
 
-    channelRepository.deleteById(channelId);
-    log.info("채널 삭제 완료: id={}", channelId);
+    channelRepository.delete(channel);
+
+    sseService.broadcast("channels.deleted", channelDto);
   }
 
   private void evictCache(List<UUID> userIds) {

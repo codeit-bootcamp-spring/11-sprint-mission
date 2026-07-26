@@ -7,6 +7,7 @@ import com.sprint.mission.discodeit.exception.notification.NotificationNotFoundE
 import com.sprint.mission.discodeit.mapper.NotificationMapper;
 import com.sprint.mission.discodeit.repository.NotificationRepository;
 import com.sprint.mission.discodeit.service.NotificationService;
+import com.sprint.mission.discodeit.service.SseService;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -29,6 +30,7 @@ public class BasicNotificationService implements NotificationService {
   private final NotificationRepository notificationRepository;
   private final NotificationMapper notificationMapper;
   private final CacheManager cacheManager;
+  private final SseService sseService;
 
   @Cacheable(value = "notifications", key = "#receiverId", unless = "#result.isEmpty()")
   @PreAuthorize("principal.userDto.id == #receiverId")
@@ -66,15 +68,29 @@ public class BasicNotificationService implements NotificationService {
       log.warn("알림 생성 요청이 비어있음: receiverIds={}", receiverIds);
       return;
     }
+
     log.debug("새 알림 생성 시작: receiverIds={}", receiverIds);
+
     List<Notification> notifications = receiverIds.stream()
         .map(receiverId -> new Notification(
             receiverId,
             title,
             content
-        )).toList();
-    notificationRepository.saveAll(notifications);
+        ))
+        .toList();
+
+    List<Notification> savedNotifications = notificationRepository.saveAll(notifications);
+
+    savedNotifications.stream()
+        .map(notificationMapper::toDto)
+        .forEach(notification -> sseService.send(
+            Set.of(notification.receiverId()),
+            "notifications.created",
+            notification
+        ));
+
     evictNotificationCache(receiverIds);
+
     log.info("새 알림 생성 완료: receiverIds={}", receiverIds);
   }
 

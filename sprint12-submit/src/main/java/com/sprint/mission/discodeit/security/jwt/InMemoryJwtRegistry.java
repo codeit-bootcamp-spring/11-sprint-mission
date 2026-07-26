@@ -1,6 +1,8 @@
 package com.sprint.mission.discodeit.security.jwt;
 
 import com.sprint.mission.discodeit.dto.data.JwtInformation;
+import com.sprint.mission.discodeit.dto.data.UserDto;
+import com.sprint.mission.discodeit.service.SseService;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
@@ -22,6 +24,7 @@ public class InMemoryJwtRegistry implements JwtRegistry {
 
   private final int maxActiveJwtCount;
   private final JwtTokenProvider jwtTokenProvider;
+  private final SseService sseService;
 
   @CacheEvict(value = "users", key = "'all'")
   @Override
@@ -47,11 +50,19 @@ public class InMemoryJwtRegistry implements JwtRegistry {
       );
       return queue;
     });
+
+    sseService.broadcast("users.updated", withOnline(jwtInformation.getUserDto(), true));
   }
 
   @CacheEvict(value = "users", key = "'all'")
   @Override
   public void invalidateJwtInformationByUserId(UUID userId) {
+    UserDto userDto = origin.getOrDefault(userId, new ConcurrentLinkedQueue<>())
+        .stream()
+        .findFirst()
+        .map(JwtInformation::getUserDto)
+        .orElse(null);
+
     origin.computeIfPresent(userId, (key, queue) -> {
       queue.forEach(jwtInformation -> {
         removeTokenIndex(
@@ -62,6 +73,10 @@ public class InMemoryJwtRegistry implements JwtRegistry {
       queue.clear(); // Clear the queue for this user
       return null; // Remove the user from the registry
     });
+
+    if (userDto != null) {
+      sseService.broadcast("users.updated", withOnline(userDto, false));
+    }
   }
 
   @Override
@@ -128,5 +143,16 @@ public class InMemoryJwtRegistry implements JwtRegistry {
   private void removeTokenIndex(String accessToken, String refreshToken) {
     accessTokenIndexes.remove(accessToken);
     refreshTokenIndexes.remove(refreshToken);
+  }
+
+  private UserDto withOnline(UserDto userDto, Boolean online) {
+    return new UserDto(
+        userDto.id(),
+        userDto.username(),
+        userDto.email(),
+        userDto.profile(),
+        online,
+        userDto.role()
+    );
   }
 }

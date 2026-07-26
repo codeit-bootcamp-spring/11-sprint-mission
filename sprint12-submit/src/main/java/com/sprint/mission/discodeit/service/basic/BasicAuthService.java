@@ -16,6 +16,7 @@ import com.sprint.mission.discodeit.security.DiscodeitUserDetails;
 import com.sprint.mission.discodeit.security.jwt.JwtRegistry;
 import com.sprint.mission.discodeit.security.jwt.JwtTokenProvider;
 import com.sprint.mission.discodeit.service.AuthService;
+import com.sprint.mission.discodeit.service.SseService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,6 +38,7 @@ public class BasicAuthService implements AuthService {
   private final JwtTokenProvider tokenProvider;
   private final UserDetailsService userDetailsService;
   private final ApplicationEventPublisher eventPublisher;
+  private final SseService sseService;
 
   @PreAuthorize("hasRole('ADMIN')")
   @Transactional
@@ -61,7 +63,10 @@ public class BasicAuthService implements AuthService {
         new RoleUpdatedEvent(user.getId(), previousRole, newRole, user.getUpdatedAt())
     );
 
-    return userMapper.toDto(user);
+    UserDto userDto = userMapper.toDto(user);
+    sseService.broadcast("users.updated", userDto);
+
+    return userDto;
   }
 
   @Override
