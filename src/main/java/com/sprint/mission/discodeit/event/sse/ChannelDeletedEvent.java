@@ -9,4 +9,5 @@ public record ChannelDeletedEvent(
     ChannelResponse channel
 ) {
 
+  public static final String TOPIC = "discodeit.ChannelDeletedEvent";
 }

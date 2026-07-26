@@ -9,4 +9,5 @@ public record ChannelUpdatedEvent(
     ChannelResponse channel
 ) {
 
+  public static final String TOPIC = "discodeit.ChannelUpdatedEvent";
 }

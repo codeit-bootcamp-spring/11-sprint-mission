@@ -9,4 +9,5 @@ public record BinaryContentStatusUpdatedEvent(
     BinaryContentResponse binaryContent
 ) {
 
+  public static final String TOPIC = "discodeit.BinaryContentStatusUpdatedEvent";
 }

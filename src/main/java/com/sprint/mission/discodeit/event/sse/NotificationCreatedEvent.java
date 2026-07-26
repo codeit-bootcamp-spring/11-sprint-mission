@@ -6,4 +6,5 @@ public record NotificationCreatedEvent(
     NotificationResponse notification
 ) {
 
+  public static final String TOPIC = "discodeit.NotificationCreatedEvent";
 }

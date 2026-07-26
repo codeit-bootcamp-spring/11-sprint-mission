@@ -6,4 +6,5 @@ public record UserCreatedEvent(
     UserResponse user
 ) {
 
+  public static final String TOPIC = "discodeit.UserCreatedEvent";
 }

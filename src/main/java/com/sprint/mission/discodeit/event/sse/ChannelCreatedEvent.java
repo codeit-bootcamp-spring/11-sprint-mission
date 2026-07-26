@@ -9,4 +9,5 @@ public record ChannelCreatedEvent(
     ChannelResponse channel
 ) {
 
+  public static final String TOPIC = "discodeit.ChannelCreatedEvent";
 }
