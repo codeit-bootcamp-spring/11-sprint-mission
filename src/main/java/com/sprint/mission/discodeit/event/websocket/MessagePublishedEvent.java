@@ -8,4 +8,5 @@ public record MessagePublishedEvent(
     MessageResponse message
 ) {
 
+  public static final String TOPIC = "discodeit.MessagePublishedEvent";
 }

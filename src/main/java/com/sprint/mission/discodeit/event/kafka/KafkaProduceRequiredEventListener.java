@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.mission.discodeit.event.notification.MessageCreatedEvent;
 import com.sprint.mission.discodeit.event.notification.RoleUpdatedEvent;
 import com.sprint.mission.discodeit.event.binarycontent.S3UploadFailedEvent;
+import com.sprint.mission.discodeit.event.websocket.MessagePublishedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -39,6 +40,12 @@ public class KafkaProduceRequiredEventListener {
   @EventListener
   public void on(S3UploadFailedEvent event) {
     send(S3UploadFailedEvent.TOPIC, event);
+  }
+
+  @Async("eventTaskExecutor")
+  @TransactionalEventListener
+  public void on(MessagePublishedEvent event) {
+    send(MessagePublishedEvent.TOPIC, event);
   }
 
   private void send(String topic, Object event) {
