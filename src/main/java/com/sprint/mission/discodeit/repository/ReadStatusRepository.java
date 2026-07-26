@@ -22,6 +22,9 @@ public interface ReadStatusRepository extends JpaRepository<ReadStatus, UUID> {
   @EntityGraph(attributePaths = {"user"})
   List<ReadStatus> findAllByChannelIdAndNotificationEnabledTrue(UUID channelId);
 
+  @EntityGraph(attributePaths = {"user"})
+  List<ReadStatus> findAllByChannelId(UUID channelId);
+
   boolean existsByUserAndChannel(User user, Channel channel);
 
   void deleteAllByChannel(Channel channel);

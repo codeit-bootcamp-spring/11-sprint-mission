@@ -6,7 +6,7 @@ plugins {
 }
 
 group = 'com.sprint.mission'
-version = '2.2-M11'
+version = '3.0-M12'
 description = 'discodeit'
 
 java {
@@ -40,6 +40,8 @@ dependencies {
     implementation 'org.springframework.retry:spring-retry'
     implementation 'com.github.ben-manes.caffeine:caffeine'
     implementation 'org.springframework.kafka:spring-kafka'
+    implementation 'org.springframework.boot:spring-boot-starter-websocket'
+    implementation 'org.springframework.security:spring-security-messaging'
 
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
 

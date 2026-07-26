@@ -1,5 +1,9 @@
 package com.sprint.mission.discodeit.security.jwt;
 
+import com.sprint.mission.discodeit.dto.user.UserResponse;
+import com.sprint.mission.discodeit.event.sse.UserUpdatedEvent;
+import com.sprint.mission.discodeit.mapper.UserMapper;
+import com.sprint.mission.discodeit.repository.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.time.Duration;
@@ -10,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.Authentication;
@@ -24,6 +29,9 @@ public class JwtLogoutHandler implements LogoutHandler {
   private final JwtTokenProvider jwtTokenProvider;
   private final JwtRegistry jwtRegistry;
   private final CacheManager cacheManager;
+  private final UserRepository userRepository;
+  private final UserMapper mapper;
+  private final ApplicationEventPublisher eventPublisher;
 
   @Override
   public void logout(HttpServletRequest request, HttpServletResponse response,
@@ -41,6 +49,11 @@ public class JwtLogoutHandler implements LogoutHandler {
           if (jwtTokenProvider.validateRefreshToken(refreshToken)) {
             userId = UUID.fromString(jwtTokenProvider.getSubject(refreshToken));
             jwtRegistry.invalidateJwtInformationByUserId(userId);
+
+            userRepository.findById(userId).ifPresent(user -> {
+              UserResponse userResponse = mapper.toResponse(user);
+              eventPublisher.publishEvent(new UserUpdatedEvent(userResponse));
+            });
           }
 
           ResponseCookie expired = ResponseCookie

@@ -5,11 +5,13 @@ import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentResponse;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.BinaryContentStatus;
 import com.sprint.mission.discodeit.event.binarycontent.BinaryContentCreatedEvent;
+import com.sprint.mission.discodeit.event.sse.BinaryContentStatusUpdatedEvent;
 import com.sprint.mission.discodeit.exception.binarycontent.BinaryContentNotFoundException;
 import com.sprint.mission.discodeit.mapper.BinaryContentMapper;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.service.BinaryContentService;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,7 +39,7 @@ public class BasicBinaryContentService implements BinaryContentService {
     this.binaryContentRepository.save(binaryContent);
 
     this.eventPublisher.publishEvent(
-        new BinaryContentCreatedEvent(binaryContent.getId(), req.bytes()));
+        new BinaryContentCreatedEvent(binaryContent.getId(), req.bytes(), null));
 
     log.info("binary-content create success: id={}, file-name={}, content-type={}, size={}",
         binaryContent.getId(), binaryContent.getFileName(), binaryContent.getContentType(),
@@ -82,12 +84,15 @@ public class BasicBinaryContentService implements BinaryContentService {
 
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   @Override
-  public void updateStatus(UUID id, BinaryContentStatus status) {
+  public void updateStatus(UUID id, BinaryContentStatus status, Set<UUID> receiverIds) {
     log.debug("binary-content update-status trial: id={}, status={}", id, status);
     BinaryContent binaryContent = this.binaryContentRepository.findById(id)
         .orElseThrow(() -> BinaryContentNotFoundException.withId(id));
 
     binaryContent.updateStatus(status);
+
+    this.eventPublisher.publishEvent(
+        new BinaryContentStatusUpdatedEvent(receiverIds, this.mapper.toResponse(binaryContent)));
 
     log.info("binary-content update-status success: id={}, status={}", id, status);
   }

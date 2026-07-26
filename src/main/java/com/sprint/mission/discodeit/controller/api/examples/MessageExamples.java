@@ -19,7 +19,8 @@ public class MessageExamples {
                 "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
                 "fileName": "string",
                 "size": 0,
-                "contentType": "string"
+                "contentType": "string",
+                "status": "SUCCESS"
               },
               "online": true
             },
@@ -28,7 +29,8 @@ public class MessageExamples {
                 "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
                 "fileName": "string",
                 "size": 0,
-                "contentType": "string"
+                "contentType": "string",
+                "status": "SUCCESS"
               }
             ]
           }

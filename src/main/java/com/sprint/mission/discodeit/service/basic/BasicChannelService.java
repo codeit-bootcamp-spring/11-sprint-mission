@@ -7,6 +7,9 @@ import com.sprint.mission.discodeit.dto.channel.PublicChannelUpdateRequest;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.event.sse.ChannelCreatedEvent;
+import com.sprint.mission.discodeit.event.sse.ChannelDeletedEvent;
+import com.sprint.mission.discodeit.event.sse.ChannelUpdatedEvent;
 import com.sprint.mission.discodeit.exception.channel.ChannelNotFoundException;
 import com.sprint.mission.discodeit.exception.channel.DuplicateChannelException;
 import com.sprint.mission.discodeit.exception.channel.NoValidParticipantsException;
@@ -20,12 +23,14 @@ import com.sprint.mission.discodeit.service.ChannelService;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,6 +46,7 @@ public class BasicChannelService implements ChannelService {
   private final ReadStatusRepository readStatusRepository;
   private final MessageRepository messageRepository;
   private final ChannelMapper mapper;
+  private final ApplicationEventPublisher eventPublisher;
 
   @CacheEvict(cacheNames = "channels", allEntries = true)
   @PreAuthorize("hasRole('CHANNEL_MANAGER')")
@@ -57,8 +63,11 @@ public class BasicChannelService implements ChannelService {
         publicChannelCreateRequest.description());
     this.channelRepository.save(channel);
 
+    ChannelResponse response = this.mapper.toResponse(channel, List.of(), Instant.now());
+    this.eventPublisher.publishEvent(new ChannelCreatedEvent(null, response));
+
     log.info("channel create-public success: id={}, name={}", channel.getId(), channel.getName());
-    return this.mapper.toResponse(channel, List.of(), Instant.now());
+    return response;
   }
 
 
@@ -88,9 +97,13 @@ public class BasicChannelService implements ChannelService {
 
     this.readStatusRepository.saveAll(readStatuses);
 
+    ChannelResponse response = this.mapper.toResponse(channel, participants, null);
+    Set<UUID> receiverIds = participants.stream().map(User::getId).collect(Collectors.toSet());
+    this.eventPublisher.publishEvent(new ChannelCreatedEvent(receiverIds, response));
+
     log.info("channel create-private success: id={}, participants-count={}", channel.getId(),
         participants.size());
-    return this.mapper.toResponse(channel, participants, null);
+    return response;
   }
 
   @Override
@@ -168,13 +181,16 @@ public class BasicChannelService implements ChannelService {
       channel.updateDescription(publicChannelUpdateRequest.newDescription());
     }
 
-    log.info("channel update success: id={}, name={}", channel.getId(), channel.getName());
     List<User> participants = this.readStatusRepository.findAllByChannel(channel).stream()
         .map(ReadStatus::getUser)
         .toList();
     Instant lastMessageAt = this.messageRepository
         .findTopCreatedAtByChannelOrderByCreatedAtDesc(channel).orElse(null);
-    return this.mapper.toResponse(channel, participants, lastMessageAt);
+    ChannelResponse response = this.mapper.toResponse(channel, participants, lastMessageAt);
+    this.eventPublisher.publishEvent(new ChannelUpdatedEvent(null, response));
+
+    log.info("channel update success: id={}, name={}", channel.getId(), channel.getName());
+    return response;
   }
 
   @CacheEvict(cacheNames = "channels", allEntries = true)
@@ -186,11 +202,21 @@ public class BasicChannelService implements ChannelService {
     Channel channel = this.channelRepository.findById(id)
         .orElseThrow(() -> ChannelNotFoundException.withId(id));
 
+    List<User> participants = this.readStatusRepository.findAllByChannel(channel).stream()
+        .map(ReadStatus::getUser)
+        .toList();
+    ChannelResponse response = this.mapper.toResponse(channel, participants, null);
+    Set<UUID> receiverIds = channel.isPrivate()
+        ? participants.stream().map(User::getId).collect(Collectors.toSet())
+        : null;
+
     this.messageRepository.deleteAllByChannel(channel);
 
     this.readStatusRepository.deleteAllByChannel(channel);
 
     this.channelRepository.delete(channel);
+
+    this.eventPublisher.publishEvent(new ChannelDeletedEvent(receiverIds, response));
 
     log.info("channel delete success: id={}", id);
   }

@@ -7,6 +7,9 @@ import com.sprint.mission.discodeit.dto.user.UserUpdateRequest;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.event.binarycontent.BinaryContentCreatedEvent;
+import com.sprint.mission.discodeit.event.sse.UserCreatedEvent;
+import com.sprint.mission.discodeit.event.sse.UserDeletedEvent;
+import com.sprint.mission.discodeit.event.sse.UserUpdatedEvent;
 import com.sprint.mission.discodeit.exception.user.DuplicateUserException;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.mapper.UserMapper;
@@ -15,6 +18,7 @@ import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.UserService;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -56,7 +60,6 @@ public class BasicUserService implements UserService {
     if (binaryContentCreateRequest.isPresent()) {
       BinaryContentCreateRequest req = binaryContentCreateRequest.get();
       profile = new BinaryContent(req.fileName(), req.size(), req.contentType());
-      this.eventPublisher.publishEvent(new BinaryContentCreatedEvent(profile.getId(), req.bytes()));
     }
 
     User user = new User(
@@ -66,10 +69,19 @@ public class BasicUserService implements UserService {
         profile
     );
 
+    if (binaryContentCreateRequest.isPresent()) {
+      BinaryContentCreateRequest req = binaryContentCreateRequest.get();
+      this.eventPublisher.publishEvent(
+          new BinaryContentCreatedEvent(profile.getId(), req.bytes(), Set.of(user.getId())));
+    }
+
     this.userRepository.save(user);
 
+    UserResponse response = this.mapper.toResponse(user);
+    this.eventPublisher.publishEvent(new UserCreatedEvent(response));
+
     log.info("user create success: id={}, username={}", user.getId(), user.getUsername());
-    return this.mapper.toResponse(user);
+    return response;
   }
 
   @Override
@@ -132,13 +144,17 @@ public class BasicUserService implements UserService {
     if (binaryContentCreateRequest.isPresent()) {
       BinaryContentCreateRequest req = binaryContentCreateRequest.get();
       profile = new BinaryContent(req.fileName(), req.size(), req.contentType());
-      this.eventPublisher.publishEvent(new BinaryContentCreatedEvent(profile.getId(), req.bytes()));
+      this.eventPublisher.publishEvent(
+          new BinaryContentCreatedEvent(profile.getId(), req.bytes(), Set.of(user.getId())));
     }
 
     user.update(username, email, password, profile);
 
+    UserResponse response = this.mapper.toResponse(user);
+    this.eventPublisher.publishEvent(new UserUpdatedEvent(response));
+
     log.info("user update success: id={}, username={}", id, user.getUsername());
-    return this.mapper.toResponse(user);
+    return response;
   }
 
   @CacheEvict(cacheNames = "users", allEntries = true)
@@ -150,9 +166,13 @@ public class BasicUserService implements UserService {
     User user = this.userRepository.findById(id)
         .orElseThrow(() -> UserNotFoundException.withId(id));
 
+    UserResponse response = this.mapper.toResponse(user);
+
     this.readStatusRepository.deleteAllByUser(user);
 
     this.userRepository.delete(user);
+
+    this.eventPublisher.publishEvent(new UserDeletedEvent(response));
 
     log.info("user delete success: id={}", user.getId());
   }
