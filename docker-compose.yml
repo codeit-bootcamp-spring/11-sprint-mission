@@ -6,9 +6,39 @@ services:
     ports:
       - "3000:80"
     depends_on:
-      - app
+      - app1
+      - app2
+      - app3
 
-  app:
+  app1:
+    build: .
+    environment: &app-env
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
+      - DB_URL=${DB_URL}
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - STORAGE_TYPE=${STORAGE_TYPE}
+      - STORAGE_LOCAL_ROOT_PATH=${STORAGE_LOCAL_ROOT_PATH}
+      - AWS_S3_ACCESS_KEY=${AWS_S3_ACCESS_KEY}
+      - AWS_S3_SECRET_KEY=${AWS_S3_SECRET_KEY}
+      - AWS_S3_REGION=${AWS_S3_REGION}
+      - AWS_S3_BUCKET=${AWS_S3_BUCKET}
+      - AWS_S3_PRESIGNED_URL_EXPIRATION=${AWS_S3_PRESIGNED_URL_EXPIRATION:-600}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - KAFKA_BOOTSTRAP_SERVERS=broker:29092
+      - INSTANCE_ID=app1
+    volumes:
+      - app-storage:/app/.discodeit/storage
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      broker:
+        condition: service_started
+
+  app2:
     build: .
     environment:
       - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
@@ -25,6 +55,35 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - KAFKA_BOOTSTRAP_SERVERS=broker:29092
+      - INSTANCE_ID=app2
+    volumes:
+      - app-storage:/app/.discodeit/storage
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      broker:
+        condition: service_started
+
+  app3:
+    build: .
+    environment:
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
+      - DB_URL=${DB_URL}
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - STORAGE_TYPE=${STORAGE_TYPE}
+      - STORAGE_LOCAL_ROOT_PATH=${STORAGE_LOCAL_ROOT_PATH}
+      - AWS_S3_ACCESS_KEY=${AWS_S3_ACCESS_KEY}
+      - AWS_S3_SECRET_KEY=${AWS_S3_SECRET_KEY}
+      - AWS_S3_REGION=${AWS_S3_REGION}
+      - AWS_S3_BUCKET=${AWS_S3_BUCKET}
+      - AWS_S3_PRESIGNED_URL_EXPIRATION=${AWS_S3_PRESIGNED_URL_EXPIRATION:-600}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - KAFKA_BOOTSTRAP_SERVERS=broker:29092
+      - INSTANCE_ID=app3
     volumes:
       - app-storage:/app/.discodeit/storage
     depends_on:
