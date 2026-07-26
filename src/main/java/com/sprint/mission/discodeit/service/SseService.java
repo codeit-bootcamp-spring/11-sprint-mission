@@ -1,10 +1,12 @@
 package com.sprint.mission.discodeit.service;
 
 import com.sprint.mission.discodeit.dto.sse.SseMessage;
+import com.sprint.mission.discodeit.event.realtime.RealtimeEventPublisher;
 import com.sprint.mission.discodeit.repository.SseEmitterRepository;
 import com.sprint.mission.discodeit.repository.SseMessageRepository;
 import java.io.IOException;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
@@ -23,6 +25,7 @@ public class SseService {
 
   private final SseEmitterRepository sseEmitterRepository;
   private final SseMessageRepository sseMessageRepository;
+  private final RealtimeEventPublisher realtimeEventPublisher;
 
   public SseEmitter connect(UUID receiverId, UUID lastEventId) {
     SseEmitter emitter = new SseEmitter(TIMEOUT.toMillis());
@@ -53,21 +56,12 @@ public class SseService {
 
   public void send(Collection<UUID> receiverIds, String eventName, Object data) {
     SseMessage message = SseMessage.of(eventName, data);
-    sseMessageRepository.save(message);
-
-    receiverIds.forEach(receiverId ->
-        sseEmitterRepository.findAllByReceiverId(receiverId)
-            .forEach(emitter -> sendToEmitter(emitter, message))
-    );
+    realtimeEventPublisher.publishSse(new ArrayList<>(receiverIds), message);
   }
 
   public void broadcast(String eventName, Object data) {
     SseMessage message = SseMessage.of(eventName, data);
-    sseMessageRepository.save(message);
-
-    sseEmitterRepository.findAll().values().stream()
-        .flatMap(List::stream)
-        .forEach(emitter -> sendToEmitter(emitter, message));
+    realtimeEventPublisher.publishSse(null, message);
   }
 
   private void sendToEmitter(SseEmitter emitter, SseMessage message) {
