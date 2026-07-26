@@ -3,19 +3,23 @@ package com.sprint.mission.discodeit.security.jwt.handler;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.mission.discodeit.dto.JwtDto;
 import com.sprint.mission.discodeit.dto.JwtInformation;
+import com.sprint.mission.discodeit.event.UserUpdatedEvent;
 import com.sprint.mission.discodeit.security.DiscodeitUserDetails;
 import com.sprint.mission.discodeit.security.jwt.JwtRegistry;
 import com.sprint.mission.discodeit.security.jwt.JwtTokenProvider;
 import com.sprint.mission.discodeit.security.jwt.RefreshTokenCookieFactory;
+import com.sprint.mission.discodeit.service.UserService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.Instant;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseCookie;
@@ -33,6 +37,8 @@ public class JwtLoginSuccessHandler implements AuthenticationSuccessHandler {
   private final JwtRegistry jwtRegistry;
   private final RefreshTokenCookieFactory refreshTokenCookieFactory;
   private final CacheManager cacheManager;
+  private final UserService userService;
+  private final ApplicationEventPublisher eventPublisher;
 
   @Override
   public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
@@ -52,6 +58,8 @@ public class JwtLoginSuccessHandler implements AuthenticationSuccessHandler {
         new JwtInformation(userDetails.getUserDto(), accessToken, refreshToken, expiration));
     evictUsersCache();
 
+    publishUserUpdated(userDetails.getUserDto().id());
+
     ResponseCookie refreshCookie = refreshTokenCookieFactory.create(refreshToken);
     response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
 
@@ -69,6 +77,14 @@ public class JwtLoginSuccessHandler implements AuthenticationSuccessHandler {
     Cache cache = cacheManager.getCache("users");
     if (cache != null) {
       cache.clear();
+    }
+  }
+
+  private void publishUserUpdated(UUID userId) {
+    try {
+      eventPublisher.publishEvent(new UserUpdatedEvent(userService.findById(userId)));
+    } catch (Exception e) {
+      log.warn("온라인 상태 변경 이벤트 발행 실패: userId={}", userId, e);
     }
   }
 }

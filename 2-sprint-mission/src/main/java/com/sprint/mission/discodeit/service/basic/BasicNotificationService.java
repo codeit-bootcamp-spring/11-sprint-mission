@@ -4,6 +4,7 @@ import com.sprint.mission.discodeit.dto.NotificationDto;
 import com.sprint.mission.discodeit.entity.Notification;
 import com.sprint.mission.discodeit.entity.Role;
 import com.sprint.mission.discodeit.event.MessageCreatedEvent;
+import com.sprint.mission.discodeit.event.NotificationCreatedEvent;
 import com.sprint.mission.discodeit.event.RoleUpdatedEvent;
 import com.sprint.mission.discodeit.event.S3UploadFailedEvent;
 import com.sprint.mission.discodeit.exception.notification.NotificationNotFoundException;
@@ -20,6 +21,7 @@ import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -36,6 +38,7 @@ public class BasicNotificationService implements NotificationService {
   private final ReadStatusRepository readStatusRepository;
   private final UserRepository userRepository;
   private final CacheManager cacheManager;
+  private final ApplicationEventPublisher eventPublisher;
 
   @Override
   @Cacheable(cacheNames = "notifications", key = "#receiverId")
@@ -127,15 +130,18 @@ public class BasicNotificationService implements NotificationService {
     if (notifications.isEmpty()) {
       return;
     }
-    notificationRepository.saveAll(notifications);
+    List<Notification> saved = notificationRepository.saveAll(notifications);
 
     Cache cache = cacheManager.getCache("notifications");
-    if (cache == null) {
-      return;
+    if (cache != null) {
+      saved.stream()
+          .map(Notification::getReceiverId)
+          .distinct()
+          .forEach(cache::evict);
     }
-    notifications.stream()
-        .map(Notification::getReceiverId)
-        .distinct()
-        .forEach(cache::evict);
+
+    saved.stream()
+        .map(notificationMapper::toDto)
+        .forEach(dto -> eventPublisher.publishEvent(new NotificationCreatedEvent(dto)));
   }
 }

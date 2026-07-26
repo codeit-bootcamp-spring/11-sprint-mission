@@ -77,16 +77,12 @@ public class BasicMessageService implements MessageService {
     Message message = request.toEntity(channel, author, attachments);
     messageRepository.save(message);
 
-    eventPublisher.publishEvent(new MessageCreatedEvent(
-        channel.getId(),
-        channel.getName(),
-        author.getId(),
-        author.getUsername(),
-        message.getContent()
-    ));
+    MessageDto.Response response = messageMapper.toDto(message);
+
+    eventPublisher.publishEvent(new MessageCreatedEvent(channel.getName(), response));
 
     log.info("메시지 생성 완료: messageId={}, channelId={}", message.getId(), channel.getId());
-    return messageMapper.toDto(message);
+    return response;
   }
 
 

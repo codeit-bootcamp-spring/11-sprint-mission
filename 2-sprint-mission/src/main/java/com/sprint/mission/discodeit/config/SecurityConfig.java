@@ -4,18 +4,22 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.mission.discodeit.entity.Role;
 import com.sprint.mission.discodeit.exception.ErrorCode;
 import com.sprint.mission.discodeit.exception.ErrorResponse;
+import com.sprint.mission.discodeit.redis.RedisLockProvider;
 import com.sprint.mission.discodeit.security.LoginFailureHandler;
 import com.sprint.mission.discodeit.security.SpaCsrfTokenRequestHandler;
 import com.sprint.mission.discodeit.security.jwt.InMemoryJwtRegistry;
 import com.sprint.mission.discodeit.security.jwt.JwtRegistry;
 import com.sprint.mission.discodeit.security.jwt.JwtTokenProvider;
+import com.sprint.mission.discodeit.security.jwt.RedisJwtRegistry;
 import com.sprint.mission.discodeit.security.jwt.filter.JwtAuthenticationFilter;
 import com.sprint.mission.discodeit.security.jwt.handler.JwtLoginSuccessHandler;
 import com.sprint.mission.discodeit.security.jwt.handler.JwtLogoutHandler;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -139,7 +143,16 @@ public class SecurityConfig {
   private int maxActiveSessions;
 
   @Bean
-  public JwtRegistry jwtRegistry() {
+  @ConditionalOnProperty(name = "discodeit.jwt.registry",
+      havingValue = "memory", matchIfMissing = true)
+  public JwtRegistry inMemoryJwtRegistry() {
     return new InMemoryJwtRegistry(maxActiveSessions);
+  }
+
+  @Bean
+  @ConditionalOnProperty(name = "discodeit.jwt.registry", havingValue = "redis")
+  public JwtRegistry redisJwtRegistry(RedisTemplate<String, Object> redisTemplate,
+      RedisLockProvider redisLockProvider) {
+    return new RedisJwtRegistry(maxActiveSessions, redisTemplate, redisLockProvider);
   }
 }

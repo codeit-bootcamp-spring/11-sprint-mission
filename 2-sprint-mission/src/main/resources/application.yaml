@@ -2,13 +2,13 @@ spring:
   application:
     name: discodeit
   kafka:
-    bootstrap-servers: localhost:9092
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
     consumer:
-      group-id: discodeit-group
-      auto-offset-reset: earliest
+      group-id: discodeit-notification
+      auto-offset-reset: latest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
   cache:
@@ -22,12 +22,13 @@ spring:
         maximumSize=100,
         expireAfterAccess=600s,
         recordStats
-    redis: # ← 추가
+    redis:
       enable-statistics: true
-    data: # ← 추가
-      redis:
-        host: ${REDIS_HOST:localhost}
-        port: ${REDIS_PORT:6379}
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
 
   servlet:
     multipart:
@@ -101,6 +102,7 @@ discodeit:
     email: ${DISCODEIT_ADMIN_EMAIL}
     password: ${DISCODEIT_ADMIN_PASSWORD}
   jwt:
+    registry: ${JWT_REGISTRY:memory} # memory | redis
     cleanup-interval: 300000 # (기본값: 5분)
     max-active-sessions: 1
     access-token:

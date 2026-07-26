@@ -5,6 +5,9 @@ import com.sprint.mission.discodeit.dto.UserDto;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.event.BinaryContentCreatedEvent;
+import com.sprint.mission.discodeit.event.UserCreatedEvent;
+import com.sprint.mission.discodeit.event.UserDeletedEvent;
+import com.sprint.mission.discodeit.event.UserUpdatedEvent;
 import com.sprint.mission.discodeit.exception.user.UserAlreadyExistsException;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.mapper.UserMapper;
@@ -66,8 +69,11 @@ public class BasicUserService implements UserService {
     User user = request.toEntity(encodedPassword, profile);
     userRepository.save(user);
 
+    UserDto.Response response = userMapper.toDto(user);
+    eventPublisher.publishEvent(new UserCreatedEvent(response));
+
     log.info("사용자 생성 완료: userId={}, username={}", user.getId(), user.getUsername());
-    return userMapper.toDto(user);
+    return response;
   }
 
   @Override
@@ -139,8 +145,11 @@ public class BasicUserService implements UserService {
         .map(passwordEncoder::encode)
         .ifPresent(user::changePassword);
 
+    UserDto.Response response = userMapper.toDto(user);
+    eventPublisher.publishEvent(new UserUpdatedEvent(response));
+
     log.info("사용자 업데이트 완료: userId={}", id);
-    return userMapper.toDto(user);
+    return response;
   }
 
   @Override
@@ -153,7 +162,11 @@ public class BasicUserService implements UserService {
     User user = userRepository.findById(id)
         .orElseThrow(() -> UserNotFoundException.withId(id));
 
+    UserDto.Response response = userMapper.toDto(user);
+
     userRepository.delete(user);
+
+    eventPublisher.publishEvent(new UserDeletedEvent(response));
     log.info("사용자 삭제 완료: userId={}", id);
   }
 }

@@ -1,0 +1,7 @@
+package com.sprint.mission.discodeit.event;
+
+import com.sprint.mission.discodeit.dto.ChannelDto;
+
+public record ChannelUpdatedEvent(ChannelDto.Response channel) {
+
+}
