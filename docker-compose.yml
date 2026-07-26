@@ -12,6 +12,8 @@ services:
 
   app1:
     build: .
+    deploy:
+      replicas: 1
     environment: &app-env
       - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
       - DB_URL=${DB_URL}
@@ -40,6 +42,8 @@ services:
 
   app2:
     build: .
+    deploy:
+      replicas: 1
     environment:
       - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
       - DB_URL=${DB_URL}
@@ -68,6 +72,8 @@ services:
 
   app3:
     build: .
+    deploy:
+      replicas: 1
     environment:
       - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
       - DB_URL=${DB_URL}
