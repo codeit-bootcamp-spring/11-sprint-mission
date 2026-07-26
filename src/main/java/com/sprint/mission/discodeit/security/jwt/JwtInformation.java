@@ -3,11 +3,13 @@ package com.sprint.mission.discodeit.security.jwt;
 import java.util.Date;
 import java.util.UUID;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Getter
+@NoArgsConstructor(force = true)
 public class JwtInformation {
 
-  private final UUID userId;
+  private UUID userId;
   private String accessToken;
   private Date accessTokenExpiration;
   private String refreshToken;
