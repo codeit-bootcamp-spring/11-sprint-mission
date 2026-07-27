@@ -10,6 +10,9 @@ import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.event.BinaryContentCreatedEvent;
 import com.sprint.mission.discodeit.event.PasswordChangeEvent;
 import com.sprint.mission.discodeit.event.RoleUpdatedEvent;
+import com.sprint.mission.discodeit.event.UserCreatedEvent;
+import com.sprint.mission.discodeit.event.UserDeletedEvent;
+import com.sprint.mission.discodeit.event.UserUpdatedEvent;
 import com.sprint.mission.discodeit.exception.DiscodeitException;
 import com.sprint.mission.discodeit.exception.ErrorCode;
 import com.sprint.mission.discodeit.exception.user.DuplicateUserException;
@@ -21,6 +24,7 @@ import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.security.jwt.JwtRegistry;
 import com.sprint.mission.discodeit.service.UserService;
 import com.sprint.mission.discodeit.storage.BinaryContentStorage;
+import java.time.Instant;
 import java.util.Map;
 import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
@@ -97,7 +101,9 @@ public class BasicUserService implements UserService {
 
     log.info("사용자 생성 성공 - userId: {}, username: {}", newUser.getId(), newUser.getUsername());
 
-    return userMapper.toDto(newUser, false);
+    UserDto dto = userMapper.toDto(newUser, false);
+    eventPublisher.publishEvent(new UserCreatedEvent(dto, Instant.now()));
+    return dto;
   }
 
   @Override
@@ -112,7 +118,7 @@ public class BasicUserService implements UserService {
   }
 
   @Override
-  @Cacheable(cacheNames = "users")
+  @Cacheable(cacheNames = "users", key = "'all'")
   public List<UserDto> allReadUser() {
     List<User> users = userRepository.findAll();
     Set<UUID> onlineUserIds = getOnlineUserIds();
@@ -134,6 +140,8 @@ public class BasicUserService implements UserService {
           return new UserNotFoundException(id);
         });
 
+    UserDto dto = userMapper.toDto(user, false);
+
     BinaryContent profile = user.getProfile();
     user.setProfile(null);
     userRepository.save(user);
@@ -142,6 +150,8 @@ public class BasicUserService implements UserService {
       log.debug("프로필 이미지 삭제 완료 - userId: {}", id);
     }
     userRepository.delete(user);
+
+    eventPublisher.publishEvent(new UserDeletedEvent(dto, Instant.now()));
 
     log.info("사용자 삭제 성공 - userId: {}", id);
   }
@@ -210,7 +220,9 @@ public class BasicUserService implements UserService {
 
     log.info("사용자 정보 업데이트 완료 - userId: {}, username: {}, email: {}", id, name, email);
 
-    return userMapper.toDto(user, getOnlineUserIds().contains(user.getId()));
+    UserDto dto = userMapper.toDto(user, getOnlineUserIds().contains(user.getId()));
+    eventPublisher.publishEvent(new UserUpdatedEvent(dto, Instant.now()));
+    return dto;
   }
 
   @Override

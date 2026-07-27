@@ -104,6 +104,7 @@ public class BasicMessageService implements MessageService {
     }
 
     Message savedMessage = messageRepository.save(message);
+    MessageDto messageDto = messageMapper.toDto(savedMessage);
 
     eventPublisher.publishEvent(new MessageCreatedEvent(
         channel.getId(),
@@ -112,12 +113,13 @@ public class BasicMessageService implements MessageService {
         author.getUsername(),
         savedMessage.getContent()
     ));
+    eventPublisher.publishEvent(messageDto);
 
     channel.updateLastMessageAt(savedMessage.getCreatedAt());
 
     log.info("매시지 생성 완료 - messageId: {}, channelId: {}, authorId: {}", savedMessage.getId(),
         channel.getId(), author.getId());
-    return messageMapper.toDto(savedMessage);
+    return messageDto;
   }
 
   @Override

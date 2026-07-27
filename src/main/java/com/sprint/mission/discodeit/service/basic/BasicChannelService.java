@@ -2,6 +2,7 @@ package com.sprint.mission.discodeit.service.basic;
 
 import com.sprint.mission.discodeit.dto.channel.ChannelDto;
 import com.sprint.mission.discodeit.dto.channel.ChannelUpdateRequest;
+import com.sprint.mission.discodeit.dto.channel.PrivateChannelCreatedEvent;
 import com.sprint.mission.discodeit.dto.channel.PrivateChannelRequest;
 import com.sprint.mission.discodeit.dto.channel.PublicChannelRequest;
 import com.sprint.mission.discodeit.dto.user.UserDto;
@@ -10,6 +11,9 @@ import com.sprint.mission.discodeit.entity.ChannelType;
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.event.ChannelCreatedEvent;
+import com.sprint.mission.discodeit.event.ChannelDeletedEvent;
+import com.sprint.mission.discodeit.event.ChannelUpdatedEvent;
 import com.sprint.mission.discodeit.exception.channel.ChannelNotFoundException;
 import com.sprint.mission.discodeit.exception.channel.PrivateChannelUpdateException;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
@@ -24,6 +28,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
@@ -45,6 +50,7 @@ public class BasicChannelService implements ChannelService {
 
   private final UserMapper userMapper;
   private final ChannelMapper channelMapper;
+  private final ApplicationEventPublisher applicationEventPublisher;
 
   @Override
   @Transactional
@@ -60,14 +66,17 @@ public class BasicChannelService implements ChannelService {
     );
     Channel savedChannel = channelRepository.save(channel);
 
+    ChannelDto dto = channelMapper.toDto(savedChannel, savedChannel.getCreatedAt(),
+        Collections.emptyList());
+    applicationEventPublisher.publishEvent(new ChannelCreatedEvent(dto, Instant.now()));
+
     log.info("Public 채널 생성 완료 - channelId: {}, name: {}", savedChannel.getId(),
         savedChannel.getName());
-    return channelMapper.toDto(savedChannel, savedChannel.getCreatedAt(), Collections.emptyList());
+    return dto;
   }
 
   @Override
   @Transactional
-  @CacheEvict(cacheNames = "channels", allEntries = true)
   public ChannelDto createPrivateChannel(PrivateChannelRequest request) {
     log.debug("Private 채널 생성 비즈니스 로직 시작 - participantCount: {}", request.participantIds().size());
     Channel channel = new Channel(
@@ -93,9 +102,17 @@ public class BasicChannelService implements ChannelService {
       participants.add(userMapper.toDto(user, false));
     });
 
+    applicationEventPublisher.publishEvent(
+        new PrivateChannelCreatedEvent(request.participantIds())
+    );
+
+    ChannelDto dto = channelMapper.toDto(createdChannel, createdChannel.getCreatedAt(),
+        participants);
+    applicationEventPublisher.publishEvent(new ChannelCreatedEvent(dto, Instant.now()));
+
     log.info("Private 채널 생성 완료 - channelId: {}, participantCount: {}", createdChannel.getId(),
         participants.size());
-    return channelMapper.toDto(createdChannel, createdChannel.getCreatedAt(), participants);
+    return dto;
   }
 
   @Override
@@ -177,8 +194,11 @@ public class BasicChannelService implements ChannelService {
           log.warn("삭제할 채널이 존재하지 않음 - channelId: {}", id);
           return new ChannelNotFoundException(id);
         });
+    ChannelDto dto = channelMapper.toDto(channel, channel.getCreatedAt(), Collections.emptyList());
 
     channelRepository.delete(channel);
+
+    applicationEventPublisher.publishEvent(new ChannelDeletedEvent(dto, Instant.now()));
     log.info("채널 삭제 성공 - channelId: {}", id);
   }
 
@@ -205,7 +225,10 @@ public class BasicChannelService implements ChannelService {
 
     channel.update(name, description);
 
+    ChannelDto dto = readChannel(channel.getId());
+    applicationEventPublisher.publishEvent(new ChannelUpdatedEvent(dto, Instant.now()));
+
     log.info("채널 업데이트 완료 - channelId: {}, name: {}, description: {}", id, name, description);
-    return readChannel(channel.getId());
+    return dto;
   }
 }

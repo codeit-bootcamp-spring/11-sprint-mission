@@ -14,11 +14,9 @@ FROM amazoncorretto:17
 
 WORKDIR /app
 
-ENV PROJECT_NAME=discodeit \
-    PROJECT_VERSION=1.2-M8 \
-    JVM_OPTS=""
+ENV JVM_OPTS=""
 
-COPY --from=builder /build/build/libs/${PROJECT_NAME}-${PROJECT_VERSION}.jar app.jar
+COPY --from=builder /build/build/libs/app.jar app.jar
 
 EXPOSE 80
 

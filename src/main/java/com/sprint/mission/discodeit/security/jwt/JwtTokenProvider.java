@@ -165,6 +165,14 @@ public class JwtTokenProvider {
     }
   }
 
+  public boolean validateAccessToken(String token) {
+    return validateToken(token) && isAccessToken(token);
+  }
+
+  public boolean validateRefreshToken(String token) {
+    return validateToken(token) && isRefreshToken(token);
+  }
+
   public ResponseCookie createRefreshTokenCookie(String refreshToken) {
     return ResponseCookie.from(REFRESH_TOKEN_COOKIE_NAME, refreshToken)
         .httpOnly(true)

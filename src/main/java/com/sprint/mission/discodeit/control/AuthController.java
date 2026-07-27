@@ -52,6 +52,18 @@ public class AuthController {
     return ResponseEntity.ok(jwtDto);
   }
 
+  @PostMapping("/logout")
+  public ResponseEntity<Void> logout(
+      @CookieValue(name = JwtTokenProvider.REFRESH_TOKEN_COOKIE_NAME, required = false) String refreshToken,
+      HttpServletResponse response) {
+    jwtService.logoutJwtSession(refreshToken);
+
+    ResponseCookie expiredCookie = jwtTokenProvider.expireRefreshTokenCookie();
+    response.addHeader(HttpHeaders.SET_COOKIE, expiredCookie.toString());
+
+    return ResponseEntity.noContent().build();
+  }
+
   @GetMapping("/csrf-token")
   public ResponseEntity<Void> getCsrfToken(CsrfToken csrfToken) {
     String tokenValue = csrfToken.getToken();
