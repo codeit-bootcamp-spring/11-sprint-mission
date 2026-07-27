@@ -16,7 +16,7 @@ import com.sprint.mission.discodeit.dto.response.UserDto;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.entity.User.Role;
-import com.sprint.mission.discodeit.event.BinaryContentCreatedEvent;
+import com.sprint.mission.discodeit.event.binarycontent.BinaryContentCreatedEvent;
 import com.sprint.mission.discodeit.exception.DiscodeitException;
 import com.sprint.mission.discodeit.mapper.UserMapper;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
@@ -28,7 +28,6 @@ import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
@@ -216,9 +215,6 @@ public class UserServiceTest {
     // then
     assertEquals("새로운 이름", result.username());
 //    assertThat(result.getUsername()).isEqualTo("새로운 이름");
-
-    // userRepository를 대상으로 save 메서드가 User의 아무 필드나 받아서 호출됐는지 확인
-    then(userRepository).should().save(any(User.class));
   }
 
   @Test
@@ -252,9 +248,6 @@ public class UserServiceTest {
 
     // then
     assertEquals("testA@naver.com", result.email());
-
-    // userRepository를 대상으로 save 메서드가 User의 아무 필드나 받아서 호출됐는지 확인
-    then(userRepository).should().save(any(User.class));
   }
 
   @Test
@@ -275,13 +268,7 @@ public class UserServiceTest {
     UserDto result = userService.update(user.getId(), request, null);
 
     // then
-    ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
-    then(userRepository).should().save(captor.capture());
-    User savedUser = captor.getValue();
-    assertTrue(passwordEncoder.matches("1234", savedUser.getPassword()));
-
-    // userRepository를 대상으로 save 메서드가 User의 아무 필드나 받아서 호출됐는지 확인
-    then(userRepository).should().save(any(User.class));
+    assertTrue(passwordEncoder.matches("1234", user.getPassword()));
   }
 
   @Test

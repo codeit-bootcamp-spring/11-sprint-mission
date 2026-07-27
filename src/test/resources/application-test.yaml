@@ -11,6 +11,9 @@ spring:
       port: 6379
       database: 1
 
+  kafka:
+    bootstrap-servers: localhost:9092
+
   sql.init.mode: never
 
   jpa:

@@ -8,8 +8,8 @@ import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.entity.User;
-import com.sprint.mission.discodeit.event.BinaryContentCreatedEvent;
-import com.sprint.mission.discodeit.event.MessageCreatedEvent;
+import com.sprint.mission.discodeit.event.binarycontent.BinaryContentCreatedEvent;
+import com.sprint.mission.discodeit.event.notification.MessageCreatedEvent;
 import com.sprint.mission.discodeit.exception.binarycontent.AttachmentSaveFailedException;
 import com.sprint.mission.discodeit.exception.channel.ChannelNotFoundException;
 import com.sprint.mission.discodeit.exception.message.MessageNotFoundException;
@@ -92,8 +92,11 @@ public class BasicMessageService implements MessageService {
           // 이벤트 리스너에서 AFTER_COMMIT 옵션으로 트랜잭션 커밋 후 전달받은 이벤트를 처리하기 때문에 DB 커넥션 점유 시간 감소
           eventPublisher.publishEvent(
               new BinaryContentCreatedEvent(
-                  binaryContent.getId(),
-                  file.getBytes()
+                  binaryContent,
+                  binaryContent.getCreatedAt(),
+                  file.getBytes(),
+                  channel.getId(),
+                  null
               )
           );
         } catch (IOException e) {
@@ -111,14 +114,12 @@ public class BasicMessageService implements MessageService {
 
     messageRepository.save(message);
 
-    // 메시지 저장(생성) 성공 후 알림 이벤트 발행
+    MessageDto messageDto = messageMapper.toDto(message);
+    // 메시지 저장(생성) 성공 후 알림 + WebSocket 구독자에게 메시지 송신(서버 → 클라이언트)을 위한 이벤트 발행
     eventPublisher.publishEvent(
         new MessageCreatedEvent(
-            channel.getId(),
-            author.getId(),
-            author.getUsername(),
-            channel.getName(),
-            message.getContent()
+            messageDto,
+            messageDto.createdAt()
         )
     );
 

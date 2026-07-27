@@ -3,6 +3,7 @@ package com.sprint.mission.discodeit.security.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.mission.discodeit.dto.response.ErrorResponse;
 import com.sprint.mission.discodeit.exception.ErrorCode;
+import com.sprint.mission.discodeit.redis.RedisLockProvider;
 import com.sprint.mission.discodeit.security.auth.DiscodeitUserDetailsService;
 import com.sprint.mission.discodeit.security.handler.JwtLoginSuccessHandler;
 import com.sprint.mission.discodeit.security.handler.JwtLogoutHandler;
@@ -12,11 +13,15 @@ import com.sprint.mission.discodeit.security.jwt.filter.JwtAuthenticationFilter;
 import com.sprint.mission.discodeit.security.jwt.provider.JwtTokenProvider;
 import com.sprint.mission.discodeit.security.jwt.registry.InMemoryJwtRegistry;
 import com.sprint.mission.discodeit.security.jwt.registry.JwtRegistry;
+import com.sprint.mission.discodeit.security.jwt.registry.RedisJwtRegistry;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler;
@@ -78,9 +83,27 @@ public class SecurityConfig {
   }
 
   @Bean
-  public JwtRegistry jwtRegistry(
+  @Profile({"dev", "test"})
+  public JwtRegistry inMemoryJwtRegistry(
       @Value("${jwt.max-active-login}") int maxActiveJwtCount) {
     return new InMemoryJwtRegistry(maxActiveJwtCount);
+  }
+
+  @Bean
+  @Profile("prod")
+  public JwtRegistry redisJwtRegistry(
+      @Value("${jwt.max-active-login}") int maxActiveJwtCount,
+      JwtTokenProvider jwtTokenProvider,
+      RedisTemplate<String, Object> redisTemplate,
+      RedisLockProvider redisLockProvider,
+      ApplicationEventPublisher eventPublisher
+  ) {
+    return new RedisJwtRegistry(
+        maxActiveJwtCount,
+        jwtTokenProvider,
+        eventPublisher,
+        redisTemplate,
+        redisLockProvider);
   }
 
   @Bean
@@ -136,6 +159,8 @@ public class SecurityConfig {
                 .requestMatchers("swagger-ui.html", "swagger-ui/**", "v3/api-docs/**").permitAll()
                 // Actuator
                 .requestMatchers("/actuator/**").permitAll()
+                // WebSocket
+                .requestMatchers("/ws/**").permitAll()
 //              // 그 외의 모든 요청은 인증된 사용자만 가능
                 .anyRequest().authenticated()
         )

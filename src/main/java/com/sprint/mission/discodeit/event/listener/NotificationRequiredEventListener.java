@@ -1,13 +1,19 @@
-package com.sprint.mission.discodeit.event;
+package com.sprint.mission.discodeit.event.listener;
 
+import com.sprint.mission.discodeit.dto.response.ChannelDto;
+import com.sprint.mission.discodeit.dto.response.MessageDto;
 import com.sprint.mission.discodeit.entity.Notification;
 import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.entity.User.Role;
+import com.sprint.mission.discodeit.event.notification.MessageCreatedEvent;
+import com.sprint.mission.discodeit.event.notification.RoleUpdatedEvent;
+import com.sprint.mission.discodeit.event.notification.S3UploadFailedEvent;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.repository.NotificationRepository;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
+import com.sprint.mission.discodeit.service.ChannelService;
 import com.sprint.mission.discodeit.service.NotificationService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +33,7 @@ public class NotificationRequiredEventListener {
   private final NotificationRepository notificationRepository;
   private final UserRepository userRepository;
   private final NotificationService notificationService;
+  private final ChannelService channelService;
 
   private final CacheManager cacheManager;
 
@@ -35,22 +42,25 @@ public class NotificationRequiredEventListener {
   @TransactionalEventListener
   public void on(MessageCreatedEvent event) {
 
+    MessageDto message = event.getData();
+    ChannelDto channel = channelService.find(message.channelId());
+
     // 알림이 활성화된 ChannelId로 ReadStatus를 조회
     List<ReadStatus> readStatuses =
-        readStatusRepository.findByChannelIdAndNotificationEnabledTrue(event.channelId());
+        readStatusRepository.findByChannelIdAndNotificationEnabledTrue(message.channelId());
 
     for (ReadStatus readStatus : readStatuses) {
 
       // 메시지 작성자는 제외
-      if (readStatus.getUser().getId().equals(event.authorId())) {
+      if (readStatus.getUser().getId().equals(message.author().id())) {
         continue;
       }
 
       // 알림 생성
       notificationService.create(
           readStatus.getUser().getId(),
-          event.authorUsername() + " #(" + event.channelName() + ")",
-          event.content()
+          message.author().username() + " #(" + channel.name() + ")",
+          message.content()
       );
 
       // 캐시 조회 후 해당 채널 참여자의 알림 캐시만 무효화
@@ -66,14 +76,14 @@ public class NotificationRequiredEventListener {
   @TransactionalEventListener
   public void on(RoleUpdatedEvent event) {
 
-    User user = userRepository.findById(event.userId()).orElseThrow(
-        () -> new UserNotFoundException(event.userId())
+    User user = userRepository.findById(event.getUserId()).orElseThrow(
+        () -> new UserNotFoundException(event.getUserId())
     );
 
     notificationService.create(
         user.getId(),
         "권한이 변경되었습니다.",
-        event.beforeRole() + " -> " + event.newRole()
+        event.getFrom().name() + " -> " + event.getTo().name()
     );
 
     // 캐시 조회 후 해당 사용자의 알림 캐시만 무효화

@@ -3,6 +3,7 @@ package com.sprint.mission.discodeit.service.basic;
 import com.sprint.mission.discodeit.dto.response.NotificationDto;
 import com.sprint.mission.discodeit.entity.Notification;
 import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.event.notification.NotificationCreatedEvent;
 import com.sprint.mission.discodeit.exception.notification.NotificationNotFoundException;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.mapper.NotificationMapper;
@@ -14,6 +15,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +28,8 @@ public class BasicNotificationService implements NotificationService {
   private final UserRepository userRepository;
   private final NotificationMapper notificationMapper;
 
+  private final ApplicationEventPublisher eventPublisher;
+
   @Override
   @Transactional
   @CacheEvict(value = "userNotifications", key = "#receiverId")
@@ -37,7 +41,16 @@ public class BasicNotificationService implements NotificationService {
     Notification notification = notificationRepository.save(
         Notification.create(receiver, title, content));
 
-    return notificationMapper.toDto(notification);
+    NotificationDto dto = notificationMapper.toDto(notification);
+
+    eventPublisher.publishEvent(
+        new NotificationCreatedEvent(
+            dto,
+            dto.createdAt()
+        )
+    );
+
+    return dto;
   }
 
   @Override

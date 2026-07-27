@@ -2,6 +2,11 @@
 # Amazon Corretto 17 이미지를 베이스 이미지로 사용
 FROM amazoncorretto:17 AS builder
 
+# 2026-07-24일부로 amazoncorretto의 xargs가 존재하지 않음
+# 직접 xargs를 설치
+# findutils 내부에 xargs 존재, -y는 설치 시 모든 동의를 수락하도록 설정(자동 수락)
+RUN yum install -y findutils
+
 # 작업 디렉토리 설정
 WORKDIR /app
 
@@ -38,7 +43,7 @@ EXPOSE 80
 
 # 환경변수 설정(프로젝트 정보)
 ENV PROJECT_NAME=discodeit
-ENV PROJECT_VERSION=1.2-M8
+ENV PROJECT_VERSION=3.0-M12
 
 # 환경변수 설정(JVM)
 ENV JVM_OPTS=""

@@ -38,9 +38,13 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.cache.CacheManager;
+import org.springframework.context.ApplicationEventPublisher;
 
 @ExtendWith(MockitoExtension.class)
 public class ChannelServiceTest {
+
+  @Mock
+  private final ApplicationEventPublisher eventPublisher = mock(ApplicationEventPublisher.class);
 
   @Mock
   private ChannelRepository channelRepository;
@@ -189,8 +193,6 @@ public class ChannelServiceTest {
 
     given(channelRepository.findById(channelId)).willReturn(Optional.of(channel));
 
-    given(channelRepository.save(any(Channel.class))).willAnswer(i -> i.getArgument(0));
-
     given(channelMapper.toDto(any(Channel.class), anyList(), any())).willAnswer(i -> {
       Channel c = i.getArgument(0);
 
@@ -210,8 +212,6 @@ public class ChannelServiceTest {
     // then
     assertThat(result.name()).isEqualTo("새 채널");
     assertThat(result.description()).isEqualTo("새 채널입니다.");
-
-    then(channelRepository).should().save(channel);
   }
 
   @Test

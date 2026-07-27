@@ -117,7 +117,7 @@ public class JwtTokenProvider {
     }
   }
 
-  // 사용자 식별 값(subject) 추출
+  // 사용자 식별 값(subject) 추출 - userId를 subject에 넣었기 때문에 즉 userId.toString()이 subject 값이 됨
   public String getSubject(String token) {
     try {
       SignedJWT signedJWT = SignedJWT.parse(token);

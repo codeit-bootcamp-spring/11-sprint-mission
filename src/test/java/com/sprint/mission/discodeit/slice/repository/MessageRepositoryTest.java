@@ -8,6 +8,7 @@ import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -18,10 +19,12 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
+import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.test.context.ActiveProfiles;
 
 @DataJpaTest
 @ActiveProfiles("test")
+@EnableJpaAuditing
 public class MessageRepositoryTest {
 
   @Autowired
@@ -46,7 +49,10 @@ public class MessageRepositoryTest {
     Pageable pageable = PageRequest.of(0, 50);
 
     // when
-    Slice<Message> result = messageRepository.findMessages(channel.getId(), null, pageable);
+    Slice<Message> result = messageRepository.findMessages(
+        channel.getId(),
+        message2.getCreatedAt().plusMillis(3000),
+        pageable);
 
     // then
     assertThat(result.getContent()).hasSize(2);
@@ -60,7 +66,10 @@ public class MessageRepositoryTest {
     Pageable pageable = PageRequest.of(0, 50);
 
     // when
-    Slice<Message> result = messageRepository.findMessages(channel.getId(), null, pageable);
+    Slice<Message> result = messageRepository.findMessages(
+        channel.getId(),
+        Instant.now().plusMillis(3000),
+        pageable);
 
     // then
     assertThat(result.getContent()).isEmpty();
@@ -156,8 +165,12 @@ public class MessageRepositoryTest {
     messageRepository.deleteAllByChannelId(channel.getId());
 
     // then : 메시지가 비어있어야 함
-    Slice<Message> result = messageRepository.findMessages(channel.getId(), null,
-        PageRequest.of(0, 50));
+    Slice<Message> result = messageRepository.findMessages(
+        channel.getId(),
+        message2.getCreatedAt().plusMillis(3000),
+        PageRequest.of(0, 50)
+    );
+
     assertThat(result).isEmpty();
   }
 
@@ -175,8 +188,12 @@ public class MessageRepositoryTest {
     messageRepository.deleteAllByChannelId(otherChannelId);
 
     // then : 채널의 메시지가 삭제되지 않고 그대로 1개 유지
-    Slice<Message> result = messageRepository.findMessages(channel.getId(), null,
-        PageRequest.of(0, 50));
+    Slice<Message> result = messageRepository.findMessages(
+        channel.getId(),
+        message.getCreatedAt().plusMillis(3000),
+        PageRequest.of(0, 50)
+    );
+
     assertThat(result).hasSize(1);
   }
 
