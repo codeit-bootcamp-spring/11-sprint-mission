@@ -7,6 +7,7 @@ import java.util.Queue;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.scheduling.annotation.Scheduled;
 
 public class InMemoryJwtRegistry implements JwtRegistry {
@@ -19,6 +20,7 @@ public class InMemoryJwtRegistry implements JwtRegistry {
   }
 
   @Override
+  @CacheEvict(cacheNames = "users", allEntries = true)
   public void registerJwtInformation(JwtInformation jwtInformation) {
     Queue<JwtInformation> queue = origin.computeIfAbsent(
         jwtInformation.userId(),
@@ -33,11 +35,13 @@ public class InMemoryJwtRegistry implements JwtRegistry {
   }
 
   @Override
+  @CacheEvict(cacheNames = "users", allEntries = true)
   public void invalidateJwtInformationByUserId(UUID userId) {
     origin.remove(userId);
   }
 
   @Override
+  @CacheEvict(cacheNames = "users", allEntries = true)
   public void invalidateJwtInformationByRefreshToken(String refreshToken) {
     if (refreshToken == null) {
       return;
@@ -86,6 +90,7 @@ public class InMemoryJwtRegistry implements JwtRegistry {
 
   @Scheduled(fixedDelay = 1000 * 60 * 5)
   @Override
+  @CacheEvict(cacheNames = "users", allEntries = true)
   public void clearExpiredJwtInformation() {
     Instant now = Instant.now();
 

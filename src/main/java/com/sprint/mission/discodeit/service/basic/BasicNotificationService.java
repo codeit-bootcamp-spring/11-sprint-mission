@@ -4,6 +4,7 @@ import com.sprint.mission.discodeit.dto.NotificationDto;
 import com.sprint.mission.discodeit.entity.Notification;
 import com.sprint.mission.discodeit.entity.Role;
 import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.event.sse.SseEvents.NotificationCreatedEvent;
 import com.sprint.mission.discodeit.repository.NotificationRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.NotificationService;
@@ -15,6 +16,7 @@ import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,6 +30,7 @@ public class BasicNotificationService implements NotificationService {
   private final NotificationRepository notificationRepository;
   private final UserRepository userRepository;
   private final CacheManager cacheManager;
+  private final ApplicationEventPublisher eventPublisher;
 
   @Override
   @Cacheable(cacheNames = "notifications", key = "#receiverId")
@@ -57,7 +60,6 @@ public class BasicNotificationService implements NotificationService {
 
   @Override
   @Transactional
-  @CacheEvict(cacheNames = "notifications", allEntries = true)
   public void notifyAdmins(String title, String content) {
     log.info("관리자 알림 발송 시작 - title: {}", title);
 
@@ -73,6 +75,32 @@ public class BasicNotificationService implements NotificationService {
 
     notificationRepository.saveAll(notifications);
 
+    Cache cache = cacheManager.getCache("notifications");
+    if (cache != null) {
+      admins.forEach(admin -> cache.evict(admin.getId()));
+    }
+
     log.info("관리자 알림 발송 완료 - 대상: {}명", admins.size());
+  }
+
+  @Override
+  @Transactional
+  @CacheEvict(cacheNames = "notifications", key = "#receiverId")
+  public NotificationDto create(UUID receiverId, String title, String content) {
+    User receiver = userRepository.findById(receiverId).orElseThrow();
+    Notification notification = new Notification(receiver, title, content);
+    notificationRepository.save(notification);
+
+    NotificationDto dto = new NotificationDto(
+        notification.getId(),
+        notification.getCreatedAt(),
+        receiver.getId(),
+        title,
+        content
+    );
+
+    eventPublisher.publishEvent(new NotificationCreatedEvent(dto));
+    
+    return dto;
   }
 }

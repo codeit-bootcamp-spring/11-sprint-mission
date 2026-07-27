@@ -8,12 +8,16 @@ import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.event.BinaryContentCreatedEvent;
 import com.sprint.mission.discodeit.event.RoleUpdatedEvent;
+import com.sprint.mission.discodeit.event.sse.SseEvents.UserCreatedEvent;
+import com.sprint.mission.discodeit.event.sse.SseEvents.UserDeletedEvent;
+import com.sprint.mission.discodeit.event.sse.SseEvents.UserUpdatedEvent;
 import com.sprint.mission.discodeit.exception.user.UserAlreadyExistsException;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.mapper.UserMapper;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.security.jwt.JwtRegistry;
+import com.sprint.mission.discodeit.service.SseService;
 import com.sprint.mission.discodeit.service.UserService;
 import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import java.io.IOException;
@@ -84,10 +88,15 @@ public class BasicUserService implements UserService {
     }
 
     userRepository.save(user);
+    UserDto dto = userMapper.toDto(user);
+    UserDto finalDto = new UserDto(dto.id(), dto.username(), dto.email(), dto.profile(), false,
+        dto.role());
+
+    eventPublisher.publishEvent(new UserCreatedEvent(finalDto));
+
     log.info("사용자 생성 완료 - userId: {}", user.getId());
 
-    UserDto dto = userMapper.toDto(user);
-    return new UserDto(dto.id(), dto.username(), dto.email(), dto.profile(), false, dto.role());
+    return finalDto;
   }
 
   @Override
@@ -151,9 +160,13 @@ public class BasicUserService implements UserService {
       throw new RuntimeException("파일 처리 중 오류가 발생했습니다.", e);
     }
 
+    UserDto dto = userMapper.toDto(user);
+
+    eventPublisher.publishEvent(new UserUpdatedEvent(dto));
+
     log.info("사용자 수정 완료 - userId: {}", user.getId());
 
-    return userMapper.toDto(user);
+    return dto;
   }
 
   @Override
@@ -168,7 +181,11 @@ public class BasicUserService implements UserService {
       throw new UserNotFoundException(id);
     }
 
+    UserDto deletedUserDto = findById(id);
     userRepository.deleteById(id);
+
+    eventPublisher.publishEvent(new UserDeletedEvent(deletedUserDto));
+
     log.info("사용자 삭제 완료 - userId: {}", id);
   }
 
@@ -187,8 +204,6 @@ public class BasicUserService implements UserService {
     String oldRole = String.valueOf(user.getRole());
 
     user.updateRole(request.newRole());
-    log.info("사용자 권한 변경 완료 - userId: {}, newRole: {}", user.getId(), request.newRole());
-
     expireUserTokens(request.userId());
 
     eventPublisher.publishEvent(new RoleUpdatedEvent(
@@ -197,7 +212,13 @@ public class BasicUserService implements UserService {
         String.valueOf(request.newRole())
     ));
 
-    return userMapper.toDto(user);
+    UserDto dto = userMapper.toDto(user);
+    
+    eventPublisher.publishEvent(new UserUpdatedEvent(dto));
+
+    log.info("사용자 권한 변경 완료 - userId: {}, newRole: {}", user.getId(), request.newRole());
+
+    return dto;
   }
 
   private void expireUserTokens(UUID targetUserId) {
