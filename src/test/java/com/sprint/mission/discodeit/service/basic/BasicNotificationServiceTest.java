@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 import com.sprint.mission.discodeit.dto.data.NotificationDto;
@@ -34,6 +35,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
@@ -50,6 +53,12 @@ class BasicNotificationServiceTest {
 
   @Mock
   private NotificationMapper notificationMapper;
+
+  @Mock
+  private CacheManager cacheManager;
+
+  @Mock
+  private Cache notificationsCache;
 
   @InjectMocks
   private BasicNotificationService notificationService;
@@ -81,6 +90,7 @@ class BasicNotificationServiceTest {
             new ReadStatus(receiver, channel, Instant.now()),
             new ReadStatus(author, channel, Instant.now())
         ));
+    given(cacheManager.getCache(eq("notifications"))).willReturn(notificationsCache);
 
     // when
     notificationService.createAll(event);
@@ -94,6 +104,9 @@ class BasicNotificationServiceTest {
     assertThat(notifications.get(0).getReceiver()).isEqualTo(receiver);
     assertThat(notifications.get(0).getTitle()).isEqualTo("author (#공지)");
     assertThat(notifications.get(0).getContent()).isEqualTo("안녕하세요");
+
+    verify(notificationsCache).evict(receiver.getId());
+    verify(notificationsCache, never()).evict(author.getId());
   }
 
   @Test
@@ -128,6 +141,7 @@ class BasicNotificationServiceTest {
         "S3 파일 업로드", "test-request-id", binaryContentId, "Access Denied");
 
     given(userRepository.findAllByRole(eq(Role.ADMIN))).willReturn(List.of(admin));
+    given(cacheManager.getCache(eq("notifications"))).willReturn(notificationsCache);
 
     // when
     notificationService.createAll(event);
@@ -145,6 +159,9 @@ class BasicNotificationServiceTest {
         .contains("RequestId: test-request-id")
         .contains("BinaryContentId: " + binaryContentId)
         .contains("Error: Access Denied");
+
+    verify(notificationsCache).evict(admin.getId());
+    verify(notificationsCache, never()).evict(receiver.getId());
   }
 
   @Test
@@ -173,13 +190,18 @@ class BasicNotificationServiceTest {
   void delete_Success() {
     // given
     UUID notificationId = UUID.randomUUID();
-    given(notificationRepository.existsById(eq(notificationId))).willReturn(true);
+    Notification notification = new Notification(receiver, "제목", "내용");
+    ReflectionTestUtils.setField(notification, "id", notificationId);
+    given(notificationRepository.findById(eq(notificationId)))
+        .willReturn(Optional.of(notification));
+    given(cacheManager.getCache(eq("notifications"))).willReturn(notificationsCache);
 
     // when
     notificationService.delete(notificationId);
 
     // then
-    verify(notificationRepository).deleteById(notificationId);
+    verify(notificationRepository).delete(notification);
+    verify(notificationsCache).evict(receiver.getId());
   }
 
   @Test
@@ -187,7 +209,7 @@ class BasicNotificationServiceTest {
   void delete_WithNonExistentId_ThrowsException() {
     // given
     UUID notificationId = UUID.randomUUID();
-    given(notificationRepository.existsById(eq(notificationId))).willReturn(false);
+    given(notificationRepository.findById(eq(notificationId))).willReturn(Optional.empty());
 
     // when & then
     assertThatThrownBy(() -> notificationService.delete(notificationId))
