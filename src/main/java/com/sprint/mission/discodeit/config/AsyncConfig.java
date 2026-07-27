@@ -1,5 +1,7 @@
 package com.sprint.mission.discodeit.config;
 
+import io.micrometer.core.aop.TimedAspect;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.task.TaskExecutor;
@@ -20,5 +22,10 @@ public class AsyncConfig {
     executor.setTaskDecorator(new ContextPropagatingTaskDecorator());
     executor.initialize();
     return executor;
+  }
+
+  @Bean
+  public TimedAspect timedAspect(MeterRegistry meterRegistry) {
+    return new TimedAspect(meterRegistry);
   }
 }
