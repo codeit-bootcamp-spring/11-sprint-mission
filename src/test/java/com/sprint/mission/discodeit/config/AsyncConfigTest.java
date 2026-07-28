@@ -7,6 +7,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.core.task.support.CompositeTaskDecorator;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.test.context.ActiveProfiles;
 
@@ -22,11 +23,11 @@ class AsyncConfigTest {
 
   @Test
   @DisplayName("이벤트 처리용 Executor에 컨텍스트 전파 데코레이터가 설정된다")
-  void eventTaskExecutor_HasContextPropagatingTaskDecorator() {
+  void eventTaskExecutor_HasCompositeTaskDecorator() {
     assertThat(eventTaskExecutor.getThreadNamePrefix()).isEqualTo("event-");
     assertThat(eventTaskExecutor)
         .extracting("taskDecorator")
-        .isInstanceOf(ContextPropagatingTaskDecorator.class);
+        .isInstanceOf(CompositeTaskDecorator.class);
   }
 
   @Test

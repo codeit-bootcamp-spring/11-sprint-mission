@@ -11,14 +11,16 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.slf4j.MDC;
+import org.springframework.core.task.TaskDecorator;
+import org.springframework.core.task.support.CompositeTaskDecorator;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
-class ContextPropagatingTaskDecoratorTest {
+class TaskDecoratorPropagationTest {
 
-  private final ContextPropagatingTaskDecorator taskDecorator =
-      new ContextPropagatingTaskDecorator();
+  private final TaskDecorator taskDecorator = new CompositeTaskDecorator(
+      List.of(new MdcTaskDecorator(), new SecurityContextTaskDecorator()));
 
   @AfterEach
   void tearDown() {
