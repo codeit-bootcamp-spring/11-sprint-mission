@@ -16,6 +16,7 @@ import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.ChannelType;
 import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.event.PrivateChannelCreatedEvent;
 import com.sprint.mission.discodeit.exception.channel.ChannelNotFoundException;
 import com.sprint.mission.discodeit.exception.channel.PrivateChannelUpdateException;
 import com.sprint.mission.discodeit.mapper.ChannelMapper;
@@ -31,9 +32,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
@@ -53,6 +56,9 @@ class BasicChannelServiceTest {
 
   @Mock
   private ChannelMapper channelMapper;
+
+  @Mock
+  private ApplicationEventPublisher eventPublisher;
 
   @InjectMocks
   private BasicChannelService channelService;
@@ -77,6 +83,7 @@ class BasicChannelServiceTest {
     channelDto = new ChannelDto(channelId, ChannelType.PUBLIC, channelName, channelDescription,
         List.of(), Instant.now());
     user = new User("testUser", "test@example.com", "password", null);
+    ReflectionTestUtils.setField(user, "id", userId);
   }
 
   @Test
@@ -111,6 +118,11 @@ class BasicChannelServiceTest {
     assertThat(result).isEqualTo(channelDto);
     verify(channelRepository).save(any(Channel.class));
     verify(readStatusRepository).<ReadStatus>saveAll(anyList());
+
+    ArgumentCaptor<PrivateChannelCreatedEvent> captor =
+        ArgumentCaptor.forClass(PrivateChannelCreatedEvent.class);
+    verify(eventPublisher).publishEvent(captor.capture());
+    assertThat(captor.getValue().participantIds()).containsExactly(userId);
   }
 
   @Test
