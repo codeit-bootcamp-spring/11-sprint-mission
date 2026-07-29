@@ -16,9 +16,11 @@ import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.NotificationService;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -35,8 +37,8 @@ public class BasicNotificationService implements NotificationService {
   private final ReadStatusRepository readStatusRepository;
   private final UserRepository userRepository;
   private final NotificationMapper notificationMapper;
+  private final CacheManager cacheManager;
 
-  @CacheEvict(cacheNames = "notifications", allEntries = true)
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   @Override
   public void createAll(MessageCreatedEvent event) {
@@ -50,12 +52,13 @@ public class BasicNotificationService implements NotificationService {
         .map(receiver -> new Notification(receiver, title, event.content()))
         .toList();
     notificationRepository.saveAll(notifications);
+    evictNotificationsCache(notifications);
 
     log.info("메시지 알림 생성 완료: messageId={}, 생성된 알림 수={}",
         event.messageId(), notifications.size());
   }
 
-  @CacheEvict(cacheNames = "notifications", allEntries = true)
+  @CacheEvict(cacheNames = "notifications", key = "#event.userId()")
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   @Override
   public void create(RoleUpdatedEvent event) {
@@ -74,7 +77,6 @@ public class BasicNotificationService implements NotificationService {
     log.info("권한 변경 알림 생성 완료: id={}, userId={}", notification.getId(), receiverId);
   }
 
-  @CacheEvict(cacheNames = "notifications", allEntries = true)
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   @Override
   public void createAll(S3UploadFailedEvent event) {
@@ -90,6 +92,7 @@ public class BasicNotificationService implements NotificationService {
         .map(admin -> new Notification(admin, "파일 업로드에 실패했습니다.", content))
         .toList();
     notificationRepository.saveAll(notifications);
+    evictNotificationsCache(notifications);
 
     log.info("업로드 실패 알림 생성 완료: binaryContentId={}, 생성된 알림 수={}",
         event.binaryContentId(), notifications.size());
@@ -118,16 +121,23 @@ public class BasicNotificationService implements NotificationService {
     return dtos;
   }
 
-  @CacheEvict(cacheNames = "notifications", allEntries = true)
   @PreAuthorize("principal.userDto.id == @basicNotificationService.find(#notificationId).receiverId")
   @Transactional
   @Override
   public void delete(UUID notificationId) {
     log.debug("알림 삭제 시작: id={}", notificationId);
-    if (!notificationRepository.existsById(notificationId)) {
-      throw NotificationNotFoundException.withId(notificationId);
-    }
-    notificationRepository.deleteById(notificationId);
+    Notification notification = notificationRepository.findById(notificationId)
+        .orElseThrow(() -> NotificationNotFoundException.withId(notificationId));
+    notificationRepository.delete(notification);
+    evictNotificationsCache(List.of(notification));
     log.info("알림 삭제 완료: id={}", notificationId);
+  }
+
+  private void evictNotificationsCache(List<Notification> notifications) {
+    Optional.ofNullable(cacheManager.getCache("notifications"))
+        .ifPresent(cache -> notifications.stream()
+            .map(notification -> notification.getReceiver().getId())
+            .distinct()
+            .forEach(cache::evict));
   }
 }
