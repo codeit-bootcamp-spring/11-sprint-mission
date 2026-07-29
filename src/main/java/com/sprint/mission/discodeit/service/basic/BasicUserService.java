@@ -9,6 +9,9 @@ import com.sprint.mission.discodeit.entity.Role;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.event.BinaryContentCreatedEvent;
 import com.sprint.mission.discodeit.event.RoleUpdatedEvent;
+import com.sprint.mission.discodeit.event.UserCreatedEvent;
+import com.sprint.mission.discodeit.event.UserDeletedEvent;
+import com.sprint.mission.discodeit.event.UserUpdatedEvent;
 import com.sprint.mission.discodeit.exception.UserAlreadyExistsException;
 import com.sprint.mission.discodeit.exception.UserNotFoundException;
 import com.sprint.mission.discodeit.mapper.UserMapper;
@@ -16,6 +19,7 @@ import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.security.jwt.JwtRegistry;
 import com.sprint.mission.discodeit.service.UserService;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -67,7 +71,7 @@ public class BasicUserService implements UserService {
         );
         binaryContentRepository.save(profileContent);
         eventPublisher.publishEvent(
-            new BinaryContentCreatedEvent(profileContent.getId(), profile.getBytes()));
+            new BinaryContentCreatedEvent(profileContent.getId(), profile.getBytes(), null));
         log.debug("프로필 이미지 메타데이터 저장 완료 - fileId: {}", profileContent.getId());
       } catch (Exception e) {
         log.error("프로필 이미지 저장 실패 - username: {}", request.username(), e);
@@ -80,7 +84,10 @@ public class BasicUserService implements UserService {
     userRepository.save(user);
 
     log.info("사용자 생성 완료 - id: {}, username: {}", user.getId(), user.getUsername());
-    return toDto(user);
+
+    UserDto userDto = toDto(user);
+    eventPublisher.publishEvent(new UserCreatedEvent(userDto, Instant.now()));
+    return userDto;
   }
 
   @Override
@@ -136,7 +143,7 @@ public class BasicUserService implements UserService {
         );
         binaryContentRepository.save(profileContent);
         eventPublisher.publishEvent(
-            new BinaryContentCreatedEvent(profileContent.getId(), profile.getBytes()));
+            new BinaryContentCreatedEvent(profileContent.getId(), profile.getBytes(), id));
         log.debug("프로필 이미지 메타데이터 수정 완료 - fileId: {}", profileContent.getId());
       } catch (Exception e) {
         log.error("프로필 이미지 저장 실패 - userId: {}", id, e);
@@ -150,7 +157,10 @@ public class BasicUserService implements UserService {
     }
 
     log.info("사용자 수정 완료 - id: {}", id);
-    return toDto(user);
+
+    UserDto userDto = toDto(user);
+    eventPublisher.publishEvent(new UserUpdatedEvent(userDto, Instant.now()));
+    return userDto;
   }
 
   @Override
@@ -164,8 +174,12 @@ public class BasicUserService implements UserService {
           log.warn("사용자 삭제 실패 - 존재하지 않는 id: {}", id);
           return new UserNotFoundException(id);
         });
+
+    UserDto userDto = toDto(user);
     userRepository.delete(user);
     log.info("사용자 삭제 완료 - id: {}", id);
+
+    eventPublisher.publishEvent(new UserDeletedEvent(userDto, Instant.now()));
   }
 
   @Override

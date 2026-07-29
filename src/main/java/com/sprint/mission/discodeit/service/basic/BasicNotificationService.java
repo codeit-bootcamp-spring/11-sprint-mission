@@ -2,15 +2,18 @@ package com.sprint.mission.discodeit.service.basic;
 
 import com.sprint.mission.discodeit.dto.response.NotificationDto;
 import com.sprint.mission.discodeit.entity.Notification;
+import com.sprint.mission.discodeit.event.NotificationCreatedEvent;
 import com.sprint.mission.discodeit.exception.NotificationAccessDeniedException;
 import com.sprint.mission.discodeit.exception.NotificationNotFoundException;
 import com.sprint.mission.discodeit.repository.NotificationRepository;
 import com.sprint.mission.discodeit.service.NotificationService;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class BasicNotificationService implements NotificationService {
 
   private final NotificationRepository notificationRepository;
+  private final ApplicationEventPublisher eventPublisher;
 
   @Override
   @Transactional
@@ -27,7 +31,10 @@ public class BasicNotificationService implements NotificationService {
   public NotificationDto create(UUID receiverId, String title, String content) {
     Notification notification = new Notification(receiverId, title, content);
     notificationRepository.save(notification);
-    return toDto(notification);
+
+    NotificationDto notificationDto = toDto(notification);
+    eventPublisher.publishEvent(new NotificationCreatedEvent(notificationDto, Instant.now()));
+    return notificationDto;
   }
 
   @Override

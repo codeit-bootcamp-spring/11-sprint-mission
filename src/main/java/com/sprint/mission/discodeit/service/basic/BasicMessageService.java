@@ -79,7 +79,8 @@ public class BasicMessageService implements MessageService {
               file.getContentType()
           );
           binaryContentRepository.save(bc);
-          eventPublisher.publishEvent(new BinaryContentCreatedEvent(bc.getId(), file.getBytes()));
+          eventPublisher.publishEvent(
+              new BinaryContentCreatedEvent(bc.getId(), file.getBytes(), author.getId()));
           message.addAttachment(bc);
           log.debug("첨부파일 메타데이터 저장 완료 - fileId: {}, fileName: {}", bc.getId(), bc.getFileName());
         } catch (Exception e) {
@@ -167,6 +168,17 @@ public class BasicMessageService implements MessageService {
         });
     messageRepository.delete(message);
     log.info("메시지 삭제 완료 - id: {}", messageId);
+  }
+
+  @Override
+  public MessageDto find(UUID messageId) {
+    log.debug("메시지 단건 조회 - id: {}", messageId);
+    Message message = messageRepository.findById(messageId)
+        .orElseThrow(() -> {
+          log.warn("메시지 조회 실패 - 존재하지 않는 id: {}", messageId);
+          return new MessageNotFoundException(messageId);
+        });
+    return toDto(message);
   }
 
   private MessageDto toDto(Message message) {

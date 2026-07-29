@@ -2,6 +2,8 @@ FROM amazoncorretto:17 AS builder
 
 WORKDIR /app
 
+RUN yum install -y findutils && yum clean all
+
 COPY gradlew .
 COPY gradle gradle
 COPY build.gradle .
@@ -18,7 +20,7 @@ FROM amazoncorretto:17-alpine3.19 AS runtime
 WORKDIR /app
 
 ENV PROJECT_NAME=discodeit
-ENV PROJECT_VERSION=1.2-M8
+ENV PROJECT_VERSION=3.0-M12
 ENV JVM_OPTS=""
 
 COPY --from=builder /app/build/libs/${PROJECT_NAME}-${PROJECT_VERSION}.jar app.jar
