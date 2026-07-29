@@ -7,6 +7,7 @@ import com.sprint.mission.discodeit.dto.MessageUpdateRequest;
 import com.sprint.mission.discodeit.dto.response.PageResponse;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.Message;
+import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.event.MessageCreatedEvent;
 import com.sprint.mission.discodeit.exception.DiscodeitException;
@@ -17,17 +18,20 @@ import com.sprint.mission.discodeit.mapper.MessageMapper;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
+import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import com.sprint.mission.discodeit.security.UserOnlineStatusResolver;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Pageable;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -57,6 +61,9 @@ class BasicMessageServiceTest {
     UserRepository userRepository;
 
     @Mock
+    ReadStatusRepository readStatusRepository;
+
+    @Mock
     BinaryContentRepository binaryContentRepository;
 
     @Mock
@@ -78,7 +85,9 @@ class BasicMessageServiceTest {
     void create_success() {
         // given
         User author = new User("evan", "evan@test.com", "password");
+        User receiver = new User("wendy", "wendy@test.com", "password");
         Channel channel = new Channel("general", "general channel");
+        ReadStatus readStatus = new ReadStatus(receiver, channel, Instant.now());
 
         MessageCreateRequest request = new MessageCreateRequest(
                 author.getId(),
@@ -102,6 +111,8 @@ class BasicMessageServiceTest {
         given(userRepository.findById(author.getId())).willReturn(Optional.of(author));
         given(channelRepository.findById(channel.getId())).willReturn(Optional.of(channel));
         given(messageRepository.save(any(Message.class))).willReturn(savedMessage);
+        given(readStatusRepository.findAllByChannel_IdAndNotificationEnabledTrue(channel.getId()))
+                .willReturn(List.of(readStatus));
         given(messageMapper.toDto(eq(savedMessage), anySet())).willReturn(expectedDto);
 
         // when
@@ -113,8 +124,16 @@ class BasicMessageServiceTest {
         then(userRepository).should().findById(author.getId());
         then(channelRepository).should().findById(channel.getId());
         then(messageRepository).should().save(any(Message.class));
-        then(eventPublisher).should().publishEvent(any(MessageCreatedEvent.class));
         then(messageMapper).should().toDto(eq(savedMessage), anySet());
+
+        ArgumentCaptor<MessageCreatedEvent> eventCaptor =
+                ArgumentCaptor.forClass(MessageCreatedEvent.class);
+        then(eventPublisher).should().publishEvent(eventCaptor.capture());
+
+        MessageCreatedEvent event = eventCaptor.getValue();
+        assertThat(event.message()).isEqualTo(expectedDto);
+        assertThat(event.channelName()).isEqualTo(channel.getName());
+        assertThat(event.receiverIds()).containsExactly(receiver.getId());
     }
 
     @Test

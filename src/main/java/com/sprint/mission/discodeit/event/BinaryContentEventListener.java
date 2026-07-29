@@ -1,11 +1,11 @@
 package com.sprint.mission.discodeit.event;
 
 import com.sprint.mission.discodeit.entity.BinaryContent;
+import com.sprint.mission.discodeit.entity.BinaryContent.BinaryContentStatus;
+import com.sprint.mission.discodeit.mapper.BinaryContentMapper;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.storage.BinaryContentStorage;
-import com.sprint.mission.discodeit.entity.BinaryContent.BinaryContentStatus;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.MDC;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
@@ -20,9 +20,10 @@ public class BinaryContentEventListener {
 
     private final BinaryContentStorage binaryContentStorage;
     private final BinaryContentRepository binaryContentRepository;
+    private final BinaryContentMapper binaryContentMapper;
     private final ApplicationEventPublisher eventPublisher;
 
-    @Async
+    @Async("binaryContentTaskExecutor")
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void handle(BinaryContentCreatedEvent event) {
@@ -34,13 +35,10 @@ public class BinaryContentEventListener {
             binaryContent.updateStatus(BinaryContentStatus.SUCCESS);
         } catch (Exception e) {
             binaryContent.updateStatus(BinaryContentStatus.FAIL);
-
-            eventPublisher.publishEvent(new S3UploadFailedEvent(
-                    "BinaryContentUpload",
-                    MDC.get("requestId"),
-                    event.id(),
-                    e.getMessage()
-            ));
         }
+
+        eventPublisher.publishEvent(new BinaryContentUpdatedEvent(
+                binaryContentMapper.toDto(binaryContent)
+        ));
     }
 }

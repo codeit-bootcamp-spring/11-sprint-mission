@@ -1,11 +1,14 @@
 package com.sprint.mission.discodeit.storage.s3;
 
 import com.sprint.mission.discodeit.dto.BinaryContentDto;
+import com.sprint.mission.discodeit.event.S3UploadFailedEvent;
 import com.sprint.mission.discodeit.exception.StorageException;
 import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import jakarta.annotation.PreDestroy;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.retry.annotation.Backoff;
@@ -38,6 +41,7 @@ public class S3BinaryContentStorage implements BinaryContentStorage {
 
     private final S3Client s3Client;
     private final S3Presigner s3Presigner;
+    private final ApplicationEventPublisher eventPublisher;
     private final String bucket;
     private final Duration presignedUrlExpiration;
 
@@ -46,7 +50,8 @@ public class S3BinaryContentStorage implements BinaryContentStorage {
             @Value("${discodeit.storage.s3.secret-key}") String secretKey,
             @Value("${discodeit.storage.s3.region}") String region,
             @Value("${discodeit.storage.s3.bucket}") String bucket,
-            @Value("${discodeit.storage.s3.presigned-url-expiration}") long presignedUrlExpirationSeconds
+            @Value("${discodeit.storage.s3.presigned-url-expiration}") long presignedUrlExpirationSeconds,
+            ApplicationEventPublisher eventPublisher
     ) {
         AwsBasicCredentials credentials = AwsBasicCredentials.create(accessKey, secretKey);
         StaticCredentialsProvider credentialsProvider = StaticCredentialsProvider.create(credentials);
@@ -64,6 +69,7 @@ public class S3BinaryContentStorage implements BinaryContentStorage {
 
         this.bucket = bucket;
         this.presignedUrlExpiration = Duration.ofSeconds(presignedUrlExpirationSeconds);
+        this.eventPublisher = eventPublisher;
     }
 
     @Retryable(
@@ -159,6 +165,17 @@ public class S3BinaryContentStorage implements BinaryContentStorage {
 
     @Recover
     public UUID recover(StorageException e, UUID id, byte[] bytes) {
+        Throwable cause = e.getCause();
+        String errorMessage = cause == null
+                ? e.getMessage()
+                : cause.getMessage();
+
+        eventPublisher.publishEvent(new S3UploadFailedEvent(
+                "BinaryContentUpload",
+                MDC.get("requestId"),
+                id,
+                errorMessage
+        ));
         throw e;
     }
 }

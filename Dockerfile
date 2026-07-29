@@ -1,14 +1,18 @@
-FROM amazoncorretto:17
+FROM amazoncorretto:17 AS builder
 
 WORKDIR /app
 
 COPY . .
 
-RUN chmod +x gradlew && ./gradlew clean bootJar -x test --no-daemon
+RUN chmod +x gradlew \
+    && ./gradlew clean bootJar -x test --no-daemon
 
-EXPOSE 80
-ENV PROJECT_NAME=discodeit
-ENV PROJECT_VERSION=1.2-MB
-ENV JVM_OPTS=""
+FROM amazoncorretto:17
 
-CMD ["sh", "-c", "java $JVM_OPTS -jar build/libs/${PROJECT_NAME}-${PROJECT_VERSION}.jar"]
+WORKDIR /app
+
+COPY --from=builder /app/build/libs/discodeit-3.0-M12.jar app.jar
+
+EXPOSE 8080
+
+ENTRYPOINT ["java", "-jar", "app.jar"]
