@@ -4,9 +4,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.entity.User;
-import com.sprint.mission.discodeit.event.notification.MessageCreatedEvent;
-import com.sprint.mission.discodeit.event.notification.RoleUpdatedEvent;
-import com.sprint.mission.discodeit.event.s3.S3UploadFailedEvent;
+import com.sprint.mission.discodeit.event.dto.MessageCreatedEvent;
+import com.sprint.mission.discodeit.event.dto.RoleUpdatedEvent;
+import com.sprint.mission.discodeit.event.dto.S3UploadFailedEvent;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.security.Role;
@@ -34,13 +34,14 @@ public class NotificationRequiredTopicListener {
     try {
       MessageCreatedEvent event = objectMapper.readValue(kafkaEvent, MessageCreatedEvent.class);
 
-      log.info("Kafka 메시지 알림 이벤트 수신 - channelId: {}", event.channelId());
+      log.info("Kafka 메시지 알림 이벤트 수신 - channelId: {}", event.data().channelId());
 
       List<ReadStatus> targetStatuses = readStatusRepository.findNotificationEnabledTargets(
-          event.channelId(), event.authorId());
+          event.data().channelId(), event.data().author().id());
 
-      String title = String.format("%s (#%s)", event.authorName(), event.channelName());
-      String content = event.content();
+      String title = String.format("%s (#%s)", event.data().author().username(),
+          event.channelName());
+      String content = event.data().content();
 
       targetStatuses.forEach(
           rs -> notificationService.createNotification(rs.getUser().getId(), title, content));

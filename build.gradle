@@ -6,7 +6,7 @@ plugins {
 }
 
 group = 'com.sprint.mission'
-version = '2.2-M11' // 'api-doc버전'-미션11
+version = '3.0-M12' // 'api-doc버전'-미션12
 description = 'Discode project for Spring Boot'
 
 java {
@@ -66,6 +66,9 @@ dependencies {
 
     // Redis Cache
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
+    // WebSocket
+    implementation 'org.springframework.boot:spring-boot-starter-websocket'
 
     // Code Generation (코드 자동 생성)
     compileOnly 'org.projectlombok:lombok'

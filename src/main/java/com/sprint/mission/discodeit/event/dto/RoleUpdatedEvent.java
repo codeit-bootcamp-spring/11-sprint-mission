@@ -1,4 +1,4 @@
-package com.sprint.mission.discodeit.event.notification;
+package com.sprint.mission.discodeit.event.dto;
 
 import com.sprint.mission.discodeit.security.Role;
 import java.util.UUID;

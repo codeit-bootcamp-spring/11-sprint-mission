@@ -5,6 +5,10 @@ import com.sprint.mission.discodeit.dto.channel.PublicChannelUpdateRequest;
 import com.sprint.mission.discodeit.dto.channel.PrivateChannelCreateRequest;
 import com.sprint.mission.discodeit.dto.channel.PublicChannelCreateRequest;
 import com.sprint.mission.discodeit.entity.*;
+import com.sprint.mission.discodeit.event.dto.ChannelCreatedEvent;
+import com.sprint.mission.discodeit.event.dto.ChannelDeletedEvent;
+import com.sprint.mission.discodeit.event.dto.ChannelUpdatedEvent;
+import com.sprint.mission.discodeit.event.dto.PrivateChannelCreatedEvent;
 import com.sprint.mission.discodeit.exception.channel.ChannelNotFoundException;
 import com.sprint.mission.discodeit.exception.channel.InsufficientParticipantsException;
 import com.sprint.mission.discodeit.exception.channel.PrivateChannelUpdateDeniedException;
@@ -17,6 +21,7 @@ import com.sprint.mission.discodeit.service.ChannelService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +40,7 @@ public class BasicChannelService implements ChannelService {
   private final UserRepository userRepository;
   private final ReadStatusRepository readStatusRepository;
   private final ChannelMapper channelMapper;
+  private final ApplicationEventPublisher eventPublisher;
 
   @Override
   @Transactional
@@ -45,14 +51,15 @@ public class BasicChannelService implements ChannelService {
     Channel channel = new Channel(dto.name(), dto.description(), ChannelType.PUBLIC);
     channel = channelRepository.save(channel);
 
+    ChannelDto channelDto = channelMapper.toDto(channel);
+    eventPublisher.publishEvent(new ChannelCreatedEvent(channelDto, Instant.now()));
+
     log.info("퍼블릭 채널 생성 완료 - channelId: {}, channelName: {}", channel.getId(), channel.getName());
-    return channelMapper.toDto(channel);
+    return channelDto;
   }
 
   @Override
   @Transactional
-  // TODO: 프라이빗 채널 생성으로 모두의 캐시를 날리기는 아까운 것 같음 -> 추후 CacheManager 클래스를 생성하여 참여한 participants의 캐시만 날릴 것
-  @CacheEvict(cacheNames = "channels", allEntries = true)
   public ChannelDto createPrivateChannel(PrivateChannelCreateRequest dto) {
     log.debug("createPrivateChannel 시작 - 입력값: {}", dto);
     if (dto.participantIds() == null || dto.participantIds().size() < 2) {
@@ -74,6 +81,8 @@ public class BasicChannelService implements ChannelService {
         .toList();
 
     readStatusRepository.saveAll(readStatuses);
+
+    eventPublisher.publishEvent(new PrivateChannelCreatedEvent(dto.participantIds()));
 
     log.info("프라이빗 채널 생성 완료 - channelId: {}", channel.getId());
     return channelMapper.toDto(channel);
@@ -118,8 +127,11 @@ public class BasicChannelService implements ChannelService {
     }
     channel.update(dto.newName(), dto.newDescription());
 
+    ChannelDto channelDto = channelMapper.toDto(channel);
+    eventPublisher.publishEvent(new ChannelUpdatedEvent(channelDto, Instant.now()));
+
     log.info("채널 수정 완료 - channelId: {}", channel.getId());
-    return channelMapper.toDto(channel);
+    return channelDto;
   }
 
   @Override
@@ -133,6 +145,10 @@ public class BasicChannelService implements ChannelService {
         .orElseThrow(() -> new ChannelNotFoundException(id));
 
     channelRepository.delete(channel);
+
+    ChannelDto channelDto = channelMapper.toDto(channel);
+    eventPublisher.publishEvent(new ChannelDeletedEvent(channelDto, Instant.now()));
+
     log.info("채널 삭제 완료 - channelId: {}", channel.getId());
   }
 }

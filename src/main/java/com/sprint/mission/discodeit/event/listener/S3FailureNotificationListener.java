@@ -1,6 +1,7 @@
-package com.sprint.mission.discodeit.event.s3;
+package com.sprint.mission.discodeit.event.listener;
 
 import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.event.dto.S3UploadFailedEvent;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.security.Role;
 import com.sprint.mission.discodeit.service.NotificationService;

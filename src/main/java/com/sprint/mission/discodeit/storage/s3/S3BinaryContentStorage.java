@@ -1,7 +1,7 @@
 package com.sprint.mission.discodeit.storage.s3;
 
 import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentDto;
-import com.sprint.mission.discodeit.event.s3.S3UploadFailedEvent;
+import com.sprint.mission.discodeit.event.dto.S3UploadFailedEvent;
 import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import java.io.InputStream;
 import java.net.URI;

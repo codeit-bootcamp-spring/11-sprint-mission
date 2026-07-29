@@ -1,4 +1,4 @@
-package com.sprint.mission.discodeit.event.s3;
+package com.sprint.mission.discodeit.event.dto;
 
 import java.util.UUID;
 

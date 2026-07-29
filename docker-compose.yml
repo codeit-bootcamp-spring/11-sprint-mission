@@ -1,18 +1,13 @@
 services:
 
-  db:
-    image: postgres:17
-    environment:
-      POSTGRES_DB: discodeit # DB이름
-      POSTGRES_USER: discodeit_user
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-    volumes:
-      # 컨테이너가 재시작되어도 데이터가 유지되도록 함
-      - db-data:/var/lib/postgresql/data
-      # PostgreSQL 서비스 실행 후 schema.sql이 자동으로 실행되도록 구성
-      - ./src/main/resources/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+  nginx:
+    build:
+      context: .
+      dockerfile: ./nginx/Dockerfile
     ports:
-      - "5433:5432"
+      - "3000:80"
+    depends_on:
+      - app
 
   app:
     # 애플리케이션 서비스를 로컬 Dockerfile에서 빌드하도록 구성
@@ -24,6 +19,7 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: prod
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/discodeit
+      REDIS_HOST: redis
       # application.yaml의 ${STORAGE_TYPE}을 s3 로 지정
       STORAGE_TYPE: ${STORAGE_TYPE}
       # 도커 내부망 통신을 위해 카프카 주소 지정
@@ -31,12 +27,53 @@ services:
     # 컨테이너가 재시작되어도 BinaryContentStorage 데이터가 유지되도록 함
     volumes:
       - binary-content-storage:/app/.discodeit/storage
-    ports:
-      - "8081:80"
     depends_on:
       - db
+      - redis
+      - broker
+
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: discodeit # DB이름
+      POSTGRES_USER: discodeit_user
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      # 컨테이너가 재시작되어도 데이터가 유지되도록 함
+      - db-data:/var/lib/postgresql/data
+      # PostgreSQL 서비스 실행 후 schema.sql이 자동으로 실행되도록 구성
+      - ./src/main/resources/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+
+  redis:
+    image: redis:7.2-alpine
+    container_name: redis
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+
+  broker:
+    image: apache/kafka:latest
+    hostname: broker
+    container_name: broker
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@broker:29093
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_LISTENERS: PLAINTEXT://broker:29092,CONTROLLER://broker:29093,PLAINTEXT_HOST://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_LOG_DIRS: /tmp/kafka-combined-logs
+      CLUSTER_ID: MkU30EVBNTcwNTJENDM2Qk
 
 # 최상위 볼륨에는 내 로컬 말고 '도커 내부'에 저장할 볼륨을 적는다.
 volumes:
   db-data:
   binary-content-storage:
+  redis-data:

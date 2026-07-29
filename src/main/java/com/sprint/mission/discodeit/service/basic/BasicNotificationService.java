@@ -2,16 +2,20 @@ package com.sprint.mission.discodeit.service.basic;
 
 import com.sprint.mission.discodeit.dto.notification.NotificationDto;
 import com.sprint.mission.discodeit.entity.Notification;
+import com.sprint.mission.discodeit.event.dto.NotificationCreatedEvent;
 import com.sprint.mission.discodeit.exception.auth.ForbiddenActionException;
 import com.sprint.mission.discodeit.exception.notification.NotificationNotFoundException;
+import com.sprint.mission.discodeit.mapper.NotificationMapper;
 import com.sprint.mission.discodeit.repository.NotificationRepository;
 import com.sprint.mission.discodeit.service.NotificationService;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +27,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class BasicNotificationService implements NotificationService {
 
   private final NotificationRepository notificationRepository;
+  private final NotificationMapper notificationMapper;
+  private final ApplicationEventPublisher eventPublisher;
 
   @Cacheable(cacheNames = "notifications", key = "#receiverId")
   @Override
@@ -57,6 +63,8 @@ public class BasicNotificationService implements NotificationService {
   public void createNotification(UUID receiverId, String title, String content) {
     Notification notification = new Notification(receiverId, title, content);
     notificationRepository.save(notification);
+    eventPublisher.publishEvent(
+        new NotificationCreatedEvent(notificationMapper.toDto(notification), Instant.now()));
     log.debug("알림 생성 완료 - receiverId: {}, title: {}", receiverId, title);
   }
 }

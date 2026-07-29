@@ -1,6 +1,8 @@
-package com.sprint.mission.discodeit.event.notification;
+package com.sprint.mission.discodeit.event.listener;
 
 import com.sprint.mission.discodeit.entity.ReadStatus;
+import com.sprint.mission.discodeit.event.dto.MessageCreatedEvent;
+import com.sprint.mission.discodeit.event.dto.RoleUpdatedEvent;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.service.NotificationService;
 import java.util.List;
@@ -24,13 +26,13 @@ public class NotificationRequiredEventListener {
   @Async("eventTaskExecutor")
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
   public void on(MessageCreatedEvent event) {
-    log.info("메시지 알림 이벤트 수신 - channelId: {}", event.channelId());
+    log.info("메시지 알림 이벤트 수신 - channelId: {}", event.data().channelId());
 
     List<ReadStatus> targetStatuses = readStatusRepository.findNotificationEnabledTargets(
-        event.channelId(), event.authorId());
+        event.data().channelId(), event.data().author().id());
 
-    String title = String.format("%s (#%s)", event.authorName(), event.channelName());
-    String content = event.content();
+    String title = String.format("%s (#%s)", event.data().author().username(), event.channelName());
+    String content = event.data().content();
 
     targetStatuses.forEach(
         rs -> notificationService.createNotification(rs.getUser().getId(), title, content));

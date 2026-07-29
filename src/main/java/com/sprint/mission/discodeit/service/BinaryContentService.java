@@ -12,7 +12,7 @@ public interface BinaryContentService {
 
   void updateStatus(UUID id, BinaryContentStatus status);
 
-  BinaryContentDto find(UUID id);
+  BinaryContentDto findById(UUID id);
 
   List<BinaryContentDto> findAllByIdIn(List<UUID> uuids);
 

@@ -7,6 +7,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -22,6 +23,7 @@ public class InMemoryJwtRegistry implements JwtRegistry {
   }
 
   @Override
+  @CacheEvict(cacheNames = "users", allEntries = true)
   public void registerJwtInformation(JwtInformation jwtInformation) {
     Queue<JwtInformation> userTokens = userTokenRegistry.computeIfAbsent(
         jwtInformation.userId(),
@@ -35,6 +37,7 @@ public class InMemoryJwtRegistry implements JwtRegistry {
   }
 
   @Override
+  @CacheEvict(cacheNames = "users", allEntries = true)
   public void invalidateJwtInformationByUserId(UUID userId) {
     userTokenRegistry.remove(userId);
   }

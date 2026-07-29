@@ -2,9 +2,9 @@ package com.sprint.mission.discodeit.event.kafka;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.sprint.mission.discodeit.event.notification.MessageCreatedEvent;
-import com.sprint.mission.discodeit.event.notification.RoleUpdatedEvent;
-import com.sprint.mission.discodeit.event.s3.S3UploadFailedEvent;
+import com.sprint.mission.discodeit.event.dto.MessageCreatedEvent;
+import com.sprint.mission.discodeit.event.dto.RoleUpdatedEvent;
+import com.sprint.mission.discodeit.event.dto.S3UploadFailedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;

@@ -4,7 +4,6 @@ import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentCreateRequest
 import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentDto;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.BinaryContentStatus;
-import com.sprint.mission.discodeit.event.binarycontent.BinaryContentCreatedEvent;
 import com.sprint.mission.discodeit.exception.binarycontent.BinaryContentNotFoundException;
 import com.sprint.mission.discodeit.exception.binarycontent.MissingFileContentException;
 import com.sprint.mission.discodeit.mapper.BinaryContentMapper;
@@ -12,7 +11,6 @@ import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.service.BinaryContentService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -28,7 +26,6 @@ public class BasicBinaryContentService implements BinaryContentService {
 
   private final BinaryContentRepository binaryContentRepository;
   private final BinaryContentMapper binaryContentMapper;
-  private final ApplicationEventPublisher eventPublisher;
 
   @Override
   @Transactional
@@ -48,9 +45,7 @@ public class BasicBinaryContentService implements BinaryContentService {
     );
     binaryContent = binaryContentRepository.save(binaryContent);
 
-    eventPublisher.publishEvent(new BinaryContentCreatedEvent(binaryContent.getId(), bytes));
-
-    log.info("파일 메타데이터 DB 저장 완료 및 이벤트 발행 - id: {}", binaryContent.getId());
+    log.info("파일 메타데이터 DB 저장 완료 - binaryContentId: {}", binaryContent.getId());
     return binaryContentMapper.toDto(binaryContent);
   }
 
@@ -65,7 +60,7 @@ public class BasicBinaryContentService implements BinaryContentService {
   }
 
   @Override
-  public BinaryContentDto find(UUID id) {
+  public BinaryContentDto findById(UUID id) {
     BinaryContent binaryContent = binaryContentRepository.findById(id)
         .orElseThrow(
             () -> new BinaryContentNotFoundException(id));
