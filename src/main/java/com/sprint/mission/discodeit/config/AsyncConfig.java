@@ -1,14 +1,14 @@
 package com.sprint.mission.discodeit.config;
 
-import java.util.Map;
-import org.slf4j.MDC;
+import com.sprint.mission.discodeit.config.decorator.MdcTaskDecorator;
+import com.sprint.mission.discodeit.config.decorator.SecurityContextTaskDecorator;
+import java.util.List;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.task.TaskExecutor;
+import org.springframework.core.task.support.CompositeTaskDecorator;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
 
 @EnableAsync
 @Configuration
@@ -22,24 +22,9 @@ public class AsyncConfig {
     executor.setQueueCapacity(50);
     executor.setThreadNamePrefix("event-");
 
-    executor.setTaskDecorator(task -> {
-      // 현재 스레드의 MDC와 SecurityContext를 캡처
-      Map<String, String> mdcContext = MDC.getCopyOfContextMap();
-      SecurityContext securityContext = SecurityContextHolder.getContext();
-
-      return () -> {
-        try {
-          if (mdcContext != null) {
-            MDC.setContextMap(mdcContext);
-          }
-          SecurityContextHolder.setContext(securityContext);
-          task.run();
-        } finally {
-          MDC.clear();
-          SecurityContextHolder.clearContext();
-        }
-      };
-    });
+    executor.setTaskDecorator(new CompositeTaskDecorator(
+        List.of(new MdcTaskDecorator(), new SecurityContextTaskDecorator())
+    ));
     executor.initialize();
     return executor;
   }

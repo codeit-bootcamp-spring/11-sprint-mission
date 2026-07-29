@@ -16,10 +16,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
+import org.springframework.context.annotation.Profile;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+@Profile("kafka")
 @Slf4j
 @RequiredArgsConstructor
 @Component
@@ -33,7 +35,7 @@ public class NotificationRequiredTopicListener {
   private final NotificationRepository notificationRepository;
   private final CacheManager cacheManager;
 
-  @KafkaListener(topics = "discodiet.MessageCreatedEvent")
+  @KafkaListener(topics = "discodeit.MessageCreatedEvent")
   public void onMessageCreatedEvent(String kafkaEvent) {
     try {
       MessageCreatedEvent event = objectMapper.readValue(kafkaEvent, MessageCreatedEvent.class);
@@ -52,7 +54,7 @@ public class NotificationRequiredTopicListener {
 
       List<User> receivers = userRepository.findAllById(receiverIds);
 
-      String title = (event.channelName() != null && event.channelName().isBlank()) ?
+      String title = (event.channelName() != null && !event.channelName().isBlank()) ?
           String.format("%s (#%s)", author.getUsername(), event.channelName())
           : author.getUsername();
 
@@ -95,7 +97,7 @@ public class NotificationRequiredTopicListener {
     }
   }
 
-  @KafkaListener(topics = "discodiet.S3UploadFailedEvent")
+  @KafkaListener(topics = "discodeit.S3UploadFailedEvent")
   public void onS3UploadFailedEvent(String kafkaEvent) {
     try {
       S3UploadFailedEvent event = objectMapper.readValue(kafkaEvent, S3UploadFailedEvent.class);

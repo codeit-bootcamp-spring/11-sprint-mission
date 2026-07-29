@@ -51,9 +51,10 @@ public class NotificationController {
       @ApiResponse(responseCode = "404", description = "알림 없음"),
   })
   public ResponseEntity<Void> delete(
-      @PathVariable UUID notificationId
+      @PathVariable UUID notificationId,
+      @AuthenticationPrincipal DiscodeitUserDetails userDetails
   ) {
-    notificationService.delete(notificationId);
+    notificationService.delete(notificationId, userDetails.getUserDto().id());
     return ResponseEntity.noContent().build();
   }
 

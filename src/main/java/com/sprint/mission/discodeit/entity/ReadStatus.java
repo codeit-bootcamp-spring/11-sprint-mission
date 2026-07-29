@@ -48,8 +48,10 @@ public class ReadStatus extends BaseUpdatableEntity {
     }
   }
 
-  public boolean isUnread(Instant messageCreatedAt) {
-    return messageCreatedAt.isAfter(lastReadAt);
+  public void updateNotificationEnabled(Boolean newNotificationEnabled) {
+    if (newNotificationEnabled != null) {
+      this.notificationEnabled = newNotificationEnabled;
+    }
   }
 
   public String toString() {

@@ -41,7 +41,7 @@ public class BasicBinaryContentService implements BinaryContentService {
   //create
   @Transactional
   @Override
-  public BinaryContentDto create(BinaryContentCreateRequest request) {
+  public BinaryContentDto create(BinaryContentCreateRequest request, UUID ownerId) {
     log.debug("첨부파일 업로드 시작");
     // 용량 제한
     if (request.bytes().length > MAX_FILE_SIZE) {
@@ -61,7 +61,7 @@ public class BasicBinaryContentService implements BinaryContentService {
 
     binaryContentRepository.save(binaryContent);
     eventPublisher.publishEvent(
-        new BinaryContentCreatedEvent(binaryContent.getId(), request.bytes())
+        new BinaryContentCreatedEvent(binaryContent.getId(), request.bytes(), ownerId)
     );
 
     log.info("첨부파일 업로드 완료 - binaryContentId: {}", binaryContent.getId());

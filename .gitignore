@@ -44,3 +44,5 @@ out/
 .env
 discodeit.env
 /logs/discodeit.log
+/.discodeit/storage/
+/cookies.txt

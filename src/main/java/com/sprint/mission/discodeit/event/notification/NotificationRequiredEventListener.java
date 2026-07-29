@@ -4,6 +4,7 @@ import com.sprint.mission.discodeit.config.CacheConfig;
 import com.sprint.mission.discodeit.entity.Notification;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
+import com.sprint.mission.discodeit.mapper.NotificationMapper;
 import com.sprint.mission.discodeit.repository.NotificationRepository;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
@@ -13,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
@@ -31,6 +33,8 @@ public class NotificationRequiredEventListener {
   private final UserRepository userRepository;
   private final NotificationRepository notificationRepository;
   private final CacheManager cacheManager;
+  private final ApplicationEventPublisher eventPublisher;
+  private final NotificationMapper notificationMapper;
 
   private static final int CONTENT_PREVIEW_LENGTH = 100;
 
@@ -69,6 +73,10 @@ public class NotificationRequiredEventListener {
     // 알림 받은 유저들의 캐시만 선택적으로 무효화
     evictNotificationsCacheForUsers(receiverIds);
 
+    notifications.forEach(n ->
+        eventPublisher.publishEvent(new NotificationCreatedEvent(notificationMapper.toDto(n)))
+    );
+
     log.info("메시지 알림 생성 완료 - channelId: {}, 수신자 수: {}",
         event.channelId(), notifications.size());
   }
@@ -85,10 +93,12 @@ public class NotificationRequiredEventListener {
     String title = "권한이 변경되었습니다.";
     String content = String.format("%s -> %s", event.oldRole(), event.newRole());
 
-    notificationRepository.save(new Notification(user, title, content));
+    Notification saved = notificationRepository.save(new Notification(user, title, content));
 
     // 대상 유저 캐시 무효화
     evictNotificationsCacheForUsers(List.of(event.userId()));
+
+    eventPublisher.publishEvent(new NotificationCreatedEvent(notificationMapper.toDto(saved)));
 
     log.info("권한 변경 알림 생성 완료 - userId: {}", event.userId());
   }

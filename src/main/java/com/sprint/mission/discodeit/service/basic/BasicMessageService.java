@@ -72,19 +72,21 @@ public class BasicMessageService implements MessageService {
 
     if (request.attachments() != null && !request.attachments().isEmpty()) {
       request.attachments().forEach(attachmentRequest ->
-          message.getAttachments().add(saveAttachment(attachmentRequest))
+          message.getAttachments().add(saveAttachment(attachmentRequest, user.getId()))
       );
     }
     Message saved = messageRepository.save(message);
+    MessageDto dto = messageMapper.toDto(saved);
     log.info("메시지 생성 완료 - messageId: {}", message.getId());
 
     eventPublisher.publishEvent(new MessageCreatedEvent(
         channel.getId(),
         user.getId(),
         request.content(),
-        channel.getName()
+        channel.getName(),
+        dto
     ));
-    return messageMapper.toDto(saved);
+    return dto;
   }
 
   //read
@@ -122,8 +124,10 @@ public class BasicMessageService implements MessageService {
     if (request.attachments() != null) {
       deleteAttachments(message.getAttachments());
       message.getAttachments().clear();
+
+      UUID authorId = message.getAuthor().getId();
       request.attachments().forEach(attachmentRequest ->
-          message.getAttachments().add(saveAttachment(attachmentRequest))
+          message.getAttachments().add(saveAttachment(attachmentRequest, authorId))
       );
     }
     log.info("메시지 업데이트 완료 - messageId: {}", message.getId());
@@ -152,7 +156,7 @@ public class BasicMessageService implements MessageService {
         });
   }
 
-  private BinaryContent saveAttachment(BinaryContentCreateRequest attachmentRequest) {
+  private BinaryContent saveAttachment(BinaryContentCreateRequest attachmentRequest, UUID ownerId) {
     log.debug("첨부파일 저장 시작");
     BinaryContent binaryContent = new BinaryContent(
         attachmentRequest.contentType(),
@@ -160,7 +164,7 @@ public class BasicMessageService implements MessageService {
     );
     binaryContentRepository.save(binaryContent);
     eventPublisher.publishEvent(
-        new BinaryContentCreatedEvent(binaryContent.getId(), attachmentRequest.bytes())
+        new BinaryContentCreatedEvent(binaryContent.getId(), attachmentRequest.bytes(), ownerId)
     );
     log.debug("첨부파일 저장 완료 - attachmentId: {}", binaryContent.getId());
     return binaryContent;

@@ -66,6 +66,7 @@ public class SecurityConfig {
         .addLogoutHandler(jwtLogoutHandler));
 
     http.authorizeHttpRequests(auth -> auth
+        .requestMatchers("/ws/**").permitAll()
         .requestMatchers(HttpMethod.GET, "/", "/index.html", "/assets/**", "/favicon.ico")
         .permitAll()
         .requestMatchers(HttpMethod.GET, "/api/auth/csrf-token").permitAll()

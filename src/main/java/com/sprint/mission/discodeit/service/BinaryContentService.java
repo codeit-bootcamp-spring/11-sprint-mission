@@ -11,7 +11,7 @@ import org.springframework.core.io.Resource;
 public interface BinaryContentService {
 
   //Create
-  BinaryContentDto create(BinaryContentCreateRequest request);
+  BinaryContentDto create(BinaryContentCreateRequest request, UUID ownerId);
 
   //Read
   BinaryContentDto findById(UUID binaryContentId);

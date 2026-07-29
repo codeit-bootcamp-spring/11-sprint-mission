@@ -8,6 +8,9 @@ import com.sprint.mission.discodeit.dto.user.UserUpdateRequest;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.event.binaryContent.BinaryContentCreatedEvent;
+import com.sprint.mission.discodeit.event.user.UserCreatedEvent;
+import com.sprint.mission.discodeit.event.user.UserDeletedEvent;
+import com.sprint.mission.discodeit.event.user.UserUpdatedEvent;
 import com.sprint.mission.discodeit.exception.user.UserEmailAlreadyExistsException;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.exception.user.UserPasswordAlreadyUsedException;
@@ -62,19 +65,22 @@ public class BasicUserService implements UserService {
       log.warn("유저 생성 실패 - 중복 이름: {}", request.username());
       throw new UserUsernameAlreadyExistsException(request.username());
     }
-    // 프로필 이미지 선택 생성
-    BinaryContent profile = saveProfileImage(profileImage);
-
     // 패스워드 encode
     String encodedPassword = passwordEncoder.encode(request.password());
 
-    // User 생성
-    User user = new User(request.username(), request.email(), encodedPassword, profile);
+    // User를 프로필 없이 먼저 생성
+    User user = new User(request.username(), request.email(), encodedPassword, null);
+
+    // 프로필 이미지 선택 생성
+    BinaryContent profile = saveProfileImage(profileImage, user.getId());
+    user.updateUserProfile(profile);
 
     userRepository.save(user);
+    UserDto dto = userMapper.toDto(user);
+    eventPublisher.publishEvent(new UserCreatedEvent(dto));
 
     log.info("유저 생성 완료 - userId: {}, email: {}", user.getId(), user.getEmail());
-    return userMapper.toDto(user); //UserStatus도 cascade로 자동 저장
+    return dto; //UserStatus도 cascade로 자동 저장
   }
 
   //Read
@@ -137,7 +143,7 @@ public class BasicUserService implements UserService {
         binaryContentRepository.delete(user.getProfile());
         log.debug("기존 프로필 이미지 삭제 완료 - profileId: {}", oldProfileId);
       }
-      user.updateUserProfile(saveProfileImage(profileImage));
+      user.updateUserProfile(saveProfileImage(profileImage, userId));
     }
 
     if (request.newUsername() != null) {
@@ -146,9 +152,11 @@ public class BasicUserService implements UserService {
     if (request.newEmail() != null) {
       user.updateUserEmail(request.newEmail());
     }
+    UserDto dto = userMapper.toDto(user);
+    eventPublisher.publishEvent(new UserUpdatedEvent(dto));
 
     log.info("유저 업데이트 완료 - newUsername: {}, newEmail: {}", user.getUsername(), user.getEmail());
-    return userMapper.toDto(user);
+    return dto;
   }
 
   //Delete
@@ -167,6 +175,7 @@ public class BasicUserService implements UserService {
     }
 
     userRepository.deleteById(userId); //JPA가 UserStatus도 cascade 삭제
+    eventPublisher.publishEvent(new UserDeletedEvent(userId));
     log.info("유저 삭제 완료 - userId: {}", userId);
   }
 
@@ -180,7 +189,7 @@ public class BasicUserService implements UserService {
   }
 
   // 프로필 생성 로직
-  private BinaryContent saveProfileImage(BinaryContentCreateRequest profileImage) {
+  private BinaryContent saveProfileImage(BinaryContentCreateRequest profileImage, UUID ownerId) {
     log.debug("프로필 이미지 저장 시작");
     if (profileImage == null) {
       return null;
@@ -193,7 +202,7 @@ public class BasicUserService implements UserService {
 
     BinaryContent saved = binaryContentRepository.save(profile);
     eventPublisher.publishEvent(
-        new BinaryContentCreatedEvent(saved.getId(), profileImage.bytes())
+        new BinaryContentCreatedEvent(saved.getId(), profileImage.bytes(), ownerId)
     );
     log.debug("프로필 이미지 저장 완료 - profileId: {}", saved.getId());
     return saved;

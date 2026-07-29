@@ -83,7 +83,10 @@ public class BasicReadStatusService implements ReadStatusService {
   @Override
   public ReadStatusDto update(UUID readStatusId, ReadStatusUpdateRequest request) {
     ReadStatus readStatus = findReadStatusOrThrow(readStatusId);
-    readStatus.updateLastReadAt(request.newLastReadAt());
+    if (request.newLastReadAt() != null) {
+      readStatus.updateLastReadAt(request.newLastReadAt());
+    }
+    readStatus.updateNotificationEnabled(request.newNotificationEnabled());
     return readStatusMapper.toDto(readStatus);
   }
 
