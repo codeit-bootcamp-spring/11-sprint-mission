@@ -1,7 +1,10 @@
 package com.sprint.mission.discodeit.entity;
 
 import com.sprint.mission.discodeit.entity.base.BaseEntity;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+import java.util.UUID;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -12,19 +15,18 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Notification extends BaseEntity {
 
-    @Column(nullable = false)
-    private String title;
+  @Column(name = "receiver_id", columnDefinition = "uuid", nullable = false)
+  private UUID receiverId;
 
-    @Column(nullable = false, columnDefinition = "text")
-    private String content;
+  @Column(nullable = false)
+  private String title;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "receiver_id", columnDefinition = "uuid")
-    private User receiver;
+  @Column(nullable = false)
+  private String content;
 
-    public Notification(String title, String content, User receiver) {
-        this.title = title;
-        this.content = content;
-        this.receiver = receiver;
-    }
-}
+  public Notification(UUID receiverId, String title, String content) {
+    this.receiverId = receiverId;
+    this.title = title;
+    this.content = content;
+  }
+} 

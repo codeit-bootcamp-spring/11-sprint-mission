@@ -23,9 +23,6 @@ public enum ErrorCode {
   READ_STATUS_NOT_FOUND("읽음 상태를 찾을 수 없습니다."),
   DUPLICATE_READ_STATUS("이미 존재하는 읽음 상태입니다."),
 
-  // Notification 관련 에러 코드
-  NOTIFICATION_NOT_FOUND("알림을 찾을 수 없습니다."),
-
   // Server 에러 코드
   INTERNAL_SERVER_ERROR("서버 내부 오류가 발생했습니다."),
   INVALID_REQUEST("잘못된 요청입니다."),
@@ -33,6 +30,10 @@ public enum ErrorCode {
   // Security 관련 에러 코드
   INVALID_TOKEN("토큰이 유효하지 않습니다."),
   INVALID_USER_DETAILS("사용자 인증 정보(UserDetails)가 유효하지 않습니다."),
+
+  // Notification 관련 에러 코드
+  NOTIFICATION_NOT_FOUND("알림을 찾을 수 없습니다."),
+  NOTIFICATION_FORBIDDEN("알림을 삭제할 권한이 없습니다."),
   ;
 
   private final String message;

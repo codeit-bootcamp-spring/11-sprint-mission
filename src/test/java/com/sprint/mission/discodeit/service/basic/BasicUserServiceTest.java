@@ -12,6 +12,9 @@ import com.sprint.mission.discodeit.dto.request.UserCreateRequest;
 import com.sprint.mission.discodeit.dto.request.UserUpdateRequest;
 import com.sprint.mission.discodeit.entity.Role;
 import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.event.message.UserCreatedEvent;
+import com.sprint.mission.discodeit.event.message.UserDeletedEvent;
+import com.sprint.mission.discodeit.event.message.UserUpdatedEvent;
 import com.sprint.mission.discodeit.exception.user.UserAlreadyExistsException;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.mapper.UserMapper;
@@ -25,6 +28,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -38,6 +42,9 @@ class BasicUserServiceTest {
   private UserMapper userMapper;
   @Mock
   private PasswordEncoder passwordEncoder;
+
+  @Mock
+  private ApplicationEventPublisher eventPublisher;
 
   @InjectMocks
   private BasicUserService userService;
@@ -76,6 +83,7 @@ class BasicUserServiceTest {
     // then
     assertThat(result).isEqualTo(userDto);
     verify(userRepository).save(any(User.class));
+    verify(eventPublisher).publishEvent(any(UserCreatedEvent.class));
   }
 
   @Test
@@ -147,6 +155,7 @@ class BasicUserServiceTest {
 
     // then
     assertThat(result).isEqualTo(userDto);
+    verify(eventPublisher).publishEvent(any(UserUpdatedEvent.class));
   }
 
   @Test
@@ -166,23 +175,25 @@ class BasicUserServiceTest {
   @DisplayName("사용자 삭제 성공")
   void deleteUser_Success() {
     // given
-    given(userRepository.existsById(eq(userId))).willReturn(true);
+    given(userRepository.findById(eq(userId))).willReturn(Optional.of(user));
+    given(userMapper.toDto(any(User.class))).willReturn(userDto);
 
     // when
     userService.delete(userId);
 
     // then
     verify(userRepository).deleteById(eq(userId));
+    verify(eventPublisher).publishEvent(any(UserDeletedEvent.class));
   }
 
   @Test
   @DisplayName("존재하지 않는 사용자 삭제 시도 시 실패")
   void deleteUser_WithNonExistentId_ThrowsException() {
     // given
-    given(userRepository.existsById(eq(userId))).willReturn(false);
+    given(userRepository.findById(eq(userId))).willReturn(Optional.empty());
 
     // when & then
     assertThatThrownBy(() -> userService.delete(userId))
         .isInstanceOf(UserNotFoundException.class);
   }
-} 
+}

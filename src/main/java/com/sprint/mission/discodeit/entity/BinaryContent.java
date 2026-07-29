@@ -1,7 +1,11 @@
 package com.sprint.mission.discodeit.entity;
 
 import com.sprint.mission.discodeit.entity.base.BaseUpdatableEntity;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -19,8 +23,9 @@ public class BinaryContent extends BaseUpdatableEntity {
   @Column(length = 100, nullable = false)
   private String contentType;
   @Enumerated(EnumType.STRING)
-  @Column(nullable = false, length = 20)
+  @Column(nullable = false)
   private BinaryContentStatus status = BinaryContentStatus.PROCESSING;
+
 
   public BinaryContent(String fileName, Long size, String contentType) {
     this.fileName = fileName;
@@ -28,9 +33,7 @@ public class BinaryContent extends BaseUpdatableEntity {
     this.contentType = contentType;
   }
 
-  public void updateStatus(BinaryContentStatus newStatus) {
-    if (this.status != newStatus) {
-      this.status = newStatus;
-    }
+  public void updateStatus(BinaryContentStatus status) {
+    this.status = status;
   }
 }
